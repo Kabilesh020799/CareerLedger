@@ -5,8 +5,11 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "prisma generate && tsc",
+    "db:generate": "prisma generate",
+    "prebuild": "npm run db:generate",
+    "build": "tsc",
     "start": "node dist/server.js",
+    "pretypecheck": "npm run db:generate",
     "typecheck": "tsc --noEmit",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed"

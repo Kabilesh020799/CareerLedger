@@ -29,6 +29,11 @@ Feature: Persist application data
     And the PostgreSQL container should start with a persistent volume
     And later deployments should preserve the credentials and database volume
 
+  Scenario: Verify the backend from a clean checkout
+    Given generated Prisma client files are not committed
+    When backend type checking or compilation runs in verification
+    Then the Prisma client should be generated before TypeScript compilation
+
   Scenario: Release a new application version from the default branch
     Given the root package version has not been released
     When that version is pushed to the default branch and verification passes
