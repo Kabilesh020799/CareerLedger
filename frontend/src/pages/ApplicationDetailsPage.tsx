@@ -1,0 +1,87 @@
+import { Alert, Box, Button, Flex, Heading, SimpleGrid, Spinner, Stack, Text } from '@chakra-ui/react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { DeleteApplicationDialog } from '../components/applications/DeleteApplicationDialog'
+import { StatusBadge } from '../components/applications/StatusBadge'
+import { useApplication } from '../hooks/useApplication'
+import { useDeleteApplication } from '../hooks/useDeleteApplication'
+import { getApiErrorMessage } from '../utils/apiError'
+
+function formatDate(value: string | null) {
+  if (!value) return 'Not provided'
+  return new Intl.DateTimeFormat('en-CA', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(value))
+}
+
+export function ApplicationDetailsPage() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const applicationQuery = useApplication(id)
+  const deleteApplication = useDeleteApplication()
+
+  if (applicationQuery.isPending) {
+    return <Flex minH="18rem" align="center" justify="center" aria-label="Loading application"><Spinner color="teal.600" size="xl" /></Flex>
+  }
+
+  if (applicationQuery.isError) {
+    return (
+      <Alert.Root status="error" borderRadius="lg">
+        <Alert.Indicator />
+        <Alert.Content>
+          <Alert.Title>Unable to load application</Alert.Title>
+          <Alert.Description>{getApiErrorMessage(applicationQuery.error, 'The application may no longer exist.')}</Alert.Description>
+        </Alert.Content>
+        <Button ml="auto" size="sm" variant="outline" onClick={() => applicationQuery.refetch()}>Retry</Button>
+      </Alert.Root>
+    )
+  }
+
+  const application = applicationQuery.data
+
+  return (
+    <Stack gap="6">
+      <Button asChild alignSelf="start" variant="plain" px="0">
+        <Link to="/applications">← Back to applications</Link>
+      </Button>
+
+      <Flex align={{ base: 'start', md: 'center' }} direction={{ base: 'column', md: 'row' }} gap="4" justify="space-between">
+        <Box>
+          <Heading as="h2" size="2xl">{application.jobTitle}</Heading>
+          <Text color="gray.600" fontSize="lg" mt="1">{application.company}</Text>
+        </Box>
+        <Flex gap="3">
+          <Button asChild variant="outline">
+            <Link to={`/applications/${application.id}/edit`}>Edit</Link>
+          </Button>
+          <DeleteApplicationDialog
+            company={application.company}
+            isDeleting={deleteApplication.isPending}
+            onConfirm={() => deleteApplication.mutate(application.id, { onSuccess: () => navigate('/applications') })}
+          />
+        </Flex>
+      </Flex>
+
+      {deleteApplication.isError && (
+        <Alert.Root status="error"><Alert.Indicator /><Alert.Title>{getApiErrorMessage(deleteApplication.error, 'Unable to delete application.')}</Alert.Title></Alert.Root>
+      )}
+
+      <Box bg="white" borderWidth="1px" borderRadius="xl" p={{ base: '5', md: '8' }}>
+        <SimpleGrid columns={{ base: 1, md: 2 }} gap="7">
+          <Detail label="Status"><StatusBadge status={application.status} /></Detail>
+          <Detail label="Applied date">{formatDate(application.appliedAt)}</Detail>
+          <Detail label="Location">{application.location ?? 'Not provided'}</Detail>
+          <Detail label="Source">{application.source ?? 'Not provided'}</Detail>
+          <Detail label="Job URL">
+            {application.jobUrl ? <a href={application.jobUrl} target="_blank" rel="noreferrer">Open job posting</a> : 'Not provided'}
+          </Detail>
+          <Detail label="Created">{formatDate(application.createdAt)}</Detail>
+        </SimpleGrid>
+        <Box borderTopWidth="1px" mt="8" pt="6">
+          <Detail label="Notes">{application.notes ?? 'No notes added.'}</Detail>
+        </Box>
+      </Box>
+    </Stack>
+  )
+}
+
+function Detail({ label, children }: { label: string; children: React.ReactNode }) {
+  return <Stack gap="1"><Text color="gray.500" fontSize="sm" fontWeight="medium">{label}</Text><Box>{children}</Box></Stack>
+}
