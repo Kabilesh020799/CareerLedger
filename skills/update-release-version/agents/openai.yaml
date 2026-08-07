@@ -1,0 +1,4 @@
+interface:
+  display_name: "Update Release Version"
+  short_description: "Classify changes and bump the release version"
+  default_prompt: "Use $update-release-version to classify my changes and update the root release version."

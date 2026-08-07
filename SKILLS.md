@@ -10,6 +10,7 @@ Every feature change must follow these focused guides:
 - [Automated testing standard](docs/standards/testing.md)
 - [Definition of done](docs/standards/definition-of-done.md)
 - [Frontend UI standard](docs/standards/frontend-ui.md)
+- [Release versioning skill](skills/update-release-version/SKILL.md)
 
 Write or update the feature specification before implementation, add unit tests with changed logic, and document delivered user-visible features in the root `README.md` before reporting a feature complete. Create the root README when the first feature needs to be documented. Describe only implemented behavior; keep roadmap features out of the user-facing feature list.
 
@@ -179,7 +180,7 @@ Add useful structured logging and error monitoring when production operation beg
 
 ### CI/CD
 
-The intended pull-request pipeline installs dependencies, lints, type-checks, tests, and builds both packages. Docker builds, security scanning, deployment, and monitoring belong to later operational phases.
+The pull-request pipeline installs dependencies, lints, type-checks, tests, and builds both packages. The [release-version skill](skills/update-release-version/SKILL.md) classifies completed changes and updates the root version when required. A new root version pushed to `master` publishes versioned Docker images, creates the GitHub Release, and deploys production.
 
 ## Skill selection rule
 

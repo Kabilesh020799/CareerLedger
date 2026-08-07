@@ -108,6 +108,10 @@ Do not report a feature as complete when only one layer is implemented. Clearly 
 - Update the root README's feature documentation when user-visible behavior changes.
 - Mention material warnings, skipped checks, and known limitations in the handoff.
 
+## Release versioning
+
+Before finalizing completed work, follow the repository's [release-version skill](skills/update-release-version/SKILL.md). Classify the combined unreleased changes and update only the root `package.json` when a major, minor, or patch release is required. Leave the version unchanged for documentation, tests, Gherkin clarification, or agent-guidance-only changes.
+
 ## Definition of done
 
-A selected feature is done when its relevant scenarios are satisfied, changed logic has unit coverage, the root README documents the delivered user-visible behavior, types and builds pass, expected errors are handled, data behavior is verified, no unrelated roadmap scope was introduced, and the contributor can reproduce any required setup or migration commands.
+A selected feature is done when its relevant scenarios are satisfied, changed logic has unit coverage, the root README documents the delivered user-visible behavior, types and builds pass, expected errors are handled, data behavior is verified, the release impact has been classified and versioned when required, no unrelated roadmap scope was introduced, and the contributor can reproduce any required setup or migration commands.

@@ -48,6 +48,23 @@ Feature: Persist application data
     Then verification should run
     But no images, release, or production deployment should be created
 
+  Scenario Outline: Select the next semantic release version
+    Given the current root package version has been released
+    When completed changes contain a <change type>
+    Then the next release should increment the <version part>
+
+    Examples:
+      | change type                         | version part |
+      | backward-compatible feature         | minor        |
+      | backward-compatible fix             | patch        |
+      | backward-incompatible product change | major       |
+
+  Scenario: Do not release repository-only maintenance
+    Given the current root package version has been released
+    When completed changes affect only documentation, tests, or agent guidance
+    Then the root package version should remain unchanged
+    And no application release should be created
+
   Scenario: Preserve the previous release when deployment is unhealthy
     Given a healthy production release is running
     When a newly deployed release fails its health check
