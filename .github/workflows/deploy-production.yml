@@ -127,35 +127,16 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 
-  create_release:
-    name: Create GitHub Release
-    needs: [plan_release, publish]
-    if: needs.plan_release.outputs.should_release == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Publish release and tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ needs.plan_release.outputs.release_tag }}
-        run: |
-          gh release create "$RELEASE_TAG" \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title "$RELEASE_TAG" \
-            --generate-notes
-
   deploy:
-    name: Deploy production
-    needs: [plan_release, create_release]
+    name: Deploy and release production
+    needs: [plan_release, publish]
     if: needs.plan_release.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     environment:
       name: production
       url: ${{ vars.PRODUCTION_URL }}
     permissions:
-      contents: read
+      contents: write
       packages: read
     steps:
       - name: Check out repository
@@ -201,3 +182,14 @@ jobs:
         run: |
           port="${DEPLOY_PORT:-22}"
           ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "/opt/job-application-tracker/deploy-production.sh '${{ needs.plan_release.outputs.release_tag }}'"
+
+      - name: Publish successful GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.plan_release.outputs.release_tag }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$RELEASE_TAG" \
+            --generate-notes

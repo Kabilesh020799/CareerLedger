@@ -84,13 +84,15 @@ The workflow:
 2. Validates the root package version and checks GitHub for that release.
 3. Stops successfully when the version has already been released.
 4. Publishes frontend and backend images tagged with the new version and commit SHA.
-5. Creates the version tag and GitHub Release with generated release notes.
-6. Copies the production Compose file and deployment script to the instance.
-7. Authenticates the instance to GHCR with the workflow's short-lived token.
-8. Pulls and starts the exact release version.
-9. On the first deployment, generates protected database credentials and starts the PostgreSQL container and volume.
-10. Waits for Compose health checks and verifies the proxied API.
-11. Restores the previous release version when deployment fails.
+5. Copies the production Compose file and deployment script to the instance.
+6. Authenticates the instance to GHCR with the workflow's short-lived token.
+7. Pulls and starts the exact release version.
+8. On the first deployment, generates protected database credentials and starts the PostgreSQL container and volume.
+9. Waits for Compose health checks and verifies the proxied API.
+10. Restores the previous release version when deployment fails.
+11. Creates the version tag and GitHub Release with generated release notes only after deployment succeeds.
+
+If deployment fails, the version remains unreleased and a later verified push can retry it. Image tags for an unreleased version may be replaced by that retry; after the GitHub Release is created, the version is immutable.
 
 Use semantic versioning:
 
@@ -98,7 +100,7 @@ Use semantic versioning:
 - Increment `MINOR` for backward-compatible features, such as `v1.1.0`.
 - Increment `MAJOR` for incompatible changes, such as `v2.0.0`.
 
-If deployment fails after the GitHub Release is created, use **Re-run failed jobs** on that workflow run after correcting the instance problem. Do not reuse a released version for different source code; publish a new patch version instead.
+If deployment fails, correct the instance problem and use **Re-run failed jobs**, or push another verified commit with the same unreleased root version. Do not reuse a successfully released version for different source code; publish a new patch version instead.
 
 ## Operations
 

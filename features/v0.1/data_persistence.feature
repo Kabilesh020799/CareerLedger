@@ -71,6 +71,12 @@ Feature: Persist application data
     Then the previous frontend and backend image versions should be restored
     And the deployment workflow should report a failure
 
+  Scenario: Keep a failed deployment version eligible for retry
+    Given a new version has not completed a healthy production deployment
+    When image publication succeeds but production deployment fails
+    Then no GitHub Release or source tag should be created for that version
+    And a later verified push may retry the same version
+
   Scenario: Applications survive a PostgreSQL container restart
     Given an application has been saved to PostgreSQL
     When the PostgreSQL container is restarted
