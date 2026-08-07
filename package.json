@@ -1,6 +1,6 @@
 {
   "name": "job-application-tracker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "release:version": "node scripts/release-version.js",
