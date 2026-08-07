@@ -122,6 +122,12 @@ npm run build
 npm run test:e2e
 ```
 
+## Production releases
+
+The root `package.json` owns the application release version. Every push to `master` is verified. When its version has not been released before, GitHub Actions automatically creates the corresponding `vMAJOR.MINOR.PATCH` GitHub Release, publishes versioned frontend and backend images, and deploys that version. The first deployment generates protected PostgreSQL credentials on the instance and starts the database container with a persistent volume. Pushes with an unchanged version stop after verification.
+
+See the [production deployment guide](docs/deployment.md) for the one-time instance and GitHub environment configuration.
+
 ## Project documentation
 
 - [Contributing guide](CONTRIBUTING.md)
@@ -130,3 +136,4 @@ npm run test:e2e
 - [Current behavior specifications](features/v0.1)
 - [Roadmap specifications](features/roadmap)
 - [Development standards](docs/standards)
+- [Production deployment guide](docs/deployment.md)

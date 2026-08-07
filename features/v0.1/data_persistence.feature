@@ -22,6 +22,33 @@ Feature: Persist application data
     When the application stack is restarted
     Then each demo application should still appear exactly once
 
+  Scenario: Initialize the production database on the first deployment
+    Given a prepared production instance has no application environment file
+    When the first release is deployed
+    Then protected PostgreSQL credentials should be generated on the instance
+    And the PostgreSQL container should start with a persistent volume
+    And later deployments should preserve the credentials and database volume
+
+  Scenario: Release a new application version from the default branch
+    Given the root package version has not been released
+    When that version is pushed to the default branch and verification passes
+    Then a semantic GitHub Release should be created for that version
+    And frontend and backend images should be published with that version
+    And the production instance should deploy that exact release version
+    And the deployment should be accepted only after its health check passes
+
+  Scenario: Do not release the same application version twice
+    Given the root package version already has a GitHub Release
+    When another commit with the same version is pushed to the default branch
+    Then verification should run
+    But no images, release, or production deployment should be created
+
+  Scenario: Preserve the previous release when deployment is unhealthy
+    Given a healthy production release is running
+    When a newly deployed release fails its health check
+    Then the previous frontend and backend image versions should be restored
+    And the deployment workflow should report a failure
+
   Scenario: Applications survive a PostgreSQL container restart
     Given an application has been saved to PostgreSQL
     When the PostgreSQL container is restarted

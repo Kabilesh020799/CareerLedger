@@ -1,0 +1,99 @@
+#!/usr/bin/env sh
+
+set -eu
+
+APP_DIR="${APP_DIR:-/opt/job-application-tracker}"
+COMPOSE_FILE="${APP_DIR}/compose.production.yml"
+ENV_FILE="${APP_DIR}/.env"
+NEW_TAG="${1:-}"
+
+if [ -z "$NEW_TAG" ]; then
+  echo "Usage: deploy-production.sh <image-tag>" >&2
+  exit 2
+fi
+
+case "$NEW_TAG" in
+  *[!a-zA-Z0-9._-]*)
+    echo "Invalid image tag" >&2
+    exit 2
+    ;;
+esac
+
+if [ ! -f "$COMPOSE_FILE" ]; then
+  echo "Production Compose file is missing in $APP_DIR" >&2
+  exit 2
+fi
+
+initialize_environment() {
+  if ! command -v openssl >/dev/null 2>&1; then
+    echo "OpenSSL is required to generate the initial PostgreSQL password." >&2
+    exit 2
+  fi
+
+  database_password="$(openssl rand -hex 32)"
+  temporary_file="$(mktemp "${ENV_FILE}.XXXXXX")"
+
+  {
+    printf '%s\n' "POSTGRES_USER=jobtracker"
+    printf '%s\n' "POSTGRES_PASSWORD=$database_password"
+    printf '%s\n' "POSTGRES_DB=jobtracker"
+    printf '%s\n' "IMAGE_TAG=$NEW_TAG"
+  } > "$temporary_file"
+
+  chmod 600 "$temporary_file"
+  mv "$temporary_file" "$ENV_FILE"
+  echo "Created protected production environment file at $ENV_FILE."
+}
+
+if [ ! -e "$ENV_FILE" ]; then
+  initialize_environment
+elif [ ! -f "$ENV_FILE" ]; then
+  echo "Production environment path is not a regular file: $ENV_FILE" >&2
+  exit 2
+fi
+
+OLD_TAG="$(sed -n 's/^IMAGE_TAG=//p' "$ENV_FILE" | head -n 1)"
+
+set_image_tag() {
+  tag="$1"
+  temporary_file="$(mktemp "${ENV_FILE}.XXXXXX")"
+  awk -v tag="$tag" '
+    BEGIN { replaced = 0 }
+    /^IMAGE_TAG=/ { print "IMAGE_TAG=" tag; replaced = 1; next }
+    { print }
+    END { if (!replaced) print "IMAGE_TAG=" tag }
+  ' "$ENV_FILE" > "$temporary_file"
+  chmod --reference="$ENV_FILE" "$temporary_file" 2>/dev/null || chmod 600 "$temporary_file"
+  mv "$temporary_file" "$ENV_FILE"
+}
+
+rollback() {
+  exit_code="$?"
+  trap - INT TERM HUP EXIT
+
+  if [ -n "$OLD_TAG" ] && [ "$OLD_TAG" != "$NEW_TAG" ]; then
+    echo "Deployment failed; restoring image tag $OLD_TAG" >&2
+    set_image_tag "$OLD_TAG"
+    docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull
+    docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans --wait --wait-timeout 180
+  fi
+
+  exit "$exit_code"
+}
+
+trap rollback INT TERM HUP EXIT
+
+set_image_tag "$NEW_TAG"
+
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans --wait --wait-timeout 180
+
+health_response="$(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T frontend wget -qO- http://127.0.0.1/api/health)"
+
+if [ "$health_response" != '{"status":"ok"}' ]; then
+  echo "Unexpected health response: $health_response" >&2
+  exit 1
+fi
+
+trap - INT TERM HUP EXIT
+echo "Deployment of $NEW_TAG completed successfully."

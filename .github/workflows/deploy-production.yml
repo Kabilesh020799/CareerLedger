@@ -1,0 +1,203 @@
+name: Verify and release production
+
+on:
+  push:
+    branches: [master]
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ghcr.io/kabilesh020799/jobapplicationtracker-backend
+  FRONTEND_IMAGE: ghcr.io/kabilesh020799/jobapplicationtracker-frontend
+
+jobs:
+  verify:
+    uses: ./.github/workflows/verify.yml
+
+  plan_release:
+    name: Plan release
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      release_tag: ${{ steps.version.outputs.release_tag }}
+      should_release: ${{ steps.release.outputs.should_release }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Read release version
+        id: version
+        run: echo "release_tag=$(node scripts/release-version.js)" >> "$GITHUB_OUTPUT"
+
+      - name: Check for an existing GitHub Release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+        run: |
+          response_file="$(mktemp)"
+          http_status="$(curl --silent --show-error --output "$response_file" --write-out '%{http_code}' \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG")"
+
+          case "$http_status" in
+            200)
+              echo "Release $RELEASE_TAG already exists; verification is complete and deployment will be skipped."
+              echo "should_release=false" >> "$GITHUB_OUTPUT"
+              ;;
+            404)
+              set +e
+              git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" >/dev/null 2>&1
+              tag_status="$?"
+              set -e
+
+              case "$tag_status" in
+                0)
+                  echo "Tag $RELEASE_TAG already exists without a corresponding release." >&2
+                  echo "Remove the unused tag or choose a new package version before releasing." >&2
+                  exit 1
+                  ;;
+                2)
+                  echo "Release $RELEASE_TAG is new and will be published."
+                  echo "should_release=true" >> "$GITHUB_OUTPUT"
+                  ;;
+                *)
+                  echo "Unable to check whether tag $RELEASE_TAG exists." >&2
+                  exit 1
+                  ;;
+              esac
+              ;;
+            *)
+              echo "GitHub release lookup failed with HTTP status $http_status." >&2
+              sed -n '1,20p' "$response_file" >&2
+              exit 1
+              ;;
+          esac
+
+  publish:
+    name: Publish ${{ matrix.service }} image
+    needs: plan_release
+    if: needs.plan_release.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - service: backend
+            context: ./backend
+            image: ghcr.io/kabilesh020799/jobapplicationtracker-backend
+          - service: frontend
+            context: ./frontend
+            image: ghcr.io/kabilesh020799/jobapplicationtracker-frontend
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
+
+      - name: Build and push image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: |
+            ${{ matrix.image }}:${{ needs.plan_release.outputs.release_tag }}
+            ${{ matrix.image }}:${{ github.sha }}
+            ${{ matrix.image }}:latest
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  create_release:
+    name: Create GitHub Release
+    needs: [plan_release, publish]
+    if: needs.plan_release.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish release and tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.plan_release.outputs.release_tag }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$RELEASE_TAG" \
+            --generate-notes
+
+  deploy:
+    name: Deploy production
+    needs: [plan_release, create_release]
+    if: needs.plan_release.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Install deployment files
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+        run: |
+          port="${DEPLOY_PORT:-22}"
+          ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p /opt/job-application-tracker"
+          scp -i ~/.ssh/deploy_key -P "$port" deploy/compose.production.yml scripts/deploy-production.sh "$DEPLOY_USER@$DEPLOY_HOST:/opt/job-application-tracker/"
+          ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "chmod 700 /opt/job-application-tracker/deploy-production.sh"
+
+      - name: Authenticate instance to GHCR
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          port="${DEPLOY_PORT:-22}"
+          printf '%s' "$GHCR_TOKEN" | ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+
+      - name: Deploy immutable images
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+        run: |
+          port="${DEPLOY_PORT:-22}"
+          ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "/opt/job-application-tracker/deploy-production.sh '${{ needs.plan_release.outputs.release_tag }}'"
