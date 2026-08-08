@@ -24,6 +24,11 @@ enum ApplicationStatus {
   WITHDRAWN
 }
 
+enum ApplicationEventType {
+  NOTE
+  STATUS_CHANGE
+}
+
 model Application {
   id        String            @id @default(cuid())
   company   String
@@ -36,11 +41,26 @@ model Application {
   appliedAt DateTime?
   userId    String?
   user      User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events    ApplicationEvent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+model ApplicationEvent {
+  id            String               @id @default(cuid())
+  applicationId String
+  application   Application          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type          ApplicationEventType
+  description   String
+  fromStatus    ApplicationStatus?
+  toStatus      ApplicationStatus?
+  occurredAt    DateTime             @default(now())
+  createdAt     DateTime             @default(now())
+
+  @@index([applicationId, occurredAt])
 }
 
 model User {

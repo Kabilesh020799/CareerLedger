@@ -36,6 +36,9 @@ jobs:
         id: version
         run: echo "release_tag=$(node scripts/release-version.js)" >> "$GITHUB_OUTPUT"
 
+      - name: Validate release changelog
+        run: node scripts/release-notes.js >/dev/null
+
       - name: Check for an existing GitHub Release
         id: release
         env:
@@ -211,8 +214,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ needs.plan_release.outputs.release_tag }}
         run: |
+          node scripts/release-notes.js > release-notes.md
           gh release create "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "$RELEASE_TAG" \
-            --generate-notes
+            --notes-file release-notes.md

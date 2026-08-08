@@ -37,3 +37,24 @@ export type CreateApplicationInput = {
 }
 
 export type UpdateApplicationInput = Partial<CreateApplicationInput>
+
+export const applicationEventTypes = ['NOTE', 'STATUS_CHANGE'] as const
+
+export type ApplicationEventType = (typeof applicationEventTypes)[number]
+
+export type ApplicationEvent = {
+  id: string
+  applicationId: string
+  type: ApplicationEventType
+  description: string
+  fromStatus: ApplicationStatus | null
+  toStatus: ApplicationStatus | null
+  occurredAt: string
+  createdAt: string
+}
+
+export type CreateApplicationEventInput = {
+  type: 'NOTE'
+  description: string
+  occurredAt: string
+}

@@ -9,7 +9,7 @@
 * 🟢 You can import this file directly.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ApplicationStatus = void 0;
+exports.ApplicationEventType = exports.ApplicationStatus = void 0;
 exports.ApplicationStatus = {
     SAVED: 'SAVED',
     APPLIED: 'APPLIED',
@@ -19,4 +19,8 @@ exports.ApplicationStatus = {
     OFFER: 'OFFER',
     REJECTED: 'REJECTED',
     WITHDRAWN: 'WITHDRAWN'
+};
+exports.ApplicationEventType = {
+    NOTE: 'NOTE',
+    STATUS_CHANGE: 'STATUS_CHANGE'
 };

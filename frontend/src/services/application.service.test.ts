@@ -25,6 +25,17 @@ const application = {
   updatedAt: '2026-08-06T12:00:00.000Z',
 }
 
+const event = {
+  id: 'event-1',
+  applicationId: 'application-1',
+  type: 'NOTE' as const,
+  description: 'Followed up with the recruiter.',
+  fromStatus: null,
+  toStatus: null,
+  occurredAt: '2026-08-07T00:00:00.000Z',
+  createdAt: '2026-08-07T15:30:00.000Z',
+}
+
 describe('applicationService', () => {
   beforeEach(() => vi.clearAllMocks())
 
@@ -52,5 +63,21 @@ describe('applicationService', () => {
 
     expect(api.patch).toHaveBeenCalledWith('/applications/application-1', { status: 'INTERVIEW' })
     expect(api.delete).toHaveBeenCalledWith('/applications/application-1')
+  })
+
+  it('lists and creates application timeline events', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: [event] })
+    vi.mocked(api.post).mockResolvedValue({ data: event })
+    const input = {
+      type: 'NOTE' as const,
+      description: 'Followed up with the recruiter.',
+      occurredAt: '2026-08-07T00:00:00.000Z',
+    }
+
+    await expect(applicationService.listEvents(application.id)).resolves.toEqual([event])
+    await expect(applicationService.createEvent(application.id, input)).resolves.toEqual(event)
+
+    expect(api.get).toHaveBeenCalledWith('/applications/application-1/events')
+    expect(api.post).toHaveBeenCalledWith('/applications/application-1/events', input)
   })
 })

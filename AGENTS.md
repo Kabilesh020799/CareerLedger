@@ -110,7 +110,7 @@ Do not report a feature as complete when only one layer is implemented. Clearly 
 
 ## Release versioning
 
-Before finalizing completed work, follow the repository's [release-version skill](skills/update-release-version/SKILL.md). Classify the combined unreleased changes and update only the root `package.json` when a major, minor, or patch release is required. Leave the version unchanged for documentation, tests, Gherkin clarification, or agent-guidance-only changes.
+Before finalizing completed work, follow the repository's [release-version skill](skills/update-release-version/SKILL.md). Classify the combined unreleased changes, update only the root `package.json` when a major, minor, or patch release is required, and add categorized user-facing entries to `CHANGELOG.md`. Leave the version and changelog unchanged for documentation, tests, Gherkin clarification, or agent-guidance-only changes.
 
 ## Definition of done
 

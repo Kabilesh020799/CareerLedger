@@ -36,11 +36,20 @@ Feature: Persist application data
 
   Scenario: Release a new application version from the default branch
     Given the root package version has not been released
+    And the changelog contains categorized entries for that version
     When that version is pushed to the default branch and verification passes
     Then a semantic GitHub Release should be created for that version
+    And its description should contain the matching changelog entries
     And frontend and backend images should be published with that version
     And the production instance should deploy that exact release version
     And the deployment should be accepted only after its health check passes
+
+  Scenario: Reject a release without changelog entries
+    Given the root package version has not been released
+    But the changelog has no categorized entries for that version
+    When that version is verified
+    Then verification should fail before images are published
+    And no production deployment or GitHub Release should be created
 
   Scenario: Do not release the same application version twice
     Given the root package version already has a GitHub Release

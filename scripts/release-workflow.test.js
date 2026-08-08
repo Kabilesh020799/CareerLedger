@@ -10,6 +10,13 @@ const workflowPath = path.join(
   "workflows",
   "deploy-production.yml",
 );
+const verifyWorkflowPath = path.join(
+  __dirname,
+  "..",
+  ".github",
+  "workflows",
+  "verify.yml",
+);
 
 test("publishes the GitHub Release only after production deployment", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
@@ -20,6 +27,21 @@ test("publishes the GitHub Release only after production deployment", () => {
   assert.notEqual(releaseStep, -1, "release step is missing");
   assert.ok(deployStep < releaseStep, "release must follow successful deployment");
   assert.doesNotMatch(workflow, /^  create_release:/m);
+  assert.match(workflow, /node scripts\/release-notes\.js > release-notes\.md/);
+  assert.match(workflow, /--notes-file release-notes\.md/);
+  assert.doesNotMatch(workflow, /--generate-notes/);
+});
+
+test("validates the versioned changelog before publishing images", () => {
+  const workflow = fs.readFileSync(workflowPath, "utf8");
+  const verifyWorkflow = fs.readFileSync(verifyWorkflowPath, "utf8");
+  const validationStep = workflow.indexOf("- name: Validate release changelog");
+  const publishJob = workflow.indexOf("  publish:");
+
+  assert.notEqual(validationStep, -1, "changelog validation step is missing");
+  assert.ok(validationStep < publishJob, "changelog validation must happen before publishing");
+  assert.match(workflow, /node scripts\/release-notes\.js >\/dev\/null/);
+  assert.match(verifyWorkflow, /npm run release:notes >\/dev\/null/);
 });
 
 test("configures the HTTP application origin without account secrets", () => {

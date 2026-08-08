@@ -183,6 +183,7 @@ Use descriptive snake-case migration names. Include migrations in the same chang
 - [ ] Relevant Gherkin behavior is added or updated.
 - [ ] New or changed logic has relevant unit coverage.
 - [ ] The root README documents new or changed user-visible features without listing roadmap work as available.
+- [ ] Releasable features and fixes have categorized entries in the planned `CHANGELOG.md` version section.
 - [ ] Frontend and backend responsibilities remain separated.
 - [ ] Inputs are validated and expected errors are handled.
 - [ ] Type checking, linting, builds, and relevant tests pass.

@@ -4,12 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { applicationService } from '../services/application.service'
 import { useCreateApplication } from './useCreateApplication'
+import { useCreateApplicationEvent } from './useCreateApplicationEvent'
 import { useDeleteApplication } from './useDeleteApplication'
 import { useUpdateApplication } from './useUpdateApplication'
 
 vi.mock('../services/application.service', () => ({
   applicationService: {
     create: vi.fn(),
+    createEvent: vi.fn(),
     update: vi.fn(),
     remove: vi.fn(),
   },
@@ -62,6 +64,35 @@ describe('application mutation hooks', () => {
 
     expect(setData).toHaveBeenCalledWith(['applications', application.id], expect.objectContaining({ status: 'INTERVIEW' }))
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications'] })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications', application.id, 'events'] })
+  })
+
+  it('refreshes the timeline after adding a manual event', async () => {
+    vi.mocked(applicationService.createEvent).mockResolvedValue({
+      id: 'event-1',
+      applicationId: application.id,
+      type: 'NOTE',
+      description: 'Followed up with the recruiter.',
+      fromStatus: null,
+      toStatus: null,
+      occurredAt: '2026-08-07T00:00:00.000Z',
+      createdAt: '2026-08-07T15:30:00.000Z',
+    })
+    const { wrapper, invalidate } = setup()
+    const { result } = renderHook(useCreateApplicationEvent, { wrapper })
+
+    await act(() => result.current.mutateAsync({
+      applicationId: application.id,
+      input: {
+        type: 'NOTE',
+        description: 'Followed up with the recruiter.',
+        occurredAt: '2026-08-07T00:00:00.000Z',
+      },
+    }))
+
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: ['applications', application.id, 'events'],
+    })
   })
 
   it('removes deleted details and refreshes the list', async () => {

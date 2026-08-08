@@ -21,12 +21,32 @@ export const applicationService = {
   },
 
   async update(userId: string, id: string, data: UpdateApplicationInput) {
-    const result = await prisma.application.updateMany({
-      where: { id, userId },
-      data,
-    });
+    return prisma.$transaction(async (transaction) => {
+      const existing = await transaction.application.findFirst({
+        where: { id, userId },
+      });
 
-    return result.count === 0 ? null : this.findById(userId, id);
+      if (!existing) return null;
+
+      const application = await transaction.application.update({
+        where: { id },
+        data,
+      });
+
+      if (data.status && data.status !== existing.status) {
+        await transaction.applicationEvent.create({
+          data: {
+            applicationId: id,
+            type: "STATUS_CHANGE",
+            description: `Status changed from ${existing.status} to ${data.status}`,
+            fromStatus: existing.status,
+            toStatus: data.status,
+          },
+        });
+      }
+
+      return application;
+    });
   },
 
   async remove(userId: string, id: string) {

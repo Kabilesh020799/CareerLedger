@@ -16,7 +16,12 @@ export function useUpdateApplication() {
       applicationService.update(id, input),
     onSuccess: (application) => {
       queryClient.setQueryData(applicationQueryKeys.detail(application.id), application)
-      return queryClient.invalidateQueries({ queryKey: applicationQueryKeys.all })
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: applicationQueryKeys.all }),
+        queryClient.invalidateQueries({
+          queryKey: applicationQueryKeys.events(application.id),
+        }),
+      ])
     },
   })
 }

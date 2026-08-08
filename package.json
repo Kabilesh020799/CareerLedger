@@ -1,9 +1,10 @@
 {
   "name": "job-application-tracker",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
+    "release:notes": "node scripts/release-notes.js",
     "release:version": "node scripts/release-version.js",
-    "test:release": "node --test scripts/release-version.test.js scripts/release-workflow.test.js"
+    "test:release": "node --test scripts/release-notes.test.js scripts/release-version.test.js scripts/release-workflow.test.js"
   }
 }

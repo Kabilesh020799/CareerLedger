@@ -14,6 +14,8 @@ Every feature change must follow these focused guides:
 
 Write or update the feature specification before implementation, add unit tests with changed logic, and document delivered user-visible features in the root `README.md` before reporting a feature complete. Create the root README when the first feature needs to be documented. Describe only implemented behavior; keep roadmap features out of the user-facing feature list.
 
+Use the release-version skill to classify SemVer and maintain the matching categorized section in `CHANGELOG.md`; GitHub Releases publish that section verbatim.
+
 ## Core skills for V0.1
 
 ### Repository and local infrastructure
@@ -80,8 +82,6 @@ Write or update the feature specification before implementation, add unit tests 
 
 **Completion evidence:** selected scenarios are current, changed logic has unit coverage, scenarios are automated at the cheapest reliable test layer, critical user journeys have end-to-end coverage, and implemented user-visible behavior is documented in the root README.
 
-## Roadmap skills
-
 ### Application timeline
 
 **Purpose:** Preserve the history behind current application status.
@@ -90,7 +90,9 @@ Write or update the feature specification before implementation, add unit tests 
 
 **Critical rule:** changing status and creating its event must be atomic and initiated by the backend.
 
-**Specification:** `features/roadmap/application_timeline.feature`.
+**Specification:** `features/v0.1/application_timeline.feature`.
+
+## Roadmap skills
 
 ### Search and data navigation
 
@@ -180,7 +182,7 @@ Add useful structured logging and error monitoring when production operation beg
 
 ### CI/CD
 
-The pull-request pipeline installs dependencies, lints, type-checks, tests, and builds both packages. The [release-version skill](skills/update-release-version/SKILL.md) classifies completed changes and updates the root version when required. A new root version pushed to `master` publishes versioned Docker images, creates the GitHub Release, and deploys production.
+The pull-request pipeline installs dependencies, lints, type-checks, tests, and builds both packages. The [release-version skill](skills/update-release-version/SKILL.md) classifies completed changes, updates the root version, and maintains categorized changelog entries. A new root version pushed to `master` publishes versioned Docker images, deploys production, and creates the GitHub Release from the matching `CHANGELOG.md` section.
 
 ## Skill selection rule
 

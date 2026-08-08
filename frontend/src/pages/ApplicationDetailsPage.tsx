@@ -1,6 +1,7 @@
 import { Alert, Box, Button, Flex, Heading, SimpleGrid, Spinner, Stack, Text } from '@chakra-ui/react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DeleteApplicationDialog } from '../components/applications/DeleteApplicationDialog'
+import { ApplicationTimeline } from '../components/applications/ApplicationTimeline'
 import { StatusBadge } from '../components/applications/StatusBadge'
 import { useApplication } from '../hooks/useApplication'
 import { useDeleteApplication } from '../hooks/useDeleteApplication'
@@ -78,6 +79,8 @@ export function ApplicationDetailsPage() {
           <Detail label="Notes">{application.notes ?? 'No notes added.'}</Detail>
         </Box>
       </Box>
+
+      <ApplicationTimeline applicationId={application.id} />
     </Stack>
   )
 }

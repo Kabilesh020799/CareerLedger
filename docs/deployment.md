@@ -83,14 +83,14 @@ Set the next stable semantic version in the root `package.json` without a leadin
 }
 ```
 
-Commit the version change with the code intended for that release and push or merge it to `master`. The workflow converts `1.0.0` to the Git tag and GitHub Release `v1.0.0`. Only the root package version controls releases; the package versions under `frontend` and `backend` are ignored. Do not manually create the tag or release first. An existing release tells the workflow that the version is already complete, while an orphaned tag causes it to stop rather than release different code under that tag.
+Add categorized `Added`, `Changed`, `Fixed`, or `Security` entries under the matching version section in `CHANGELOG.md`. Commit the version and changelog changes with the code intended for that release and push or merge them to `master`. The workflow converts `1.0.0` to the Git tag and GitHub Release `v1.0.0`, using that changelog section as the release description. Only the root package version controls releases; the package versions under `frontend` and `backend` are ignored. Do not manually create the tag or release first. An existing release tells the workflow that the version is already complete, while an orphaned tag causes it to stop rather than release different code under that tag.
 
 Every push is verified. A new version releases and deploys; an unchanged version stops after verification. Invalid versions such as `v1.0.0`, `1.0`, or `1.0.0-rc.1` fail verification.
 
 The workflow:
 
 1. Installs locked dependencies and runs all current checks.
-2. Validates the root package version and checks GitHub for that release.
+2. Validates the root package version and its categorized `CHANGELOG.md` section, then checks GitHub for that release.
 3. Stops successfully when the version has already been released.
 4. Publishes frontend and backend images tagged with the new version and commit SHA.
 5. Copies the production Compose file and deployment script to the instance.
@@ -100,7 +100,7 @@ The workflow:
 9. On the first deployment, generates protected database and session credentials, bootstraps the built-in demo user, and starts the PostgreSQL container and volume.
 10. Waits for Compose health checks and verifies the proxied API.
 11. Restores the previous release version when deployment fails.
-12. Creates the version tag and GitHub Release with generated release notes only after deployment succeeds.
+12. Creates the version tag and GitHub Release with the matching changelog entries only after deployment succeeds.
 
 Release planning runs in parallel with verification. Frontend and backend images build in parallel with persistent BuildKit caches, and publishing remains gated on both successful verification and a new version. The deployment pulls only the two versioned application images; stable infrastructure images are reused unless they are missing. The backend runtime image contains compiled code and production dependencies rather than test and build tooling.
 

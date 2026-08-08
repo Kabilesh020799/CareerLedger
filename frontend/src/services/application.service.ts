@@ -1,6 +1,8 @@
 import { api } from './api'
 import type {
   Application,
+  ApplicationEvent,
+  CreateApplicationEventInput,
   CreateApplicationInput,
   UpdateApplicationInput,
 } from '../types/application'
@@ -28,5 +30,15 @@ export const applicationService = {
 
   async remove(id: string) {
     await api.delete(`/applications/${id}`)
+  },
+
+  async listEvents(id: string) {
+    const response = await api.get<ApplicationEvent[]>(`/applications/${id}/events`)
+    return response.data
+  },
+
+  async createEvent(id: string, input: CreateApplicationEventInput) {
+    const response = await api.post<ApplicationEvent>(`/applications/${id}/events`, input)
+    return response.data
   },
 }

@@ -71,6 +71,9 @@ Inside Docker, the frontend sends `/api` requests through Nginx to the backend. 
 - Create applications with validated fields.
 - Open application details.
 - Edit application details and status.
+- Review a newest-first timeline of application activity.
+- Add dated notes to an application's timeline.
+- Record status changes automatically with their previous and new statuses.
 - Delete applications after confirmation.
 - Persist records in PostgreSQL.
 - Sign in and sign out with Google.
@@ -95,8 +98,10 @@ Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW
 | `GET` | `/api/applications/:id` | Retrieve an application |
 | `PATCH` | `/api/applications/:id` | Update an application |
 | `DELETE` | `/api/applications/:id` | Delete an application |
+| `GET` | `/api/applications/:id/events` | List an application's timeline events |
+| `POST` | `/api/applications/:id/events` | Add a manual note to an application's timeline |
 
-All application endpoints require an authenticated session. Requests cannot list or mutate applications owned by another user. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
+All application and timeline endpoints require an authenticated session. Requests cannot list or mutate applications owned by another user. Status updates and their timeline events are saved in one database transaction. Deleting an application also deletes its timeline. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
 
 ## Development without Docker
 
@@ -143,7 +148,7 @@ npm run test:e2e
 
 ## Production releases
 
-The root `package.json` owns the application release version. Every push to `master` is verified. When its version has not been released before, GitHub Actions automatically creates the corresponding `vMAJOR.MINOR.PATCH` GitHub Release, publishes versioned frontend and backend images, and deploys that version. The first deployment generates protected PostgreSQL and session credentials on the instance, bootstraps the built-in demo user, and starts the database container with a persistent volume. Pushes with an unchanged version stop after verification.
+The root `package.json` owns the application release version, and the matching section in `CHANGELOG.md` owns its categorized GitHub Release notes. Every push to `master` is verified. When its version has not been released before, GitHub Actions validates the changelog, publishes versioned frontend and backend images, deploys that version, and creates the corresponding `vMAJOR.MINOR.PATCH` GitHub Release. The first deployment generates protected PostgreSQL and session credentials on the instance, bootstraps the built-in demo user, and starts the database container with a persistent volume. Pushes with an unchanged version stop after verification.
 
 The selected production deployment intentionally uses plain HTTP and publicly known demo credentials. Although the password is hashed in the database and records remain user-scoped, HTTP does not encrypt login credentials or session cookies in transit. Do not store sensitive data in this deployment or treat it as secure against unauthorized access or network interception.
 
@@ -152,6 +157,7 @@ See the [production deployment guide](docs/deployment.md) for the one-time insta
 ## Project documentation
 
 - [Contributing guide](CONTRIBUTING.md)
+- [Release changelog](CHANGELOG.md)
 - [Agent instructions](AGENTS.md)
 - [Project skills](SKILLS.md)
 - [Current behavior specifications](features/v0.1)
