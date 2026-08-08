@@ -161,8 +161,47 @@ jobs:
         run: |
           port="${DEPLOY_PORT:-22}"
           ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p /opt/job-application-tracker"
-          scp -i ~/.ssh/deploy_key -P "$port" deploy/compose.production.yml scripts/deploy-production.sh "$DEPLOY_USER@$DEPLOY_HOST:/opt/job-application-tracker/"
+          scp -i ~/.ssh/deploy_key -P "$port" deploy/compose.production.yml deploy/Caddyfile scripts/deploy-production.sh "$DEPLOY_USER@$DEPLOY_HOST:/opt/job-application-tracker/"
           ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "chmod 700 /opt/job-application-tracker/deploy-production.sh"
+
+      - name: Configure protected authentication environment
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        run: |
+          case "$PRODUCTION_URL" in
+            https://*) ;;
+            *) echo "PRODUCTION_URL must use HTTPS." >&2; exit 1 ;;
+          esac
+
+          app_domain="${PRODUCTION_URL#https://}"
+          app_domain="${app_domain%/}"
+          case "$app_domain" in
+            ""|*/*) echo "PRODUCTION_URL must contain only an HTTPS origin." >&2; exit 1 ;;
+          esac
+
+          test -n "$GOOGLE_CLIENT_ID"
+          test -n "$GOOGLE_CLIENT_SECRET"
+          if [ "${#SESSION_SECRET}" -lt 32 ]; then
+            echo "SESSION_SECRET must contain at least 32 characters." >&2
+            exit 1
+          fi
+
+          port="${DEPLOY_PORT:-22}"
+          {
+            printf 'APP_DOMAIN=%s\n' "$app_domain"
+            printf 'FRONTEND_URL=%s\n' "${PRODUCTION_URL%/}"
+            printf 'GOOGLE_CLIENT_ID=%s\n' "$GOOGLE_CLIENT_ID"
+            printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET"
+            printf 'GOOGLE_CALLBACK_URL=%s/api/auth/google/callback\n' "${PRODUCTION_URL%/}"
+            printf 'SESSION_SECRET=%s\n' "$SESSION_SECRET"
+            printf 'COOKIE_SECURE=true\n'
+          } | ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "umask 077; cat > /opt/job-application-tracker/.auth.env"
 
       - name: Authenticate instance to GHCR
         env:

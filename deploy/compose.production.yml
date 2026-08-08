@@ -26,6 +26,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PORT: 3000
       NODE_ENV: production
+      SEED_DEMO_DATA: "false"
+    env_file:
+      - .auth.env
     depends_on:
       postgres:
         condition: service_healthy
@@ -42,8 +45,6 @@ services:
     image: ghcr.io/kabilesh020799/jobapplicationtracker-frontend:${IMAGE_TAG:?IMAGE_TAG is required}
     pull_policy: always
     restart: unless-stopped
-    ports:
-      - "80:80"
     depends_on:
       backend:
         condition: service_healthy
@@ -56,8 +57,29 @@ services:
     networks:
       - internal
 
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    env_file:
+      - .auth.env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      frontend:
+        condition: service_healthy
+    networks:
+      - internal
+
 networks:
   internal:
 
 volumes:
   postgres-data:
+  caddy-data:
+  caddy-config:

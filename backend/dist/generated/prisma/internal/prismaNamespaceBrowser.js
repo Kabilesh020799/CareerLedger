@@ -48,7 +48,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.ApplicationScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
+exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.SessionScalarFieldEnum = exports.UserScalarFieldEnum = exports.ApplicationScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/index-browser"));
 exports.Decimal = runtime.Decimal;
 exports.NullTypes = {
@@ -75,7 +75,9 @@ exports.JsonNull = runtime.JsonNull;
  */
 exports.AnyNull = runtime.AnyNull;
 exports.ModelName = {
-    Application: 'Application'
+    Application: 'Application',
+    User: 'User',
+    Session: 'Session'
 };
 /*
  * Enums
@@ -96,8 +98,25 @@ exports.ApplicationScalarFieldEnum = {
     status: 'status',
     notes: 'notes',
     appliedAt: 'appliedAt',
+    userId: 'userId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
+};
+exports.UserScalarFieldEnum = {
+    id: 'id',
+    googleId: 'googleId',
+    username: 'username',
+    passwordHash: 'passwordHash',
+    email: 'email',
+    name: 'name',
+    avatarUrl: 'avatarUrl',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.SessionScalarFieldEnum = {
+    id: 'id',
+    data: 'data',
+    expiresAt: 'expiresAt'
 };
 exports.SortOrder = {
     asc: 'asc',

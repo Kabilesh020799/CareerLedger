@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { hash } from "bcryptjs";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -79,12 +80,42 @@ const demoApplications = [
 ];
 
 async function main() {
+  const demoUsername = (process.env.DEMO_USER_USERNAME ?? "demo").toLowerCase();
+  const demoPassword = process.env.DEMO_USER_PASSWORD ?? "JobTrackerDemo123!";
+  const passwordHash = await hash(demoPassword, 12);
+  const demoUser = await prisma.user.upsert({
+    where: { username: demoUsername },
+    create: {
+      username: demoUsername,
+      passwordHash,
+      email: "demo@jobtracker.local",
+      name: "Demo User",
+    },
+    update: {
+      passwordHash,
+      name: "Demo User",
+    },
+  });
+
   const result = await prisma.application.createMany({
-    data: demoApplications,
+    data: demoApplications.map((application) => ({
+      ...application,
+      userId: demoUser.id,
+    })),
     skipDuplicates: true,
   });
 
-  console.log(`Seed complete: ${result.count} demo application(s) created.`);
+  const claimed = await prisma.application.updateMany({
+    where: {
+      id: { in: demoApplications.map(({ id }) => id) },
+      userId: null,
+    },
+    data: { userId: demoUser.id },
+  });
+
+  console.log(
+    `Seed complete: demo user ready; ${result.count} application(s) created and ${claimed.count} legacy demo application(s) assigned.`,
+  );
 }
 
 main()

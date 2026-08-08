@@ -13,20 +13,25 @@ function getId(req) {
     const id = req.params.id;
     return Array.isArray(id) ? id[0] : id;
 }
+function getUserId(req) {
+    if (!req.user)
+        throw new Error("Authenticated user is missing");
+    return req.user.id;
+}
 exports.applicationController = {
-    async list(_req, res) {
-        const applications = await application_service_1.applicationService.list();
+    async list(req, res) {
+        const applications = await application_service_1.applicationService.list(getUserId(req));
         res.json(applications);
     },
     async create(req, res) {
         const parsed = application_validator_1.createApplicationSchema.safeParse(req.body);
         if (!parsed.success)
             return validationError(res, parsed.error.flatten());
-        const application = await application_service_1.applicationService.create(parsed.data);
+        const application = await application_service_1.applicationService.create(getUserId(req), parsed.data);
         res.status(201).json(application);
     },
     async getById(req, res) {
-        const application = await application_service_1.applicationService.findById(getId(req));
+        const application = await application_service_1.applicationService.findById(getUserId(req), getId(req));
         if (!application) {
             res.status(404).json({ error: "Application not found" });
             return;
@@ -37,7 +42,7 @@ exports.applicationController = {
         const parsed = application_validator_1.updateApplicationSchema.safeParse(req.body);
         if (!parsed.success)
             return validationError(res, parsed.error.flatten());
-        const application = await application_service_1.applicationService.update(getId(req), parsed.data);
+        const application = await application_service_1.applicationService.update(getUserId(req), getId(req), parsed.data);
         if (!application) {
             res.status(404).json({ error: "Application not found" });
             return;
@@ -45,7 +50,7 @@ exports.applicationController = {
         res.json(application);
     },
     async remove(req, res) {
-        const deleted = await application_service_1.applicationService.remove(getId(req));
+        const deleted = await application_service_1.applicationService.remove(getUserId(req), getId(req));
         if (!deleted) {
             res.status(404).json({ error: "Application not found" });
             return;

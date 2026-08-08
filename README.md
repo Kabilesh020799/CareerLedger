@@ -4,7 +4,14 @@ A full-stack application for creating, reviewing, updating, and deleting job app
 
 ## Start the complete application
 
-The only prerequisites are Docker and Docker Compose.
+The only prerequisites are Docker and Docker Compose. The local stack includes a development-only account:
+
+```text
+Username: demo
+Password: JobTrackerDemo123!
+```
+
+The password is stored as a bcrypt hash, not plaintext. Password login is hard-disabled when the backend runs in production.
 
 From the repository root, run:
 
@@ -17,7 +24,7 @@ Open:
 - Application: <http://localhost:5173>
 - API health check: <http://localhost:3000/api/health>
 
-The first startup builds both applications, creates PostgreSQL, applies Prisma migrations, and inserts six demo applications. The seed is idempotent: later starts do not duplicate or overwrite existing demo records.
+The first startup builds both applications, creates PostgreSQL, applies Prisma migrations, and seeds six applications owned by the demo user.
 
 Run in the background with:
 
@@ -55,7 +62,7 @@ This final command permanently deletes the local PostgreSQL volume.
 | Backend | `http://localhost:3000` | Express REST API |
 | PostgreSQL | `localhost:5432` | Persistent application database |
 
-Inside Docker, the frontend sends `/api` requests through Nginx to the backend. The backend waits for PostgreSQL to become healthy before applying migrations and seeding data. The frontend waits for a healthy backend.
+Inside Docker, the frontend sends `/api` requests through Nginx to the backend. The backend waits for PostgreSQL to become healthy before applying migrations. The frontend waits for a healthy backend.
 
 ## Available functionality
 
@@ -66,7 +73,10 @@ Inside Docker, the frontend sends `/api` requests through Nginx to the backend. 
 - Edit application details and status.
 - Delete applications after confirmation.
 - Persist records in PostgreSQL.
-- Load representative demo records on first startup.
+- Sign in and sign out with Google.
+- Sign in with the seeded demo account during local development.
+- Keep every application private to the account that created it.
+- Persist authenticated sessions in PostgreSQL using an HTTP-only cookie.
 
 Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW`, `OFFER`, `REJECTED`, and `WITHDRAWN`.
 
@@ -75,11 +85,18 @@ Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | `GET` | `/api/health` | Check API availability |
+| `GET` | `/api/auth/google` | Start Google sign-in |
+| `GET` | `/api/auth/google/callback` | Complete Google sign-in |
+| `POST` | `/api/auth/login` | Sign in with the development account when enabled |
+| `GET` | `/api/auth/session` | Read the current public user session |
+| `POST` | `/api/auth/logout` | End the current session |
 | `GET` | `/api/applications` | List applications |
 | `POST` | `/api/applications` | Create an application |
 | `GET` | `/api/applications/:id` | Retrieve an application |
 | `PATCH` | `/api/applications/:id` | Update an application |
 | `DELETE` | `/api/applications/:id` | Delete an application |
+
+All application endpoints require an authenticated session. Requests cannot list or mutate applications owned by another user. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
 
 ## Development without Docker
 
@@ -94,6 +111,7 @@ Then run the backend and frontend separately:
 ```bash
 cd backend
 npm install
+cp .env.example .env
 npm run db:migrate
 npm run db:seed
 npm run dev
@@ -110,6 +128,7 @@ npm run dev
 
 ```bash
 cd backend
+npm test
 npm run typecheck
 npm run build
 ```
@@ -124,7 +143,7 @@ npm run test:e2e
 
 ## Production releases
 
-The root `package.json` owns the application release version. Every push to `master` is verified. When its version has not been released before, GitHub Actions automatically creates the corresponding `vMAJOR.MINOR.PATCH` GitHub Release, publishes versioned frontend and backend images, and deploys that version. The first deployment generates protected PostgreSQL credentials on the instance and starts the database container with a persistent volume. Pushes with an unchanged version stop after verification.
+The root `package.json` owns the application release version. Every push to `master` is verified. When its version has not been released before, GitHub Actions automatically creates the corresponding `vMAJOR.MINOR.PATCH` GitHub Release, publishes versioned frontend and backend images, and deploys that version. The first deployment generates protected PostgreSQL credentials, starts the database container with a persistent volume, and obtains HTTPS certificates for the configured domain. Pushes with an unchanged version stop after verification.
 
 See the [production deployment guide](docs/deployment.md) for the one-time instance and GitHub environment configuration.
 

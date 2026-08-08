@@ -34,6 +34,7 @@ jobs:
         working-directory: backend
         run: |
           npm ci
+          npm test
           npm run typecheck
           npm run build
 
@@ -49,4 +50,6 @@ jobs:
         run: |
           sh -n scripts/deploy-production.sh
           sh scripts/deploy-production.test.sh
+          cp deploy/.auth.env.production.example deploy/.auth.env
           docker compose --env-file deploy/.env.production.example -f deploy/compose.production.yml config --quiet
+          rm deploy/.auth.env

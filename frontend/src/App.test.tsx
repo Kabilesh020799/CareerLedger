@@ -10,6 +10,25 @@ vi.mock('./hooks/useApplications', () => ({
   useApplications: () => ({ isPending: false, isError: false, isSuccess: true, data: [] }),
 }))
 
+vi.mock('./hooks/useSession', () => ({
+  useSession: () => ({
+    isPending: false,
+    isError: false,
+    data: {
+      user: {
+        id: 'user-1',
+        email: 'user@example.com',
+        name: 'Test User',
+        avatarUrl: null,
+      },
+    },
+  }),
+}))
+
+vi.mock('./hooks/useLogout', () => ({
+  useLogout: () => ({ mutate: vi.fn(), isPending: false, isError: false }),
+}))
+
 function renderApp(path: string) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 

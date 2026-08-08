@@ -13,4 +13,4 @@ RUN npm run build
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npm run db:migrate && npm run db:seed && npm run start"]
+CMD ["sh", "-c", "npm run db:migrate && if [ \"${SEED_DEMO_DATA:-false}\" = \"true\" ]; then npm run db:seed; fi && npm run start"]

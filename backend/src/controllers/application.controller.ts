@@ -17,9 +17,14 @@ function getId(req: Request) {
   return Array.isArray(id) ? id[0] : id;
 }
 
+function getUserId(req: Request) {
+  if (!req.user) throw new Error("Authenticated user is missing");
+  return req.user.id;
+}
+
 export const applicationController = {
-  async list(_req: Request, res: Response) {
-    const applications = await applicationService.list();
+  async list(req: Request, res: Response) {
+    const applications = await applicationService.list(getUserId(req));
     res.json(applications);
   },
 
@@ -27,12 +32,12 @@ export const applicationController = {
     const parsed = createApplicationSchema.safeParse(req.body);
     if (!parsed.success) return validationError(res, parsed.error.flatten());
 
-    const application = await applicationService.create(parsed.data);
+    const application = await applicationService.create(getUserId(req), parsed.data);
     res.status(201).json(application);
   },
 
   async getById(req: Request, res: Response) {
-    const application = await applicationService.findById(getId(req));
+    const application = await applicationService.findById(getUserId(req), getId(req));
     if (!application) {
       res.status(404).json({ error: "Application not found" });
       return;
@@ -45,7 +50,11 @@ export const applicationController = {
     const parsed = updateApplicationSchema.safeParse(req.body);
     if (!parsed.success) return validationError(res, parsed.error.flatten());
 
-    const application = await applicationService.update(getId(req), parsed.data);
+    const application = await applicationService.update(
+      getUserId(req),
+      getId(req),
+      parsed.data,
+    );
     if (!application) {
       res.status(404).json({ error: "Application not found" });
       return;
@@ -55,7 +64,7 @@ export const applicationController = {
   },
 
   async remove(req: Request, res: Response) {
-    const deleted = await applicationService.remove(getId(req));
+    const deleted = await applicationService.remove(getUserId(req), getId(req));
     if (!deleted) {
       res.status(404).json({ error: "Application not found" });
       return;
