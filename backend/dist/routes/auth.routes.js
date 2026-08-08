@@ -8,8 +8,8 @@ const passport_1 = require("../config/passport");
 exports.authRouter = (0, express_1.Router)();
 exports.authRouter.get("/session", auth_controller_1.authController.session);
 exports.authRouter.post("/login", (req, res, next) => {
-    if (!auth_1.authConfig.demoLoginEnabled) {
-        res.status(404).json({ error: "Demo login is unavailable" });
+    if (!auth_1.authConfig.passwordLoginEnabled) {
+        res.status(404).json({ error: "Password login is unavailable" });
         return;
     }
     auth_controller_1.authController.passwordLogin(req, res, next);

@@ -31,10 +31,11 @@ test("installs authentication secrets before deploying protected endpoints", () 
 
   assert.notEqual(authStep, -1, "authentication configuration step is missing");
   assert.ok(authStep < deployStep, "authentication must be configured before deployment");
-  assert.match(workflow, /secrets\.GOOGLE_CLIENT_ID/);
-  assert.match(workflow, /secrets\.GOOGLE_CLIENT_SECRET/);
+  assert.match(workflow, /secrets\.APP_USERNAME/);
+  assert.match(workflow, /secrets\.APP_PASSWORD/);
   assert.match(workflow, /secrets\.SESSION_SECRET/);
-  assert.match(workflow, /deploy\/Caddyfile/);
+  assert.doesNotMatch(workflow, /deploy\/Caddyfile/);
+  assert.match(workflow, /COOKIE_SECURE=false/);
 });
 
 test("plans releases alongside verification but gates image publishing on both", () => {

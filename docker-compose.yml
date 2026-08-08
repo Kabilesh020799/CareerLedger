@@ -32,7 +32,7 @@ services:
       GOOGLE_CALLBACK_URL: http://localhost:5173/api/auth/google/callback
       SESSION_SECRET: ${SESSION_SECRET:-local-docker-session-secret-change-me}
       COOKIE_SECURE: "false"
-      ENABLE_DEMO_LOGIN: "true"
+      ENABLE_PASSWORD_LOGIN: "true"
       SEED_DEMO_DATA: "true"
       DEMO_USER_USERNAME: demo
       DEMO_USER_PASSWORD: JobTrackerDemo123!
@@ -53,7 +53,9 @@ services:
       context: ./frontend
       args:
         VITE_API_URL: /api
-        VITE_ENABLE_DEMO_LOGIN: "true"
+        VITE_ENABLE_PASSWORD_LOGIN: "true"
+        VITE_ENABLE_GOOGLE_LOGIN: ${ENABLE_GOOGLE_LOGIN:-false}
+        VITE_INSECURE_HTTP_DEPLOYMENT: "false"
     container_name: job-tracker-frontend
     restart: unless-stopped
     ports:

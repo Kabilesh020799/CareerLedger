@@ -8,8 +8,8 @@ export const authRouter = Router();
 authRouter.get("/session", authController.session);
 
 authRouter.post("/login", (req, res, next) => {
-  if (!authConfig.demoLoginEnabled) {
-    res.status(404).json({ error: "Demo login is unavailable" });
+  if (!authConfig.passwordLoginEnabled) {
+    res.status(404).json({ error: "Password login is unavailable" });
     return;
   }
 

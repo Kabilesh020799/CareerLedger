@@ -18,7 +18,9 @@ export function LoginPage() {
   const passwordLogin = usePasswordLogin()
   const [searchParams] = useSearchParams()
   const error = searchParams.get('error')
-  const demoLoginEnabled = import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true'
+  const passwordLoginEnabled = import.meta.env.VITE_ENABLE_PASSWORD_LOGIN === 'true'
+  const googleLoginEnabled = import.meta.env.VITE_ENABLE_GOOGLE_LOGIN === 'true'
+  const insecureHttpDeployment = import.meta.env.VITE_INSECURE_HTTP_DEPLOYMENT === 'true'
   const {
     register,
     handleSubmit,
@@ -40,8 +42,20 @@ export function LoginPage() {
         <Stack bg="white" borderWidth="1px" borderRadius="xl" boxShadow="sm" gap="6" p={{ base: '7', md: '10' }}>
           <Stack gap="2">
             <Heading color="teal.700">Job Tracker</Heading>
-            <Text color="gray.600">Sign in to securely access your applications.</Text>
+            <Text color="gray.600">Sign in to access your applications.</Text>
           </Stack>
+
+          {insecureHttpDeployment && (
+            <Alert.Root status="warning" borderRadius="md">
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Title>Insecure HTTP connection</Alert.Title>
+                <Alert.Description>
+                  Your username, password, and session are not encrypted in transit.
+                </Alert.Description>
+              </Alert.Content>
+            </Alert.Root>
+          )}
 
           {error && (
             <Box role="alert" bg="red.50" color="red.700" borderRadius="md" px="4" py="3">
@@ -49,10 +63,10 @@ export function LoginPage() {
             </Box>
           )}
 
-          {demoLoginEnabled && (
+          {passwordLoginEnabled && (
             <form onSubmit={handleSubmit(submitPasswordLogin)} noValidate>
               <Stack gap="4">
-                <Text fontWeight="semibold">Development account</Text>
+                <Text fontWeight="semibold">Account login</Text>
 
                 {passwordLogin.isError && (
                   <Alert.Root status="error" borderRadius="md">
@@ -85,11 +99,13 @@ export function LoginPage() {
             </form>
           )}
 
-          {demoLoginEnabled && <Separator />}
+          {passwordLoginEnabled && googleLoginEnabled && <Separator />}
 
-          <Button asChild colorPalette="teal" size="lg">
-            <a href={googleLoginUrl}>Continue with Google</a>
-          </Button>
+          {googleLoginEnabled && (
+            <Button asChild colorPalette="teal" size="lg">
+              <a href={googleLoginUrl}>Continue with Google</a>
+            </Button>
+          )}
 
           <Text color="gray.500" fontSize="sm">
             Your applications are private to your signed-in account.

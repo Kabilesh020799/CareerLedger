@@ -16,7 +16,8 @@
     "typecheck:ci": "tsc --noEmit",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed",
-    "db:seed:runtime": "node dist/seed.js"
+    "db:seed:runtime": "node dist/seed.js",
+    "db:bootstrap-user": "node dist/bootstrap-user.js"
   },
   "keywords": [],
   "author": "",

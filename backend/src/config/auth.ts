@@ -22,8 +22,7 @@ export const authConfig = {
     "http://localhost:3000/api/auth/google/callback",
   googleClientId: process.env.GOOGLE_CLIENT_ID,
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  demoLoginEnabled:
-    !isProduction && process.env.ENABLE_DEMO_LOGIN === "true",
+  passwordLoginEnabled: process.env.ENABLE_PASSWORD_LOGIN === "true",
   isProduction,
   secureCookie:
     process.env.COOKIE_SECURE === undefined

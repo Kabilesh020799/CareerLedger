@@ -24,10 +24,18 @@ Feature: Secure user-owned application data
     Then the response status should be 401
     And the response should not identify which credential was incorrect
 
-  Scenario: Disable demo login in production
+  Scenario: Sign in to the production HTTP deployment
+    Given password login is enabled in production
+    And a production user was bootstrapped from deployment secrets
+    When I sign in with that production username and password
+    Then I should have an authenticated application session
+    And the login page should warn that HTTP does not protect credentials in transit
+
+  Scenario: Do not expose the local demo account in production
     Given the application is running in production
-    When I try to sign in with demo credentials
-    Then demo sign-in should be unavailable
+    When the database bootstrap runs
+    Then the documented local demo credentials should not be created
+    And demo applications should not be seeded
 
   Scenario: Report the current signed-in user
     Given I am authenticated

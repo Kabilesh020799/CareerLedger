@@ -48,8 +48,8 @@ Add environment secrets:
 | `DEPLOY_USER` | Non-root deployment user |
 | `DEPLOY_SSH_KEY` | Dedicated private deployment key |
 | `DEPLOY_KNOWN_HOSTS` | Verified SSH known-hosts line |
-| `GOOGLE_CLIENT_ID` | Google OAuth web-client ID |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth web-client secret |
+| `APP_USERNAME` | Production login username using letters, numbers, `.`, `_`, or `-` |
+| `APP_PASSWORD` | Production login password containing at least 12 characters |
 | `SESSION_SECRET` | At least 32 random characters, such as the output of `openssl rand -hex 32` |
 
 Add environment variables:
@@ -57,25 +57,17 @@ Add environment variables:
 | Variable | Value |
 | --- | --- |
 | `DEPLOY_PORT` | SSH port, normally `22` |
-| `PRODUCTION_URL` | HTTPS public origin, for example `https://jobs.example.com` |
+| `PRODUCTION_URL` | HTTP public origin, currently `http://52.71.164.202` |
 
 Restrict the environment to the `master` branch. Add required approval if deployments should pause for confirmation after images are published.
 
-## 4. Configure DNS, Google, and networking
+## 4. Configure networking
 
-Create a DNS `A` record for the application domain pointing to the instance's stable public IP. In the Google Cloud Console, create an OAuth web client and add the exact authorized redirect URI:
+Allow inbound TCP port 80 from the internet. Allow SSH only from trusted sources when possible. Do not expose backend port 3000 or PostgreSQL port 5432; the production Compose file keeps both internal.
 
-```text
-https://jobs.example.com/api/auth/google/callback
-```
+The selected deployment intentionally uses plain HTTP with username/password authentication. This does not encrypt the login password or session cookie in transit. A network observer may capture and reuse them. The login page displays this warning, and the session cookie is intentionally configured without the `Secure` attribute so it can operate over HTTP.
 
-Use the same origin as `PRODUCTION_URL`. Google requires an HTTPS domain for a production callback; a raw EC2 IP address cannot be used.
-
-Allow inbound TCP ports 80 and 443 from the internet so Caddy can obtain and renew certificates and serve the application. Allow UDP 443 if HTTP/3 is desired. Allow SSH only from trusted sources when possible. Do not expose backend port 3000 or PostgreSQL port 5432; the production Compose file keeps both internal.
-
-Caddy is included in the production Compose stack and provisions TLS automatically after DNS points to the instance. Authentication uses secure, HTTP-only session cookies and the deployment fails closed when its Google or session secrets are missing.
-
-The local demo username/password endpoint is hard-disabled under `NODE_ENV=production`, and the production Compose stack does not seed the demo account or demo applications.
+The workflow bootstraps or updates one production user from `APP_USERNAME` and `APP_PASSWORD`. The password is base64-encoded only for safe environment-file transport and then stored in PostgreSQL as a bcrypt hash; base64 is not encryption. The production Compose stack does not create the local `demo` account or demo applications.
 
 ## 5. Publish a release automatically
 
@@ -97,11 +89,11 @@ The workflow:
 2. Validates the root package version and checks GitHub for that release.
 3. Stops successfully when the version has already been released.
 4. Publishes frontend and backend images tagged with the new version and commit SHA.
-5. Copies the production Compose file, Caddy configuration, and deployment script to the instance.
-6. Writes the protected authentication environment from GitHub environment secrets.
+5. Copies the production Compose file and deployment script to the instance.
+6. Writes the protected authentication environment and production account configuration from GitHub environment secrets.
 7. Authenticates the instance to GHCR with the workflow's short-lived token.
 8. Pulls and starts the exact release version.
-9. On the first deployment, generates protected database credentials and starts the PostgreSQL container and volume.
+9. On the first deployment, generates protected database credentials, bootstraps the production user, and starts the PostgreSQL container and volume.
 10. Waits for Compose health checks and verifies the proxied API.
 11. Restores the previous release version when deployment fails.
 12. Creates the version tag and GitHub Release with generated release notes only after deployment succeeds.

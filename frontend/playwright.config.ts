@@ -14,14 +14,14 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'npm run db:seed && PORT=3001 FRONTEND_URL=http://127.0.0.1:4173 ENABLE_DEMO_LOGIN=true npx tsx src/server.ts',
+      command: 'npm run db:seed && PORT=3001 FRONTEND_URL=http://127.0.0.1:4173 ENABLE_PASSWORD_LOGIN=true npx tsx src/server.ts',
       cwd: '../backend',
       url: 'http://127.0.0.1:3001/api/health',
       reuseExistingServer: false,
       timeout: 30_000,
     },
     {
-      command: 'VITE_API_URL=http://127.0.0.1:3001/api VITE_ENABLE_DEMO_LOGIN=true npm run dev -- --host 127.0.0.1 --port 4173',
+      command: 'VITE_API_URL=http://127.0.0.1:3001/api VITE_ENABLE_PASSWORD_LOGIN=true npm run dev -- --host 127.0.0.1 --port 4173',
       url: 'http://127.0.0.1:4173/applications',
       reuseExistingServer: false,
       timeout: 30_000,
