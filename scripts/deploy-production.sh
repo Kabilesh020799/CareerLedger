@@ -74,7 +74,7 @@ rollback() {
   if [ -n "$OLD_TAG" ] && [ "$OLD_TAG" != "$NEW_TAG" ]; then
     echo "Deployment failed; restoring image tag $OLD_TAG" >&2
     set_image_tag "$OLD_TAG"
-    docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull
+    docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull backend frontend
     docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans --wait --wait-timeout 180
   fi
 
@@ -85,7 +85,7 @@ trap rollback INT TERM HUP EXIT
 
 set_image_tag "$NEW_TAG"
 
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull backend frontend
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans --wait --wait-timeout 180
 
 health_response="$(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T frontend wget -qO- http://127.0.0.1/api/health)"

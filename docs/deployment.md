@@ -106,6 +106,8 @@ The workflow:
 11. Restores the previous release version when deployment fails.
 12. Creates the version tag and GitHub Release with generated release notes only after deployment succeeds.
 
+Release planning runs in parallel with verification. Frontend and backend images build in parallel with persistent BuildKit caches, and publishing remains gated on both successful verification and a new version. The deployment pulls only the two versioned application images; stable infrastructure images are reused unless they are missing. The backend runtime image contains compiled code and production dependencies rather than test and build tooling.
+
 If deployment fails, the version remains unreleased and a later verified push can retry it. Image tags for an unreleased version may be replaced by that retry; after the GitHub Release is created, the version is immutable.
 
 Use semantic versioning:

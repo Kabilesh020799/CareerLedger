@@ -36,3 +36,18 @@ test("installs authentication secrets before deploying protected endpoints", () 
   assert.match(workflow, /secrets\.SESSION_SECRET/);
   assert.match(workflow, /deploy\/Caddyfile/);
 });
+
+test("plans releases alongside verification but gates image publishing on both", () => {
+  const workflow = fs.readFileSync(workflowPath, "utf8");
+  const planBlock = workflow.slice(
+    workflow.indexOf("  plan_release:"),
+    workflow.indexOf("  publish:"),
+  );
+  const publishBlock = workflow.slice(
+    workflow.indexOf("  publish:"),
+    workflow.indexOf("  deploy:"),
+  );
+
+  assert.doesNotMatch(planBlock, /^    needs:/m);
+  assert.match(publishBlock, /needs: \[verify, plan_release\]/);
+});

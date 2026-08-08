@@ -20,7 +20,6 @@ services:
 
   backend:
     image: ghcr.io/kabilesh020799/jobapplicationtracker-backend:${IMAGE_TAG:?IMAGE_TAG is required}
-    pull_policy: always
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
@@ -43,7 +42,6 @@ services:
 
   frontend:
     image: ghcr.io/kabilesh020799/jobapplicationtracker-frontend:${IMAGE_TAG:?IMAGE_TAG is required}
-    pull_policy: always
     restart: unless-stopped
     depends_on:
       backend:

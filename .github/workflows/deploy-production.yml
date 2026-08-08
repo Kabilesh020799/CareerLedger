@@ -22,7 +22,6 @@ jobs:
 
   plan_release:
     name: Plan release
-    needs: verify
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -86,7 +85,7 @@ jobs:
 
   publish:
     name: Publish ${{ matrix.service }} image
-    needs: plan_release
+    needs: [verify, plan_release]
     if: needs.plan_release.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     permissions:

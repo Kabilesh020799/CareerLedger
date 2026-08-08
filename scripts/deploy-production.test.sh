@@ -14,6 +14,11 @@ trap cleanup EXIT
 mkdir -p "$TEST_DIRECTORY/app" "$TEST_DIRECTORY/bin"
 cp "$REPOSITORY_ROOT/deploy/compose.production.yml" "$TEST_DIRECTORY/app/compose.production.yml"
 
+if grep -q 'pull_policy:' "$TEST_DIRECTORY/app/compose.production.yml"; then
+  echo "Production Compose must not repeat the deployment script's explicit image pull." >&2
+  exit 1
+fi
+
 cat > "$TEST_DIRECTORY/bin/docker" <<'SCRIPT'
 #!/usr/bin/env sh
 printf '%s\n' "$*" >> "$FAKE_DOCKER_LOG"
@@ -60,7 +65,7 @@ ENV
 APP_DIR="$TEST_DIRECTORY/app" FAKE_HEALTH=ok sh "$REPOSITORY_ROOT/scripts/deploy-production.sh" new-tag
 grep -q '^POSTGRES_PASSWORD=test_password$' "$TEST_DIRECTORY/app/.env"
 grep -q '^IMAGE_TAG=new-tag$' "$TEST_DIRECTORY/app/.env"
-grep -q 'pull' "$FAKE_DOCKER_LOG"
+grep -q 'pull backend frontend' "$FAKE_DOCKER_LOG"
 grep -q 'up -d --remove-orphans --wait --wait-timeout 180' "$FAKE_DOCKER_LOG"
 
 : > "$TEST_DIRECTORY/docker.log"

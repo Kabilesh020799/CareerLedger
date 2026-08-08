@@ -34,9 +34,10 @@ jobs:
         working-directory: backend
         run: |
           npm ci
+          npm run db:generate
           npm test
-          npm run typecheck
-          npm run build
+          npm run typecheck:ci
+          npm run build:ci
 
       - name: Verify frontend
         working-directory: frontend
