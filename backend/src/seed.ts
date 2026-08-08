@@ -2,6 +2,7 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "./generated/prisma/client";
 import { hash } from "bcryptjs";
+import { builtInDemoUser } from "./config/demo-user";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -80,8 +81,11 @@ const demoApplications = [
 ];
 
 async function main() {
-  const demoUsername = (process.env.DEMO_USER_USERNAME ?? "demo").toLowerCase();
-  const demoPassword = process.env.DEMO_USER_PASSWORD ?? "JobTrackerDemo123!";
+  const demoUsername = (
+    process.env.DEMO_USER_USERNAME ?? builtInDemoUser.username
+  ).toLowerCase();
+  const demoPassword =
+    process.env.DEMO_USER_PASSWORD ?? builtInDemoUser.password;
   const passwordHash = await hash(demoPassword, 12);
   const demoUser = await prisma.user.upsert({
     where: { username: demoUsername },

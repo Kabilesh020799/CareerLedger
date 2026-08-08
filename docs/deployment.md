@@ -14,7 +14,7 @@ sudo chown "$USER":"$USER" /opt/job-application-tracker
 chmod 700 /opt/job-application-tracker
 ```
 
-The first deployment automatically creates `/opt/job-application-tracker/.env` with a random URL-safe PostgreSQL password and permissions of `600`. GitHub Actions separately installs `/opt/job-application-tracker/.auth.env` with permissions of `600`. It starts PostgreSQL through Compose, creates the persistent volume, and applies migrations. Later deployments update only `IMAGE_TAG`; they preserve the generated database credentials and named volumes.
+The first deployment automatically creates `/opt/job-application-tracker/.env` with random URL-safe PostgreSQL and session credentials and permissions of `600`. GitHub Actions separately installs `/opt/job-application-tracker/.auth.env` with the public application URL and HTTP cookie mode. It starts PostgreSQL through Compose, creates the persistent volume, and applies migrations. Later deployments update only `IMAGE_TAG`; they preserve the generated credentials and named volumes. Existing deployments that do not yet have `SESSION_SECRET` receive one automatically on their next deployment.
 
 `deploy/.env.production.example` remains available as a reference or for deliberately supplying credentials before the first deployment. Do not commit or transmit the production environment file.
 
@@ -48,9 +48,6 @@ Add environment secrets:
 | `DEPLOY_USER` | Non-root deployment user |
 | `DEPLOY_SSH_KEY` | Dedicated private deployment key |
 | `DEPLOY_KNOWN_HOSTS` | Verified SSH known-hosts line |
-| `APP_USERNAME` | Production login username using letters, numbers, `.`, `_`, or `-` |
-| `APP_PASSWORD` | Production login password containing at least 12 characters |
-| `SESSION_SECRET` | At least 32 random characters, such as the output of `openssl rand -hex 32` |
 
 Add environment variables:
 
@@ -67,7 +64,14 @@ Allow inbound TCP port 80 from the internet. Allow SSH only from trusted sources
 
 The selected deployment intentionally uses plain HTTP with username/password authentication. This does not encrypt the login password or session cookie in transit. A network observer may capture and reuse them. The login page displays this warning, and the session cookie is intentionally configured without the `Secure` attribute so it can operate over HTTP.
 
-The workflow bootstraps or updates one production user from `APP_USERNAME` and `APP_PASSWORD`. The password is base64-encoded only for safe environment-file transport and then stored in PostgreSQL as a bcrypt hash; base64 is not encryption. The production Compose stack does not create the local `demo` account or demo applications.
+The application bootstraps this built-in production account on every container start:
+
+```text
+Username: demo
+Password: JobTrackerDemo123!
+```
+
+The password is intentionally present in the application source and is therefore public. The bootstrap process stores only its bcrypt hash in PostgreSQL and updates the existing demo user's hash when necessary. Production does not seed any demo application records. Do not store private information behind this shared account.
 
 ## 5. Publish a release automatically
 
@@ -90,10 +94,10 @@ The workflow:
 3. Stops successfully when the version has already been released.
 4. Publishes frontend and backend images tagged with the new version and commit SHA.
 5. Copies the production Compose file and deployment script to the instance.
-6. Writes the protected authentication environment and production account configuration from GitHub environment secrets.
+6. Writes the public application origin and HTTP cookie mode to the instance.
 7. Authenticates the instance to GHCR with the workflow's short-lived token.
 8. Pulls and starts the exact release version.
-9. On the first deployment, generates protected database credentials, bootstraps the production user, and starts the PostgreSQL container and volume.
+9. On the first deployment, generates protected database and session credentials, bootstraps the built-in demo user, and starts the PostgreSQL container and volume.
 10. Waits for Compose health checks and verifies the proxied API.
 11. Restores the previous release version when deployment fails.
 12. Creates the version tag and GitHub Release with generated release notes only after deployment succeeds.

@@ -22,18 +22,18 @@ test("publishes the GitHub Release only after production deployment", () => {
   assert.doesNotMatch(workflow, /^  create_release:/m);
 });
 
-test("installs authentication secrets before deploying protected endpoints", () => {
+test("configures the HTTP application origin without account secrets", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
   const authStep = workflow.indexOf(
-    "- name: Configure protected authentication environment",
+    "- name: Configure HTTP application environment",
   );
   const deployStep = workflow.indexOf("- name: Deploy immutable images");
 
   assert.notEqual(authStep, -1, "authentication configuration step is missing");
   assert.ok(authStep < deployStep, "authentication must be configured before deployment");
-  assert.match(workflow, /secrets\.APP_USERNAME/);
-  assert.match(workflow, /secrets\.APP_PASSWORD/);
-  assert.match(workflow, /secrets\.SESSION_SECRET/);
+  assert.doesNotMatch(workflow, /secrets\.APP_USERNAME/);
+  assert.doesNotMatch(workflow, /secrets\.APP_PASSWORD/);
+  assert.doesNotMatch(workflow, /secrets\.SESSION_SECRET/);
   assert.doesNotMatch(workflow, /deploy\/Caddyfile/);
   assert.match(workflow, /COOKIE_SECURE=false/);
 });

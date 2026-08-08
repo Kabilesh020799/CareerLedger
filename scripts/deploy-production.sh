@@ -24,19 +24,25 @@ if [ ! -f "$COMPOSE_FILE" ]; then
   exit 2
 fi
 
-initialize_environment() {
+require_openssl() {
   if ! command -v openssl >/dev/null 2>&1; then
-    echo "OpenSSL is required to generate the initial PostgreSQL password." >&2
+    echo "OpenSSL is required to generate protected runtime credentials." >&2
     exit 2
   fi
+}
+
+initialize_environment() {
+  require_openssl
 
   database_password="$(openssl rand -hex 32)"
+  session_secret="$(openssl rand -hex 32)"
   temporary_file="$(mktemp "${ENV_FILE}.XXXXXX")"
 
   {
     printf '%s\n' "POSTGRES_USER=jobtracker"
     printf '%s\n' "POSTGRES_PASSWORD=$database_password"
     printf '%s\n' "POSTGRES_DB=jobtracker"
+    printf '%s\n' "SESSION_SECRET=$session_secret"
     printf '%s\n' "IMAGE_TAG=$NEW_TAG"
   } > "$temporary_file"
 
@@ -51,6 +57,33 @@ elif [ ! -f "$ENV_FILE" ]; then
   echo "Production environment path is not a regular file: $ENV_FILE" >&2
   exit 2
 fi
+
+ensure_session_secret() {
+  existing_secret="$(sed -n 's/^SESSION_SECRET=//p' "$ENV_FILE" | head -n 1)"
+  if [ -n "$existing_secret" ]; then
+    return
+  fi
+
+  require_openssl
+  session_secret="$(openssl rand -hex 32)"
+  temporary_file="$(mktemp "${ENV_FILE}.XXXXXX")"
+  awk -v secret="$session_secret" '
+    BEGIN { replaced = 0 }
+    /^SESSION_SECRET=/ {
+      if (!replaced) print "SESSION_SECRET=" secret
+      replaced = 1
+      next
+    }
+    { print }
+    END { if (!replaced) print "SESSION_SECRET=" secret }
+  ' "$ENV_FILE" > "$temporary_file"
+  chmod --reference="$ENV_FILE" "$temporary_file" 2>/dev/null || chmod 600 "$temporary_file"
+  mv "$temporary_file" "$ENV_FILE"
+  echo "Added a protected session secret to $ENV_FILE."
+}
+
+ensure_session_secret
+chmod 600 "$ENV_FILE"
 
 OLD_TAG="$(sed -n 's/^IMAGE_TAG=//p' "$ENV_FILE" | head -n 1)"
 

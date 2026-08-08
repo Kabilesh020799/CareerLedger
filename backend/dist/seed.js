@@ -4,6 +4,7 @@ require("dotenv/config");
 const adapter_pg_1 = require("@prisma/adapter-pg");
 const client_1 = require("./generated/prisma/client");
 const bcryptjs_1 = require("bcryptjs");
+const demo_user_1 = require("./config/demo-user");
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
     throw new Error("DATABASE_URL is not configured");
@@ -77,8 +78,8 @@ const demoApplications = [
     },
 ];
 async function main() {
-    const demoUsername = (process.env.DEMO_USER_USERNAME ?? "demo").toLowerCase();
-    const demoPassword = process.env.DEMO_USER_PASSWORD ?? "JobTrackerDemo123!";
+    const demoUsername = (process.env.DEMO_USER_USERNAME ?? demo_user_1.builtInDemoUser.username).toLowerCase();
+    const demoPassword = process.env.DEMO_USER_PASSWORD ?? demo_user_1.builtInDemoUser.password;
     const passwordHash = await (0, bcryptjs_1.hash)(demoPassword, 12);
     const demoUser = await prisma.user.upsert({
         where: { username: demoUsername },

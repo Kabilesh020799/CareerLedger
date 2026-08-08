@@ -4,14 +4,14 @@ A full-stack application for creating, reviewing, updating, and deleting job app
 
 ## Start the complete application
 
-The only prerequisites are Docker and Docker Compose. The local stack includes a development-only account:
+The only prerequisites are Docker and Docker Compose. The application includes this built-in demo account in local and production environments:
 
 ```text
 Username: demo
 Password: JobTrackerDemo123!
 ```
 
-The password is stored as a bcrypt hash, not plaintext. Production uses a separate account supplied through GitHub environment secrets.
+The bootstrap code stores the password as a bcrypt hash in PostgreSQL. These credentials are intentionally public and are suitable only for a demo deployment.
 
 From the repository root, run:
 
@@ -74,8 +74,7 @@ Inside Docker, the frontend sends `/api` requests through Nginx to the backend. 
 - Delete applications after confirmation.
 - Persist records in PostgreSQL.
 - Sign in and sign out with Google.
-- Sign in with the seeded demo account during local development.
-- Sign in with a deployment-specific username and password in production.
+- Sign in with the built-in demo account locally or in production.
 - Keep every application private to the account that created it.
 - Persist authenticated sessions in PostgreSQL using an HTTP-only cookie.
 
@@ -144,9 +143,9 @@ npm run test:e2e
 
 ## Production releases
 
-The root `package.json` owns the application release version. Every push to `master` is verified. When its version has not been released before, GitHub Actions automatically creates the corresponding `vMAJOR.MINOR.PATCH` GitHub Release, publishes versioned frontend and backend images, and deploys that version. The first deployment generates protected PostgreSQL credentials, bootstraps the production user from GitHub secrets, and starts the database container with a persistent volume. Pushes with an unchanged version stop after verification.
+The root `package.json` owns the application release version. Every push to `master` is verified. When its version has not been released before, GitHub Actions automatically creates the corresponding `vMAJOR.MINOR.PATCH` GitHub Release, publishes versioned frontend and backend images, and deploys that version. The first deployment generates protected PostgreSQL and session credentials on the instance, bootstraps the built-in demo user, and starts the database container with a persistent volume. Pushes with an unchanged version stop after verification.
 
-The selected production deployment intentionally uses plain HTTP. Although database passwords are hashed and records remain user-scoped, HTTP does not encrypt login credentials or session cookies in transit. Do not treat this deployment as secure against network interception.
+The selected production deployment intentionally uses plain HTTP and publicly known demo credentials. Although the password is hashed in the database and records remain user-scoped, HTTP does not encrypt login credentials or session cookies in transit. Do not store sensitive data in this deployment or treat it as secure against unauthorized access or network interception.
 
 See the [production deployment guide](docs/deployment.md) for the one-time instance and GitHub environment configuration.
 
