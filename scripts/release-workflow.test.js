@@ -90,3 +90,21 @@ test("provides backend verification with an isolated test database URL", () => {
     /DATABASE_URL: postgresql:\/\/jobtracker:jobtracker_dev@127\.0\.0\.1:5432\/jobtracker_test/,
   );
 });
+
+test("deploys a repository-scoped frontend artifact to GitHub Pages", () => {
+  const workflow = fs.readFileSync(workflowPath, "utf8");
+  const pagesBlock = workflow.slice(
+    workflow.indexOf("  deploy_pages:"),
+    workflow.indexOf("  plan_release:"),
+  );
+
+  assert.match(pagesBlock, /needs: verify/);
+  assert.match(pagesBlock, /pages: write/);
+  assert.match(pagesBlock, /id-token: write/);
+  assert.match(pagesBlock, /environment:\n      name: github-pages/);
+  assert.match(pagesBlock, /VITE_API_URL: \$\{\{ vars\.PAGES_API_URL \}\}/);
+  assert.match(pagesBlock, /VITE_ROUTER_MODE: hash/);
+  assert.match(pagesBlock, /npm run build -- --base=\/JobApplicationTracker\//);
+  assert.match(pagesBlock, /path: frontend\/dist/);
+  assert.match(pagesBlock, /actions\/deploy-pages@/);
+});

@@ -195,7 +195,9 @@ npm run test:e2e
 
 ## Production releases
 
-The root `package.json` owns the application release version, and the matching section in `CHANGELOG.md` owns its categorized GitHub Release notes. Every push to `master` is verified. When its version has not been released before, GitHub Actions validates the changelog, publishes versioned frontend and backend images, deploys that version, and creates the corresponding `vMAJOR.MINOR.PATCH` GitHub Release. The first deployment generates protected PostgreSQL and session credentials on the instance, bootstraps the built-in demo user, and starts the database container with a persistent volume. Pushes with an unchanged version stop after verification.
+The root `package.json` owns the application release version, and the matching section in `CHANGELOG.md` owns its categorized GitHub Release notes. Every push to `master` is verified and publishes the frontend to GitHub Pages. When its version has not been released before, GitHub Actions also validates the changelog, publishes versioned frontend and backend images, deploys that version to EC2, and creates the corresponding `vMAJOR.MINOR.PATCH` GitHub Release. The first EC2 deployment generates protected PostgreSQL and session credentials on the instance, bootstraps the built-in demo user, and starts the database container with a persistent volume.
+
+The repository-scoped Pages site is published at <https://kabilesh020799.github.io/JobApplicationTracker/> and uses hash-based client routing. Its API URL comes from the repository variable `PAGES_API_URL`. GitHub Pages is HTTPS-only for this deployment, so an HTTP API will be blocked by browsers as mixed content; configure an HTTPS API domain before treating the Pages UI as a working production client.
 
 The selected production deployment intentionally uses plain HTTP and publicly known demo credentials. Although the password is hashed in the database and records remain user-scoped, HTTP does not encrypt login credentials or session cookies in transit. Do not store sensitive data in this deployment or treat it as secure against unauthorized access or network interception.
 
