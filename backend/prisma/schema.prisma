@@ -29,6 +29,11 @@ enum ApplicationEventType {
   STATUS_CHANGE
 }
 
+enum ReminderType {
+  FOLLOW_UP
+  DEADLINE
+}
+
 model Application {
   id        String            @id @default(cuid())
   company   String
@@ -42,6 +47,7 @@ model Application {
   userId    String?
   user      User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
   events    ApplicationEvent[]
+  reminders ApplicationReminder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -51,6 +57,21 @@ model Application {
   @@index([userId, createdAt])
   @@index([userId, status])
   @@index([userId, updatedAt])
+}
+
+model ApplicationReminder {
+  id            String       @id @default(cuid())
+  applicationId String
+  application   Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type          ReminderType
+  description   String
+  dueAt         DateTime
+  completedAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([applicationId, dueAt])
+  @@index([completedAt, dueAt])
 }
 
 model ApplicationEvent {

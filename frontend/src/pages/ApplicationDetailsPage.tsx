@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DeleteApplicationDialog } from '../components/applications/DeleteApplicationDialog'
 import { ApplicationTimeline } from '../components/applications/ApplicationTimeline'
 import { StatusBadge } from '../components/applications/StatusBadge'
+import { ApplicationReminders } from '../components/reminders/ApplicationReminders'
 import { useApplication } from '../hooks/useApplication'
 import { useDeleteApplication } from '../hooks/useDeleteApplication'
 import { getApiErrorMessage } from '../utils/apiError'
@@ -80,6 +81,7 @@ export function ApplicationDetailsPage() {
         </Box>
       </Box>
 
+      <ApplicationReminders applicationId={application.id} />
       <ApplicationTimeline applicationId={application.id} />
     </Stack>
   )

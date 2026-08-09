@@ -56,6 +56,13 @@ describe("authentication API boundary", () => {
     expect(response.body).toEqual({ error: "Authentication required" });
   });
 
+  it("protects reminders from unauthenticated requests", async () => {
+    const response = await request(app).get("/api/reminders");
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: "Authentication required" });
+  });
+
   it("fails closed when Google credentials are missing", async () => {
     const response = await request(app).get("/api/auth/google");
 

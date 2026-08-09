@@ -81,6 +81,9 @@ Inside Docker, the frontend sends `/api` requests through Nginx to the backend. 
 - Review a newest-first timeline of application activity.
 - Add dated notes to an application's timeline.
 - Record status changes automatically with their previous and new statuses.
+- Add follow-up and deadline reminders to an application.
+- Complete, reopen, or delete reminders from application details.
+- Review overdue and upcoming reminders on the dashboard and jump to their applications.
 - Delete applications after confirmation.
 - Persist records in PostgreSQL.
 - Sign in and sign out with Google.
@@ -108,9 +111,14 @@ Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW
 | `DELETE` | `/api/applications/:id` | Delete an application |
 | `GET` | `/api/applications/:id/events` | List an application's timeline events |
 | `POST` | `/api/applications/:id/events` | Add a manual note to an application's timeline |
+| `GET` | `/api/applications/:id/reminders` | List an application's reminders |
+| `POST` | `/api/applications/:id/reminders` | Add a follow-up or deadline reminder |
+| `GET` | `/api/reminders` | List the current user's open reminders |
+| `PATCH` | `/api/reminders/:id` | Complete or reopen a reminder |
+| `DELETE` | `/api/reminders/:id` | Delete a reminder |
 | `GET` | `/api/dashboard/summary` | Retrieve current user-scoped pipeline totals and rates |
 
-All application, timeline, and dashboard endpoints require an authenticated session. Requests cannot list, aggregate, or mutate applications owned by another user. Dashboard progression rates use all non-saved applications as the denominator and current active milestone statuses as the numerator. The discovery endpoint accepts `search`, `status`, `source`, `appliedFrom`, `appliedTo`, `sortBy`, `sortOrder`, `page`, and `limit` query parameters and returns `{ data, pagination }`; supported page sizes are 10, 20, and 50. The original list endpoint remains available for existing clients. Status updates and their timeline events are saved in one database transaction. Deleting an application also deletes its timeline. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
+All application, timeline, reminder, and dashboard endpoints require an authenticated session. Requests cannot list, aggregate, or mutate applications or reminders owned by another user. Dashboard progression rates use all non-saved applications as the denominator and current active milestone statuses as the numerator. The discovery endpoint accepts `search`, `status`, `source`, `appliedFrom`, `appliedTo`, `sortBy`, `sortOrder`, `page`, and `limit` query parameters and returns `{ data, pagination }`; supported page sizes are 10, 20, and 50. The original list endpoint remains available for existing clients. Status updates and their timeline events are saved in one database transaction. Deleting an application also deletes its timeline and reminders. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
 
 ## Development without Docker
 

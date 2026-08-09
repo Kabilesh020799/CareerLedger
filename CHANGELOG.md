@@ -16,6 +16,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added immediate board updates that restore a card to its previous column when saving fails, while successful status moves continue to record timeline events atomically.
 - Added a private dashboard with current status totals, applications created since Monday, and screening, interview, and offer progression rates with clear denominators.
 - Added automatic dashboard refreshes after applications are created, updated, moved, or deleted.
+- Added user-owned follow-up and deadline reminders that can be created, completed, reopened, or deleted from application details.
+- Added overdue and upcoming reminder groups on the dashboard with direct application links and quick completion actions.
 
 ### Fixed
 

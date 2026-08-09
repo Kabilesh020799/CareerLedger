@@ -8,6 +8,9 @@ import type { DashboardSummary } from '../types/dashboard'
 import { DashboardPage } from './DashboardPage'
 
 vi.mock('../hooks/useDashboardSummary', () => ({ useDashboardSummary: vi.fn() }))
+vi.mock('../components/reminders/DashboardReminders', () => ({
+  DashboardReminders: () => <div>Reminder overview</div>,
+}))
 
 const summary = {
   totalApplications: 9,

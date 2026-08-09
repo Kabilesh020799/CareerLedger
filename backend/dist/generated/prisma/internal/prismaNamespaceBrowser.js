@@ -48,7 +48,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.SessionScalarFieldEnum = exports.UserScalarFieldEnum = exports.ApplicationEventScalarFieldEnum = exports.ApplicationScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
+exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.SessionScalarFieldEnum = exports.UserScalarFieldEnum = exports.ApplicationEventScalarFieldEnum = exports.ApplicationReminderScalarFieldEnum = exports.ApplicationScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/index-browser"));
 exports.Decimal = runtime.Decimal;
 exports.NullTypes = {
@@ -76,6 +76,7 @@ exports.JsonNull = runtime.JsonNull;
 exports.AnyNull = runtime.AnyNull;
 exports.ModelName = {
     Application: 'Application',
+    ApplicationReminder: 'ApplicationReminder',
     ApplicationEvent: 'ApplicationEvent',
     User: 'User',
     Session: 'Session'
@@ -100,6 +101,16 @@ exports.ApplicationScalarFieldEnum = {
     notes: 'notes',
     appliedAt: 'appliedAt',
     userId: 'userId',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.ApplicationReminderScalarFieldEnum = {
+    id: 'id',
+    applicationId: 'applicationId',
+    type: 'type',
+    description: 'description',
+    dueAt: 'dueAt',
+    completedAt: 'completedAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };

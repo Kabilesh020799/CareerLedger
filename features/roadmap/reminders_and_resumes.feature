@@ -1,8 +1,8 @@
 @roadmap
-Feature: Improve follow-ups and resume strategy
+Feature: Automate follow-ups and compare resume strategy
   As a job seeker
-  I want reminders and resume tracking
-  So that I follow up on time and learn what produces results
+  I want automatic follow-up suggestions and resume tracking
+  So that I receive proactive guidance and learn what produces results
 
   Scenario: Suggest a follow-up
     Given an application has status "APPLIED"
@@ -10,11 +10,6 @@ Feature: Improve follow-ups and resume strategy
     And no follow-up has been recorded
     When reminders are evaluated
     Then a follow-up reminder should be suggested
-
-  Scenario: Remind me about a deadline
-    Given an assessment or interview has an upcoming due date
-    When the reminder threshold is reached
-    Then I should see a reminder containing the deadline
 
   Scenario: Record the resume used for an application
     Given multiple resume versions exist

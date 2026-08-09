@@ -43,6 +43,71 @@ test('view authenticated dashboard totals and pipeline rates', async ({ page }) 
     .toContainText(`${summary.conversionRates.offer}%`)
 })
 
+test('create, complete, reopen, and delete an application reminder', async ({ page }) => {
+  const company = `Reminder verification ${Date.now()}`
+  const description = 'Submit the take-home assessment'
+  await signIn(page)
+
+  await page.getByRole('link', { name: 'Add application' }).click()
+  await page.getByLabel('Company').fill(company)
+  await page.getByLabel('Job title').fill('Reminder Engineer')
+  await page.getByLabel('Status').selectOption('ASSESSMENT')
+  await page.getByRole('button', { name: 'Create application' }).click()
+  await expect(page).toHaveURL(/\/applications\/[^/]+$/)
+  const applicationUrl = page.url()
+
+  await page.getByLabel(/Reminder type/).selectOption('DEADLINE')
+  await page.getByLabel(/Description/).fill(description)
+  await page.getByLabel(/Due date and time/).fill('2099-08-15T09:30')
+  await page.getByRole('button', { name: 'Add reminder' }).click()
+  await expect(page.getByRole('article', { name: description })).toBeVisible()
+
+  await page.getByRole('link', { name: 'Dashboard' }).click()
+  const dashboardReminder = page.getByRole('article', { name: description })
+  await expect(dashboardReminder).toBeVisible()
+  await expect(dashboardReminder.getByRole('link', { name: new RegExp(company) }))
+    .toHaveAttribute('href', new URL(applicationUrl).pathname)
+  await dashboardReminder.getByRole('button', { name: 'Complete' }).click()
+  await expect(dashboardReminder).not.toBeVisible()
+
+  await page.goto(applicationUrl)
+  const completedReminder = page.getByRole('article', { name: description })
+  await expect(completedReminder.getByText('Completed')).toBeVisible()
+  await completedReminder.getByRole('button', { name: 'Reopen' }).click()
+  await expect(completedReminder.getByText('Upcoming')).toBeVisible()
+  await completedReminder.getByRole('button', { name: 'Delete' }).click()
+  await page.getByRole('button', { name: 'Delete reminder' }).click()
+  await expect(page.getByRole('article', { name: description })).not.toBeVisible()
+
+  const cascadeDescription = 'Verify application reminder cascade'
+  await page.getByLabel(/Reminder type/).selectOption('FOLLOW_UP')
+  await page.getByLabel(/Description/).fill(cascadeDescription)
+  await page.getByLabel(/Due date and time/).fill('2099-08-16T09:30')
+  await page.getByRole('button', { name: 'Add reminder' }).click()
+  await expect(page.getByRole('article', { name: cascadeDescription })).toBeVisible()
+
+  const applicationId = new URL(applicationUrl).pathname.split('/').at(-1)
+  const remindersResponse = await page.request.get(
+    `http://127.0.0.1:3001/api/applications/${applicationId}/reminders`,
+  )
+  expect(remindersResponse.ok()).toBe(true)
+  const reminders = await remindersResponse.json()
+  const cascadeReminder = reminders.find(
+    (reminder: { description: string }) => reminder.description === cascadeDescription,
+  )
+  expect(cascadeReminder?.id).toBeTruthy()
+
+  await page.getByRole('button', { name: 'Delete', exact: true }).first().click()
+  await page.getByRole('button', { name: 'Delete application' }).click()
+  await expect(page).toHaveURL(/\/applications$/)
+
+  const cascadeResponse = await page.request.patch(
+    `http://127.0.0.1:3001/api/reminders/${cascadeReminder.id}`,
+    { data: { completed: true } },
+  )
+  expect(cascadeResponse.status()).toBe(404)
+})
+
 test('search, filter, sort, and retain application discovery controls', async ({ page }) => {
   await signIn(page)
 

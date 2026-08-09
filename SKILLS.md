@@ -122,6 +122,16 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 **Specification:** `features/v0.1/dashboard_analytics.feature`.
 
+### Application reminders
+
+**Purpose:** Keep user-created follow-ups and deadlines visible alongside their applications and on the dashboard.
+
+**Expected knowledge:** Prisma relations and cascading deletes, date and time handling, user-scoped REST APIs, TanStack Query invalidation, accessible forms, and dashboard states.
+
+**Critical rule:** authorize reminders through their owning application on every read and mutation; deleting an application must cascade to its reminders. Manual reminder operations belong in the request-driven API and do not require a background worker.
+
+**Specification:** `features/v0.1/application_reminders.feature`.
+
 ## Roadmap skills
 
 ### Strategy analytics
@@ -172,9 +182,9 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 **Specification:** the LLM fallback scenario in `features/roadmap/gmail_sync.feature`.
 
-### Reminders and resume strategy
+### Automated follow-ups and resume strategy
 
-**Purpose:** Surface timely actions and measure which resume versions produce outcomes.
+**Purpose:** Suggest follow-ups automatically and measure which resume versions produce outcomes.
 
 **Expected knowledge:** scheduled rules, dates and time zones, notifications, relational modeling, outcome analytics.
 

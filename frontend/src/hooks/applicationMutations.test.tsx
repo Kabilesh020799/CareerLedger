@@ -107,5 +107,6 @@ describe('application mutation hooks', () => {
     expect(remove).toHaveBeenCalledWith({ queryKey: ['applications', application.id] })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications'] })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['dashboard'] })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['reminders'] })
   })
 })

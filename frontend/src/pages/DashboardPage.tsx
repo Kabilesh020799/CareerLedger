@@ -1,5 +1,6 @@
 import { Alert, Box, Button, Flex, Heading, SimpleGrid, Spinner, Stack, Text } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
+import { DashboardReminders } from '../components/reminders/DashboardReminders'
 import { useDashboardSummary } from '../hooks/useDashboardSummary'
 import type { DashboardSummary } from '../types/dashboard'
 import { getApiErrorMessage } from '../utils/apiError'
@@ -35,7 +36,12 @@ export function DashboardPage() {
         </Alert.Root>
       )}
 
-      {summaryQuery.isSuccess && <DashboardContent summary={summaryQuery.data} />}
+      {summaryQuery.isSuccess && (
+        <>
+          <DashboardContent summary={summaryQuery.data} />
+          <DashboardReminders />
+        </>
+      )}
     </Stack>
   )
 }

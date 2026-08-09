@@ -59,6 +59,10 @@ vi.mock('./hooks/useDashboardSummary', () => ({
   }),
 }))
 
+vi.mock('./components/reminders/DashboardReminders', () => ({
+  DashboardReminders: () => <div>Reminder overview</div>,
+}))
+
 vi.mock('./hooks/useSession', () => ({
   useSession: () => ({
     isPending: false,

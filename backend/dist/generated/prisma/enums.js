@@ -9,7 +9,7 @@
 * 🟢 You can import this file directly.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ApplicationEventType = exports.ApplicationStatus = void 0;
+exports.ReminderType = exports.ApplicationEventType = exports.ApplicationStatus = void 0;
 exports.ApplicationStatus = {
     SAVED: 'SAVED',
     APPLIED: 'APPLIED',
@@ -23,4 +23,8 @@ exports.ApplicationStatus = {
 exports.ApplicationEventType = {
     NOTE: 'NOTE',
     STATUS_CHANGE: 'STATUS_CHANGE'
+};
+exports.ReminderType = {
+    FOLLOW_UP: 'FOLLOW_UP',
+    DEADLINE: 'DEADLINE'
 };
