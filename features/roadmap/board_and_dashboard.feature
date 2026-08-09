@@ -1,19 +1,8 @@
 @roadmap @ui
-Feature: Visualize job-search progress
+Feature: Understand job-search outcomes
   As a job seeker
-  I want board and dashboard views
+  I want a dashboard of useful metrics
   So that I can understand my pipeline and strategy
-
-  Scenario: View applications on a Kanban board
-    Given applications exist in multiple statuses
-    When I open the board
-    Then each application should appear in its current status column
-
-  Scenario: Move an application between board columns
-    Given an application is in the "APPLIED" column
-    When I move it to the "INTERVIEW" column
-    Then the backend should change its status to "INTERVIEW"
-    And a status-change timeline event should be created
 
   Scenario: View useful dashboard metrics
     Given applications exist with different statuses and dates

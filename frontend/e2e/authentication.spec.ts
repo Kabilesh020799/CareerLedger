@@ -43,6 +43,48 @@ test('search, filter, sort, and retain application discovery controls', async ({
   await expect(page.getByRole('row').nth(1)).toContainText('Atlas')
 })
 
+test('move an application across the board and record its timeline', async ({ page }) => {
+  const company = `Board verification ${Date.now()}`
+  await signIn(page)
+
+  await page.getByRole('link', { name: 'Add application' }).click()
+  await page.getByLabel('Company').fill(company)
+  await page.getByLabel('Job title').fill('Pipeline Engineer')
+  await page.getByLabel('Status').selectOption('APPLIED')
+  await page.getByRole('button', { name: 'Create application' }).click()
+
+  await page.getByRole('link', { name: 'Board', exact: true }).click()
+  const card = page.getByRole('article', {
+    name: `${company}, Pipeline Engineer`,
+  })
+  const screeningColumn = page.getByRole('region', {
+    name: 'Screening applications',
+  })
+  await card.dragTo(screeningColumn)
+  await expect(screeningColumn.getByRole('article', {
+    name: `${company}, Pipeline Engineer`,
+  })).toBeVisible()
+
+  const movedCard = screeningColumn.getByRole('article', {
+    name: `${company}, Pipeline Engineer`,
+  })
+  await movedCard.getByLabel(`Move ${company} to status`).selectOption('INTERVIEW')
+  const interviewColumn = page.getByRole('region', {
+    name: 'Interview applications',
+  })
+  await expect(interviewColumn.getByRole('article', {
+    name: `${company}, Pipeline Engineer`,
+  })).toBeVisible()
+
+  await interviewColumn.getByRole('link', { name: company }).click()
+  await expect(page.getByText('Status changed from APPLIED to SCREENING')).toBeVisible()
+  await expect(page.getByText('Status changed from SCREENING to INTERVIEW')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Delete' }).click()
+  await page.getByRole('button', { name: 'Delete application' }).click()
+  await expect(page).toHaveURL(/\/applications$/)
+})
+
 test('add a note and record a status change in the application timeline', async ({ page }) => {
   await signIn(page)
 

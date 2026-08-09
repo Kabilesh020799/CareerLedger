@@ -5,6 +5,7 @@ import { useSession } from '../hooks/useSession'
 
 const navigation = [
   { label: 'Applications', to: '/applications' },
+  { label: 'Board', to: '/board' },
   { label: 'Dashboard', to: '/dashboard' },
 ]
 

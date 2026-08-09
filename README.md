@@ -71,6 +71,8 @@ Inside Docker, the frontend sends `/api` requests through Nginx to the backend. 
 - Combine status, source, and inclusive applied-date filters.
 - Sort applications by applied date, creation date, update date, or company.
 - Navigate server-paginated results with URL-persistent discovery controls.
+- View all applications on an eight-column status board with per-column counts.
+- Move board cards by drag-and-drop or an accessible status selector, with immediate feedback and automatic rollback on failure.
 - See loading, empty, and API error states.
 - Create applications with validated fields.
 - Open application details.

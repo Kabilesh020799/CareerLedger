@@ -102,15 +102,25 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 **Specification:** `features/v0.1/application_discovery.feature`.
 
+### Application status board
+
+**Purpose:** Visualize and update the application pipeline across every supported status.
+
+**Expected knowledge:** responsive Chakra UI layouts, accessible drag-and-drop alternatives, optimistic TanStack Query mutations, cache rollback, and status timeline behavior.
+
+**Critical rule:** every board move must use the backend application update contract so that the status and its timeline event remain atomic; failed optimistic moves must restore the previous board.
+
+**Specification:** `features/v0.1/application_board.feature`.
+
 ## Roadmap skills
 
-### Kanban and dashboard
+### Dashboard analytics
 
-**Purpose:** Visualize pipeline state and useful job-search outcomes.
+**Purpose:** Summarize useful job-search outcomes and strategy comparisons.
 
-**Expected knowledge:** responsive UI, accessible drag-and-drop, status mutation, aggregation queries, meaningful metrics.
+**Expected knowledge:** aggregation queries, meaningful metrics, responsive data visualization, and outcome-rate definitions.
 
-**Critical rule:** board movement calls the backend, which owns status and timeline changes; do not add decorative analytics without decision value.
+**Critical rule:** do not add decorative analytics without decision value or present rates without clear denominators.
 
 **Specification:** `features/roadmap/board_and_dashboard.feature`.
 

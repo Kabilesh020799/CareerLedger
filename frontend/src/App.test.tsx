@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { AppProvider } from './components/ui/AppProvider'
 
@@ -12,6 +12,25 @@ vi.mock('./hooks/useApplications', () => ({
     isError: false,
     isSuccess: true,
     data: { data: [], pagination: { page: 1, limit: 20, total: 0, pages: 0 } },
+  }),
+}))
+
+vi.mock('./hooks/useApplicationBoard', () => ({
+  useApplicationBoard: () => ({
+    isPending: false,
+    isError: false,
+    isSuccess: true,
+    data: [],
+  }),
+}))
+
+vi.mock('./hooks/useMoveApplication', () => ({
+  useMoveApplication: () => ({
+    mutate: vi.fn(),
+    reset: vi.fn(),
+    isPending: false,
+    isSuccess: false,
+    isError: false,
   }),
 }))
 
@@ -49,6 +68,8 @@ function renderApp(path: string) {
 }
 
 describe('application routing', () => {
+  afterEach(cleanup)
+
   it('shows primary navigation and navigates to applications', async () => {
     const user = userEvent.setup()
     renderApp('/dashboard')
@@ -56,6 +77,16 @@ describe('application routing', () => {
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
     await user.click(screen.getByRole('link', { name: 'Applications' }))
     expect(screen.getByRole('heading', { name: 'Applications' })).toBeInTheDocument()
+  })
+
+  it('navigates to the application board', async () => {
+    const user = userEvent.setup()
+    renderApp('/applications')
+
+    await user.click(screen.getByRole('link', { name: 'Board' }))
+
+    expect(screen.getByRole('heading', { name: 'Application board' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'No applications on your board' })).toBeInTheDocument()
   })
 
   it('shows a recovery link for an unknown route', () => {
