@@ -34,6 +34,26 @@ export const reminderController = {
     res.json(reminders);
   },
 
+  async listFollowUpSuggestions(req: Request, res: Response) {
+    const suggestions = await reminderService.listFollowUpSuggestions(
+      getUserId(req),
+    );
+    res.json(suggestions);
+  },
+
+  async createSuggestedFollowUp(req: Request, res: Response) {
+    const reminder = await reminderService.createSuggestedFollowUp(
+      getUserId(req),
+      getParameter(req, "id"),
+    );
+    if (!reminder) {
+      res.status(404).json({ error: "Follow-up suggestion not found" });
+      return;
+    }
+
+    res.status(201).json(reminder);
+  },
+
   async create(req: Request, res: Response) {
     const parsed = createReminderSchema.safeParse(req.body);
     if (!parsed.success) {

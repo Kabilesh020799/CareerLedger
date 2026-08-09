@@ -70,6 +70,16 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 **Specifications:** `features/v0.1/application_ui.feature`.
 
+### Color theme and visual system
+
+**Purpose:** Keep application surfaces, text, controls, navigation, and feedback readable and visually consistent in light and dark environments.
+
+**Expected knowledge:** Chakra semantic color tokens, dark-mode conditions, accessible theme controls, browser preferences, local persistence, and contrast-aware status colors.
+
+**Critical rule:** use semantic surface, foreground, and border tokens for structural UI instead of hardcoded light-only colors; theme selection must remain keyboard accessible and must not change the meaning of status or error colors.
+
+**Specification:** `features/v0.1/color_theme.feature`.
+
 ### Behavior-driven testing
 
 **Purpose:** Turn product requirements into stable executable specifications.
@@ -124,11 +134,11 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 ### Application reminders
 
-**Purpose:** Keep user-created follow-ups and deadlines visible alongside their applications and on the dashboard.
+**Purpose:** Keep user-created follow-ups and deadlines visible alongside their applications, and proactively surface applied applications that need follow-up.
 
 **Expected knowledge:** Prisma relations and cascading deletes, date and time handling, user-scoped REST APIs, TanStack Query invalidation, accessible forms, and dashboard states.
 
-**Critical rule:** authorize reminders through their owning application on every read and mutation; deleting an application must cascade to its reminders. Manual reminder operations belong in the request-driven API and do not require a background worker.
+**Critical rule:** authorize reminders and suggestions through their owning application on every read and mutation; deleting an application must cascade to its reminders. Evaluate dashboard suggestions from persisted application, timeline, and reminder data in the request-driven API; this behavior does not require a background worker.
 
 **Specification:** `features/v0.1/application_reminders.feature`.
 
@@ -182,11 +192,11 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 **Specification:** the LLM fallback scenario in `features/roadmap/gmail_sync.feature`.
 
-### Automated follow-ups and resume strategy
+### Resume strategy
 
-**Purpose:** Suggest follow-ups automatically and measure which resume versions produce outcomes.
+**Purpose:** Measure which resume versions produce outcomes.
 
-**Expected knowledge:** scheduled rules, dates and time zones, notifications, relational modeling, outcome analytics.
+**Expected knowledge:** relational modeling, resume versioning, outcome definitions, and responsible analytics.
 
 **Specification:** `features/roadmap/reminders_and_resumes.feature`.
 

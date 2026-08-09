@@ -9,17 +9,19 @@ vi.mock('./api', () => ({
 describe('reminderService', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('lists application and open dashboard reminders', async () => {
+  it('lists application reminders, open reminders, and follow-up suggestions', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: [] })
 
     await reminderService.listForApplication('application-1')
     await reminderService.listOpen()
+    await reminderService.listFollowUpSuggestions()
 
     expect(api.get).toHaveBeenNthCalledWith(
       1,
       '/applications/application-1/reminders',
     )
     expect(api.get).toHaveBeenNthCalledWith(2, '/reminders')
+    expect(api.get).toHaveBeenNthCalledWith(3, '/reminders/suggestions')
   })
 
   it('creates, completes, reopens, and deletes reminders', async () => {
@@ -33,13 +35,19 @@ describe('reminderService', () => {
     vi.mocked(api.delete).mockResolvedValue({})
 
     await reminderService.create('application-1', input)
+    await reminderService.createSuggestedFollowUp('application-1')
     await reminderService.setCompleted('reminder-1', true)
     await reminderService.setCompleted('reminder-1', false)
     await reminderService.remove('reminder-1')
 
-    expect(api.post).toHaveBeenCalledWith(
+    expect(api.post).toHaveBeenNthCalledWith(
+      1,
       '/applications/application-1/reminders',
       input,
+    )
+    expect(api.post).toHaveBeenNthCalledWith(
+      2,
+      '/reminders/suggestions/application-1',
     )
     expect(api.patch).toHaveBeenNthCalledWith(1, '/reminders/reminder-1', {
       completed: true,

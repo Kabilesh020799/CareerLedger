@@ -40,9 +40,9 @@ export function ApplicationsPage() {
       <Flex align={{ base: 'start', sm: 'center' }} direction={{ base: 'column', sm: 'row' }} gap="4" justify="space-between">
         <Stack gap="1">
           <Heading as="h2" size="2xl">Applications</Heading>
-          <Text color="gray.600">Track every opportunity in one place.</Text>
+          <Text color="fg.muted">Track every opportunity in one place.</Text>
         </Stack>
-        <Button asChild colorPalette="teal">
+        <Button asChild colorPalette="purple">
           <Link to="/applications/new">Add application</Link>
         </Button>
       </Flex>
@@ -55,7 +55,7 @@ export function ApplicationsPage() {
 
       {applicationsQuery.isPending && (
         <Flex align="center" justify="center" minH="16rem" aria-label="Loading applications">
-          <Spinner color="teal.600" size="xl" />
+          <Spinner color="purple.fg" size="xl" />
         </Flex>
       )}
 
@@ -71,28 +71,28 @@ export function ApplicationsPage() {
       )}
 
       {applicationsQuery.isSuccess && applicationsQuery.data.pagination.total === 0 && !hasFilters && (
-        <Stack align="center" bg="white" borderWidth="1px" borderRadius="xl" p={{ base: '8', md: '12' }} textAlign="center" gap="3">
+        <Stack align="center" bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" p={{ base: '8', md: '12' }} textAlign="center" gap="3">
           <Heading as="h3" size="lg">No applications yet</Heading>
-          <Text color="gray.600">Add your first opportunity to start tracking your job search.</Text>
-          <Button asChild colorPalette="teal" mt="2">
+          <Text color="fg.muted">Add your first opportunity to start tracking your job search.</Text>
+          <Button asChild colorPalette="purple" mt="2">
             <Link to="/applications/new">Create your first application</Link>
           </Button>
         </Stack>
       )}
 
       {applicationsQuery.isSuccess && applicationsQuery.data.pagination.total === 0 && hasFilters && (
-        <Stack align="center" bg="white" borderWidth="1px" borderRadius="xl" p={{ base: '8', md: '12' }} textAlign="center" gap="3">
+        <Stack align="center" bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" p={{ base: '8', md: '12' }} textAlign="center" gap="3">
           <Heading as="h3" size="lg">No matching applications</Heading>
-          <Text color="gray.600">Try changing your search or clearing the filters.</Text>
-          <Button colorPalette="teal" mt="2" onClick={clearFilters}>Clear filters</Button>
+          <Text color="fg.muted">Try changing your search or clearing the filters.</Text>
+          <Button colorPalette="purple" mt="2" onClick={clearFilters}>Clear filters</Button>
         </Stack>
       )}
 
       {applicationsQuery.isSuccess && applicationsQuery.data.pagination.total > 0 && applicationsQuery.data.data.length === 0 && (
-        <Stack align="center" bg="white" borderWidth="1px" borderRadius="xl" p="8" textAlign="center" gap="3">
+        <Stack align="center" bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" p="8" textAlign="center" gap="3">
           <Heading as="h3" size="lg">No applications on this page</Heading>
           <Button
-            colorPalette="teal"
+            colorPalette="purple"
             onClick={() => setQuery({ ...query, page: Math.max(1, query.page - 1) })}
           >
             Previous page
@@ -102,7 +102,7 @@ export function ApplicationsPage() {
 
       {applicationsQuery.isSuccess && applicationsQuery.data.data.length > 0 && (
         <Stack gap="3">
-          <Box bg="white" borderWidth="1px" borderRadius="xl" overflowX="auto">
+          <Box bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" overflowX="auto">
             <Table.Root variant="line" size="md">
             <Table.Header>
               <Table.Row>
@@ -139,7 +139,7 @@ export function ApplicationsPage() {
             gap="3"
             justify="space-between"
           >
-            <Text color="gray.600" fontSize="sm">
+            <Text color="fg.muted" fontSize="sm">
               Showing {applicationsQuery.data.data.length} of {applicationsQuery.data.pagination.total} applications
             </Text>
             <Flex align="center" gap="3">

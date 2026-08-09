@@ -1,6 +1,7 @@
 import { Alert, Box, Button, Flex, Heading, SimpleGrid, Spinner, Stack, Text } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
 import { DashboardReminders } from '../components/reminders/DashboardReminders'
+import { FollowUpSuggestions } from '../components/reminders/FollowUpSuggestions'
 import { useDashboardSummary } from '../hooks/useDashboardSummary'
 import type { DashboardSummary } from '../types/dashboard'
 import { getApiErrorMessage } from '../utils/apiError'
@@ -12,12 +13,12 @@ export function DashboardPage() {
     <Stack gap="7">
       <Stack gap="1">
         <Heading as="h2" size="2xl">Dashboard</Heading>
-        <Text color="gray.600">A current snapshot of your application pipeline.</Text>
+        <Text color="fg.muted">A current snapshot of your application pipeline.</Text>
       </Stack>
 
       {summaryQuery.isPending && (
         <Flex align="center" aria-label="Loading dashboard" justify="center" minH="20rem">
-          <Spinner color="teal.600" size="xl" />
+          <Spinner color="purple.fg" size="xl" />
         </Flex>
       )}
 
@@ -39,6 +40,7 @@ export function DashboardPage() {
       {summaryQuery.isSuccess && (
         <>
           <DashboardContent summary={summaryQuery.data} />
+          <FollowUpSuggestions />
           <DashboardReminders />
         </>
       )}
@@ -68,7 +70,8 @@ function DashboardContent({ summary }: { summary: DashboardSummary }) {
       {summary.totalApplications === 0 && (
         <Stack
           align="center"
-          bg="white"
+          bg="bg.panel"
+          borderColor="border"
           borderRadius="xl"
           borderWidth="1px"
           gap="3"
@@ -76,8 +79,8 @@ function DashboardContent({ summary }: { summary: DashboardSummary }) {
           textAlign="center"
         >
           <Heading as="h3" size="lg">No application activity yet</Heading>
-          <Text color="gray.600">Create your first application to start measuring your pipeline.</Text>
-          <Button asChild colorPalette="teal" mt="2">
+          <Text color="fg.muted">Create your first application to start measuring your pipeline.</Text>
+          <Button asChild colorPalette="purple" mt="2">
             <Link to="/applications/new">Create your first application</Link>
           </Button>
         </Stack>
@@ -86,7 +89,7 @@ function DashboardContent({ summary }: { summary: DashboardSummary }) {
       <Stack gap="4">
         <Stack gap="1">
           <Heading as="h3" size="lg">Pipeline conversion</Heading>
-          <Text color="gray.600" fontSize="sm">
+          <Text color="fg.muted" fontSize="sm">
             Current milestone status across {summary.submittedApplications} submitted application{summary.submittedApplications === 1 ? '' : 's'}. Saved applications are excluded from the denominator.
           </Text>
         </Stack>
@@ -117,15 +120,16 @@ function MetricCard({ label, value }: { label: string; value: number }) {
     <Stack
       as="article"
       aria-label={label}
-      bg="white"
+      bg="bg.panel"
+      borderColor="border"
       borderRadius="xl"
       borderWidth="1px"
       gap="2"
       p="5"
       shadow="sm"
     >
-      <Text color="gray.600" fontSize="sm" fontWeight="medium">{label}</Text>
-      <Text color="gray.900" fontSize="3xl" fontWeight="bold">{value}</Text>
+      <Text color="fg.muted" fontSize="sm" fontWeight="medium">{label}</Text>
+      <Text color="fg" fontSize="3xl" fontWeight="bold">{value}</Text>
     </Stack>
   )
 }
@@ -143,7 +147,8 @@ function RateCard({
     <Stack
       as="article"
       aria-label={label}
-      bg="white"
+      bg="bg.panel"
+      borderColor="border"
       borderRadius="xl"
       borderWidth="1px"
       gap="3"
@@ -151,23 +156,23 @@ function RateCard({
       shadow="sm"
     >
       <Flex align="baseline" justify="space-between" gap="3">
-        <Text color="gray.700" fontWeight="semibold">{label}</Text>
-        <Text color="teal.700" fontSize="2xl" fontWeight="bold">{formatPercentage(value)}</Text>
+        <Text color="fg" fontWeight="semibold">{label}</Text>
+        <Text color="purple.fg" fontSize="2xl" fontWeight="bold">{formatPercentage(value)}</Text>
       </Flex>
       <Box
         aria-label={`${label}: ${formatPercentage(value)}`}
         aria-valuemax={100}
         aria-valuemin={0}
         aria-valuenow={value}
-        bg="gray.100"
+        bg="bg.emphasized"
         borderRadius="full"
         h="2"
         overflow="hidden"
         role="progressbar"
       >
-        <Box bg="teal.500" h="full" width={`${Math.min(value, 100)}%`} />
+        <Box bg="purple.solid" h="full" width={`${Math.min(value, 100)}%`} />
       </Box>
-      <Text color="gray.500" fontSize="xs">{description}</Text>
+      <Text color="fg.subtle" fontSize="xs">{description}</Text>
     </Stack>
   )
 }

@@ -11,6 +11,24 @@ async function signIn(page: Page) {
   await expect(page).toHaveURL(/\/applications$/)
 }
 
+test('switch and retain the application color theme', async ({ page }) => {
+  await page.goto('/login')
+  await page.evaluate(() => window.localStorage.removeItem('job-tracker-color-mode'))
+  await page.reload()
+
+  await page.getByRole('button', { name: 'Switch to dark theme' }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  await expect(page.getByRole('button', { name: 'Switch to light theme' })).toBeVisible()
+
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  await signIn(page)
+  await expect(page.getByRole('button', { name: 'Switch to light theme' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Switch to light theme' }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+})
+
 test('sign in with the demo user and access its applications', async ({ page }) => {
   await signIn(page)
 
@@ -41,6 +59,29 @@ test('view authenticated dashboard totals and pipeline rates', async ({ page }) 
     .toContainText(`${summary.conversionRates.interview}%`)
   await expect(page.getByRole('article', { name: 'Offer progression' }))
     .toContainText(`${summary.conversionRates.offer}%`)
+})
+
+test('create a reminder from an inactive application suggestion', async ({ page }) => {
+  await signIn(page)
+  await page.getByRole('link', { name: 'Dashboard' }).click()
+
+  const suggestion = page.getByRole('article', { name: 'Follow up with Cove Labs' })
+  await expect(suggestion).toBeVisible()
+  await expect(suggestion.getByRole('link', { name: 'Cove Labs — Quality Engineer' }))
+    .toHaveAttribute('href', '/applications/demo-cove-quality-engineer')
+  await suggestion.getByRole('button', { name: 'Add follow-up' }).click()
+
+  await expect(page.getByRole('button', { name: 'Add follow-up' })).not.toBeVisible()
+  const reminder = page.getByRole('article', { name: 'Follow up with Cove Labs' })
+  await expect(reminder.getByRole('button', { name: 'Complete' })).toBeVisible()
+  await reminder.getByRole('link', { name: /Cove Labs/ }).click()
+
+  const applicationReminder = page.getByRole('article', {
+    name: 'Follow up with Cove Labs',
+  })
+  await applicationReminder.getByRole('button', { name: 'Delete' }).click()
+  await page.getByRole('button', { name: 'Delete reminder' }).click()
+  await expect(applicationReminder).not.toBeVisible()
 })
 
 test('create, complete, reopen, and delete an application reminder', async ({ page }) => {
@@ -126,6 +167,10 @@ test('search, filter, sort, and retain application discovery controls', async ({
   await expect(page.getByText('Shopify')).toBeVisible()
 
   await page.getByRole('button', { name: 'Clear filters' }).first().click()
+  await expect(page).not.toHaveURL(/search=/)
+  await expect(page.getByLabel('Search')).toHaveValue('')
+  await expect(page.getByLabel('Status')).toHaveValue('')
+  await expect(page.getByLabel('Source')).toHaveValue('')
   await page.getByLabel('Sort by').selectOption('company')
   await page.getByLabel('Order').selectOption('asc')
   await page.getByRole('button', { name: 'Apply filters' }).click()

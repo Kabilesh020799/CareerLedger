@@ -61,8 +61,8 @@ export function ApplicationBoard({
           <Stack
             as="section"
             aria-label={`${label} applications`}
-            bg={isDropTarget ? 'teal.50' : 'gray.100'}
-            borderColor={isDropTarget ? 'teal.400' : 'transparent'}
+            bg={isDropTarget ? 'purple.subtle' : 'bg.muted'}
+            borderColor={isDropTarget ? 'purple.emphasized' : 'transparent'}
             borderRadius="xl"
             borderWidth="2px"
             flex="0 0 17rem"
@@ -77,13 +77,13 @@ export function ApplicationBoard({
           >
             <Flex align="center" justify="space-between" px="1">
               <Heading as="h3" size="sm">{label}</Heading>
-              <Badge colorPalette="teal" variant="subtle">
+              <Badge colorPalette="purple" variant="subtle">
                 {statusApplications.length}
               </Badge>
             </Flex>
 
             {statusApplications.length === 0 && (
-              <Text color="gray.500" fontSize="sm" px="1">No applications</Text>
+              <Text color="fg.subtle" fontSize="sm" px="1">No applications</Text>
             )}
 
             {statusApplications.map((application) => (
@@ -149,7 +149,8 @@ function ApplicationBoardCard({
     <Stack
       as="article"
       aria-label={`${application.company}, ${application.jobTitle}`}
-      bg="white"
+      bg="bg.panel"
+      borderColor="border"
       borderRadius="lg"
       borderWidth="1px"
       cursor={disabled ? 'wait' : 'grab'}
@@ -162,12 +163,12 @@ function ApplicationBoardCard({
       onDragStart={onDragStart}
     >
       <Stack gap="1">
-        <ChakraLink asChild fontWeight="semibold" color="teal.700">
+        <ChakraLink asChild fontWeight="semibold" color="purple.fg">
           <Link to={`/applications/${application.id}`}>{application.company}</Link>
         </ChakraLink>
-        <Text color="gray.700" fontSize="sm">{application.jobTitle}</Text>
+        <Text color="fg" fontSize="sm">{application.jobTitle}</Text>
         {application.location && (
-          <Text color="gray.500" fontSize="xs">{application.location}</Text>
+          <Text color="fg.subtle" fontSize="xs">{application.location}</Text>
         )}
       </Stack>
 

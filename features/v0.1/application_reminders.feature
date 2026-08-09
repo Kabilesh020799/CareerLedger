@@ -54,3 +54,28 @@ Feature: Track application follow-ups and deadlines
     Given I own an application with reminders
     When I delete the application
     Then its reminders should also be deleted
+
+  Scenario: Suggest a follow-up for an inactive application
+    Given I own an application with status "APPLIED"
+    And its latest application or timeline activity was more than 7 days ago
+    And it has no follow-up reminder
+    When I open the dashboard
+    Then the application should appear in suggested follow-ups
+    And the suggestion should link to the application
+
+  Scenario Outline: Do not suggest an ineligible follow-up
+    Given I own an application that <condition>
+    When I open the dashboard
+    Then the application should not appear in suggested follow-ups
+
+    Examples:
+      | condition                                      |
+      | does not have status "APPLIED"                |
+      | has activity within the last 7 days            |
+      | already has a follow-up reminder               |
+
+  Scenario: Create a reminder from a follow-up suggestion
+    Given I own an application with a follow-up suggestion
+    When I add the suggested follow-up
+    Then an open follow-up reminder due one day later should be created
+    And the application should disappear from suggested follow-ups

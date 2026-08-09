@@ -14,7 +14,7 @@ export function DashboardReminders() {
     <Stack gap="4">
       <Stack gap="1">
         <Heading as="h3" size="lg">Reminders</Heading>
-        <Text color="gray.600" fontSize="sm">Upcoming actions and deadlines across your applications.</Text>
+        <Text color="fg.muted" fontSize="sm">Upcoming actions and deadlines across your applications.</Text>
       </Stack>
 
       {updateReminder.isError && (
@@ -29,8 +29,8 @@ export function DashboardReminders() {
 
       {remindersQuery.isPending && (
         <Flex align="center" aria-label="Loading dashboard reminders" gap="3">
-          <Spinner color="teal.600" size="sm" />
-          <Text color="gray.600">Loading reminders…</Text>
+          <Spinner color="purple.fg" size="sm" />
+          <Text color="fg.muted">Loading reminders…</Text>
         </Flex>
       )}
 
@@ -46,9 +46,9 @@ export function DashboardReminders() {
       )}
 
       {remindersQuery.isSuccess && remindersQuery.data.length === 0 && (
-        <Box bg="white" borderRadius="xl" borderWidth="1px" p="5">
+        <Box bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" p="5">
           <Text fontWeight="medium">No open reminders</Text>
-          <Text color="gray.600" fontSize="sm" mt="1">New follow-ups and deadlines will appear here.</Text>
+          <Text color="fg.muted" fontSize="sm" mt="1">New follow-ups and deadlines will appear here.</Text>
         </Box>
       )}
 
@@ -109,7 +109,7 @@ function ReminderGroup({
 }) {
   return (
     <Stack gap="3">
-      <Heading as="h4" color={heading === 'Overdue' ? 'red.700' : 'gray.700'} size="sm">
+      <Heading as="h4" color={heading === 'Overdue' ? 'fg.error' : 'fg'} size="sm">
         {heading} ({reminders.length})
       </Heading>
       <Stack gap="3">
@@ -118,8 +118,8 @@ function ReminderGroup({
             align={{ base: 'start', md: 'center' }}
             as="article"
             aria-label={reminder.description}
-            bg="white"
-            borderColor={heading === 'Overdue' ? 'red.200' : 'gray.200'}
+            bg="bg.panel"
+            borderColor={heading === 'Overdue' ? 'border.error' : 'border'}
             borderRadius="xl"
             borderWidth="1px"
             direction={{ base: 'column', md: 'row' }}
@@ -130,15 +130,15 @@ function ReminderGroup({
           >
             <Stack gap="2">
               <Flex gap="2" wrap="wrap">
-                <Badge colorPalette={heading === 'Overdue' ? 'red' : 'teal'}>{heading}</Badge>
+                <Badge colorPalette={heading === 'Overdue' ? 'red' : 'purple'}>{heading}</Badge>
                 <Badge colorPalette={reminder.type === 'DEADLINE' ? 'purple' : 'blue'}>
                   {reminder.type === 'DEADLINE' ? 'Deadline' : 'Follow-up'}
                 </Badge>
               </Flex>
               <Text fontWeight="medium">{reminder.description}</Text>
-              <Text color="gray.500" fontSize="sm">
+              <Text color="fg.subtle" fontSize="sm">
                 Due {formatReminderDate(reminder.dueAt)} ·{' '}
-                <ChakraLink asChild color="teal.700">
+                <ChakraLink asChild color="purple.fg">
                   <Link to={`/applications/${reminder.application.id}`}>
                     {reminder.application.company} — {reminder.application.jobTitle}
                   </Link>

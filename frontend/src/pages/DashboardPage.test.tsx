@@ -11,6 +11,9 @@ vi.mock('../hooks/useDashboardSummary', () => ({ useDashboardSummary: vi.fn() })
 vi.mock('../components/reminders/DashboardReminders', () => ({
   DashboardReminders: () => <div>Reminder overview</div>,
 }))
+vi.mock('../components/reminders/FollowUpSuggestions', () => ({
+  FollowUpSuggestions: () => <div>Follow-up suggestions</div>,
+}))
 
 const summary = {
   totalApplications: 9,

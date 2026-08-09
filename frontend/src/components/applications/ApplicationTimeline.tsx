@@ -56,11 +56,11 @@ export function ApplicationTimeline({ applicationId }: { applicationId: string }
   }
 
   return (
-    <Box bg="white" borderWidth="1px" borderRadius="xl" p={{ base: '5', md: '8' }}>
+    <Box bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" p={{ base: '5', md: '8' }}>
       <Stack gap="7">
         <Box>
           <Heading as="h3" size="lg">Application timeline</Heading>
-          <Text color="gray.600" mt="1">Record notes and review status changes over time.</Text>
+          <Text color="fg.muted" mt="1">Record notes and review status changes over time.</Text>
         </Box>
 
         <form onSubmit={handleSubmit(submit)} noValidate>
@@ -94,7 +94,7 @@ export function ApplicationTimeline({ applicationId }: { applicationId: string }
                 <Input {...register('occurredAt')} type="date" />
                 <Field.ErrorText>{errors.occurredAt?.message}</Field.ErrorText>
               </Field.Root>
-              <Button colorPalette="teal" loading={createEvent.isPending} type="submit">
+              <Button colorPalette="purple" loading={createEvent.isPending} type="submit">
                 Add note
               </Button>
             </Flex>
@@ -123,8 +123,8 @@ function TimelineEntries({ events, error, isPending, onRetry }: TimelineEntriesP
   if (isPending) {
     return (
       <Flex align="center" gap="3" aria-label="Loading application timeline">
-        <Spinner color="teal.600" size="sm" />
-        <Text color="gray.600">Loading timeline…</Text>
+        <Spinner color="purple.fg" size="sm" />
+        <Text color="fg.muted">Loading timeline…</Text>
       </Flex>
     )
   }
@@ -144,9 +144,9 @@ function TimelineEntries({ events, error, isPending, onRetry }: TimelineEntriesP
 
   if (!events?.length) {
     return (
-      <Box bg="gray.50" borderRadius="lg" p="5">
+      <Box bg="bg.subtle" borderRadius="lg" p="5">
         <Text fontWeight="medium">No timeline activity yet</Text>
-        <Text color="gray.600" fontSize="sm" mt="1">Add a note or change the application status to begin its history.</Text>
+        <Text color="fg.muted" fontSize="sm" mt="1">Add a note or change the application status to begin its history.</Text>
       </Box>
     )
   }
@@ -158,7 +158,7 @@ function TimelineEntries({ events, error, isPending, onRetry }: TimelineEntriesP
           as="li"
           key={event.id}
           borderLeftWidth="2px"
-          borderColor={event.type === 'STATUS_CHANGE' ? 'teal.400' : 'gray.300'}
+          borderColor={event.type === 'STATUS_CHANGE' ? 'purple.emphasized' : 'border.emphasized'}
           pb="6"
           pl="5"
           position="relative"
@@ -166,7 +166,7 @@ function TimelineEntries({ events, error, isPending, onRetry }: TimelineEntriesP
         >
           <Box
             aria-hidden="true"
-            bg={event.type === 'STATUS_CHANGE' ? 'teal.500' : 'gray.400'}
+            bg={event.type === 'STATUS_CHANGE' ? 'purple.solid' : 'bg.emphasized'}
             borderRadius="full"
             boxSize="2.5"
             left="-1.5"
@@ -174,16 +174,16 @@ function TimelineEntries({ events, error, isPending, onRetry }: TimelineEntriesP
             top="1.5"
           />
           <Flex align="center" gap="3" justify="space-between" wrap="wrap">
-            <Badge colorPalette={event.type === 'STATUS_CHANGE' ? 'teal' : 'gray'}>
+            <Badge colorPalette={event.type === 'STATUS_CHANGE' ? 'purple' : 'gray'}>
               {event.type === 'STATUS_CHANGE' ? 'Status change' : 'Note'}
             </Badge>
-            <Text color="gray.500" fontSize="sm">{formatEventDate(event.occurredAt)}</Text>
+            <Text color="fg.subtle" fontSize="sm">{formatEventDate(event.occurredAt)}</Text>
           </Flex>
           <Text mt="2">{event.description}</Text>
           {event.fromStatus && event.toStatus && (
             <Flex align="center" gap="2" mt="3">
               <StatusBadge status={event.fromStatus} />
-              <Text aria-hidden="true" color="gray.500">→</Text>
+              <Text aria-hidden="true" color="fg.subtle">→</Text>
               <StatusBadge status={event.toStatus} />
             </Flex>
           )}

@@ -5,8 +5,8 @@ export function NotFoundPage() {
   return (
     <Stack align="start" gap="4">
       <Heading as="h2" size="2xl">Page not found</Heading>
-      <Text color="gray.600">The page you requested does not exist.</Text>
-      <Button asChild colorPalette="teal">
+      <Text color="fg.muted">The page you requested does not exist.</Text>
+      <Button asChild colorPalette="purple">
         <Link to="/applications">Return to applications</Link>
       </Button>
     </Stack>

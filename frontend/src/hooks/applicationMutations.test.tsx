@@ -67,6 +67,7 @@ describe('application mutation hooks', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications'] })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications', application.id, 'events'] })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['dashboard'] })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['reminders'] })
   })
 
   it('refreshes the timeline after adding a manual event', async () => {
@@ -95,6 +96,7 @@ describe('application mutation hooks', () => {
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: ['applications', application.id, 'events'],
     })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['reminders'] })
   })
 
   it('removes deleted details and refreshes the list', async () => {

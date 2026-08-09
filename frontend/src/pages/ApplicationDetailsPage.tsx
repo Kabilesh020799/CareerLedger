@@ -20,7 +20,7 @@ export function ApplicationDetailsPage() {
   const deleteApplication = useDeleteApplication()
 
   if (applicationQuery.isPending) {
-    return <Flex minH="18rem" align="center" justify="center" aria-label="Loading application"><Spinner color="teal.600" size="xl" /></Flex>
+    return <Flex minH="18rem" align="center" justify="center" aria-label="Loading application"><Spinner color="purple.fg" size="xl" /></Flex>
   }
 
   if (applicationQuery.isError) {
@@ -47,7 +47,7 @@ export function ApplicationDetailsPage() {
       <Flex align={{ base: 'start', md: 'center' }} direction={{ base: 'column', md: 'row' }} gap="4" justify="space-between">
         <Box>
           <Heading as="h2" size="2xl">{application.jobTitle}</Heading>
-          <Text color="gray.600" fontSize="lg" mt="1">{application.company}</Text>
+          <Text color="fg.muted" fontSize="lg" mt="1">{application.company}</Text>
         </Box>
         <Flex gap="3">
           <Button asChild variant="outline">
@@ -65,7 +65,7 @@ export function ApplicationDetailsPage() {
         <Alert.Root status="error"><Alert.Indicator /><Alert.Title>{getApiErrorMessage(deleteApplication.error, 'Unable to delete application.')}</Alert.Title></Alert.Root>
       )}
 
-      <Box bg="white" borderWidth="1px" borderRadius="xl" p={{ base: '5', md: '8' }}>
+      <Box bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" p={{ base: '5', md: '8' }}>
         <SimpleGrid columns={{ base: 1, md: 2 }} gap="7">
           <Detail label="Status"><StatusBadge status={application.status} /></Detail>
           <Detail label="Applied date">{formatDate(application.appliedAt)}</Detail>
@@ -88,5 +88,5 @@ export function ApplicationDetailsPage() {
 }
 
 function Detail({ label, children }: { label: string; children: React.ReactNode }) {
-  return <Stack gap="1"><Text color="gray.500" fontSize="sm" fontWeight="medium">{label}</Text><Box>{children}</Box></Stack>
+  return <Stack gap="1"><Text color="fg.subtle" fontSize="sm" fontWeight="medium">{label}</Text><Box>{children}</Box></Stack>
 }

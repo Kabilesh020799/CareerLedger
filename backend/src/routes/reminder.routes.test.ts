@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const reminderServiceMock = vi.hoisted(() => ({
   listForApplication: vi.fn(),
   listOpen: vi.fn(),
+  listFollowUpSuggestions: vi.fn(),
+  createSuggestedFollowUp: vi.fn(),
   create: vi.fn(),
   updateCompletion: vi.fn(),
   remove: vi.fn(),
@@ -102,6 +104,42 @@ describe("reminder API", () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual([{ id: "reminder-1" }]);
     expect(reminderServiceMock.listOpen).toHaveBeenCalledWith("user-1");
+  });
+
+  it("lists follow-up suggestions for the current user", async () => {
+    const suggestions = [{ application: { id: "application-1" } }];
+    reminderServiceMock.listFollowUpSuggestions.mockResolvedValue(suggestions);
+
+    const response = await request(app).get("/api/reminders/suggestions");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(suggestions);
+    expect(reminderServiceMock.listFollowUpSuggestions).toHaveBeenCalledWith(
+      "user-1",
+    );
+  });
+
+  it("creates an eligible suggested follow-up and hides ineligible resources", async () => {
+    reminderServiceMock.createSuggestedFollowUp
+      .mockResolvedValueOnce({ id: "reminder-1" })
+      .mockResolvedValueOnce(null);
+
+    const created = await request(app).post(
+      "/api/reminders/suggestions/application-1",
+    );
+    const missing = await request(app).post(
+      "/api/reminders/suggestions/application-2",
+    );
+
+    expect(created.status).toBe(201);
+    expect(created.body).toEqual({ id: "reminder-1" });
+    expect(missing.status).toBe(404);
+    expect(missing.body).toEqual({ error: "Follow-up suggestion not found" });
+    expect(reminderServiceMock.createSuggestedFollowUp).toHaveBeenNthCalledWith(
+      1,
+      "user-1",
+      "application-1",
+    );
   });
 
   it("completes and reopens a reminder", async () => {

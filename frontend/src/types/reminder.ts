@@ -21,6 +21,15 @@ export type ReminderWithApplication = Reminder & {
   }
 }
 
+export type FollowUpSuggestion = {
+  application: {
+    id: string
+    company: string
+    jobTitle: string
+  }
+  lastActivityAt: string
+}
+
 export type CreateReminderInput = {
   type: ReminderType
   description: string

@@ -81,7 +81,7 @@ export function ApplicationForm({
         </FormField>
 
         <FormField label="Status" error={errors.status?.message}>
-          <Box as="select" {...register('status')} aria-label="Status" borderWidth="1px" borderRadius="md" h="10" px="3" width="full" bg="transparent">
+          <Box as="select" {...register('status')} aria-label="Status" borderColor="border" borderWidth="1px" borderRadius="md" h="10" px="3" width="full" bg="bg">
             {applicationStatuses.map((status) => (
               <option key={status} value={status}>{statusLabels[status]}</option>
             ))}
@@ -93,7 +93,7 @@ export function ApplicationForm({
         <Textarea {...register('notes')} minH="8rem" resize="vertical" />
       </FormField>
 
-        <Button alignSelf="start" colorPalette="teal" loading={isSubmitting} type="submit">
+        <Button alignSelf="start" colorPalette="purple" loading={isSubmitting} type="submit">
           {submitLabel}
         </Button>
       </Stack>

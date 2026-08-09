@@ -7,6 +7,7 @@ import { useSession } from '../hooks/useSession'
 import { loginSchema, type LoginInput } from '../schemas/login.schema'
 import { googleLoginUrl } from '../services/auth.service'
 import { getApiErrorMessage } from '../utils/apiError'
+import { ThemeToggle } from '../components/ui/ThemeToggle'
 
 const errorMessages: Record<string, string> = {
   oauth: 'Google sign-in was not completed. Please try again.',
@@ -37,12 +38,15 @@ export function LoginPage() {
   if (session.data?.user) return <Navigate to="/applications" replace />
 
   return (
-    <Box minH="100vh" bg="gray.50" display="grid" placeItems="center" px="5">
+    <Box minH="100vh" bg="bg.subtle" color="fg" display="grid" placeItems="center" px="5" position="relative">
+      <Box position="absolute" right={{ base: '4', md: '7' }} top={{ base: '4', md: '7' }}>
+        <ThemeToggle />
+      </Box>
       <Container maxW="md">
-        <Stack bg="white" borderWidth="1px" borderRadius="xl" boxShadow="sm" gap="6" p={{ base: '7', md: '10' }}>
+        <Stack bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="2xl" boxShadow="lg" gap="6" p={{ base: '7', md: '10' }}>
           <Stack gap="2">
-            <Heading color="teal.700">Job Tracker</Heading>
-            <Text color="gray.600">Sign in to access your applications.</Text>
+            <Heading color="purple.fg">Job Tracker</Heading>
+            <Text color="fg.muted">Sign in to access your applications.</Text>
           </Stack>
 
           {insecureHttpDeployment && (
@@ -58,7 +62,7 @@ export function LoginPage() {
           )}
 
           {error && (
-            <Box role="alert" bg="red.50" color="red.700" borderRadius="md" px="4" py="3">
+            <Box role="alert" bg="bg.error" color="fg.error" borderRadius="md" px="4" py="3">
               {errorMessages[error] ?? 'Sign-in failed. Please try again.'}
             </Box>
           )}
@@ -92,7 +96,7 @@ export function LoginPage() {
                   <Field.ErrorText>{errors.password?.message}</Field.ErrorText>
                 </Field.Root>
 
-                <Button type="submit" colorPalette="teal" loading={passwordLogin.isPending}>
+                <Button type="submit" colorPalette="purple" loading={passwordLogin.isPending}>
                   Sign in
                 </Button>
               </Stack>
@@ -102,12 +106,12 @@ export function LoginPage() {
           {passwordLoginEnabled && googleLoginEnabled && <Separator />}
 
           {googleLoginEnabled && (
-            <Button asChild colorPalette="teal" size="lg">
+            <Button asChild colorPalette="purple" size="lg">
               <a href={googleLoginUrl}>Continue with Google</a>
             </Button>
           )}
 
-          <Text color="gray.500" fontSize="sm">
+          <Text color="fg.subtle" fontSize="sm">
             Your applications are private to your signed-in account.
           </Text>
         </Stack>

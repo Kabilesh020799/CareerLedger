@@ -1,15 +1,8 @@
 @roadmap
-Feature: Automate follow-ups and compare resume strategy
+Feature: Compare resume strategy
   As a job seeker
-  I want automatic follow-up suggestions and resume tracking
-  So that I receive proactive guidance and learn what produces results
-
-  Scenario: Suggest a follow-up
-    Given an application has status "APPLIED"
-    And it has had no activity for more than 7 days
-    And no follow-up has been recorded
-    When reminders are evaluated
-    Then a follow-up reminder should be suggested
+  I want to track the resume used for each application
+  So that I can learn what produces results
 
   Scenario: Record the resume used for an application
     Given multiple resume versions exist

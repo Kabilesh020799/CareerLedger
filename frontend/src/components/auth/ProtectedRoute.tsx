@@ -10,8 +10,8 @@ export function ProtectedRoute() {
     return (
       <Center minH="100vh">
         <Stack align="center" gap="3">
-          <Spinner color="teal.600" />
-          <Text color="gray.600">Checking your session…</Text>
+          <Spinner color="purple.fg" />
+          <Text color="fg.muted">Checking your session…</Text>
         </Stack>
       </Center>
     )
@@ -22,7 +22,7 @@ export function ProtectedRoute() {
       <Center minH="100vh" px="6">
         <Stack align="center" gap="3" textAlign="center">
           <Text fontWeight="semibold">We could not verify your session.</Text>
-          <Text color="gray.600">Refresh the page to try again.</Text>
+          <Text color="fg.muted">Refresh the page to try again.</Text>
         </Stack>
       </Center>
     )

@@ -1,11 +1,19 @@
 html {
-  background: #f7fafc;
+  background: var(--chakra-colors-bg-subtle, #f7f7fb);
 }
 
 body {
+  background: var(--chakra-colors-bg-subtle, #f7f7fb);
+  color: var(--chakra-colors-fg, #18181b);
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+html.dark,
+html.dark body {
+  background: var(--chakra-colors-bg-subtle, #11111b);
 }
 
 * {

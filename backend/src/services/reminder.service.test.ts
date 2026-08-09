@@ -10,7 +10,7 @@ const transaction = {
 };
 
 const prismaMock = vi.hoisted(() => ({
-  application: { findFirst: vi.fn() },
+  application: { findFirst: vi.fn(), findMany: vi.fn() },
   applicationReminder: {
     findMany: vi.fn(),
     deleteMany: vi.fn(),
@@ -78,6 +78,109 @@ describe("reminderService", () => {
       orderBy: [{ dueAt: "asc" }, { createdAt: "asc" }],
       take: 50,
     });
+  });
+
+  it("suggests owned applied applications inactive for more than seven days", async () => {
+    const now = new Date("2026-08-09T15:00:00.000Z");
+    const updatedAt = new Date("2026-07-30T10:00:00.000Z");
+    const eventAt = new Date("2026-07-31T10:00:00.000Z");
+    prismaMock.application.findMany.mockResolvedValue([
+      {
+        id: "application-1",
+        company: "Acme",
+        jobTitle: "Engineer",
+        updatedAt,
+        events: [{ createdAt: eventAt }],
+      },
+    ]);
+
+    await expect(
+      reminderService.listFollowUpSuggestions("user-1", now),
+    ).resolves.toEqual([
+      {
+        application: {
+          id: "application-1",
+          company: "Acme",
+          jobTitle: "Engineer",
+        },
+        lastActivityAt: eventAt,
+      },
+    ]);
+    expect(prismaMock.application.findMany).toHaveBeenCalledWith({
+      where: {
+        userId: "user-1",
+        status: "APPLIED",
+        updatedAt: { lt: new Date("2026-08-02T15:00:00.000Z") },
+        events: {
+          none: { createdAt: { gte: new Date("2026-08-02T15:00:00.000Z") } },
+        },
+        reminders: { none: { type: "FOLLOW_UP" } },
+      },
+      select: {
+        id: true,
+        company: true,
+        jobTitle: true,
+        updatedAt: true,
+        events: {
+          orderBy: { createdAt: "desc" },
+          select: { createdAt: true },
+          take: 1,
+        },
+      },
+      orderBy: { updatedAt: "asc" },
+      take: 20,
+    });
+  });
+
+  it("creates a suggested follow-up due one day later when still eligible", async () => {
+    const now = new Date("2026-08-09T15:00:00.000Z");
+    transaction.application.findFirst.mockResolvedValue({
+      id: "application-1",
+      company: "Acme",
+    });
+    transaction.applicationReminder.create.mockResolvedValue({ id: "reminder-1" });
+
+    await expect(
+      reminderService.createSuggestedFollowUp(
+        "user-1",
+        "application-1",
+        now,
+      ),
+    ).resolves.toEqual({ id: "reminder-1" });
+    expect(transaction.application.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "application-1",
+        userId: "user-1",
+        status: "APPLIED",
+        updatedAt: { lt: new Date("2026-08-02T15:00:00.000Z") },
+        events: {
+          none: { createdAt: { gte: new Date("2026-08-02T15:00:00.000Z") } },
+        },
+        reminders: { none: { type: "FOLLOW_UP" } },
+      },
+      select: { id: true, company: true },
+    });
+    expect(transaction.applicationReminder.create).toHaveBeenCalledWith({
+      data: {
+        applicationId: "application-1",
+        type: "FOLLOW_UP",
+        description: "Follow up with Acme",
+        dueAt: new Date("2026-08-10T15:00:00.000Z"),
+      },
+    });
+  });
+
+  it("does not create a suggested follow-up when it is no longer eligible", async () => {
+    transaction.application.findFirst.mockResolvedValue(null);
+
+    await expect(
+      reminderService.createSuggestedFollowUp(
+        "user-1",
+        "application-1",
+        new Date("2026-08-09T15:00:00.000Z"),
+      ),
+    ).resolves.toBeNull();
+    expect(transaction.applicationReminder.create).not.toHaveBeenCalled();
   });
 
   it("creates a reminder only after confirming application ownership", async () => {

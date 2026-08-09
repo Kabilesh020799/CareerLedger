@@ -1,5 +1,6 @@
 import type {
   CreateReminderInput,
+  FollowUpSuggestion,
   Reminder,
   ReminderWithApplication,
 } from '../types/reminder'
@@ -15,6 +16,18 @@ export const reminderService = {
 
   async listOpen() {
     const response = await api.get<ReminderWithApplication[]>('/reminders')
+    return response.data
+  },
+
+  async listFollowUpSuggestions() {
+    const response = await api.get<FollowUpSuggestion[]>('/reminders/suggestions')
+    return response.data
+  },
+
+  async createSuggestedFollowUp(applicationId: string) {
+    const response = await api.post<Reminder>(
+      `/reminders/suggestions/${applicationId}`,
+    )
     return response.data
   },
 

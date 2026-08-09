@@ -62,6 +62,9 @@ vi.mock('./hooks/useDashboardSummary', () => ({
 vi.mock('./components/reminders/DashboardReminders', () => ({
   DashboardReminders: () => <div>Reminder overview</div>,
 }))
+vi.mock('./components/reminders/FollowUpSuggestions', () => ({
+  FollowUpSuggestions: () => <div>Follow-up suggestions</div>,
+}))
 
 vi.mock('./hooks/useSession', () => ({
   useSession: () => ({

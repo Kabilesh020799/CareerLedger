@@ -62,7 +62,7 @@ export function ApplicationDiscoveryControls({
   }
 
   return (
-    <Box bg="white" borderRadius="xl" borderWidth="1px" p={{ base: '4', md: '5' }}>
+    <Box bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" p={{ base: '4', md: '5' }}>
       <form onSubmit={handleSubmit(submit)} noValidate>
         <Stack gap="4">
           <SimpleGrid columns={{ base: 1, md: 2, xl: 4 }} gap="4">
@@ -122,7 +122,7 @@ export function ApplicationDiscoveryControls({
           </SimpleGrid>
 
           <Stack direction={{ base: 'column', sm: 'row' }} gap="3">
-            <Button colorPalette="teal" type="submit">Apply filters</Button>
+            <Button colorPalette="purple" type="submit">Apply filters</Button>
             <Button type="button" variant="outline" onClick={onClear}>Clear filters</Button>
           </Stack>
         </Stack>
@@ -151,7 +151,8 @@ function Select(props: React.ComponentProps<typeof Box>) {
   return (
     <Box
       as="select"
-      bg="transparent"
+      bg="bg"
+      borderColor="border"
       borderRadius="md"
       borderWidth="1px"
       h="10"

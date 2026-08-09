@@ -24,9 +24,9 @@ export function ApplicationBoardPage() {
       >
         <Stack gap="1">
           <Heading as="h2" size="2xl">Application board</Heading>
-          <Text color="gray.600">Move opportunities as they progress through your pipeline.</Text>
+          <Text color="fg.muted">Move opportunities as they progress through your pipeline.</Text>
         </Stack>
-        <Button asChild colorPalette="teal">
+        <Button asChild colorPalette="purple">
           <Link to="/applications/new">Add application</Link>
         </Button>
       </Flex>
@@ -56,7 +56,7 @@ export function ApplicationBoardPage() {
 
       {boardQuery.isPending && (
         <Flex align="center" aria-label="Loading application board" justify="center" minH="20rem">
-          <Spinner color="teal.600" size="xl" />
+          <Spinner color="purple.fg" size="xl" />
         </Flex>
       )}
 
@@ -78,7 +78,8 @@ export function ApplicationBoardPage() {
       {boardQuery.isSuccess && boardQuery.data.length === 0 && (
         <Stack
           align="center"
-          bg="white"
+          bg="bg.panel"
+          borderColor="border"
           borderRadius="xl"
           borderWidth="1px"
           gap="3"
@@ -86,8 +87,8 @@ export function ApplicationBoardPage() {
           textAlign="center"
         >
           <Heading as="h3" size="lg">No applications on your board</Heading>
-          <Text color="gray.600">Create your first application to start building your pipeline.</Text>
-          <Button asChild colorPalette="teal" mt="2">
+          <Text color="fg.muted">Create your first application to start building your pipeline.</Text>
+          <Button asChild colorPalette="purple" mt="2">
             <Link to="/applications/new">Create your first application</Link>
           </Button>
         </Stack>

@@ -47,6 +47,18 @@ const demoApplications = [
         appliedAt: new Date("2026-08-04T00:00:00.000Z"),
     },
     {
+        id: "demo-cove-quality-engineer",
+        company: "Cove Labs",
+        jobTitle: "Quality Engineer",
+        location: "Halifax, NS",
+        source: "Company Website",
+        status: "APPLIED",
+        notes: "Waiting for an update after submitting the application.",
+        appliedAt: new Date("2026-07-20T00:00:00.000Z"),
+        createdAt: new Date("2026-07-20T00:00:00.000Z"),
+        updatedAt: new Date("2026-07-20T00:00:00.000Z"),
+    },
+    {
         id: "demo-volta-product-engineer",
         company: "Volta",
         jobTitle: "Product Engineer",

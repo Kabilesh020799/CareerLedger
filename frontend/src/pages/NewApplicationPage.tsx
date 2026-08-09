@@ -16,10 +16,10 @@ export function NewApplicationPage() {
           <Link to="/applications">← Back to applications</Link>
         </Button>
         <Heading as="h2" size="2xl">Add application</Heading>
-        <Text color="gray.600" mt="1">Record an opportunity and keep its progress organized.</Text>
+        <Text color="fg.muted" mt="1">Record an opportunity and keep its progress organized.</Text>
       </Box>
 
-      <Box bg="white" borderWidth="1px" borderRadius="xl" p={{ base: '5', md: '8' }}>
+      <Box bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" p={{ base: '5', md: '8' }}>
         <ApplicationForm
           initialValues={emptyApplicationForm}
           submitLabel="Create application"

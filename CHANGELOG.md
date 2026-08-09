@@ -18,6 +18,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic dashboard refreshes after applications are created, updated, moved, or deleted.
 - Added user-owned follow-up and deadline reminders that can be created, completed, reopened, or deleted from application details.
 - Added overdue and upcoming reminder groups on the dashboard with direct application links and quick completion actions.
+- Added automatic dashboard follow-up suggestions for applied applications inactive for more than seven days, with one-action reminder creation due the next day.
+- Added persistent light and dark themes with device-preference detection, accessible controls before and after sign-in, and a contrast-aware purple and plum visual system.
 
 ### Fixed
 

@@ -13,7 +13,7 @@ export function EditApplicationPage() {
   const updateApplication = useUpdateApplication()
 
   if (applicationQuery.isPending) {
-    return <Flex minH="18rem" align="center" justify="center" aria-label="Loading application"><Spinner color="teal.600" size="xl" /></Flex>
+    return <Flex minH="18rem" align="center" justify="center" aria-label="Loading application"><Spinner color="purple.fg" size="xl" /></Flex>
   }
 
   if (applicationQuery.isError || !id) {
@@ -31,10 +31,10 @@ export function EditApplicationPage() {
           <Link to={`/applications/${application.id}`}>← Back to application</Link>
         </Button>
         <Heading as="h2" size="2xl">Edit application</Heading>
-        <Text color="gray.600" mt="1">Update your application to {application.company}.</Text>
+        <Text color="fg.muted" mt="1">Update your application to {application.company}.</Text>
       </Box>
 
-      <Box bg="white" borderWidth="1px" borderRadius="xl" p={{ base: '5', md: '8' }}>
+      <Box bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" p={{ base: '5', md: '8' }}>
         <ApplicationForm
           initialValues={applicationToFormValues(application)}
           submitLabel="Save changes"

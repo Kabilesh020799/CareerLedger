@@ -57,11 +57,11 @@ export function ApplicationReminders({ applicationId }: { applicationId: string 
     createReminder.error ?? updateReminder.error ?? deleteReminder.error
 
   return (
-    <Box bg="white" borderRadius="xl" borderWidth="1px" p={{ base: '5', md: '8' }}>
+    <Box bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" p={{ base: '5', md: '8' }}>
       <Stack gap="7">
         <Box>
           <Heading as="h3" size="lg">Reminders</Heading>
-          <Text color="gray.600" mt="1">Schedule follow-ups and important application deadlines.</Text>
+          <Text color="fg.muted" mt="1">Schedule follow-ups and important application deadlines.</Text>
         </Box>
 
         {mutationError && (
@@ -109,7 +109,7 @@ export function ApplicationReminders({ applicationId }: { applicationId: string 
 
             <Button
               alignSelf="start"
-              colorPalette="teal"
+              colorPalette="purple"
               loading={createReminder.isPending}
               type="submit"
             >
@@ -160,8 +160,8 @@ function ReminderEntries({
   if (isPending) {
     return (
       <Flex align="center" aria-label="Loading application reminders" gap="3">
-        <Spinner color="teal.600" size="sm" />
-        <Text color="gray.600">Loading reminders…</Text>
+        <Spinner color="purple.fg" size="sm" />
+        <Text color="fg.muted">Loading reminders…</Text>
       </Flex>
     )
   }
@@ -181,9 +181,9 @@ function ReminderEntries({
 
   if (!reminders?.length) {
     return (
-      <Box bg="gray.50" borderRadius="lg" p="5">
+      <Box bg="bg.subtle" borderRadius="lg" p="5">
         <Text fontWeight="medium">No reminders yet</Text>
-        <Text color="gray.600" fontSize="sm" mt="1">Add a follow-up or deadline to keep this application moving.</Text>
+        <Text color="fg.muted" fontSize="sm" mt="1">Add a follow-up or deadline to keep this application moving.</Text>
       </Box>
     )
   }
@@ -196,7 +196,7 @@ function ReminderEntries({
           <Stack
             as="article"
             aria-label={reminder.description}
-            bg="gray.50"
+            bg="bg.subtle"
             borderRadius="lg"
             gap="3"
             key={reminder.id}
@@ -209,12 +209,12 @@ function ReminderEntries({
                   <Badge colorPalette={reminder.type === 'DEADLINE' ? 'purple' : 'blue'}>
                     {reminder.type === 'DEADLINE' ? 'Deadline' : 'Follow-up'}
                   </Badge>
-                  <Badge colorPalette={status === 'Overdue' ? 'red' : status === 'Completed' ? 'green' : 'teal'}>
+                  <Badge colorPalette={status === 'Overdue' ? 'red' : status === 'Completed' ? 'green' : 'purple'}>
                     {status}
                   </Badge>
                 </Flex>
                 <Text fontWeight="medium">{reminder.description}</Text>
-                <Text color="gray.500" fontSize="sm">Due {formatReminderDate(reminder.dueAt)}</Text>
+                <Text color="fg.subtle" fontSize="sm">Due {formatReminderDate(reminder.dueAt)}</Text>
               </Stack>
               <Flex gap="2">
                 <Button
