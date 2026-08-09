@@ -6,6 +6,7 @@ exports.applicationService = {
     list(userId) {
         return prisma_1.prisma.application.findMany({
             where: { userId },
+            include: applicationInclude,
             orderBy: { createdAt: "desc" },
         });
     },
@@ -39,6 +40,7 @@ exports.applicationService = {
             prisma_1.prisma.application.count({ where }),
             prisma_1.prisma.application.findMany({
                 where,
+                include: applicationInclude,
                 orderBy: [orderBy, { id: "asc" }],
                 skip: (query.page - 1) * query.limit,
                 take: query.limit,
@@ -55,10 +57,26 @@ exports.applicationService = {
         };
     },
     create(userId, data) {
-        return prisma_1.prisma.application.create({ data: { ...data, userId } });
+        return prisma_1.prisma.$transaction(async (transaction) => {
+            if (data.resumeVersionId) {
+                const resumeVersion = await transaction.resumeVersion.findFirst({
+                    where: { id: data.resumeVersionId, userId },
+                    select: { id: true },
+                });
+                if (!resumeVersion)
+                    return null;
+            }
+            return transaction.application.create({
+                data: { ...data, userId },
+                include: applicationInclude,
+            });
+        });
     },
     findById(userId, id) {
-        return prisma_1.prisma.application.findFirst({ where: { id, userId } });
+        return prisma_1.prisma.application.findFirst({
+            where: { id, userId },
+            include: applicationInclude,
+        });
     },
     async update(userId, id, data) {
         return prisma_1.prisma.$transaction(async (transaction) => {
@@ -67,9 +85,18 @@ exports.applicationService = {
             });
             if (!existing)
                 return null;
+            if (data.resumeVersionId) {
+                const resumeVersion = await transaction.resumeVersion.findFirst({
+                    where: { id: data.resumeVersionId, userId },
+                    select: { id: true },
+                });
+                if (!resumeVersion)
+                    return false;
+            }
             const application = await transaction.application.update({
                 where: { id },
                 data,
+                include: applicationInclude,
             });
             if (data.status && data.status !== existing.status) {
                 await transaction.applicationEvent.create({
@@ -88,6 +115,11 @@ exports.applicationService = {
     async remove(userId, id) {
         const result = await prisma_1.prisma.application.deleteMany({ where: { id, userId } });
         return result.count > 0;
+    },
+};
+const applicationInclude = {
+    resumeVersion: {
+        select: { id: true, name: true, notes: true },
     },
 };
 function applicationOrderBy(sortBy, sortOrder) {

@@ -1,13 +1,8 @@
 @roadmap
-Feature: Compare resume strategy
+Feature: Compare resume outcomes
   As a job seeker
-  I want to track the resume used for each application
+  I want to compare outcomes across resume versions
   So that I can learn what produces results
-
-  Scenario: Record the resume used for an application
-    Given multiple resume versions exist
-    When I create or update an application
-    Then I should be able to associate one resume version with it
 
   Scenario: Compare outcomes by resume
     Given applications reference different resume versions

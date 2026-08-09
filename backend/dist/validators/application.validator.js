@@ -22,6 +22,7 @@ exports.createApplicationSchema = zod_1.z.object({
     status: zod_1.z.enum(exports.applicationStatuses).optional(),
     notes: nullableText,
     appliedAt: zod_1.z.coerce.date().nullable().optional(),
+    resumeVersionId: zod_1.z.string().trim().min(1).nullable().optional(),
 });
 exports.updateApplicationSchema = exports.createApplicationSchema
     .partial()

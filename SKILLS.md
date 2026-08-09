@@ -142,6 +142,16 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 **Specification:** `features/v0.1/application_reminders.feature`.
 
+### Resume version tracking
+
+**Purpose:** Record reusable resume variants and identify which version accompanied each application.
+
+**Expected knowledge:** Prisma ownership relations, optional associations, user-scoped REST APIs, validated forms, and TanStack Query cache invalidation.
+
+**Critical rule:** authorize every resume version through its owner, permit only an owned version to be associated with an application, and preserve applications by clearing their association when a version is deleted.
+
+**Specification:** `features/v0.1/resume_versions.feature`.
+
 ## Roadmap skills
 
 ### Strategy analytics
@@ -192,9 +202,9 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 **Specification:** the LLM fallback scenario in `features/roadmap/gmail_sync.feature`.
 
-### Resume strategy
+### Resume outcome analytics
 
-**Purpose:** Measure which resume versions produce outcomes.
+**Purpose:** Compare application outcomes across the implemented resume versions.
 
 **Expected knowledge:** relational modeling, resume versioning, outcome definitions, and responsible analytics.
 

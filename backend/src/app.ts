@@ -9,6 +9,7 @@ import { applicationRouter } from "./routes/application.routes";
 import { authRouter } from "./routes/auth.routes";
 import { dashboardRouter } from "./routes/dashboard.routes";
 import { reminderRouter } from "./routes/reminder.routes";
+import { resumeVersionRouter } from "./routes/resume-version.routes";
 import { PrismaSessionStore } from "./services/session-store";
 
 export function createApp() {
@@ -45,6 +46,7 @@ export function createApp() {
   app.use("/api/applications", requireAuth, applicationRouter);
   app.use("/api/dashboard", requireAuth, dashboardRouter);
   app.use("/api/reminders", requireAuth, reminderRouter);
+  app.use("/api/resumes", requireAuth, resumeVersionRouter);
 
   app.use(
     (

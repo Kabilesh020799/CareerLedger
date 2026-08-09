@@ -41,6 +41,10 @@ exports.applicationController = {
         if (!parsed.success)
             return validationError(res, parsed.error.flatten());
         const application = await application_service_1.applicationService.create(getUserId(req), parsed.data);
+        if (!application) {
+            res.status(400).json({ error: "Resume version not found" });
+            return;
+        }
         res.status(201).json(application);
     },
     async getById(req, res) {
@@ -56,6 +60,10 @@ exports.applicationController = {
         if (!parsed.success)
             return validationError(res, parsed.error.flatten());
         const application = await application_service_1.applicationService.update(getUserId(req), getId(req), parsed.data);
+        if (application === false) {
+            res.status(400).json({ error: "Resume version not found" });
+            return;
+        }
         if (!application) {
             res.status(404).json({ error: "Application not found" });
             return;

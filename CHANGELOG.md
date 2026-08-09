@@ -6,7 +6,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
-## [2.2.0] - 2026-08-09
+## [3.0.0] - 2026-08-09
 
 ### Added
 
@@ -20,6 +20,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added overdue and upcoming reminder groups on the dashboard with direct application links and quick completion actions.
 - Added automatic dashboard follow-up suggestions for applied applications inactive for more than seven days, with one-action reminder creation due the next day.
 - Added persistent light and dark themes with device-preference detection, accessible controls before and after sign-in, and a contrast-aware purple and plum visual system.
+- Added private, reusable resume versions with editable positioning notes and optional application associations that are safely cleared when a version is deleted.
 
 ### Fixed
 
@@ -33,6 +34,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v2.2.0...HEAD
-[2.2.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v2.1.0...v2.2.0
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v2.1.0...v3.0.0
 [2.1.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v2.0.0...v2.1.0

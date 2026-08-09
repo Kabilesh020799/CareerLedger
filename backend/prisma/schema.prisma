@@ -46,6 +46,8 @@ model Application {
   appliedAt DateTime?
   userId    String?
   user      User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeVersionId String?
+  resumeVersion   ResumeVersion? @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
   events    ApplicationEvent[]
   reminders ApplicationReminder[]
 
@@ -56,6 +58,21 @@ model Application {
   @@index([userId, company])
   @@index([userId, createdAt])
   @@index([userId, status])
+  @@index([userId, updatedAt])
+  @@index([resumeVersionId])
+}
+
+model ResumeVersion {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  notes        String?
+  applications Application[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([userId, name])
   @@index([userId, updatedAt])
 }
 
@@ -98,6 +115,7 @@ model User {
   avatarUrl    String?
 
   applications Application[]
+  resumeVersions ResumeVersion[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

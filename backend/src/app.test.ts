@@ -63,6 +63,11 @@ describe("authentication API boundary", () => {
     expect(response.body).toEqual({ error: "Authentication required" });
   });
 
+  it("protects resume versions from unauthenticated requests", async () => {
+    const response = await request(app).get("/api/resumes");
+    expect(response.status).toBe(401);
+  });
+
   it("fails closed when Google credentials are missing", async () => {
     const response = await request(app).get("/api/auth/google");
 

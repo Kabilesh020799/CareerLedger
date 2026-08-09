@@ -3,8 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { prismaMock, transactionMock } = vi.hoisted(() => {
   const transaction = {
     application: {
+      create: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn(),
+    },
+    resumeVersion: {
+      findFirst: vi.fn(),
     },
     applicationEvent: {
       create: vi.fn(),
@@ -30,6 +34,12 @@ vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
 
 import { applicationService } from "./application.service";
 
+const applicationInclude = {
+  resumeVersion: {
+    select: { id: true, name: true, notes: true },
+  },
+};
+
 describe("application ownership", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -45,6 +55,7 @@ describe("application ownership", () => {
 
     expect(prismaMock.application.findMany).toHaveBeenCalledWith({
       where: { userId: "user-1" },
+      include: applicationInclude,
       orderBy: { createdAt: "desc" },
     });
   });
@@ -81,6 +92,7 @@ describe("application ownership", () => {
     expect(prismaMock.application.count).toHaveBeenCalledWith({ where });
     expect(prismaMock.application.findMany).toHaveBeenCalledWith({
       where,
+      include: applicationInclude,
       orderBy: [{ company: "asc" }, { id: "asc" }],
       skip: 20,
       take: 20,
@@ -103,6 +115,7 @@ describe("application ownership", () => {
 
     expect(prismaMock.application.findMany).toHaveBeenCalledWith({
       where: { userId: "user-1" },
+      include: applicationInclude,
       orderBy: [
         { appliedAt: { sort: "desc", nulls: "last" } },
         { id: "asc" },
@@ -119,20 +132,53 @@ describe("application ownership", () => {
   });
 
   it("assigns a newly created application to the authenticated user", async () => {
-    prismaMock.application.create.mockResolvedValue({ id: "application-1" });
+    transactionMock.application.create.mockResolvedValue({ id: "application-1" });
 
     await applicationService.create("user-1", {
       company: "Acme",
       jobTitle: "Engineer",
     });
 
-    expect(prismaMock.application.create).toHaveBeenCalledWith({
+    expect(transactionMock.application.create).toHaveBeenCalledWith({
       data: {
         company: "Acme",
         jobTitle: "Engineer",
         userId: "user-1",
       },
+      include: applicationInclude,
     });
+  });
+
+  it("associates only an owned resume version when creating", async () => {
+    transactionMock.resumeVersion.findFirst.mockResolvedValue({ id: "resume-1" });
+    transactionMock.application.create.mockResolvedValue({
+      id: "application-1",
+      resumeVersionId: "resume-1",
+    });
+
+    await applicationService.create("user-1", {
+      company: "Acme",
+      jobTitle: "Engineer",
+      resumeVersionId: "resume-1",
+    });
+
+    expect(transactionMock.resumeVersion.findFirst).toHaveBeenCalledWith({
+      where: { id: "resume-1", userId: "user-1" },
+      select: { id: true },
+    });
+  });
+
+  it("rejects an inaccessible resume version when creating", async () => {
+    transactionMock.resumeVersion.findFirst.mockResolvedValue(null);
+
+    await expect(
+      applicationService.create("user-1", {
+        company: "Acme",
+        jobTitle: "Engineer",
+        resumeVersionId: "resume-2",
+      }),
+    ).resolves.toBeNull();
+    expect(transactionMock.application.create).not.toHaveBeenCalled();
   });
 
   it("cannot read another user's application", async () => {
@@ -142,6 +188,7 @@ describe("application ownership", () => {
 
     expect(prismaMock.application.findFirst).toHaveBeenCalledWith({
       where: { id: "application-2", userId: "user-1" },
+      include: applicationInclude,
     });
   });
 
@@ -179,6 +226,7 @@ describe("application ownership", () => {
     expect(transactionMock.application.update).toHaveBeenCalledWith({
       where: { id: "application-1" },
       data: { status: "INTERVIEW" },
+      include: applicationInclude,
     });
     expect(transactionMock.applicationEvent.create).toHaveBeenCalledWith({
       data: {
@@ -189,6 +237,21 @@ describe("application ownership", () => {
         toStatus: "INTERVIEW",
       },
     });
+  });
+
+  it("rejects an inaccessible resume version when updating", async () => {
+    transactionMock.application.findFirst.mockResolvedValue({
+      id: "application-1",
+      status: "APPLIED",
+    });
+    transactionMock.resumeVersion.findFirst.mockResolvedValue(null);
+
+    await expect(
+      applicationService.update("user-1", "application-1", {
+        resumeVersionId: "resume-2",
+      }),
+    ).resolves.toBe(false);
+    expect(transactionMock.application.update).not.toHaveBeenCalled();
   });
 
   it("does not record a status event when the status is unchanged", async () => {

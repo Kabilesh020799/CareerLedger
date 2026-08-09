@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Alert, Box, Button, Field, Input, SimpleGrid, Stack, Textarea } from '@chakra-ui/react'
+import { Alert, Box, Button, Field, Input, NativeSelect, SimpleGrid, Stack, Text, Textarea } from '@chakra-ui/react'
 import { useForm } from 'react-hook-form'
 import {
   applicationFormSchema,
   type ApplicationFormValues,
 } from '../../schemas/application.schema'
 import { applicationStatuses } from '../../types/application'
+import { useResumeVersions } from '../../hooks/useResumeVersions'
 
 type ApplicationFormProps = {
   initialValues: ApplicationFormValues
@@ -33,6 +34,7 @@ export function ApplicationForm({
   serverError,
   onSubmit,
 }: ApplicationFormProps) {
+  const resumeVersions = useResumeVersions()
   const {
     register,
     handleSubmit,
@@ -86,6 +88,26 @@ export function ApplicationForm({
               <option key={status} value={status}>{statusLabels[status]}</option>
             ))}
           </Box>
+        </FormField>
+
+        <FormField label="Resume version" error={errors.resumeVersionId?.message}>
+          <NativeSelect.Root disabled={resumeVersions.isPending || resumeVersions.isError}>
+            <NativeSelect.Field {...register('resumeVersionId')} aria-label="Resume version">
+              <option value="">No resume version</option>
+              {resumeVersions.data?.map((resumeVersion) => (
+                <option key={resumeVersion.id} value={resumeVersion.id}>
+                  {resumeVersion.name}
+                </option>
+              ))}
+            </NativeSelect.Field>
+            <NativeSelect.Indicator />
+          </NativeSelect.Root>
+          {resumeVersions.isError && (
+            <Text color="fg.error" fontSize="sm">Resume versions could not be loaded.</Text>
+          )}
+          {resumeVersions.isSuccess && resumeVersions.data.length === 0 && (
+            <Text color="fg.muted" fontSize="sm">Add versions from the Resumes page.</Text>
+          )}
         </FormField>
       </SimpleGrid>
 

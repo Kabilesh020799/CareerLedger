@@ -21,6 +21,12 @@ export type Application = {
   status: ApplicationStatus
   notes: string | null
   appliedAt: string | null
+  resumeVersionId?: string | null
+  resumeVersion?: {
+    id: string
+    name: string
+    notes: string | null
+  } | null
   createdAt: string
   updatedAt: string
 }
@@ -34,6 +40,7 @@ export type CreateApplicationInput = {
   status?: ApplicationStatus
   notes?: string | null
   appliedAt?: string | null
+  resumeVersionId?: string | null
 }
 
 export type UpdateApplicationInput = Partial<CreateApplicationInput>

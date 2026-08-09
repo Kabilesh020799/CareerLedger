@@ -8,6 +8,7 @@ import { EditApplicationPage } from './pages/EditApplicationPage'
 import { NewApplicationPage } from './pages/NewApplicationPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { LoginPage } from './pages/LoginPage'
+import { ResumeVersionsPage } from './pages/ResumeVersionsPage'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Route index element={<Navigate to="/applications" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="board" element={<ApplicationBoardPage />} />
+          <Route path="resumes" element={<ResumeVersionsPage />} />
           <Route path="applications" element={<ApplicationsPage />} />
           <Route path="applications/new" element={<NewApplicationPage />} />
           <Route path="applications/:id" element={<ApplicationDetailsPage />} />

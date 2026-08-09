@@ -24,6 +24,7 @@ export const applicationFormSchema = z.object({
       message: 'Enter a valid applied date',
     })
     .optional(),
+  resumeVersionId: z.string().trim().optional(),
 })
 
 export type ApplicationFormValues = z.infer<typeof applicationFormSchema>
@@ -37,6 +38,7 @@ export const emptyApplicationForm: ApplicationFormValues = {
   status: 'SAVED',
   notes: '',
   appliedAt: '',
+  resumeVersionId: '',
 }
 
 export function applicationToFormValues(application: Application): ApplicationFormValues {
@@ -49,6 +51,7 @@ export function applicationToFormValues(application: Application): ApplicationFo
     status: application.status,
     notes: application.notes ?? '',
     appliedAt: application.appliedAt?.slice(0, 10) ?? '',
+    resumeVersionId: application.resumeVersionId ?? '',
   }
 }
 
@@ -64,5 +67,6 @@ export function applicationFormToInput(values: ApplicationFormValues): CreateApp
     status: values.status,
     notes: nullable(values.notes),
     appliedAt: values.appliedAt ? new Date(`${values.appliedAt}T00:00:00.000Z`).toISOString() : null,
+    resumeVersionId: nullable(values.resumeVersionId),
   }
 }

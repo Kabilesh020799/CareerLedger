@@ -15,6 +15,7 @@ const application_routes_1 = require("./routes/application.routes");
 const auth_routes_1 = require("./routes/auth.routes");
 const dashboard_routes_1 = require("./routes/dashboard.routes");
 const reminder_routes_1 = require("./routes/reminder.routes");
+const resume_version_routes_1 = require("./routes/resume-version.routes");
 const session_store_1 = require("./services/session-store");
 function createApp() {
     const app = (0, express_1.default)();
@@ -45,6 +46,7 @@ function createApp() {
     app.use("/api/applications", require_auth_1.requireAuth, application_routes_1.applicationRouter);
     app.use("/api/dashboard", require_auth_1.requireAuth, dashboard_routes_1.dashboardRouter);
     app.use("/api/reminders", require_auth_1.requireAuth, reminder_routes_1.reminderRouter);
+    app.use("/api/resumes", require_auth_1.requireAuth, resume_version_routes_1.resumeVersionRouter);
     app.use((error, _req, res, _next) => {
         console.error(error);
         res.status(500).json({ error: "Internal server error" });

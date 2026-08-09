@@ -71,6 +71,7 @@ export function ApplicationDetailsPage() {
           <Detail label="Applied date">{formatDate(application.appliedAt)}</Detail>
           <Detail label="Location">{application.location ?? 'Not provided'}</Detail>
           <Detail label="Source">{application.source ?? 'Not provided'}</Detail>
+          <Detail label="Resume version">{application.resumeVersion?.name ?? 'Not provided'}</Detail>
           <Detail label="Job URL">
             {application.jobUrl ? <a href={application.jobUrl} target="_blank" rel="noreferrer">Open job posting</a> : 'Not provided'}
           </Detail>

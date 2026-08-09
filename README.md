@@ -88,6 +88,8 @@ Inside Docker, the frontend sends `/api` requests through Nginx to the backend. 
 - Turn a follow-up suggestion into a reminder due the next day with one action.
 - Switch between a polished light theme and a low-glare dark theme from the sign-in page or application navigation.
 - Start with the device color preference and remember an explicitly selected theme across reloads.
+- Create, rename, annotate, and delete private resume versions.
+- Associate an optional resume version with each application and preserve the application if that version is deleted.
 - Delete applications after confirmation.
 - Persist records in PostgreSQL.
 - Sign in and sign out with Google.
@@ -122,9 +124,13 @@ Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW
 | `POST` | `/api/reminders/suggestions/:id` | Create a reminder from a follow-up suggestion |
 | `PATCH` | `/api/reminders/:id` | Complete or reopen a reminder |
 | `DELETE` | `/api/reminders/:id` | Delete a reminder |
+| `GET` | `/api/resumes` | List the current user's resume versions |
+| `POST` | `/api/resumes` | Create a resume version |
+| `PATCH` | `/api/resumes/:id` | Update a resume version |
+| `DELETE` | `/api/resumes/:id` | Delete a resume version |
 | `GET` | `/api/dashboard/summary` | Retrieve current user-scoped pipeline totals and rates |
 
-All application, timeline, reminder, and dashboard endpoints require an authenticated session. Requests cannot list, aggregate, or mutate applications or reminders owned by another user. Follow-up suggestions are evaluated when requested and require an `APPLIED` application whose latest application or timeline activity is more than seven days old and which has no existing follow-up reminder. Dashboard progression rates use all non-saved applications as the denominator and current active milestone statuses as the numerator. The discovery endpoint accepts `search`, `status`, `source`, `appliedFrom`, `appliedTo`, `sortBy`, `sortOrder`, `page`, and `limit` query parameters and returns `{ data, pagination }`; supported page sizes are 10, 20, and 50. The original list endpoint remains available for existing clients. Status updates and their timeline events are saved in one database transaction. Deleting an application also deletes its timeline and reminders. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
+All application, timeline, reminder, resume, and dashboard endpoints require an authenticated session. Requests cannot list, aggregate, or mutate records owned by another user. Resume endpoints store version names and notes, not uploaded documents. An application can optionally reference one of its owner's resume versions; deleting that version clears the reference without deleting the application. Follow-up suggestions are evaluated when requested and require an `APPLIED` application whose latest application or timeline activity is more than seven days old and which has no existing follow-up reminder. Dashboard progression rates use all non-saved applications as the denominator and current active milestone statuses as the numerator. The discovery endpoint accepts `search`, `status`, `source`, `appliedFrom`, `appliedTo`, `sortBy`, `sortOrder`, `page`, and `limit` query parameters and returns `{ data, pagination }`; supported page sizes are 10, 20, and 50. The original list endpoint remains available for existing clients. Status updates and their timeline events are saved in one database transaction. Deleting an application also deletes its timeline and reminders. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
 
 ## Development without Docker
 

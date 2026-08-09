@@ -48,7 +48,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defineExtension = exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.SessionScalarFieldEnum = exports.UserScalarFieldEnum = exports.ApplicationEventScalarFieldEnum = exports.ApplicationReminderScalarFieldEnum = exports.ApplicationScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
+exports.defineExtension = exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.SessionScalarFieldEnum = exports.UserScalarFieldEnum = exports.ApplicationEventScalarFieldEnum = exports.ApplicationReminderScalarFieldEnum = exports.ResumeVersionScalarFieldEnum = exports.ApplicationScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.prismaVersion = exports.getExtensionContext = exports.Decimal = exports.Sql = exports.raw = exports.join = exports.empty = exports.sql = exports.PrismaClientValidationError = exports.PrismaClientInitializationError = exports.PrismaClientRustPanicError = exports.PrismaClientUnknownRequestError = exports.PrismaClientKnownRequestError = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/client"));
 /**
  * Prisma Errors
@@ -104,6 +104,7 @@ exports.JsonNull = runtime.JsonNull;
 exports.AnyNull = runtime.AnyNull;
 exports.ModelName = {
     Application: 'Application',
+    ResumeVersion: 'ResumeVersion',
     ApplicationReminder: 'ApplicationReminder',
     ApplicationEvent: 'ApplicationEvent',
     User: 'User',
@@ -129,6 +130,15 @@ exports.ApplicationScalarFieldEnum = {
     notes: 'notes',
     appliedAt: 'appliedAt',
     userId: 'userId',
+    resumeVersionId: 'resumeVersionId',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.ResumeVersionScalarFieldEnum = {
+    id: 'id',
+    userId: 'userId',
+    name: 'name',
+    notes: 'notes',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };

@@ -14,6 +14,7 @@ const validApplication: ApplicationFormValues = {
   status: 'APPLIED',
   notes: '',
   appliedAt: '2026-08-06',
+  resumeVersionId: 'resume-1',
 }
 
 describe('applicationFormSchema', () => {
@@ -67,6 +68,7 @@ describe('applicationFormSchema', () => {
       jobUrl: null,
       notes: 'Follow up next week',
       appliedAt: expect.stringContaining('2026-08-06'),
+      resumeVersionId: 'resume-1',
     })
   })
 })

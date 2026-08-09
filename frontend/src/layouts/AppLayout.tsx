@@ -7,6 +7,7 @@ import { ThemeToggle } from '../components/ui/ThemeToggle'
 const navigation = [
   { label: 'Applications', to: '/applications' },
   { label: 'Board', to: '/board' },
+  { label: 'Resumes', to: '/resumes' },
   { label: 'Dashboard', to: '/dashboard' },
 ]
 

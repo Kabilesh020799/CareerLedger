@@ -63,6 +63,21 @@ test('view authenticated dashboard totals and pipeline rates', async ({ page }) 
 
 test('create a reminder from an inactive application suggestion', async ({ page }) => {
   await signIn(page)
+
+  const existingRemindersResponse = await page.request.get(
+    'http://127.0.0.1:3001/api/applications/demo-cove-quality-engineer/reminders',
+  )
+  expect(existingRemindersResponse.ok()).toBe(true)
+  const existingReminders = await existingRemindersResponse.json()
+  for (const reminder of existingReminders) {
+    if (reminder.type === 'FOLLOW_UP') {
+      const deleteResponse = await page.request.delete(
+        `http://127.0.0.1:3001/api/reminders/${reminder.id}`,
+      )
+      expect(deleteResponse.ok()).toBe(true)
+    }
+  }
+
   await page.getByRole('link', { name: 'Dashboard' }).click()
 
   const suggestion = page.getByRole('article', { name: 'Follow up with Cove Labs' })
@@ -195,7 +210,16 @@ test('move an application across the board and record its timeline', async ({ pa
   const screeningColumn = page.getByRole('region', {
     name: 'Screening applications',
   })
-  await card.dragTo(screeningColumn)
+  const applicationHref = await card.getByRole('link', { name: company }).getAttribute('href')
+  const applicationId = applicationHref?.split('/').at(-1)
+  if (!applicationId) throw new Error('Created application link is missing its ID')
+  const dataTransfer = await page.evaluateHandle(() => new DataTransfer())
+  await dataTransfer.evaluate((transfer, id) => transfer.setData('text/plain', id), applicationId)
+  await card.dispatchEvent('dragstart', { dataTransfer })
+  await screeningColumn.dispatchEvent('dragenter', { dataTransfer })
+  await screeningColumn.dispatchEvent('dragover', { dataTransfer })
+  await screeningColumn.dispatchEvent('drop', { dataTransfer })
+  await card.dispatchEvent('dragend', { dataTransfer })
   await expect(screeningColumn.getByRole('article', {
     name: `${company}, Pipeline Engineer`,
   })).toBeVisible()

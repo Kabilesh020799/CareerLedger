@@ -10,6 +10,7 @@ export const applicationService = {
   list(userId: string) {
     return prisma.application.findMany({
       where: { userId },
+      include: applicationInclude,
       orderBy: { createdAt: "desc" },
     });
   },
@@ -45,6 +46,7 @@ export const applicationService = {
       prisma.application.count({ where }),
       prisma.application.findMany({
         where,
+        include: applicationInclude,
         orderBy: [orderBy, { id: "asc" }],
         skip: (query.page - 1) * query.limit,
         take: query.limit,
@@ -63,11 +65,27 @@ export const applicationService = {
   },
 
   create(userId: string, data: CreateApplicationInput) {
-    return prisma.application.create({ data: { ...data, userId } });
+    return prisma.$transaction(async (transaction) => {
+      if (data.resumeVersionId) {
+        const resumeVersion = await transaction.resumeVersion.findFirst({
+          where: { id: data.resumeVersionId, userId },
+          select: { id: true },
+        });
+        if (!resumeVersion) return null;
+      }
+
+      return transaction.application.create({
+        data: { ...data, userId },
+        include: applicationInclude,
+      });
+    });
   },
 
   findById(userId: string, id: string) {
-    return prisma.application.findFirst({ where: { id, userId } });
+    return prisma.application.findFirst({
+      where: { id, userId },
+      include: applicationInclude,
+    });
   },
 
   async update(userId: string, id: string, data: UpdateApplicationInput) {
@@ -78,9 +96,18 @@ export const applicationService = {
 
       if (!existing) return null;
 
+      if (data.resumeVersionId) {
+        const resumeVersion = await transaction.resumeVersion.findFirst({
+          where: { id: data.resumeVersionId, userId },
+          select: { id: true },
+        });
+        if (!resumeVersion) return false;
+      }
+
       const application = await transaction.application.update({
         where: { id },
         data,
+        include: applicationInclude,
       });
 
       if (data.status && data.status !== existing.status) {
@@ -104,6 +131,12 @@ export const applicationService = {
     return result.count > 0;
   },
 };
+
+const applicationInclude = {
+  resumeVersion: {
+    select: { id: true, name: true, notes: true },
+  },
+} satisfies Prisma.ApplicationInclude;
 
 function applicationOrderBy(
   sortBy: ApplicationDiscoveryInput["sortBy"],

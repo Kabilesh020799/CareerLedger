@@ -22,6 +22,7 @@ export const createApplicationSchema = z.object({
   status: z.enum(applicationStatuses).optional(),
   notes: nullableText,
   appliedAt: z.coerce.date().nullable().optional(),
+  resumeVersionId: z.string().trim().min(1).nullable().optional(),
 });
 
 export const updateApplicationSchema = createApplicationSchema
