@@ -34,6 +34,31 @@ vi.mock('./hooks/useMoveApplication', () => ({
   }),
 }))
 
+vi.mock('./hooks/useDashboardSummary', () => ({
+  useDashboardSummary: () => ({
+    isPending: false,
+    isError: false,
+    isSuccess: true,
+    data: {
+      totalApplications: 0,
+      createdThisWeek: 0,
+      weekStartedAt: '2026-08-03T00:00:00.000Z',
+      submittedApplications: 0,
+      statusCounts: {
+        SAVED: 0,
+        APPLIED: 0,
+        SCREENING: 0,
+        ASSESSMENT: 0,
+        INTERVIEW: 0,
+        OFFER: 0,
+        REJECTED: 0,
+        WITHDRAWN: 0,
+      },
+      conversionRates: { screening: 0, interview: 0, offer: 0 },
+    },
+  }),
+}))
+
 vi.mock('./hooks/useSession', () => ({
   useSession: () => ({
     isPending: false,

@@ -52,6 +52,7 @@ describe('application mutation hooks', () => {
     await act(() => result.current.mutateAsync({ company: 'Acme Corp', jobTitle: 'Software Engineer' }))
 
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications'] })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['dashboard'] })
   })
 
   it('refreshes the list and detail cache after an update', async () => {
@@ -65,6 +66,7 @@ describe('application mutation hooks', () => {
     expect(setData).toHaveBeenCalledWith(['applications', application.id], expect.objectContaining({ status: 'INTERVIEW' }))
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications'] })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications', application.id, 'events'] })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['dashboard'] })
   })
 
   it('refreshes the timeline after adding a manual event', async () => {
@@ -104,5 +106,6 @@ describe('application mutation hooks', () => {
 
     expect(remove).toHaveBeenCalledWith({ queryKey: ['applications', application.id] })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications'] })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['dashboard'] })
   })
 })

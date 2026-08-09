@@ -18,6 +18,31 @@ test('sign in with the demo user and access its applications', async ({ page }) 
   await expect(page.getByText('Shopify')).toBeVisible()
 })
 
+test('view authenticated dashboard totals and pipeline rates', async ({ page }) => {
+  await signIn(page)
+  const summaryResponse = await page.request.get(
+    'http://127.0.0.1:3001/api/dashboard/summary',
+  )
+  expect(summaryResponse.ok()).toBe(true)
+  const summary = await summaryResponse.json()
+
+  await page.getByRole('link', { name: 'Dashboard' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
+  await expect(
+    page.getByRole('article', { name: 'Total applications' }).getByText(
+      String(summary.totalApplications),
+      { exact: true },
+    ),
+  ).toBeVisible()
+  await expect(page.getByRole('article', { name: 'Screening progression' }))
+    .toContainText(`${summary.conversionRates.screening}%`)
+  await expect(page.getByRole('article', { name: 'Interview progression' }))
+    .toContainText(`${summary.conversionRates.interview}%`)
+  await expect(page.getByRole('article', { name: 'Offer progression' }))
+    .toContainText(`${summary.conversionRates.offer}%`)
+})
+
 test('search, filter, sort, and retain application discovery controls', async ({ page }) => {
   await signIn(page)
 

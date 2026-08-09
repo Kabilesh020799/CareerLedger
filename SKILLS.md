@@ -112,15 +112,25 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 **Specification:** `features/v0.1/application_board.feature`.
 
-## Roadmap skills
-
 ### Dashboard analytics
 
-**Purpose:** Summarize useful job-search outcomes and strategy comparisons.
+**Purpose:** Summarize the current application pipeline with user-scoped totals, weekly activity, and clearly defined progression rates.
 
-**Expected knowledge:** aggregation queries, meaningful metrics, responsive data visualization, and outcome-rate definitions.
+**Expected knowledge:** Prisma aggregation queries, UTC week boundaries, meaningful metrics, responsive data visualization, and TanStack Query cache invalidation.
 
-**Critical rule:** do not add decorative analytics without decision value or present rates without clear denominators.
+**Critical rule:** scope every aggregation to the authenticated user, state rate denominators clearly, and invalidate the summary after application mutations.
+
+**Specification:** `features/v0.1/dashboard_analytics.feature`.
+
+## Roadmap skills
+
+### Strategy analytics
+
+**Purpose:** Compare job-search outcomes by source and resume strategy.
+
+**Expected knowledge:** outcome definitions, resume modeling, aggregation queries, and responsible data visualization.
+
+**Critical rule:** do not add decorative analytics or present rates without clear denominators and sufficient underlying data.
 
 **Specification:** `features/roadmap/board_and_dashboard.feature`.
 

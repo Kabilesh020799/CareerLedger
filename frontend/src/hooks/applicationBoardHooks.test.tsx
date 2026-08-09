@@ -83,6 +83,7 @@ describe('application board hooks', () => {
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: applicationQueryKeys.events(application.id),
     })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['dashboard'] })
   })
 
   it('restores the previous board when a move fails', async () => {

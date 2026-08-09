@@ -14,6 +14,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added server-side sorting and pagination with URL-persistent Chakra UI controls, clearable no-result states, and page-size selection.
 - Added an application status board with all eight pipeline stages, per-column counts, drag-and-drop movement, and an accessible status selector.
 - Added immediate board updates that restore a card to its previous column when saving fails, while successful status moves continue to record timeline events atomically.
+- Added a private dashboard with current status totals, applications created since Monday, and screening, interview, and offer progression rates with clear denominators.
+- Added automatic dashboard refreshes after applications are created, updated, moved, or deleted.
 
 ### Fixed
 

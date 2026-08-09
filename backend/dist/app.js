@@ -13,6 +13,7 @@ const passport_1 = require("./config/passport");
 const require_auth_1 = require("./middleware/require-auth");
 const application_routes_1 = require("./routes/application.routes");
 const auth_routes_1 = require("./routes/auth.routes");
+const dashboard_routes_1 = require("./routes/dashboard.routes");
 const session_store_1 = require("./services/session-store");
 function createApp() {
     const app = (0, express_1.default)();
@@ -41,6 +42,7 @@ function createApp() {
     });
     app.use("/api/auth", auth_routes_1.authRouter);
     app.use("/api/applications", require_auth_1.requireAuth, application_routes_1.applicationRouter);
+    app.use("/api/dashboard", require_auth_1.requireAuth, dashboard_routes_1.dashboardRouter);
     app.use((error, _req, res, _next) => {
         console.error(error);
         res.status(500).json({ error: "Internal server error" });

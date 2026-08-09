@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { applicationService } from '../services/application.service'
 import type { Application, ApplicationStatus } from '../types/application'
 import { applicationQueryKeys } from './applicationQueryKeys'
+import { dashboardQueryKeys } from './dashboardQueryKeys'
 
 type MoveApplicationVariables = {
   id: string
@@ -51,6 +52,7 @@ export function useMoveApplication() {
       queryClient.invalidateQueries({
         queryKey: applicationQueryKeys.events(variables.id),
       }),
+      queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.all }),
     ]),
   })
 }
