@@ -129,3 +129,22 @@ test("propagates CloudFront HTTPS to secure production sessions", () => {
     /proxy_set_header X-Forwarded-Proto \$upstream_forwarded_proto/,
   );
 });
+
+test("opens SSH only for the active GitHub runner and always removes it", () => {
+  const workflow = fs.readFileSync(workflowPath, "utf8");
+  const allowStep = workflow.indexOf("- name: Allow this runner to reach SSH");
+  const deployStep = workflow.indexOf("- name: Deploy immutable images");
+  const cleanupStep = workflow.indexOf("- name: Remove this runner's SSH access");
+
+  assert.match(workflow, /id-token: write/);
+  assert.match(
+    workflow,
+    /aws-actions\/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c/,
+  );
+  assert.match(workflow, /--cidr \"\$runner_cidr\"/);
+  assert.match(workflow, /if: always\(\) && steps\.allow_ssh\.outputs\.runner_cidr != ''/);
+  assert.match(workflow, /--cidr \"\$RUNNER_CIDR\"/);
+  assert.match(workflow, /ConnectTimeout=15/);
+  assert.ok(allowStep < deployStep, "runner SSH access must precede deployment");
+  assert.ok(deployStep < cleanupStep, "runner SSH access must be removed after deployment");
+});

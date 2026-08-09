@@ -139,10 +139,38 @@ jobs:
       url: ${{ vars.PRODUCTION_URL }}
     permissions:
       contents: write
+      id-token: write
       packages: read
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Configure short-lived AWS credentials
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Allow this runner to reach SSH
+        id: allow_ssh
+        env:
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_SECURITY_GROUP_ID: ${{ vars.DEPLOY_SECURITY_GROUP_ID }}
+        run: |
+          runner_ip="$(curl --fail --silent --show-error --retry 3 https://checkip.amazonaws.com)"
+          case "$runner_ip" in
+            *[!0-9.]*|""|.*|*.) echo "Unable to determine the runner IPv4 address." >&2; exit 1 ;;
+          esac
+
+          port="${DEPLOY_PORT:-22}"
+          runner_cidr="$runner_ip/32"
+          aws ec2 authorize-security-group-ingress \
+            --group-id "$DEPLOY_SECURITY_GROUP_ID" \
+            --ip-protocol tcp \
+            --from-port "$port" \
+            --to-port "$port" \
+            --cidr "$runner_cidr"
+          echo "runner_cidr=$runner_cidr" >> "$GITHUB_OUTPUT"
 
       - name: Configure SSH
         env:
@@ -162,9 +190,9 @@ jobs:
           DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
         run: |
           port="${DEPLOY_PORT:-22}"
-          ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p /opt/job-application-tracker"
-          scp -i ~/.ssh/deploy_key -P "$port" deploy/compose.production.yml scripts/deploy-production.sh "$DEPLOY_USER@$DEPLOY_HOST:/opt/job-application-tracker/"
-          ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "chmod 700 /opt/job-application-tracker/deploy-production.sh"
+          ssh -o ConnectTimeout=15 -o ConnectionAttempts=2 -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p /opt/job-application-tracker"
+          scp -o ConnectTimeout=15 -o ConnectionAttempts=2 -i ~/.ssh/deploy_key -P "$port" deploy/compose.production.yml scripts/deploy-production.sh "$DEPLOY_USER@$DEPLOY_HOST:/opt/job-application-tracker/"
+          ssh -o ConnectTimeout=15 -o ConnectionAttempts=2 -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "chmod 700 /opt/job-application-tracker/deploy-production.sh"
 
       - name: Configure application environment
         env:
@@ -231,3 +259,18 @@ jobs:
             --target "$GITHUB_SHA" \
             --title "$RELEASE_TAG" \
             --notes-file release-notes.md
+
+      - name: Remove this runner's SSH access
+        if: always() && steps.allow_ssh.outputs.runner_cidr != ''
+        env:
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_SECURITY_GROUP_ID: ${{ vars.DEPLOY_SECURITY_GROUP_ID }}
+          RUNNER_CIDR: ${{ steps.allow_ssh.outputs.runner_cidr }}
+        run: |
+          port="${DEPLOY_PORT:-22}"
+          aws ec2 revoke-security-group-ingress \
+            --group-id "$DEPLOY_SECURITY_GROUP_ID" \
+            --ip-protocol tcp \
+            --from-port "$port" \
+            --to-port "$port" \
+            --cidr "$RUNNER_CIDR"

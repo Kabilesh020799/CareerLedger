@@ -15,10 +15,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Changed
 
 - Changed production proxy handling to preserve CloudFront's viewer protocol, issue secure session cookies, and present the HTTPS deployment without an insecure-connection warning.
+- Changed automated deployment to use short-lived GitHub OIDC credentials and fail fast when SSH is unreachable.
 
 ### Security
 
 - Restricted direct EC2 HTTP ingress to AWS's managed CloudFront origin-facing network.
+- Restricted deployment SSH ingress to the active GitHub runner's IPv4 address and remove it after every deployment attempt.
 
 ## [3.1.1] - 2026-08-09
 

@@ -199,7 +199,7 @@ The root `package.json` owns the application release version, and the matching s
 
 Production is available at <https://d2g95c1jos960v.cloudfront.net>. CloudFront terminates browser-facing HTTPS and forwards uncached application requests to the EC2 frontend, which serves React and proxies `/api` to the private backend container. PostgreSQL remains private inside the Compose network.
 
-Direct public HTTP access to the EC2 address is disabled; use the CloudFront URL.
+Direct public HTTP access to the EC2 address is disabled; use the CloudFront URL. Deployments use short-lived GitHub OIDC credentials to permit SSH only from the active runner, then remove that ingress rule automatically.
 
 The CloudFront-to-EC2 origin connection currently uses HTTP, so encryption is not end-to-end even though browser traffic and secure session cookies use HTTPS. The built-in demo credentials are public. Do not store sensitive data behind this shared demonstration account.
 

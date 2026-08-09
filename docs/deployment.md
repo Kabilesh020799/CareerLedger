@@ -55,10 +55,15 @@ Add environment variables:
 
 | Variable | Value |
 | --- | --- |
+| `AWS_DEPLOY_ROLE_ARN` | IAM role trusted by this repository's `production` environment through GitHub OIDC |
+| `AWS_REGION` | AWS region containing the instance and security group, currently `us-east-1` |
+| `DEPLOY_SECURITY_GROUP_ID` | EC2 security group whose SSH ingress is managed during deployment |
 | `DEPLOY_PORT` | SSH port, normally `22` |
 | `PRODUCTION_URL` | Public HTTPS origin, currently `https://d2g95c1jos960v.cloudfront.net` |
 
 Restrict the environment to the `master` branch. Add required approval if deployments should pause for confirmation after images are published.
+
+The deployment job uses GitHub OIDC to assume a least-privilege IAM role. That role can only authorize and revoke ingress on the application's security group. At the start of a deployment, the workflow permits SSH from the active GitHub runner's public IPv4 `/32`; its final step removes that rule even when deployment fails. No long-lived AWS access key is stored in GitHub, and port 22 does not need permanent public ingress.
 
 To enable Gmail synchronization, enable the Gmail API in the Google Cloud project, configure its OAuth consent screen, and register the exact redirect URI `https://your-domain/api/gmail/callback`. Add test users while the consent screen remains in testing. Gmail metadata is a restricted scope and a public app that stores restricted-scope data may require Google verification and a security assessment.
 
@@ -66,7 +71,7 @@ Google requires HTTPS redirect URIs on a domain the application is authorized to
 
 ## 4. Configure networking
 
-CloudFront distribution `EI1Q2B9SNAQJH` serves browser-facing HTTPS at `d2g95c1jos960v.cloudfront.net` and connects to the EC2 frontend on port 80. Its behavior allows all application methods, disables caching for authenticated responses, and forwards headers, cookies, and query strings. The instance's inbound port 80 rule is restricted to the AWS-managed CloudFront origin-facing prefix list `pl-3b927c52`; direct public HTTP access is disabled. Allow SSH only from trusted sources when possible. Do not expose backend port 3000 or PostgreSQL port 5432; the production Compose file keeps both internal.
+CloudFront distribution `EI1Q2B9SNAQJH` serves browser-facing HTTPS at `d2g95c1jos960v.cloudfront.net` and connects to the EC2 frontend on port 80. Its behavior allows all application methods, disables caching for authenticated responses, and forwards headers, cookies, and query strings. The instance's inbound port 80 rule is restricted to the AWS-managed CloudFront origin-facing prefix list `pl-3b927c52`; direct public HTTP access is disabled. SSH is opened only for the active deployment runner and removed afterward. Do not expose backend port 3000 or PostgreSQL port 5432; the production Compose file keeps both internal.
 
 CloudFront encrypts browser traffic and the application issues a `Secure`, HTTP-only session cookie. The CloudFront-to-EC2 origin connection currently uses HTTP, so transport encryption is not end-to-end. The frontend passes CloudFront's viewer protocol to Express through `X-Forwarded-Proto` so secure cookies are issued correctly.
 
@@ -99,7 +104,7 @@ The workflow:
 2. Validates the root package version and its categorized `CHANGELOG.md` section, then checks GitHub for that release.
 3. Stops successfully when the version has already been released.
 4. Publishes frontend and backend images tagged with the new version and commit SHA.
-5. Copies the production Compose file and deployment script to the instance.
+5. Assumes the repository-specific AWS role, temporarily permits SSH from the active runner's `/32`, and copies the production Compose file and deployment script to the instance.
 6. Writes the public application origin and HTTP cookie mode to the instance.
 7. Authenticates the instance to GHCR with the workflow's short-lived token.
 8. Pulls and starts the exact release version.
@@ -107,6 +112,7 @@ The workflow:
 10. Waits for Compose health checks and verifies the proxied API.
 11. Restores the previous release version when deployment fails.
 12. Creates the version tag and GitHub Release with the matching changelog entries only after deployment succeeds.
+13. Removes the runner-specific SSH ingress rule whether deployment succeeds or fails.
 
 Release planning runs in parallel with verification. Frontend and backend images build in parallel with persistent BuildKit caches, and publishing remains gated on both successful verification and a new version. The deployment pulls only the two versioned application images; stable infrastructure images are reused unless they are missing. The backend runtime image contains compiled code and production dependencies rather than test and build tooling.
 
