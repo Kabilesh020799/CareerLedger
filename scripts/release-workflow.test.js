@@ -77,3 +77,16 @@ test("plans releases alongside verification but gates image publishing on both",
   assert.doesNotMatch(planBlock, /^    needs:/m);
   assert.match(publishBlock, /needs: \[verify, plan_release\]/);
 });
+
+test("provides backend verification with an isolated test database URL", () => {
+  const verifyWorkflow = fs.readFileSync(verifyWorkflowPath, "utf8");
+  const backendStep = verifyWorkflow.slice(
+    verifyWorkflow.indexOf("- name: Verify backend"),
+    verifyWorkflow.indexOf("- name: Verify frontend"),
+  );
+
+  assert.match(
+    backendStep,
+    /DATABASE_URL: postgresql:\/\/jobtracker:jobtracker_dev@127\.0\.0\.1:5432\/jobtracker_test/,
+  );
+});

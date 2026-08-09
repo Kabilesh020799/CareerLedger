@@ -29,6 +29,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - Fixed board dragging so the complete application card follows the pointer instead of a small company-name preview.
+- Fixed release verification so backend tests receive their required isolated database configuration in GitHub Actions.
 
 ## [2.1.0] - 2026-08-07
 

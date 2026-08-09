@@ -33,6 +33,8 @@ jobs:
 
       - name: Verify backend
         working-directory: backend
+        env:
+          DATABASE_URL: postgresql://jobtracker:jobtracker_dev@127.0.0.1:5432/jobtracker_test
         run: |
           npm ci
           npm run db:generate
