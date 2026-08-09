@@ -38,6 +38,40 @@ export type CreateApplicationInput = {
 
 export type UpdateApplicationInput = Partial<CreateApplicationInput>
 
+export const applicationSortFields = [
+  'appliedAt',
+  'createdAt',
+  'updatedAt',
+  'company',
+] as const
+
+export type ApplicationSortField = (typeof applicationSortFields)[number]
+export type ApplicationSortOrder = 'asc' | 'desc'
+
+export type ApplicationDiscoveryQuery = {
+  search?: string
+  status?: ApplicationStatus
+  source?: string
+  appliedFrom?: string
+  appliedTo?: string
+  sortBy: ApplicationSortField
+  sortOrder: ApplicationSortOrder
+  page: number
+  limit: number
+}
+
+export type ApplicationPagination = {
+  page: number
+  limit: number
+  total: number
+  pages: number
+}
+
+export type ApplicationDiscoveryResult = {
+  data: Application[]
+  pagination: ApplicationPagination
+}
+
 export const applicationEventTypes = ['NOTE', 'STATUS_CHANGE'] as const
 
 export type ApplicationEventType = (typeof applicationEventTypes)[number]

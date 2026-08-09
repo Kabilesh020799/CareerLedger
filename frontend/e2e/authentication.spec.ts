@@ -18,6 +18,31 @@ test('sign in with the demo user and access its applications', async ({ page }) 
   await expect(page.getByText('Shopify')).toBeVisible()
 })
 
+test('search, filter, sort, and retain application discovery controls', async ({ page }) => {
+  await signIn(page)
+
+  await page.getByLabel('Search').fill('shopify')
+  await page.getByLabel('Status').selectOption('INTERVIEW')
+  await page.getByLabel('Source').fill('Company Website')
+  await page.getByRole('button', { name: 'Apply filters' }).click()
+
+  await expect(page).toHaveURL(/search=shopify/)
+  await expect(page).toHaveURL(/status=INTERVIEW/)
+  await expect(page.getByText('Shopify')).toBeVisible()
+  await expect(page.getByText('RBC')).not.toBeVisible()
+
+  await page.reload()
+  await expect(page.getByLabel('Search')).toHaveValue('shopify')
+  await expect(page.getByText('Shopify')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Clear filters' }).first().click()
+  await page.getByLabel('Sort by').selectOption('company')
+  await page.getByLabel('Order').selectOption('asc')
+  await page.getByRole('button', { name: 'Apply filters' }).click()
+
+  await expect(page.getByRole('row').nth(1)).toContainText('Atlas')
+})
+
 test('add a note and record a status change in the application timeline', async ({ page }) => {
   await signIn(page)
 

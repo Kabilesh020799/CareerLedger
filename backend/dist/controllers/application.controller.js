@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.applicationController = void 0;
 const application_service_1 = require("../services/application.service");
+const application_discovery_validator_1 = require("../validators/application-discovery.validator");
 const application_validator_1 = require("../validators/application.validator");
 function validationError(res, error) {
     return res.status(400).json({
@@ -22,6 +23,18 @@ exports.applicationController = {
     async list(req, res) {
         const applications = await application_service_1.applicationService.list(getUserId(req));
         res.json(applications);
+    },
+    async search(req, res) {
+        const parsed = application_discovery_validator_1.applicationDiscoverySchema.safeParse(req.query);
+        if (!parsed.success) {
+            res.status(400).json({
+                error: "Invalid application query",
+                details: parsed.error.flatten(),
+            });
+            return;
+        }
+        const result = await application_service_1.applicationService.search(getUserId(req), parsed.data);
+        res.json(result);
     },
     async create(req, res) {
         const parsed = application_validator_1.createApplicationSchema.safeParse(req.body);

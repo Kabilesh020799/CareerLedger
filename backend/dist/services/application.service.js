@@ -9,6 +9,51 @@ exports.applicationService = {
             orderBy: { createdAt: "desc" },
         });
     },
+    async search(userId, query) {
+        const where = {
+            userId,
+            ...(query.search
+                ? {
+                    OR: [
+                        { company: { contains: query.search, mode: "insensitive" } },
+                        { jobTitle: { contains: query.search, mode: "insensitive" } },
+                        { location: { contains: query.search, mode: "insensitive" } },
+                    ],
+                }
+                : {}),
+            ...(query.status ? { status: query.status } : {}),
+            ...(query.source
+                ? { source: { equals: query.source, mode: "insensitive" } }
+                : {}),
+            ...(query.appliedFrom || query.appliedTo
+                ? {
+                    appliedAt: {
+                        ...(query.appliedFrom ? { gte: query.appliedFrom } : {}),
+                        ...(query.appliedTo ? { lte: query.appliedTo } : {}),
+                    },
+                }
+                : {}),
+        };
+        const orderBy = applicationOrderBy(query.sortBy, query.sortOrder);
+        const [total, data] = await prisma_1.prisma.$transaction([
+            prisma_1.prisma.application.count({ where }),
+            prisma_1.prisma.application.findMany({
+                where,
+                orderBy: [orderBy, { id: "asc" }],
+                skip: (query.page - 1) * query.limit,
+                take: query.limit,
+            }),
+        ]);
+        return {
+            data,
+            pagination: {
+                page: query.page,
+                limit: query.limit,
+                total,
+                pages: Math.ceil(total / query.limit),
+            },
+        };
+    },
     create(userId, data) {
         return prisma_1.prisma.application.create({ data: { ...data, userId } });
     },
@@ -45,3 +90,15 @@ exports.applicationService = {
         return result.count > 0;
     },
 };
+function applicationOrderBy(sortBy, sortOrder) {
+    switch (sortBy) {
+        case "appliedAt":
+            return { appliedAt: { sort: sortOrder, nulls: "last" } };
+        case "company":
+            return { company: sortOrder };
+        case "updatedAt":
+            return { updatedAt: sortOrder };
+        case "createdAt":
+            return { createdAt: sortOrder };
+    }
+}

@@ -2,6 +2,8 @@ import { api } from './api'
 import type {
   Application,
   ApplicationEvent,
+  ApplicationDiscoveryQuery,
+  ApplicationDiscoveryResult,
   CreateApplicationEventInput,
   CreateApplicationInput,
   UpdateApplicationInput,
@@ -10,6 +12,13 @@ import type {
 export const applicationService = {
   async list() {
     const response = await api.get<Application[]>('/applications')
+    return response.data
+  },
+
+  async search(query: ApplicationDiscoveryQuery) {
+    const response = await api.get<ApplicationDiscoveryResult>('/applications/search', {
+      params: query,
+    })
     return response.data
   },
 

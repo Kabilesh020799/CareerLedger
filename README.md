@@ -67,6 +67,10 @@ Inside Docker, the frontend sends `/api` requests through Nginx to the backend. 
 ## Available functionality
 
 - View applications in a table.
+- Search applications by company, job title, or location without case sensitivity.
+- Combine status, source, and inclusive applied-date filters.
+- Sort applications by applied date, creation date, update date, or company.
+- Navigate server-paginated results with URL-persistent discovery controls.
 - See loading, empty, and API error states.
 - Create applications with validated fields.
 - Open application details.
@@ -94,6 +98,7 @@ Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW
 | `GET` | `/api/auth/session` | Read the current public user session |
 | `POST` | `/api/auth/logout` | End the current session |
 | `GET` | `/api/applications` | List applications |
+| `GET` | `/api/applications/search` | Search, filter, sort, and paginate applications |
 | `POST` | `/api/applications` | Create an application |
 | `GET` | `/api/applications/:id` | Retrieve an application |
 | `PATCH` | `/api/applications/:id` | Update an application |
@@ -101,7 +106,7 @@ Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW
 | `GET` | `/api/applications/:id/events` | List an application's timeline events |
 | `POST` | `/api/applications/:id/events` | Add a manual note to an application's timeline |
 
-All application and timeline endpoints require an authenticated session. Requests cannot list or mutate applications owned by another user. Status updates and their timeline events are saved in one database transaction. Deleting an application also deletes its timeline. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
+All application and timeline endpoints require an authenticated session. Requests cannot list or mutate applications owned by another user. The discovery endpoint accepts `search`, `status`, `source`, `appliedFrom`, `appliedTo`, `sortBy`, `sortOrder`, `page`, and `limit` query parameters and returns `{ data, pagination }`; supported page sizes are 10, 20, and 50. The original list endpoint remains available for existing clients. Status updates and their timeline events are saved in one database transaction. Deleting an application also deletes its timeline. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
 
 ## Development without Docker
 

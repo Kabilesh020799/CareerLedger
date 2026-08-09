@@ -1,7 +1,16 @@
 import { Alert, Box, Button, Flex, Heading, Spinner, Stack, Table, Text } from '@chakra-ui/react'
-import { Link } from 'react-router-dom'
+import { useMemo } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { ApplicationDiscoveryControls } from '../components/applications/ApplicationDiscoveryControls'
 import { StatusBadge } from '../components/applications/StatusBadge'
 import { useApplications } from '../hooks/useApplications'
+import {
+  applicationDiscoveryFromSearchParams,
+  applicationDiscoveryToSearchParams,
+  defaultApplicationDiscoveryQuery,
+  hasApplicationDiscoveryFilters,
+} from '../schemas/application-discovery.schema'
+import type { ApplicationDiscoveryQuery } from '../types/application'
 import { getApiErrorMessage } from '../utils/apiError'
 
 function formatDate(value: string | null) {
@@ -10,7 +19,21 @@ function formatDate(value: string | null) {
 }
 
 export function ApplicationsPage() {
-  const applicationsQuery = useApplications()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const query = useMemo(
+    () => applicationDiscoveryFromSearchParams(searchParams),
+    [searchParams],
+  )
+  const applicationsQuery = useApplications(query)
+  const hasFilters = hasApplicationDiscoveryFilters(query)
+
+  const setQuery = (nextQuery: ApplicationDiscoveryQuery) => {
+    setSearchParams(applicationDiscoveryToSearchParams(nextQuery))
+  }
+
+  const clearFilters = () => {
+    setQuery(defaultApplicationDiscoveryQuery)
+  }
 
   return (
     <Stack gap="6">
@@ -23,6 +46,12 @@ export function ApplicationsPage() {
           <Link to="/applications/new">Add application</Link>
         </Button>
       </Flex>
+
+      <ApplicationDiscoveryControls
+        query={query}
+        onChange={setQuery}
+        onClear={clearFilters}
+      />
 
       {applicationsQuery.isPending && (
         <Flex align="center" justify="center" minH="16rem" aria-label="Loading applications">
@@ -41,7 +70,7 @@ export function ApplicationsPage() {
         </Alert.Root>
       )}
 
-      {applicationsQuery.isSuccess && applicationsQuery.data.length === 0 && (
+      {applicationsQuery.isSuccess && applicationsQuery.data.pagination.total === 0 && !hasFilters && (
         <Stack align="center" bg="white" borderWidth="1px" borderRadius="xl" p={{ base: '8', md: '12' }} textAlign="center" gap="3">
           <Heading as="h3" size="lg">No applications yet</Heading>
           <Text color="gray.600">Add your first opportunity to start tracking your job search.</Text>
@@ -51,9 +80,30 @@ export function ApplicationsPage() {
         </Stack>
       )}
 
-      {applicationsQuery.isSuccess && applicationsQuery.data.length > 0 && (
-        <Box bg="white" borderWidth="1px" borderRadius="xl" overflowX="auto">
-          <Table.Root variant="line" size="md">
+      {applicationsQuery.isSuccess && applicationsQuery.data.pagination.total === 0 && hasFilters && (
+        <Stack align="center" bg="white" borderWidth="1px" borderRadius="xl" p={{ base: '8', md: '12' }} textAlign="center" gap="3">
+          <Heading as="h3" size="lg">No matching applications</Heading>
+          <Text color="gray.600">Try changing your search or clearing the filters.</Text>
+          <Button colorPalette="teal" mt="2" onClick={clearFilters}>Clear filters</Button>
+        </Stack>
+      )}
+
+      {applicationsQuery.isSuccess && applicationsQuery.data.pagination.total > 0 && applicationsQuery.data.data.length === 0 && (
+        <Stack align="center" bg="white" borderWidth="1px" borderRadius="xl" p="8" textAlign="center" gap="3">
+          <Heading as="h3" size="lg">No applications on this page</Heading>
+          <Button
+            colorPalette="teal"
+            onClick={() => setQuery({ ...query, page: Math.max(1, query.page - 1) })}
+          >
+            Previous page
+          </Button>
+        </Stack>
+      )}
+
+      {applicationsQuery.isSuccess && applicationsQuery.data.data.length > 0 && (
+        <Stack gap="3">
+          <Box bg="white" borderWidth="1px" borderRadius="xl" overflowX="auto">
+            <Table.Root variant="line" size="md">
             <Table.Header>
               <Table.Row>
                 <Table.ColumnHeader>Company</Table.ColumnHeader>
@@ -65,7 +115,7 @@ export function ApplicationsPage() {
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {applicationsQuery.data.map((application) => (
+              {applicationsQuery.data.data.map((application) => (
                 <Table.Row key={application.id}>
                   <Table.Cell fontWeight="medium">{application.company}</Table.Cell>
                   <Table.Cell>{application.jobTitle}</Table.Cell>
@@ -80,8 +130,41 @@ export function ApplicationsPage() {
                 </Table.Row>
               ))}
             </Table.Body>
-          </Table.Root>
-        </Box>
+            </Table.Root>
+          </Box>
+
+          <Flex
+            align={{ base: 'start', sm: 'center' }}
+            direction={{ base: 'column', sm: 'row' }}
+            gap="3"
+            justify="space-between"
+          >
+            <Text color="gray.600" fontSize="sm">
+              Showing {applicationsQuery.data.data.length} of {applicationsQuery.data.pagination.total} applications
+            </Text>
+            <Flex align="center" gap="3">
+              <Button
+                disabled={query.page <= 1}
+                size="sm"
+                variant="outline"
+                onClick={() => setQuery({ ...query, page: query.page - 1 })}
+              >
+                Previous
+              </Button>
+              <Text fontSize="sm">
+                Page {query.page} of {Math.max(1, applicationsQuery.data.pagination.pages)}
+              </Text>
+              <Button
+                disabled={query.page >= applicationsQuery.data.pagination.pages}
+                size="sm"
+                variant="outline"
+                onClick={() => setQuery({ ...query, page: query.page + 1 })}
+              >
+                Next
+              </Button>
+            </Flex>
+          </Flex>
+        </Stack>
       )}
     </Stack>
   )

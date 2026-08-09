@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { applicationService } from "../services/application.service";
+import { applicationDiscoverySchema } from "../validators/application-discovery.validator";
 import {
   createApplicationSchema,
   updateApplicationSchema,
@@ -26,6 +27,20 @@ export const applicationController = {
   async list(req: Request, res: Response) {
     const applications = await applicationService.list(getUserId(req));
     res.json(applications);
+  },
+
+  async search(req: Request, res: Response) {
+    const parsed = applicationDiscoverySchema.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Invalid application query",
+        details: parsed.error.flatten(),
+      });
+      return;
+    }
+
+    const result = await applicationService.search(getUserId(req), parsed.data);
+    res.json(result);
   },
 
   async create(req: Request, res: Response) {

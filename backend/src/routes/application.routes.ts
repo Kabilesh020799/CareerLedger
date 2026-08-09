@@ -6,6 +6,7 @@ export const applicationRouter = Router();
 
 applicationRouter.get("/", applicationController.list);
 applicationRouter.post("/", applicationController.create);
+applicationRouter.get("/search", applicationController.search);
 applicationRouter.get("/:id/events", applicationEventController.list);
 applicationRouter.post("/:id/events", applicationEventController.create);
 applicationRouter.get("/:id", applicationController.getById);

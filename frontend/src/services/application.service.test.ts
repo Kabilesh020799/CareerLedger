@@ -46,6 +46,24 @@ describe('applicationService', () => {
     expect(api.get).toHaveBeenCalledWith('/applications')
   })
 
+  it('searches applications with server-side discovery parameters', async () => {
+    const query = {
+      search: 'Acme',
+      sortBy: 'company' as const,
+      sortOrder: 'asc' as const,
+      page: 2,
+      limit: 10,
+    }
+    const result = {
+      data: [application],
+      pagination: { page: 2, limit: 10, total: 12, pages: 2 },
+    }
+    vi.mocked(api.get).mockResolvedValue({ data: result })
+
+    await expect(applicationService.search(query)).resolves.toEqual(result)
+    expect(api.get).toHaveBeenCalledWith('/applications/search', { params: query })
+  })
+
   it('creates an application through the API', async () => {
     vi.mocked(api.post).mockResolvedValue({ data: application })
     const input = { company: 'Acme Corp', jobTitle: 'Software Engineer' }

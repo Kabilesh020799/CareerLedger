@@ -92,17 +92,17 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 **Specification:** `features/v0.1/application_timeline.feature`.
 
-## Roadmap skills
-
 ### Search and data navigation
 
 **Purpose:** Support large application collections efficiently.
 
-**Expected knowledge:** Prisma query construction, safe query validation, server-side filtering, sorting, pagination, URL state, query caching.
+**Expected knowledge:** Prisma query construction, safe query validation, server-side filtering, sorting, pagination, URL state, and TanStack Query caching.
 
-**Critical rule:** perform search, filtering, sorting, and pagination on the backend rather than loading the entire database into React.
+**Critical rule:** perform search, filtering, sorting, and pagination on the backend rather than loading the entire database into React; keep every query scoped to the authenticated user.
 
-**Specification:** `features/roadmap/application_discovery.feature`.
+**Specification:** `features/v0.1/application_discovery.feature`.
+
+## Roadmap skills
 
 ### Kanban and dashboard
 

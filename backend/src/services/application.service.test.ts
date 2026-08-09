@@ -15,6 +15,7 @@ const { prismaMock, transactionMock } = vi.hoisted(() => {
     transactionMock: transaction,
     prismaMock: {
       application: {
+        count: vi.fn(),
         findMany: vi.fn(),
         create: vi.fn(),
         findFirst: vi.fn(),
@@ -45,6 +46,75 @@ describe("application ownership", () => {
     expect(prismaMock.application.findMany).toHaveBeenCalledWith({
       where: { userId: "user-1" },
       orderBy: { createdAt: "desc" },
+    });
+  });
+
+  it("searches only owned applications with combined filters", async () => {
+    const data = [{ id: "application-1" }];
+    prismaMock.$transaction.mockResolvedValueOnce([1, data]);
+    const appliedFrom = new Date("2026-07-01T00:00:00.000Z");
+    const appliedTo = new Date("2026-07-31T00:00:00.000Z");
+
+    const result = await applicationService.search("user-1", {
+      search: "engineer",
+      status: "INTERVIEW",
+      source: "LinkedIn",
+      appliedFrom,
+      appliedTo,
+      sortBy: "company",
+      sortOrder: "asc",
+      page: 2,
+      limit: 20,
+    });
+
+    const where = {
+      userId: "user-1",
+      OR: [
+        { company: { contains: "engineer", mode: "insensitive" } },
+        { jobTitle: { contains: "engineer", mode: "insensitive" } },
+        { location: { contains: "engineer", mode: "insensitive" } },
+      ],
+      status: "INTERVIEW",
+      source: { equals: "LinkedIn", mode: "insensitive" },
+      appliedAt: { gte: appliedFrom, lte: appliedTo },
+    };
+    expect(prismaMock.application.count).toHaveBeenCalledWith({ where });
+    expect(prismaMock.application.findMany).toHaveBeenCalledWith({
+      where,
+      orderBy: [{ company: "asc" }, { id: "asc" }],
+      skip: 20,
+      take: 20,
+    });
+    expect(result).toEqual({
+      data,
+      pagination: { page: 2, limit: 20, total: 1, pages: 1 },
+    });
+  });
+
+  it("sorts nullable applied dates with missing dates last", async () => {
+    prismaMock.$transaction.mockResolvedValueOnce([41, []]);
+
+    const result = await applicationService.search("user-1", {
+      sortBy: "appliedAt",
+      sortOrder: "desc",
+      page: 1,
+      limit: 20,
+    });
+
+    expect(prismaMock.application.findMany).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+      orderBy: [
+        { appliedAt: { sort: "desc", nulls: "last" } },
+        { id: "asc" },
+      ],
+      skip: 0,
+      take: 20,
+    });
+    expect(result.pagination).toEqual({
+      page: 1,
+      limit: 20,
+      total: 41,
+      pages: 3,
     });
   });
 

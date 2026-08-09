@@ -7,7 +7,12 @@ import App from './App'
 import { AppProvider } from './components/ui/AppProvider'
 
 vi.mock('./hooks/useApplications', () => ({
-  useApplications: () => ({ isPending: false, isError: false, isSuccess: true, data: [] }),
+  useApplications: () => ({
+    isPending: false,
+    isError: false,
+    isSuccess: true,
+    data: { data: [], pagination: { page: 1, limit: 20, total: 0, pages: 0 } },
+  }),
 }))
 
 vi.mock('./hooks/useSession', () => ({

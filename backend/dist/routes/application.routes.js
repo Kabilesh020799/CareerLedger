@@ -7,6 +7,7 @@ const application_event_controller_1 = require("../controllers/application-event
 exports.applicationRouter = (0, express_1.Router)();
 exports.applicationRouter.get("/", application_controller_1.applicationController.list);
 exports.applicationRouter.post("/", application_controller_1.applicationController.create);
+exports.applicationRouter.get("/search", application_controller_1.applicationController.search);
 exports.applicationRouter.get("/:id/events", application_event_controller_1.applicationEventController.list);
 exports.applicationRouter.post("/:id/events", application_event_controller_1.applicationEventController.create);
 exports.applicationRouter.get("/:id", application_controller_1.applicationController.getById);
