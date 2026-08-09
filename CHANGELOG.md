@@ -6,6 +6,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-08-09
+
+### Added
+
+- Added a no-domain HTTPS production entry point through CloudFront for the complete EC2-hosted application.
+
+### Changed
+
+- Changed production proxy handling to preserve CloudFront's viewer protocol, issue secure session cookies, and present the HTTPS deployment without an insecure-connection warning.
+
+### Security
+
+- Restricted direct EC2 HTTP ingress to AWS's managed CloudFront origin-facing network.
+
 ## [3.1.1] - 2026-08-09
 
 ### Fixed
@@ -55,7 +69,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.1.1...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.2.0...HEAD
+[3.2.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.1.1...v3.2.0
 [3.1.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v2.1.0...v3.0.0

@@ -197,7 +197,11 @@ npm run test:e2e
 
 The root `package.json` owns the application release version, and the matching section in `CHANGELOG.md` owns its categorized GitHub Release notes. Every push to `master` is verified. When its version has not been released before, GitHub Actions validates the changelog, publishes versioned frontend and backend images, deploys that version to EC2, and creates the corresponding `vMAJOR.MINOR.PATCH` GitHub Release. The first deployment generates protected PostgreSQL and session credentials on the instance, bootstraps the built-in demo user, and starts the database container with a persistent volume. Pushes with an unchanged version stop after verification.
 
-The selected production deployment intentionally uses plain HTTP and publicly known demo credentials. Although the password is hashed in the database and records remain user-scoped, HTTP does not encrypt login credentials or session cookies in transit. Do not store sensitive data in this deployment or treat it as secure against unauthorized access or network interception.
+Production is available at <https://d2g95c1jos960v.cloudfront.net>. CloudFront terminates browser-facing HTTPS and forwards uncached application requests to the EC2 frontend, which serves React and proxies `/api` to the private backend container. PostgreSQL remains private inside the Compose network.
+
+Direct public HTTP access to the EC2 address is disabled; use the CloudFront URL.
+
+The CloudFront-to-EC2 origin connection currently uses HTTP, so encryption is not end-to-end even though browser traffic and secure session cookies use HTTPS. The built-in demo credentials are public. Do not store sensitive data behind this shared demonstration account.
 
 See the [production deployment guide](docs/deployment.md) for the one-time instance and GitHub environment configuration.
 

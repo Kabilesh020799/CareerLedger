@@ -14,7 +14,7 @@ sudo chown "$USER":"$USER" /opt/job-application-tracker
 chmod 700 /opt/job-application-tracker
 ```
 
-The first deployment automatically creates `/opt/job-application-tracker/.env` with random URL-safe PostgreSQL and session credentials and permissions of `600`. GitHub Actions separately installs `/opt/job-application-tracker/.auth.env` with the public application URL and HTTP cookie mode. It starts PostgreSQL through Compose, creates the persistent volume, and applies migrations. Later deployments update only `IMAGE_TAG`; they preserve the generated credentials and named volumes. Existing deployments that do not yet have `SESSION_SECRET` receive one automatically on their next deployment.
+The first deployment automatically creates `/opt/job-application-tracker/.env` with random URL-safe PostgreSQL and session credentials and permissions of `600`. GitHub Actions separately installs `/opt/job-application-tracker/.auth.env` with the public application URL and secure cookie mode. It starts PostgreSQL through Compose, creates the persistent volume, and applies migrations. Later deployments update only `IMAGE_TAG`; they preserve the generated credentials and named volumes. Existing deployments that do not yet have `SESSION_SECRET` receive one automatically on their next deployment.
 
 `deploy/.env.production.example` remains available as a reference or for deliberately supplying credentials before the first deployment. Do not commit or transmit the production environment file.
 
@@ -56,19 +56,19 @@ Add environment variables:
 | Variable | Value |
 | --- | --- |
 | `DEPLOY_PORT` | SSH port, normally `22` |
-| `PRODUCTION_URL` | Public HTTP or HTTPS origin, currently `http://54.204.226.12` |
+| `PRODUCTION_URL` | Public HTTPS origin, currently `https://d2g95c1jos960v.cloudfront.net` |
 
 Restrict the environment to the `master` branch. Add required approval if deployments should pause for confirmation after images are published.
 
 To enable Gmail synchronization, enable the Gmail API in the Google Cloud project, configure its OAuth consent screen, and register the exact redirect URI `https://your-domain/api/gmail/callback`. Add test users while the consent screen remains in testing. Gmail metadata is a restricted scope and a public app that stores restricted-scope data may require Google verification and a security assessment.
 
-Google requires HTTPS redirect URIs on a public domain; only localhost HTTP callbacks are exempt. The current raw-IP HTTP demo deployment therefore cannot enable Gmail authorization. Leave `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` unset there, or move production to an HTTPS domain before configuring them.
+Google requires HTTPS redirect URIs on a domain the application is authorized to use; only localhost IP callbacks are exempt. The CloudFront address supports the application and password sessions, but Gmail OAuth production verification still requires a domain you control. Leave `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` unset until that domain is available.
 
 ## 4. Configure networking
 
-Allow inbound TCP port 80 from the internet. Allow SSH only from trusted sources when possible. Do not expose backend port 3000 or PostgreSQL port 5432; the production Compose file keeps both internal.
+CloudFront distribution `EI1Q2B9SNAQJH` serves browser-facing HTTPS at `d2g95c1jos960v.cloudfront.net` and connects to the EC2 frontend on port 80. Its behavior allows all application methods, disables caching for authenticated responses, and forwards headers, cookies, and query strings. The instance's inbound port 80 rule is restricted to the AWS-managed CloudFront origin-facing prefix list `pl-3b927c52`; direct public HTTP access is disabled. Allow SSH only from trusted sources when possible. Do not expose backend port 3000 or PostgreSQL port 5432; the production Compose file keeps both internal.
 
-The selected deployment intentionally uses plain HTTP with username/password authentication. This does not encrypt the login password or session cookie in transit. A network observer may capture and reuse them. The login page displays this warning, and the session cookie is intentionally configured without the `Secure` attribute so it can operate over HTTP.
+CloudFront encrypts browser traffic and the application issues a `Secure`, HTTP-only session cookie. The CloudFront-to-EC2 origin connection currently uses HTTP, so transport encryption is not end-to-end. The frontend passes CloudFront's viewer protocol to Express through `X-Forwarded-Proto` so secure cookies are issued correctly.
 
 The application bootstraps this built-in production account on every container start:
 

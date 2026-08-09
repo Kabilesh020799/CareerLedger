@@ -21,6 +21,18 @@ const deployScriptPath = path.join(
   __dirname,
   "deploy-production.sh",
 );
+const frontendDockerfilePath = path.join(
+  __dirname,
+  "..",
+  "frontend",
+  "Dockerfile",
+);
+const frontendNginxPath = path.join(
+  __dirname,
+  "..",
+  "frontend",
+  "nginx.conf",
+);
 
 test("publishes the GitHub Release only after production deployment", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
@@ -104,4 +116,16 @@ test("keeps the production frontend in the EC2 Compose release", () => {
   assert.doesNotMatch(workflow, /PAGES_API_URL/);
   assert.match(workflow, /service: frontend/);
   assert.match(deployScript, /docker compose[^\n]*pull backend frontend/);
+});
+
+test("propagates CloudFront HTTPS to secure production sessions", () => {
+  const dockerfile = fs.readFileSync(frontendDockerfilePath, "utf8");
+  const nginx = fs.readFileSync(frontendNginxPath, "utf8");
+
+  assert.match(dockerfile, /ARG VITE_INSECURE_HTTP_DEPLOYMENT=false/);
+  assert.match(nginx, /\$http_cloudfront_forwarded_proto/);
+  assert.match(
+    nginx,
+    /proxy_set_header X-Forwarded-Proto \$upstream_forwarded_proto/,
+  );
 });
