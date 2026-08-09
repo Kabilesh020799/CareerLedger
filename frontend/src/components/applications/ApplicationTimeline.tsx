@@ -94,7 +94,7 @@ export function ApplicationTimeline({ applicationId }: { applicationId: string }
                 <Input {...register('occurredAt')} type="date" />
                 <Field.ErrorText>{errors.occurredAt?.message}</Field.ErrorText>
               </Field.Root>
-              <Button colorPalette="purple" loading={createEvent.isPending} type="submit">
+              <Button alignSelf={{ base: 'stretch', sm: 'auto' }} colorPalette="purple" loading={createEvent.isPending} type="submit">
                 Add note
               </Button>
             </Flex>

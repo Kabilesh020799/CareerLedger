@@ -3,6 +3,7 @@ import { applicationQueryKeys } from './applicationQueryKeys'
 import { resumeVersionService } from '../services/resume-version.service'
 import { resumeVersionQueryKeys } from './resumeVersionQueryKeys'
 import type { UpdateResumeVersionInput } from '../types/resume'
+import { dashboardQueryKeys } from './dashboardQueryKeys'
 
 export function useUpdateResumeVersion() {
   const queryClient = useQueryClient()
@@ -12,6 +13,7 @@ export function useUpdateResumeVersion() {
     onSuccess: () => Promise.all([
       queryClient.invalidateQueries({ queryKey: resumeVersionQueryKeys.all }),
       queryClient.invalidateQueries({ queryKey: applicationQueryKeys.all }),
+      queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.all }),
     ]),
   })
 }

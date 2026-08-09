@@ -48,6 +48,7 @@ describe('resume version hooks', () => {
     await act(() => result.current.mutateAsync({ name: 'Full-stack resume' }))
 
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['resume-versions'] })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['dashboard'] })
   })
 
   it('updates and deletes while refreshing application associations', async () => {
@@ -62,10 +63,12 @@ describe('resume version hooks', () => {
     }))
     expect(updateSetup.invalidate).toHaveBeenCalledWith({ queryKey: ['resume-versions'] })
     expect(updateSetup.invalidate).toHaveBeenCalledWith({ queryKey: ['applications'] })
+    expect(updateSetup.invalidate).toHaveBeenCalledWith({ queryKey: ['dashboard'] })
 
     const deleteSetup = setup()
     const remove = renderHook(useDeleteResumeVersion, { wrapper: deleteSetup.wrapper })
     await act(() => remove.result.current.mutateAsync('resume-1'))
     expect(deleteSetup.invalidate).toHaveBeenCalledWith({ queryKey: ['applications'] })
+    expect(deleteSetup.invalidate).toHaveBeenCalledWith({ queryKey: ['dashboard'] })
   })
 })

@@ -115,7 +115,7 @@ export function ApplicationForm({
         <Textarea {...register('notes')} minH="8rem" resize="vertical" />
       </FormField>
 
-        <Button alignSelf="start" colorPalette="purple" loading={isSubmitting} type="submit">
+        <Button alignSelf={{ base: 'stretch', sm: 'start' }} colorPalette="purple" loading={isSubmitting} type="submit">
           {submitLabel}
         </Button>
       </Stack>

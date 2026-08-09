@@ -108,7 +108,7 @@ export function ApplicationReminders({ applicationId }: { applicationId: string 
             </SimpleGrid>
 
             <Button
-              alignSelf="start"
+              alignSelf={{ base: 'stretch', sm: 'start' }}
               colorPalette="purple"
               loading={createReminder.isPending}
               type="submit"
@@ -216,7 +216,7 @@ function ReminderEntries({
                 <Text fontWeight="medium">{reminder.description}</Text>
                 <Text color="fg.subtle" fontSize="sm">Due {formatReminderDate(reminder.dueAt)}</Text>
               </Stack>
-              <Flex gap="2">
+              <Flex gap="2" w={{ base: 'full', sm: 'auto' }} wrap="wrap">
                 <Button
                   loading={updatingId === reminder.id}
                   size="sm"

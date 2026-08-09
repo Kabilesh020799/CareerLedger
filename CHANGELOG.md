@@ -21,6 +21,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic dashboard follow-up suggestions for applied applications inactive for more than seven days, with one-action reminder creation due the next day.
 - Added persistent light and dark themes with device-preference detection, accessible controls before and after sign-in, and a contrast-aware purple and plum visual system.
 - Added private, reusable resume versions with editable positioning notes and optional application associations that are safely cleared when a version is deleted.
+- Added private resume outcome comparisons with submitted application counts and clearly denominated screening, interview, and offer rates, including explicit zero-data states.
+- Added responsive phone, tablet, and desktop layouts with compact mobile navigation, adaptive forms and actions, responsive dialogs, and contained scrolling for wide data views.
 
 ### Fixed
 

@@ -146,6 +146,7 @@ function ReminderGroup({
               </Text>
             </Stack>
             <Button
+              alignSelf={{ base: 'stretch', md: 'auto' }}
               loading={updatingId === reminder.id}
               size="sm"
               variant="outline"

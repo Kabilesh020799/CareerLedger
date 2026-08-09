@@ -15,6 +15,7 @@ describe('dashboardService', () => {
       submittedApplications: 5,
       statusCounts: {},
       conversionRates: { screening: 60, interview: 40, offer: 20 },
+      resumeOutcomes: [],
     }
     vi.mocked(api.get).mockResolvedValue({ data: summary })
 

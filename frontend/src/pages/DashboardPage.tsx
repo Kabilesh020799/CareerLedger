@@ -2,6 +2,7 @@ import { Alert, Box, Button, Flex, Heading, SimpleGrid, Spinner, Stack, Text } f
 import { Link } from 'react-router-dom'
 import { DashboardReminders } from '../components/reminders/DashboardReminders'
 import { FollowUpSuggestions } from '../components/reminders/FollowUpSuggestions'
+import { ResumeOutcomeAnalytics } from '../components/dashboard/ResumeOutcomeAnalytics'
 import { useDashboardSummary } from '../hooks/useDashboardSummary'
 import type { DashboardSummary } from '../types/dashboard'
 import { getApiErrorMessage } from '../utils/apiError'
@@ -40,6 +41,7 @@ export function DashboardPage() {
       {summaryQuery.isSuccess && (
         <>
           <DashboardContent summary={summaryQuery.data} />
+          <ResumeOutcomeAnalytics outcomes={summaryQuery.data.resumeOutcomes} />
           <FollowUpSuggestions />
           <DashboardReminders />
         </>
@@ -155,7 +157,7 @@ function RateCard({
       p="5"
       shadow="sm"
     >
-      <Flex align="baseline" justify="space-between" gap="3">
+      <Flex align="baseline" justify="space-between" gap="3" wrap="wrap">
         <Text color="fg" fontWeight="semibold">{label}</Text>
         <Text color="purple.fg" fontSize="2xl" fontWeight="bold">{formatPercentage(value)}</Text>
       </Flex>

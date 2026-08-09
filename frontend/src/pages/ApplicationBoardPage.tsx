@@ -26,7 +26,7 @@ export function ApplicationBoardPage() {
           <Heading as="h2" size="2xl">Application board</Heading>
           <Text color="fg.muted">Move opportunities as they progress through your pipeline.</Text>
         </Stack>
-        <Button asChild colorPalette="purple">
+        <Button asChild colorPalette="purple" w={{ base: 'full', sm: 'auto' }}>
           <Link to="/applications/new">Add application</Link>
         </Button>
       </Flex>

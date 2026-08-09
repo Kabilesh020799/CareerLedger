@@ -49,8 +49,8 @@ export function ApplicationDetailsPage() {
           <Heading as="h2" size="2xl">{application.jobTitle}</Heading>
           <Text color="fg.muted" fontSize="lg" mt="1">{application.company}</Text>
         </Box>
-        <Flex gap="3">
-          <Button asChild variant="outline">
+        <Flex gap="3" w={{ base: 'full', sm: 'auto' }} wrap="wrap">
+          <Button asChild flex={{ base: '1', sm: 'initial' }} variant="outline">
             <Link to={`/applications/${application.id}/edit`}>Edit</Link>
           </Button>
           <DeleteApplicationDialog

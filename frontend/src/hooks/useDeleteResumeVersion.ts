@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { applicationQueryKeys } from './applicationQueryKeys'
 import { resumeVersionService } from '../services/resume-version.service'
 import { resumeVersionQueryKeys } from './resumeVersionQueryKeys'
+import { dashboardQueryKeys } from './dashboardQueryKeys'
 
 export function useDeleteResumeVersion() {
   const queryClient = useQueryClient()
@@ -10,6 +11,7 @@ export function useDeleteResumeVersion() {
     onSuccess: () => Promise.all([
       queryClient.invalidateQueries({ queryKey: resumeVersionQueryKeys.all }),
       queryClient.invalidateQueries({ queryKey: applicationQueryKeys.all }),
+      queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.all }),
     ]),
   })
 }

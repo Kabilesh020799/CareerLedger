@@ -55,6 +55,7 @@ vi.mock('./hooks/useDashboardSummary', () => ({
         WITHDRAWN: 0,
       },
       conversionRates: { screening: 0, interview: 0, offer: 0 },
+      resumeOutcomes: [],
     },
   }),
 }))
@@ -106,15 +107,20 @@ describe('application routing', () => {
     const user = userEvent.setup()
     renderApp('/dashboard')
 
+    const menuButton = screen.getByRole('button', { name: 'Open navigation' })
+    expect(menuButton).toHaveAttribute('aria-expanded', 'false')
+    await user.click(menuButton)
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
     await user.click(screen.getByRole('link', { name: 'Applications' }))
     expect(screen.getByRole('heading', { name: 'Applications' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Open navigation' })).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('navigates to the application board', async () => {
     const user = userEvent.setup()
     renderApp('/applications')
 
+    await user.click(screen.getByRole('button', { name: 'Open navigation' }))
     await user.click(screen.getByRole('link', { name: 'Board' }))
 
     expect(screen.getByRole('heading', { name: 'Application board' })).toBeInTheDocument()

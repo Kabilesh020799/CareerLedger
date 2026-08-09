@@ -82,6 +82,7 @@ export function FollowUpSuggestions() {
                 </Text>
               </Stack>
               <Button
+                alignSelf={{ base: 'stretch', md: 'auto' }}
                 colorPalette="purple"
                 loading={createFollowUp.isPending && createFollowUp.variables === suggestion.application.id}
                 size="sm"

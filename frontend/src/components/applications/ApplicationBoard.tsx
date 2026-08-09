@@ -47,10 +47,15 @@ export function ApplicationBoard({
     <Flex
       align="stretch"
       gap="4"
+      maxW="full"
       overflowX="auto"
+      overscrollBehaviorX="contain"
       pb="4"
       role="group"
       aria-label="Application status board"
+      scrollSnapType="x proximity"
+      tabIndex={0}
+      w="full"
     >
       {applicationStatuses.map((status) => {
         const statusApplications = grouped[status]
@@ -71,6 +76,7 @@ export function ApplicationBoard({
             minH="24rem"
             p="3"
             transition="background 0.15s ease, border-color 0.15s ease"
+            scrollSnapAlign="start"
             onDragEnter={() => setDropTarget(status)}
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => drop(event, status)}

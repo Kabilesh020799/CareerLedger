@@ -42,7 +42,7 @@ export function ApplicationsPage() {
           <Heading as="h2" size="2xl">Applications</Heading>
           <Text color="fg.muted">Track every opportunity in one place.</Text>
         </Stack>
-        <Button asChild colorPalette="purple">
+        <Button asChild colorPalette="purple" w={{ base: 'full', sm: 'auto' }}>
           <Link to="/applications/new">Add application</Link>
         </Button>
       </Flex>
@@ -102,8 +102,19 @@ export function ApplicationsPage() {
 
       {applicationsQuery.isSuccess && applicationsQuery.data.data.length > 0 && (
         <Stack gap="3">
-          <Box bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" overflowX="auto">
-            <Table.Root variant="line" size="md">
+          <Box
+            aria-label="Scrollable applications table"
+            bg="bg.panel"
+            borderColor="border"
+            borderWidth="1px"
+            borderRadius="xl"
+            maxW="full"
+            overflowX="auto"
+            overscrollBehaviorX="contain"
+            role="region"
+            tabIndex={0}
+          >
+            <Table.Root minW="50rem" variant="line" size="md">
             <Table.Header>
               <Table.Row>
                 <Table.ColumnHeader>Company</Table.ColumnHeader>
@@ -142,7 +153,7 @@ export function ApplicationsPage() {
             <Text color="fg.muted" fontSize="sm">
               Showing {applicationsQuery.data.data.length} of {applicationsQuery.data.pagination.total} applications
             </Text>
-            <Flex align="center" gap="3">
+            <Flex align="center" gap="3" justify={{ base: 'space-between', sm: 'start' }} w={{ base: 'full', sm: 'auto' }} wrap="wrap">
               <Button
                 disabled={query.page <= 1}
                 size="sm"

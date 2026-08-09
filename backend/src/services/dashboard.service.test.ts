@@ -5,6 +5,9 @@ const prismaMock = vi.hoisted(() => ({
     groupBy: vi.fn(),
     count: vi.fn(),
   },
+  resumeVersion: {
+    findMany: vi.fn(),
+  },
   $transaction: vi.fn(),
 }));
 
@@ -31,6 +34,26 @@ describe("dashboardService", () => {
       { status: "REJECTED", _count: { _all: 1 } },
     ]);
     prismaMock.application.count.mockResolvedValue(3);
+    prismaMock.resumeVersion.findMany.mockResolvedValue([
+      {
+        id: "resume-2",
+        name: "Backend resume",
+        applications: [],
+      },
+      {
+        id: "resume-1",
+        name: "Full-stack resume",
+        applications: [
+          { status: "APPLIED" },
+          { status: "SCREENING" },
+          { status: "ASSESSMENT" },
+          { status: "INTERVIEW" },
+          { status: "OFFER" },
+          { status: "REJECTED" },
+          { status: "WITHDRAWN" },
+        ],
+      },
+    ]);
 
     const result = await dashboardService.getSummary(
       "user-1",
@@ -57,6 +80,22 @@ describe("dashboardService", () => {
         interview: 28.6,
         offer: 14.3,
       },
+      resumeOutcomes: [
+        {
+          resumeVersionId: "resume-2",
+          name: "Backend resume",
+          submittedApplications: 0,
+          milestoneCounts: { screening: 0, interview: 0, offer: 0 },
+          conversionRates: { screening: null, interview: null, offer: null },
+        },
+        {
+          resumeVersionId: "resume-1",
+          name: "Full-stack resume",
+          submittedApplications: 7,
+          milestoneCounts: { screening: 4, interview: 2, offer: 1 },
+          conversionRates: { screening: 57.1, interview: 28.6, offer: 14.3 },
+        },
+      ],
     });
     expect(prismaMock.application.groupBy).toHaveBeenCalledWith({
       by: ["status"],
@@ -69,11 +108,24 @@ describe("dashboardService", () => {
         createdAt: { gte: new Date("2026-08-03T00:00:00.000Z") },
       },
     });
+    expect(prismaMock.resumeVersion.findMany).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+      select: {
+        id: true,
+        name: true,
+        applications: {
+          where: { userId: "user-1", status: { not: "SAVED" } },
+          select: { status: true },
+        },
+      },
+      orderBy: [{ name: "asc" }, { id: "asc" }],
+    });
   });
 
   it("returns complete zero metrics when no applications exist", async () => {
     prismaMock.application.groupBy.mockResolvedValue([]);
     prismaMock.application.count.mockResolvedValue(0);
+    prismaMock.resumeVersion.findMany.mockResolvedValue([]);
 
     const result = await dashboardService.getSummary(
       "user-1",
@@ -88,6 +140,7 @@ describe("dashboardService", () => {
       interview: 0,
       offer: 0,
     });
+    expect(result.resumeOutcomes).toEqual([]);
   });
 
   it("returns zero rates when every application is only saved", async () => {
@@ -95,6 +148,9 @@ describe("dashboardService", () => {
       { status: "SAVED", _count: { _all: 4 } },
     ]);
     prismaMock.application.count.mockResolvedValue(1);
+    prismaMock.resumeVersion.findMany.mockResolvedValue([
+      { id: "resume-1", name: "Saved resume", applications: [] },
+    ]);
 
     const result = await dashboardService.getSummary("user-1");
 
@@ -104,6 +160,10 @@ describe("dashboardService", () => {
       screening: 0,
       interview: 0,
       offer: 0,
+    });
+    expect(result.resumeOutcomes[0]).toMatchObject({
+      submittedApplications: 0,
+      conversionRates: { screening: null, interview: null, offer: null },
     });
   });
 });

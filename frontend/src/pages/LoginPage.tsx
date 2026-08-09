@@ -38,12 +38,12 @@ export function LoginPage() {
   if (session.data?.user) return <Navigate to="/applications" replace />
 
   return (
-    <Box minH="100vh" bg="bg.subtle" color="fg" display="grid" placeItems="center" px="5" position="relative">
+    <Box minH="100vh" bg="bg.subtle" color="fg" display="grid" placeItems="center" px={{ base: '4', sm: '5' }} py={{ base: '20', sm: '12' }} position="relative">
       <Box position="absolute" right={{ base: '4', md: '7' }} top={{ base: '4', md: '7' }}>
         <ThemeToggle />
       </Box>
       <Container maxW="md">
-        <Stack bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="2xl" boxShadow="lg" gap="6" p={{ base: '7', md: '10' }}>
+        <Stack bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="2xl" boxShadow="lg" gap="6" p={{ base: '6', sm: '7', md: '10' }}>
           <Stack gap="2">
             <Heading color="purple.fg">Job Tracker</Heading>
             <Text color="fg.muted">Sign in to access your applications.</Text>

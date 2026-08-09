@@ -31,6 +31,15 @@ const summary = {
     WITHDRAWN: 0,
   },
   conversionRates: { screening: 57.1, interview: 28.6, offer: 14.3 },
+  resumeOutcomes: [
+    {
+      resumeVersionId: 'resume-1',
+      name: 'Full-stack resume',
+      submittedApplications: 7,
+      milestoneCounts: { screening: 4, interview: 2, offer: 1 },
+      conversionRates: { screening: 57.1, interview: 28.6, offer: 14.3 },
+    },
+  ],
 } satisfies DashboardSummary
 
 function renderPage() {
@@ -64,6 +73,7 @@ describe('DashboardPage', () => {
     expect(within(screen.getByRole('article', { name: 'Interview progression' })).getByText('28.6%')).toBeInTheDocument()
     expect(within(screen.getByRole('article', { name: 'Offer progression' })).getByText('14.3%')).toBeInTheDocument()
     expect(screen.getByText(/7 submitted applications/)).toBeInTheDocument()
+    expect(screen.getByRole('row', { name: 'Outcomes for Full-stack resume' })).toBeInTheDocument()
   })
 
   it('shows zero metrics and a creation action for an empty dashboard', () => {
@@ -80,6 +90,7 @@ describe('DashboardPage', () => {
           Object.keys(summary.statusCounts).map((status) => [status, 0]),
         ),
         conversionRates: { screening: 0, interview: 0, offer: 0 },
+        resumeOutcomes: [],
       },
     } as never)
 

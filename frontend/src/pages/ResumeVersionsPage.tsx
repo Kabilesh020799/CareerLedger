@@ -146,7 +146,7 @@ function ResumeVersionCard({
               {resumeVersion.notes ?? 'No notes added.'}
             </Text>
           </Box>
-          <Stack direction="row" gap="2">
+          <Stack direction={{ base: 'column', sm: 'row' }} gap="2">
             <Button size="sm" variant="outline" onClick={onEdit}>Edit</Button>
             <DeleteResumeVersionDialog
               isDeleting={isDeleting}

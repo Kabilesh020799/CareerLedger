@@ -1,11 +1,11 @@
 @roadmap @ui @dashboard
-Feature: Compare job-search strategies
+Feature: Compare application sources
   As a job seeker
-  I want to compare application outcomes by strategy
-  So that I can improve future applications
+  I want to compare application outcomes by source
+  So that I can learn where successful opportunities originate
 
-  Scenario: Compare job-search strategies
-    Given applications contain source and resume information
-    When I view strategy analytics
+  Scenario: Compare outcomes by source
+    Given applications contain source information
+    When I view source analytics
     Then I should see response, interview, and offer rates
-    And I should be able to compare outcomes by source and resume
+    And I should be able to compare outcomes across application sources

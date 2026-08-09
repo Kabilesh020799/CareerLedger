@@ -74,6 +74,7 @@ Inside Docker, the frontend sends `/api` requests through Nginx to the backend. 
 - View all applications on an eight-column status board with per-column counts.
 - Move board cards by drag-and-drop or an accessible status selector, with immediate feedback and automatic rollback on failure.
 - Review user-scoped status totals, applications created since Monday, and current screening, interview, and offer progression rates on the dashboard.
+- Compare submitted application counts and screening, interview, and offer rates across private resume versions.
 - See loading, empty, and API error states.
 - Create applications with validated fields.
 - Open application details.
@@ -88,6 +89,7 @@ Inside Docker, the frontend sends `/api` requests through Nginx to the backend. 
 - Turn a follow-up suggestion into a reminder due the next day with one action.
 - Switch between a polished light theme and a low-glare dark theme from the sign-in page or application navigation.
 - Start with the device color preference and remember an explicitly selected theme across reloads.
+- Use every primary workflow on phones, tablets, and computers with adaptive navigation, responsive forms and grids, and contained scrolling for wide data views.
 - Create, rename, annotate, and delete private resume versions.
 - Associate an optional resume version with each application and preserve the application if that version is deleted.
 - Delete applications after confirmation.
@@ -130,7 +132,7 @@ Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW
 | `DELETE` | `/api/resumes/:id` | Delete a resume version |
 | `GET` | `/api/dashboard/summary` | Retrieve current user-scoped pipeline totals and rates |
 
-All application, timeline, reminder, resume, and dashboard endpoints require an authenticated session. Requests cannot list, aggregate, or mutate records owned by another user. Resume endpoints store version names and notes, not uploaded documents. An application can optionally reference one of its owner's resume versions; deleting that version clears the reference without deleting the application. Follow-up suggestions are evaluated when requested and require an `APPLIED` application whose latest application or timeline activity is more than seven days old and which has no existing follow-up reminder. Dashboard progression rates use all non-saved applications as the denominator and current active milestone statuses as the numerator. The discovery endpoint accepts `search`, `status`, `source`, `appliedFrom`, `appliedTo`, `sortBy`, `sortOrder`, `page`, and `limit` query parameters and returns `{ data, pagination }`; supported page sizes are 10, 20, and 50. The original list endpoint remains available for existing clients. Status updates and their timeline events are saved in one database transaction. Deleting an application also deletes its timeline and reminders. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
+All application, timeline, reminder, resume, and dashboard endpoints require an authenticated session. Requests cannot list, aggregate, or mutate records owned by another user. Resume endpoints store version names and notes, not uploaded documents. An application can optionally reference one of its owner's resume versions; deleting that version clears the reference without deleting the application. Follow-up suggestions are evaluated when requested and require an `APPLIED` application whose latest application or timeline activity is more than seven days old and which has no existing follow-up reminder. Dashboard progression rates use all non-saved applications as the denominator and current active milestone statuses as the numerator. Resume outcome rates use only submitted applications associated with that resume version; saved and unassigned applications are excluded, and versions without submitted applications show unavailable rates. The discovery endpoint accepts `search`, `status`, `source`, `appliedFrom`, `appliedTo`, `sortBy`, `sortOrder`, `page`, and `limit` query parameters and returns `{ data, pagination }`; supported page sizes are 10, 20, and 50. The original list endpoint remains available for existing clients. Status updates and their timeline events are saved in one database transaction. Deleting an application also deletes its timeline and reminders. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
 
 ## Development without Docker
 

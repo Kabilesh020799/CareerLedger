@@ -33,6 +33,7 @@ test('manage a resume version and associate it with an application', async ({ pa
   await page.getByRole('link', { name: 'Add application' }).click()
   await page.getByLabel('Company').fill(company)
   await page.getByLabel('Job title').fill('Platform Engineer')
+  await page.getByLabel('Status').selectOption('INTERVIEW')
   await page.getByRole('button', { name: 'Create application' }).click()
   await expect(page.getByRole('heading', { name: 'Platform Engineer' })).toBeVisible()
   const applicationUrl = page.url()
@@ -43,6 +44,12 @@ test('manage a resume version and associate it with an application', async ({ pa
   await page.getByRole('button', { name: 'Save changes' }).click()
   await expect(page).toHaveURL(applicationUrl)
   await expect(page.getByText('Resume version', { exact: true }).locator('..')).toContainText(revisedName)
+
+  await page.getByRole('link', { name: 'Dashboard' }).click()
+  const outcomeRow = page.getByRole('row', { name: `Outcomes for ${revisedName}` })
+  await expect(outcomeRow.getByText('1', { exact: true })).toBeVisible()
+  await expect(outcomeRow.getByText('100%')).toHaveCount(2)
+  await expect(outcomeRow.getByText('0%', { exact: true })).toBeVisible()
 
   await page.getByRole('link', { name: 'Resumes' }).click()
   const revisedCard = page.getByRole('article', { name: revisedName })

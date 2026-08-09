@@ -29,6 +29,7 @@ describe('useDashboardSummary', () => {
         WITHDRAWN: 0,
       },
       conversionRates: { screening: 0, interview: 0, offer: 0 },
+      resumeOutcomes: [],
     }
     vi.mocked(dashboardService.getSummary).mockResolvedValue(summary)
     const queryClient = new QueryClient({

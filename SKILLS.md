@@ -80,6 +80,16 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 **Specification:** `features/v0.1/color_theme.feature`.
 
+### Responsive application experience
+
+**Purpose:** Keep every public and authenticated workflow usable on phones, tablets, and desktop computers.
+
+**Expected knowledge:** Chakra responsive props and breakpoints, adaptive navigation, intrinsic sizing, contained overflow, touch-friendly actions, responsive dialogs, and viewport-based Playwright testing.
+
+**Critical rule:** do not allow document-level horizontal scrolling; wide application tables, status boards, and analytics comparisons must scroll inside labelled regions while forms, actions, navigation, and dialogs adapt to the viewport.
+
+**Specification:** `features/v0.1/responsive_layout.feature`.
+
 ### Behavior-driven testing
 
 **Purpose:** Turn product requirements into stable executable specifications.
@@ -152,13 +162,23 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 **Specification:** `features/v0.1/resume_versions.feature`.
 
+### Resume outcome analytics
+
+**Purpose:** Compare screening, interview, and offer progress across private resume versions.
+
+**Expected knowledge:** user-scoped aggregation, milestone definitions, nullable rates, responsive comparison tables, and TanStack Query invalidation.
+
+**Critical rule:** use each resume version's submitted applications as its denominator, exclude saved and unassigned applications, show rates as unavailable when the denominator is zero, and never include another user's records.
+
+**Specification:** `features/v0.1/resume_outcome_analytics.feature`.
+
 ## Roadmap skills
 
-### Strategy analytics
+### Source analytics
 
-**Purpose:** Compare job-search outcomes by source and resume strategy.
+**Purpose:** Compare job-search outcomes by application source.
 
-**Expected knowledge:** outcome definitions, resume modeling, aggregation queries, and responsible data visualization.
+**Expected knowledge:** outcome definitions, source normalization, aggregation queries, and responsible data visualization.
 
 **Critical rule:** do not add decorative analytics or present rates without clear denominators and sufficient underlying data.
 
@@ -201,14 +221,6 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 **Critical rule:** AI is a fallback; raw output never directly updates the database.
 
 **Specification:** the LLM fallback scenario in `features/roadmap/gmail_sync.feature`.
-
-### Resume outcome analytics
-
-**Purpose:** Compare application outcomes across the implemented resume versions.
-
-**Expected knowledge:** relational modeling, resume versioning, outcome definitions, and responsible analytics.
-
-**Specification:** `features/roadmap/reminders_and_resumes.feature`.
 
 ### Browser job capture
 
