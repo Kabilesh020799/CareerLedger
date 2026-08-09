@@ -1,12 +1,6 @@
-# Automated GitHub Pages and versioned production deployment
+# Automated versioned production deployment
 
-Pull requests targeting `master` run verification only. Every push to `master` is verified, publishes the static frontend to GitHub Pages, and reads the root `package.json` version. If that version has not been released, GitHub Actions creates the GitHub Release, publishes versioned Docker images to GitHub Container Registry, and deploys that exact version to the production instance through SSH. A push that keeps an already released version still refreshes Pages but does not publish images or deploy EC2 again.
-
-## GitHub Pages frontend
-
-Configure the repository variable `PAGES_API_URL` with the complete API base URL, including `/api`. The initial raw-IP deployment uses `http://54.204.226.12/api`. The workflow builds the frontend under `/JobApplicationTracker/`, enables hash routing for static hosting, uploads `frontend/dist`, and deploys it through the `github-pages` environment.
-
-The Pages URL is <https://kabilesh020799.github.io/JobApplicationTracker/>. Because GitHub Pages serves HTTPS, browsers block requests from it to the current HTTP API. A working authenticated Pages client requires an HTTPS API endpoint. For reliable cookie authentication, use related custom domains such as `app.example.com` for Pages and `api.example.com` for EC2.
+Pull requests targeting `master` run verification only. Every push to `master` is verified and reads the root `package.json` version. If that version has not been released, GitHub Actions creates the GitHub Release, publishes versioned Docker images to GitHub Container Registry, and deploys that exact version to the production instance through SSH. A push that keeps an already released version does not publish or deploy again.
 
 ## 1. Prepare the instance
 
@@ -62,7 +56,7 @@ Add environment variables:
 | Variable | Value |
 | --- | --- |
 | `DEPLOY_PORT` | SSH port, normally `22` |
-| `PRODUCTION_URL` | Public HTTP or HTTPS origin, currently `http://52.71.164.202` |
+| `PRODUCTION_URL` | Public HTTP or HTTPS origin, currently `http://54.204.226.12` |
 
 Restrict the environment to the `master` branch. Add required approval if deployments should pause for confirmation after images are published.
 
@@ -102,18 +96,17 @@ Every push is verified. A new version releases and deploys; an unchanged version
 The workflow:
 
 1. Installs locked dependencies and runs all current checks.
-2. Builds and publishes the frontend to GitHub Pages with repository-scoped assets and hash routing.
-3. Validates the root package version and its categorized `CHANGELOG.md` section, then checks GitHub for that release.
-4. Stops the versioned release path successfully when the version has already been released.
-5. Publishes frontend and backend images tagged with the new version and commit SHA.
-6. Copies the production Compose file and deployment script to the instance.
-7. Writes the public application origin and HTTP cookie mode to the instance.
-8. Authenticates the instance to GHCR with the workflow's short-lived token.
-9. Pulls and starts the exact release version.
-10. On the first deployment, generates protected database and session credentials, bootstraps the built-in demo user, and starts the PostgreSQL container and volume.
-11. Waits for Compose health checks and verifies the proxied API.
-12. Restores the previous release version when deployment fails.
-13. Creates the version tag and GitHub Release with the matching changelog entries only after deployment succeeds.
+2. Validates the root package version and its categorized `CHANGELOG.md` section, then checks GitHub for that release.
+3. Stops successfully when the version has already been released.
+4. Publishes frontend and backend images tagged with the new version and commit SHA.
+5. Copies the production Compose file and deployment script to the instance.
+6. Writes the public application origin and HTTP cookie mode to the instance.
+7. Authenticates the instance to GHCR with the workflow's short-lived token.
+8. Pulls and starts the exact release version.
+9. On the first deployment, generates protected database and session credentials, bootstraps the built-in demo user, and starts the PostgreSQL container and volume.
+10. Waits for Compose health checks and verifies the proxied API.
+11. Restores the previous release version when deployment fails.
+12. Creates the version tag and GitHub Release with the matching changelog entries only after deployment succeeds.
 
 Release planning runs in parallel with verification. Frontend and backend images build in parallel with persistent BuildKit caches, and publishing remains gated on both successful verification and a new version. The deployment pulls only the two versioned application images; stable infrastructure images are reused unless they are missing. The backend runtime image contains compiled code and production dependencies rather than test and build tooling.
 

@@ -17,6 +17,10 @@ const verifyWorkflowPath = path.join(
   "workflows",
   "verify.yml",
 );
+const deployScriptPath = path.join(
+  __dirname,
+  "deploy-production.sh",
+);
 
 test("publishes the GitHub Release only after production deployment", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
@@ -91,20 +95,13 @@ test("provides backend verification with an isolated test database URL", () => {
   );
 });
 
-test("deploys a repository-scoped frontend artifact to GitHub Pages", () => {
+test("keeps the production frontend in the EC2 Compose release", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
-  const pagesBlock = workflow.slice(
-    workflow.indexOf("  deploy_pages:"),
-    workflow.indexOf("  plan_release:"),
-  );
+  const deployScript = fs.readFileSync(deployScriptPath, "utf8");
 
-  assert.match(pagesBlock, /needs: verify/);
-  assert.match(pagesBlock, /pages: write/);
-  assert.match(pagesBlock, /id-token: write/);
-  assert.match(pagesBlock, /environment:\n      name: github-pages/);
-  assert.match(pagesBlock, /VITE_API_URL: \$\{\{ vars\.PAGES_API_URL \}\}/);
-  assert.match(pagesBlock, /VITE_ROUTER_MODE: hash/);
-  assert.match(pagesBlock, /npm run build -- --base=\/JobApplicationTracker\//);
-  assert.match(pagesBlock, /path: frontend\/dist/);
-  assert.match(pagesBlock, /actions\/deploy-pages@/);
+  assert.doesNotMatch(workflow, /deploy_pages:/);
+  assert.doesNotMatch(workflow, /actions\/deploy-pages@/);
+  assert.doesNotMatch(workflow, /PAGES_API_URL/);
+  assert.match(workflow, /service: frontend/);
+  assert.match(deployScript, /docker compose[^\n]*pull backend frontend/);
 });
