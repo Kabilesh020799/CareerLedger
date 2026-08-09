@@ -14,6 +14,7 @@ const require_auth_1 = require("./middleware/require-auth");
 const application_routes_1 = require("./routes/application.routes");
 const auth_routes_1 = require("./routes/auth.routes");
 const dashboard_routes_1 = require("./routes/dashboard.routes");
+const gmail_routes_1 = require("./routes/gmail.routes");
 const reminder_routes_1 = require("./routes/reminder.routes");
 const resume_version_routes_1 = require("./routes/resume-version.routes");
 const session_store_1 = require("./services/session-store");
@@ -45,6 +46,7 @@ function createApp() {
     app.use("/api/auth", auth_routes_1.authRouter);
     app.use("/api/applications", require_auth_1.requireAuth, application_routes_1.applicationRouter);
     app.use("/api/dashboard", require_auth_1.requireAuth, dashboard_routes_1.dashboardRouter);
+    app.use("/api/gmail", require_auth_1.requireAuth, gmail_routes_1.gmailRouter);
     app.use("/api/reminders", require_auth_1.requireAuth, reminder_routes_1.reminderRouter);
     app.use("/api/resumes", require_auth_1.requireAuth, resume_version_routes_1.resumeVersionRouter);
     app.use((error, _req, res, _next) => {

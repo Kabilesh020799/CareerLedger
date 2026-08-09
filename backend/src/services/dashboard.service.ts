@@ -15,38 +15,51 @@ const interviewMilestoneStatuses = new Set<ApplicationStatusValue>([
   ApplicationStatus.INTERVIEW,
   ApplicationStatus.OFFER,
 ]);
+const responseOutcomeStatuses = new Set<ApplicationStatusValue>([
+  ApplicationStatus.SCREENING,
+  ApplicationStatus.ASSESSMENT,
+  ApplicationStatus.INTERVIEW,
+  ApplicationStatus.OFFER,
+  ApplicationStatus.REJECTED,
+]);
 
 export const dashboardService = {
   async getSummary(userId: string, now = new Date()) {
     const weekStartedAt = startOfUtcWeek(now);
-    const [groupedStatuses, createdThisWeek, resumeVersions] = await prisma.$transaction([
-      prisma.application.groupBy({
-        by: ["status"],
-        where: { userId },
-        _count: { _all: true },
-      }),
-      prisma.application.count({
-        where: {
-          userId,
-          createdAt: { gte: weekStartedAt },
-        },
-      }),
-      prisma.resumeVersion.findMany({
-        where: { userId },
-        select: {
-          id: true,
-          name: true,
-          applications: {
-            where: {
-              userId,
-              status: { not: ApplicationStatus.SAVED },
-            },
-            select: { status: true },
+    const [groupedStatuses, createdThisWeek, resumeVersions, groupedSources] =
+      await prisma.$transaction([
+        prisma.application.groupBy({
+          by: ["status"],
+          where: { userId },
+          _count: { _all: true },
+        }),
+        prisma.application.count({
+          where: {
+            userId,
+            createdAt: { gte: weekStartedAt },
           },
-        },
-        orderBy: [{ name: "asc" }, { id: "asc" }],
-      }),
-    ]);
+        }),
+        prisma.resumeVersion.findMany({
+          where: { userId },
+          select: {
+            id: true,
+            name: true,
+            applications: {
+              where: {
+                userId,
+                status: { not: ApplicationStatus.SAVED },
+              },
+              select: { status: true },
+            },
+          },
+          orderBy: [{ name: "asc" }, { id: "asc" }],
+        }),
+        prisma.application.groupBy({
+          by: ["source", "status"],
+          where: { userId, source: { not: null } },
+          _count: { _all: true },
+        }),
+      ]);
 
     const statusCounts = createEmptyStatusCounts();
     for (const group of groupedStatuses) {
@@ -80,9 +93,101 @@ export const dashboardService = {
       resumeOutcomes: resumeVersions.map((resumeVersion) =>
         createResumeOutcome(resumeVersion),
       ),
+      sourceOutcomes: createSourceOutcomes(groupedSources),
     };
   },
 };
+
+function createSourceOutcomes(
+  sourceGroups: Array<{
+    source: string | null;
+    status: ApplicationStatusValue;
+    _count: { _all: number };
+  }>,
+) {
+  const groupedSources = new Map<
+    string,
+    {
+      source: string;
+      statusCounts: Map<ApplicationStatusValue, number>;
+    }
+  >();
+
+  for (const sourceGroup of sourceGroups) {
+    const source = normalizeSourceLabel(sourceGroup.source);
+    if (!source) continue;
+
+    const key = source.toLocaleLowerCase("en-US");
+    const group = groupedSources.get(key);
+    if (group) {
+      group.statusCounts.set(
+        sourceGroup.status,
+        (group.statusCounts.get(sourceGroup.status) ?? 0) +
+          sourceGroup._count._all,
+      );
+    } else {
+      groupedSources.set(key, {
+        source,
+        statusCounts: new Map([
+          [sourceGroup.status, sourceGroup._count._all],
+        ]),
+      });
+    }
+  }
+
+  return [...groupedSources.values()]
+    .map(({ source, statusCounts }) => {
+      const submittedApplications = sumStatusCounts(
+        statusCounts,
+        (status) => status !== ApplicationStatus.SAVED,
+      );
+      const responses = sumStatusCounts(statusCounts, (status) =>
+        responseOutcomeStatuses.has(status),
+      );
+      const interviews = sumStatusCounts(statusCounts, (status) =>
+        interviewMilestoneStatuses.has(status),
+      );
+      const offers = statusCounts.get(ApplicationStatus.OFFER) ?? 0;
+
+      return {
+        source,
+        submittedApplications,
+        outcomeCounts: {
+          response: responses,
+          interview: interviews,
+          offer: offers,
+        },
+        outcomeRates: {
+          response: optionalPercentage(responses, submittedApplications),
+          interview: optionalPercentage(interviews, submittedApplications),
+          offer: optionalPercentage(offers, submittedApplications),
+        },
+      };
+    })
+    .sort(
+      (left, right) =>
+        right.submittedApplications - left.submittedApplications ||
+        left.source.localeCompare(right.source, "en-US", {
+          sensitivity: "base",
+        }),
+    );
+}
+
+function sumStatusCounts(
+  statusCounts: Map<ApplicationStatusValue, number>,
+  include: (status: ApplicationStatusValue) => boolean,
+) {
+  let total = 0;
+  for (const [status, count] of statusCounts) {
+    if (include(status)) total += count;
+  }
+  return total;
+}
+
+function normalizeSourceLabel(source: string | null) {
+  const normalized = source?.trim().replace(/\s+/g, " ");
+  return normalized || null;
+}
 
 function createResumeOutcome(resumeVersion: {
   id: string;

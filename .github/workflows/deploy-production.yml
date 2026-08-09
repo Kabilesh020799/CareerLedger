@@ -166,28 +166,39 @@ jobs:
           scp -i ~/.ssh/deploy_key -P "$port" deploy/compose.production.yml scripts/deploy-production.sh "$DEPLOY_USER@$DEPLOY_HOST:/opt/job-application-tracker/"
           ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "chmod 700 /opt/job-application-tracker/deploy-production.sh"
 
-      - name: Configure HTTP application environment
+      - name: Configure application environment
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
           PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           case "$PRODUCTION_URL" in
-            http://*) ;;
-            *) echo "PRODUCTION_URL must be an HTTP origin." >&2; exit 1 ;;
+            http://*)
+              app_host="${PRODUCTION_URL#http://}"
+              cookie_secure=false
+              ;;
+            https://*)
+              app_host="${PRODUCTION_URL#https://}"
+              cookie_secure=true
+              ;;
+            *) echo "PRODUCTION_URL must be an HTTP or HTTPS origin." >&2; exit 1 ;;
           esac
 
-          app_host="${PRODUCTION_URL#http://}"
           app_host="${app_host%/}"
           case "$app_host" in
-            ""|*/*) echo "PRODUCTION_URL must contain only an HTTP origin." >&2; exit 1 ;;
+            ""|*/*) echo "PRODUCTION_URL must contain only an origin." >&2; exit 1 ;;
           esac
 
           port="${DEPLOY_PORT:-22}"
           {
             printf 'FRONTEND_URL=%s\n' "${PRODUCTION_URL%/}"
-            printf 'COOKIE_SECURE=false\n'
+            printf 'COOKIE_SECURE=%s\n' "$cookie_secure"
+            printf 'GOOGLE_CLIENT_ID=%s\n' "$GOOGLE_CLIENT_ID"
+            printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET"
+            printf 'GMAIL_CALLBACK_URL=%s/api/gmail/callback\n' "${PRODUCTION_URL%/}"
           } | ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "umask 077; cat > /opt/job-application-tracker/.auth.env"
 
       - name: Authenticate instance to GHCR

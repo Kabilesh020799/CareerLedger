@@ -48,15 +48,21 @@ Add environment secrets:
 | `DEPLOY_USER` | Non-root deployment user |
 | `DEPLOY_SSH_KEY` | Dedicated private deployment key |
 | `DEPLOY_KNOWN_HOSTS` | Verified SSH known-hosts line |
+| `GOOGLE_CLIENT_ID` | Optional Google web OAuth client ID used for Gmail connection |
+| `GOOGLE_CLIENT_SECRET` | Optional Google web OAuth client secret used for Gmail connection |
 
 Add environment variables:
 
 | Variable | Value |
 | --- | --- |
 | `DEPLOY_PORT` | SSH port, normally `22` |
-| `PRODUCTION_URL` | HTTP public origin, currently `http://52.71.164.202` |
+| `PRODUCTION_URL` | Public HTTP or HTTPS origin, currently `http://52.71.164.202` |
 
 Restrict the environment to the `master` branch. Add required approval if deployments should pause for confirmation after images are published.
+
+To enable Gmail synchronization, enable the Gmail API in the Google Cloud project, configure its OAuth consent screen, and register the exact redirect URI `https://your-domain/api/gmail/callback`. Add test users while the consent screen remains in testing. Gmail metadata is a restricted scope and a public app that stores restricted-scope data may require Google verification and a security assessment.
+
+Google requires HTTPS redirect URIs on a public domain; only localhost HTTP callbacks are exempt. The current raw-IP HTTP demo deployment therefore cannot enable Gmail authorization. Leave `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` unset there, or move production to an HTTPS domain before configuring them.
 
 ## 4. Configure networking
 

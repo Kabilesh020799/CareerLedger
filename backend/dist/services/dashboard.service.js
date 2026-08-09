@@ -14,10 +14,17 @@ const interviewMilestoneStatuses = new Set([
     enums_1.ApplicationStatus.INTERVIEW,
     enums_1.ApplicationStatus.OFFER,
 ]);
+const responseOutcomeStatuses = new Set([
+    enums_1.ApplicationStatus.SCREENING,
+    enums_1.ApplicationStatus.ASSESSMENT,
+    enums_1.ApplicationStatus.INTERVIEW,
+    enums_1.ApplicationStatus.OFFER,
+    enums_1.ApplicationStatus.REJECTED,
+]);
 exports.dashboardService = {
     async getSummary(userId, now = new Date()) {
         const weekStartedAt = startOfUtcWeek(now);
-        const [groupedStatuses, createdThisWeek, resumeVersions] = await prisma_1.prisma.$transaction([
+        const [groupedStatuses, createdThisWeek, resumeVersions, groupedSources] = await prisma_1.prisma.$transaction([
             prisma_1.prisma.application.groupBy({
                 by: ["status"],
                 where: { userId },
@@ -44,6 +51,11 @@ exports.dashboardService = {
                 },
                 orderBy: [{ name: "asc" }, { id: "asc" }],
             }),
+            prisma_1.prisma.application.groupBy({
+                by: ["source", "status"],
+                where: { userId, source: { not: null } },
+                _count: { _all: true },
+            }),
         ]);
         const statusCounts = createEmptyStatusCounts();
         for (const group of groupedStatuses) {
@@ -68,9 +80,69 @@ exports.dashboardService = {
                 offer: percentage(statusCounts.OFFER, submittedApplications),
             },
             resumeOutcomes: resumeVersions.map((resumeVersion) => createResumeOutcome(resumeVersion)),
+            sourceOutcomes: createSourceOutcomes(groupedSources),
         };
     },
 };
+function createSourceOutcomes(sourceGroups) {
+    const groupedSources = new Map();
+    for (const sourceGroup of sourceGroups) {
+        const source = normalizeSourceLabel(sourceGroup.source);
+        if (!source)
+            continue;
+        const key = source.toLocaleLowerCase("en-US");
+        const group = groupedSources.get(key);
+        if (group) {
+            group.statusCounts.set(sourceGroup.status, (group.statusCounts.get(sourceGroup.status) ?? 0) +
+                sourceGroup._count._all);
+        }
+        else {
+            groupedSources.set(key, {
+                source,
+                statusCounts: new Map([
+                    [sourceGroup.status, sourceGroup._count._all],
+                ]),
+            });
+        }
+    }
+    return [...groupedSources.values()]
+        .map(({ source, statusCounts }) => {
+        const submittedApplications = sumStatusCounts(statusCounts, (status) => status !== enums_1.ApplicationStatus.SAVED);
+        const responses = sumStatusCounts(statusCounts, (status) => responseOutcomeStatuses.has(status));
+        const interviews = sumStatusCounts(statusCounts, (status) => interviewMilestoneStatuses.has(status));
+        const offers = statusCounts.get(enums_1.ApplicationStatus.OFFER) ?? 0;
+        return {
+            source,
+            submittedApplications,
+            outcomeCounts: {
+                response: responses,
+                interview: interviews,
+                offer: offers,
+            },
+            outcomeRates: {
+                response: optionalPercentage(responses, submittedApplications),
+                interview: optionalPercentage(interviews, submittedApplications),
+                offer: optionalPercentage(offers, submittedApplications),
+            },
+        };
+    })
+        .sort((left, right) => right.submittedApplications - left.submittedApplications ||
+        left.source.localeCompare(right.source, "en-US", {
+            sensitivity: "base",
+        }));
+}
+function sumStatusCounts(statusCounts, include) {
+    let total = 0;
+    for (const [status, count] of statusCounts) {
+        if (include(status))
+            total += count;
+    }
+    return total;
+}
+function normalizeSourceLabel(source) {
+    const normalized = source?.trim().replace(/\s+/g, " ");
+    return normalized || null;
+}
 function createResumeOutcome(resumeVersion) {
     const submittedApplications = resumeVersion.applications.length;
     const screeningMilestones = resumeVersion.applications.filter(({ status }) => screeningMilestoneStatuses.has(status)).length;

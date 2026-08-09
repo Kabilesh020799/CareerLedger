@@ -172,17 +172,27 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 **Specification:** `features/v0.1/resume_outcome_analytics.feature`.
 
-## Roadmap skills
-
 ### Source analytics
 
-**Purpose:** Compare job-search outcomes by application source.
+**Purpose:** Compare response, interview, and offer progress across application sources.
 
-**Expected knowledge:** outcome definitions, source normalization, aggregation queries, and responsible data visualization.
+**Expected knowledge:** source normalization, user-scoped aggregation, outcome definitions, nullable rates, responsive comparison tables, and TanStack Query invalidation.
 
-**Critical rule:** do not add decorative analytics or present rates without clear denominators and sufficient underlying data.
+**Critical rule:** normalize source names by case and whitespace, use each source's submitted applications as its denominator, exclude saved and unassigned applications from rates, state the current-status outcome definitions, and never include another user's records.
 
-**Specification:** `features/roadmap/board_and_dashboard.feature`.
+**Specification:** `features/v0.1/source_analytics.feature`.
+
+### Manual Gmail synchronization
+
+**Purpose:** Connect a private Gmail account and collect new provider message references on demand without changing applications.
+
+**Expected knowledge:** Google OAuth web-server flow, restricted scopes, encrypted credential storage, refresh tokens, Gmail history synchronization, cursor expiry, deduplication, user-scoped APIs, and retryable UI states.
+
+**Critical rule:** request only Gmail metadata access for this phase, validate session-bound OAuth state, keep tokens server-side and encrypted at rest, scope connections and messages to their owner, advance the history cursor only after message references are persisted, recover an expired cursor with a new initial sync, and never classify email or mutate applications in this capability.
+
+**Specification:** `features/v0.1/gmail_sync.feature`.
+
+## Roadmap skills
 
 ### Authentication and authorization
 
@@ -194,13 +204,13 @@ Use the release-version skill to classify SemVer and maintain the matching categ
 
 **Specification:** `features/roadmap/authentication.feature`.
 
-### Gmail integration and classification
+### Gmail classification and matching
 
-**Purpose:** Suggest application updates from recruitment email.
+**Purpose:** Classify synchronized recruitment email and propose reviewable application updates.
 
 **Expected knowledge:** Gmail API, minimal OAuth scopes, incremental synchronization, deterministic text classification, confidence scoring, review workflows.
 
-**Critical rules:** begin with manual sync and deterministic rules; deduplicate messages; require review for uncertain matches; never silently mutate records.
+**Critical rules:** use deterministic rules before AI; require review for uncertain matches; never silently mutate records.
 
 **Specification:** `features/roadmap/gmail_sync.feature`.
 

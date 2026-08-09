@@ -4,13 +4,6 @@ Feature: Discover recruitment updates from Gmail
   I want recruitment emails converted into reviewable updates
   So that my tracker stays current with less manual effort
 
-  Scenario: Manually synchronize Gmail
-    Given I have connected my Gmail account
-    When I request a Gmail synchronization
-    Then new relevant messages should be fetched
-    And previously processed messages should not be processed again
-    And the last synchronization state should be recorded
-
   Scenario Outline: Classify recruitment email using deterministic rules
     Given an email contains <phrase>
     When the email is classified

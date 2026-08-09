@@ -36,7 +36,16 @@ test('sign in with the demo user and access its applications', async ({ page }) 
   await expect(page.getByText('Shopify')).toBeVisible()
 })
 
-test('view authenticated dashboard totals and pipeline rates', async ({ page }) => {
+test('view Gmail synchronization configuration status', async ({ page }) => {
+  await signIn(page)
+  await page.getByRole('link', { name: 'Gmail' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Gmail synchronization' })).toBeVisible()
+  await expect(page.getByText('Gmail integration is unavailable')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Authorize Gmail' })).toHaveCount(0)
+})
+
+test('view authenticated dashboard totals, pipeline rates, and source outcomes', async ({ page }) => {
   await signIn(page)
   const summaryResponse = await page.request.get(
     'http://127.0.0.1:3001/api/dashboard/summary',
@@ -59,6 +68,16 @@ test('view authenticated dashboard totals and pipeline rates', async ({ page }) 
     .toContainText(`${summary.conversionRates.interview}%`)
   await expect(page.getByRole('article', { name: 'Offer progression' }))
     .toContainText(`${summary.conversionRates.offer}%`)
+
+  const companyWebsite = summary.sourceOutcomes.find(
+    (outcome: { source: string }) => outcome.source === 'Company Website',
+  )
+  expect(companyWebsite).toBeTruthy()
+  const sourceRow = page.getByRole('row', { name: 'Outcomes for Company Website' })
+  await expect(sourceRow).toContainText(String(companyWebsite.submittedApplications))
+  await expect(sourceRow).toContainText(`${companyWebsite.outcomeRates.response}%`)
+  await expect(sourceRow).toContainText(`${companyWebsite.outcomeRates.interview}%`)
+  await expect(sourceRow).toContainText(`${companyWebsite.outcomeRates.offer}%`)
 })
 
 test('create a reminder from an inactive application suggestion', async ({ page }) => {
@@ -100,8 +119,9 @@ test('create a reminder from an inactive application suggestion', async ({ page 
 })
 
 test('create, complete, reopen, and delete an application reminder', async ({ page }) => {
-  const company = `Reminder verification ${Date.now()}`
-  const description = 'Submit the take-home assessment'
+  const suffix = Date.now()
+  const company = `Reminder verification ${suffix}`
+  const description = `Submit the take-home assessment ${suffix}`
   await signIn(page)
 
   await page.getByRole('link', { name: 'Add application' }).click()
@@ -109,7 +129,8 @@ test('create, complete, reopen, and delete an application reminder', async ({ pa
   await page.getByLabel('Job title').fill('Reminder Engineer')
   await page.getByLabel('Status').selectOption('ASSESSMENT')
   await page.getByRole('button', { name: 'Create application' }).click()
-  await expect(page).toHaveURL(/\/applications\/[^/]+$/)
+  await expect(page.getByRole('heading', { name: 'Reminder Engineer' })).toBeVisible()
+  await expect(page).toHaveURL(/\/applications\/(?!new$)[^/]+$/)
   const applicationUrl = page.url()
 
   await page.getByLabel(/Reminder type/).selectOption('DEADLINE')

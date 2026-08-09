@@ -24,15 +24,28 @@ describe("dashboardService", () => {
   });
 
   it("returns user-scoped totals, Monday activity, and pipeline rates", async () => {
-    prismaMock.application.groupBy.mockResolvedValue([
-      { status: "SAVED", _count: { _all: 2 } },
-      { status: "APPLIED", _count: { _all: 2 } },
-      { status: "SCREENING", _count: { _all: 1 } },
-      { status: "ASSESSMENT", _count: { _all: 1 } },
-      { status: "INTERVIEW", _count: { _all: 1 } },
-      { status: "OFFER", _count: { _all: 1 } },
-      { status: "REJECTED", _count: { _all: 1 } },
-    ]);
+    prismaMock.application.groupBy
+      .mockResolvedValueOnce([
+        { status: "SAVED", _count: { _all: 2 } },
+        { status: "APPLIED", _count: { _all: 2 } },
+        { status: "SCREENING", _count: { _all: 1 } },
+        { status: "ASSESSMENT", _count: { _all: 1 } },
+        { status: "INTERVIEW", _count: { _all: 1 } },
+        { status: "OFFER", _count: { _all: 1 } },
+        { status: "REJECTED", _count: { _all: 1 } },
+      ])
+      .mockResolvedValueOnce([
+        { source: " LinkedIn ", status: "SAVED", _count: { _all: 1 } },
+        { source: "LinkedIn", status: "APPLIED", _count: { _all: 1 } },
+        { source: "linkedin", status: "SCREENING", _count: { _all: 1 } },
+        { source: "LinkedIn", status: "ASSESSMENT", _count: { _all: 1 } },
+        { source: "LinkedIn", status: "INTERVIEW", _count: { _all: 1 } },
+        { source: "LinkedIn", status: "OFFER", _count: { _all: 1 } },
+        { source: "LinkedIn", status: "REJECTED", _count: { _all: 1 } },
+        { source: "LinkedIn", status: "WITHDRAWN", _count: { _all: 1 } },
+        { source: "Referral", status: "SAVED", _count: { _all: 1 } },
+        { source: "   ", status: "OFFER", _count: { _all: 1 } },
+      ]);
     prismaMock.application.count.mockResolvedValue(3);
     prismaMock.resumeVersion.findMany.mockResolvedValue([
       {
@@ -96,6 +109,20 @@ describe("dashboardService", () => {
           conversionRates: { screening: 57.1, interview: 28.6, offer: 14.3 },
         },
       ],
+      sourceOutcomes: [
+        {
+          source: "LinkedIn",
+          submittedApplications: 7,
+          outcomeCounts: { response: 5, interview: 2, offer: 1 },
+          outcomeRates: { response: 71.4, interview: 28.6, offer: 14.3 },
+        },
+        {
+          source: "Referral",
+          submittedApplications: 0,
+          outcomeCounts: { response: 0, interview: 0, offer: 0 },
+          outcomeRates: { response: null, interview: null, offer: null },
+        },
+      ],
     });
     expect(prismaMock.application.groupBy).toHaveBeenCalledWith({
       by: ["status"],
@@ -120,6 +147,11 @@ describe("dashboardService", () => {
       },
       orderBy: [{ name: "asc" }, { id: "asc" }],
     });
+    expect(prismaMock.application.groupBy).toHaveBeenCalledWith({
+      by: ["source", "status"],
+      where: { userId: "user-1", source: { not: null } },
+      _count: { _all: true },
+    });
   });
 
   it("returns complete zero metrics when no applications exist", async () => {
@@ -141,12 +173,19 @@ describe("dashboardService", () => {
       offer: 0,
     });
     expect(result.resumeOutcomes).toEqual([]);
+    expect(result.sourceOutcomes).toEqual([]);
   });
 
   it("returns zero rates when every application is only saved", async () => {
-    prismaMock.application.groupBy.mockResolvedValue([
-      { status: "SAVED", _count: { _all: 4 } },
-    ]);
+    prismaMock.application.groupBy
+      .mockResolvedValueOnce([{ status: "SAVED", _count: { _all: 4 } }])
+      .mockResolvedValueOnce([
+        {
+          source: "Company site",
+          status: "SAVED",
+          _count: { _all: 1 },
+        },
+      ]);
     prismaMock.application.count.mockResolvedValue(1);
     prismaMock.resumeVersion.findMany.mockResolvedValue([
       { id: "resume-1", name: "Saved resume", applications: [] },
@@ -164,6 +203,12 @@ describe("dashboardService", () => {
     expect(result.resumeOutcomes[0]).toMatchObject({
       submittedApplications: 0,
       conversionRates: { screening: null, interview: null, offer: null },
+    });
+    expect(result.sourceOutcomes[0]).toEqual({
+      source: "Company site",
+      submittedApplications: 0,
+      outcomeCounts: { response: 0, interview: 0, offer: 0 },
+      outcomeRates: { response: null, interview: null, offer: null },
     });
   });
 });

@@ -48,6 +48,7 @@ test('phone workflows fit the viewport and wide data scrolls locally', async ({ 
     ['/applications/demo-shopify-frontend/edit', 'Edit application'],
     ['/dashboard', 'Dashboard'],
     ['/resumes', 'Resume versions'],
+    ['/gmail', 'Gmail synchronization'],
   ] as const
 
   for (const [route, heading] of routes) {
@@ -84,6 +85,7 @@ test('phone workflows fit the viewport and wide data scrolls locally', async ({ 
     await page.goto('/dashboard')
     await expect(page.getByRole('row', { name: `Outcomes for Responsive resume ${suffix}` })).toBeVisible()
     await expectNoPageOverflow(page)
+    await expectInternalHorizontalScroll(page.getByRole('region', { name: 'Scrollable source outcome comparison' }))
     await expectInternalHorizontalScroll(page.getByRole('region', { name: 'Scrollable resume outcome comparison' }))
 
     await page.goto(`/applications/${applicationId}`)
@@ -123,7 +125,7 @@ test('tablet layout uses available width and adaptive form columns', async ({ pa
   expect(company!.x).toBeLessThan(jobTitle!.x)
   await expectNoPageOverflow(page)
 
-  for (const route of ['/dashboard', '/resumes', '/board']) {
+  for (const route of ['/dashboard', '/resumes', '/gmail', '/board']) {
     await page.goto(route)
     await expectNoPageOverflow(page)
   }

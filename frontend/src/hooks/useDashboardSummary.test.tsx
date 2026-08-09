@@ -30,6 +30,7 @@ describe('useDashboardSummary', () => {
       },
       conversionRates: { screening: 0, interview: 0, offer: 0 },
       resumeOutcomes: [],
+      sourceOutcomes: [],
     }
     vi.mocked(dashboardService.getSummary).mockResolvedValue(summary)
     const queryClient = new QueryClient({

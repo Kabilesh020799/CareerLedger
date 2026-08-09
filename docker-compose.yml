@@ -30,6 +30,7 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_CALLBACK_URL: http://localhost:5173/api/auth/google/callback
+      GMAIL_CALLBACK_URL: http://localhost:5173/api/gmail/callback
       SESSION_SECRET: ${SESSION_SECRET:-local-docker-session-secret-change-me}
       COOKIE_SECURE: "false"
       ENABLE_PASSWORD_LOGIN: "true"

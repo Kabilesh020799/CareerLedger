@@ -48,7 +48,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.SessionScalarFieldEnum = exports.UserScalarFieldEnum = exports.ApplicationEventScalarFieldEnum = exports.ApplicationReminderScalarFieldEnum = exports.ResumeVersionScalarFieldEnum = exports.ApplicationScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
+exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.SessionScalarFieldEnum = exports.GmailMessageScalarFieldEnum = exports.GmailConnectionScalarFieldEnum = exports.UserScalarFieldEnum = exports.ApplicationEventScalarFieldEnum = exports.ApplicationReminderScalarFieldEnum = exports.ResumeVersionScalarFieldEnum = exports.ApplicationScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/index-browser"));
 exports.Decimal = runtime.Decimal;
 exports.NullTypes = {
@@ -80,6 +80,8 @@ exports.ModelName = {
     ApplicationReminder: 'ApplicationReminder',
     ApplicationEvent: 'ApplicationEvent',
     User: 'User',
+    GmailConnection: 'GmailConnection',
+    GmailMessage: 'GmailMessage',
     Session: 'Session'
 };
 /*
@@ -144,6 +146,23 @@ exports.UserScalarFieldEnum = {
     avatarUrl: 'avatarUrl',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
+};
+exports.GmailConnectionScalarFieldEnum = {
+    id: 'id',
+    userId: 'userId',
+    gmailEmail: 'gmailEmail',
+    encryptedCredentials: 'encryptedCredentials',
+    historyId: 'historyId',
+    lastSyncedAt: 'lastSyncedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.GmailMessageScalarFieldEnum = {
+    id: 'id',
+    connectionId: 'connectionId',
+    gmailMessageId: 'gmailMessageId',
+    threadId: 'threadId',
+    createdAt: 'createdAt'
 };
 exports.SessionScalarFieldEnum = {
     id: 'id',

@@ -74,6 +74,7 @@ Inside Docker, the frontend sends `/api` requests through Nginx to the backend. 
 - View all applications on an eight-column status board with per-column counts.
 - Move board cards by drag-and-drop or an accessible status selector, with immediate feedback and automatic rollback on failure.
 - Review user-scoped status totals, applications created since Monday, and current screening, interview, and offer progression rates on the dashboard.
+- Compare response, interview, and offer counts and rates across normalized application sources, using each source's submitted applications as its denominator.
 - Compare submitted application counts and screening, interview, and offer rates across private resume versions.
 - See loading, empty, and API error states.
 - Create applications with validated fields.
@@ -98,6 +99,8 @@ Inside Docker, the frontend sends `/api` requests through Nginx to the backend. 
 - Sign in with the built-in demo account locally or in production.
 - Keep every application private to the account that created it.
 - Persist authenticated sessions in PostgreSQL using an HTTP-only cookie.
+- Connect Gmail through separate OAuth consent and manually synchronize recent and newly added message references.
+- Deduplicate Gmail messages by provider ID, resume incremental synchronization from Gmail history, and recover automatically when a history cursor expires.
 
 Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW`, `OFFER`, `REJECTED`, and `WITHDRAWN`.
 
@@ -131,8 +134,21 @@ Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW
 | `PATCH` | `/api/resumes/:id` | Update a resume version |
 | `DELETE` | `/api/resumes/:id` | Delete a resume version |
 | `GET` | `/api/dashboard/summary` | Retrieve current user-scoped pipeline totals and rates |
+| `GET` | `/api/gmail/status` | Read private Gmail connection and synchronization status |
+| `GET` | `/api/gmail/connect` | Start Gmail metadata authorization |
+| `GET` | `/api/gmail/callback` | Complete Gmail authorization |
+| `POST` | `/api/gmail/sync` | Manually synchronize Gmail message references |
+| `DELETE` | `/api/gmail/connection` | Revoke and delete the current user's Gmail connection |
 
-All application, timeline, reminder, resume, and dashboard endpoints require an authenticated session. Requests cannot list, aggregate, or mutate records owned by another user. Resume endpoints store version names and notes, not uploaded documents. An application can optionally reference one of its owner's resume versions; deleting that version clears the reference without deleting the application. Follow-up suggestions are evaluated when requested and require an `APPLIED` application whose latest application or timeline activity is more than seven days old and which has no existing follow-up reminder. Dashboard progression rates use all non-saved applications as the denominator and current active milestone statuses as the numerator. Resume outcome rates use only submitted applications associated with that resume version; saved and unassigned applications are excluded, and versions without submitted applications show unavailable rates. The discovery endpoint accepts `search`, `status`, `source`, `appliedFrom`, `appliedTo`, `sortBy`, `sortOrder`, `page`, and `limit` query parameters and returns `{ data, pagination }`; supported page sizes are 10, 20, and 50. The original list endpoint remains available for existing clients. Status updates and their timeline events are saved in one database transaction. Deleting an application also deletes its timeline and reminders. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
+All application, timeline, reminder, resume, and dashboard endpoints require an authenticated session. Requests cannot list, aggregate, or mutate records owned by another user. Resume endpoints store version names and notes, not uploaded documents. An application can optionally reference one of its owner's resume versions; deleting that version clears the reference without deleting the application. Follow-up suggestions are evaluated when requested and require an `APPLIED` application whose latest application or timeline activity is more than seven days old and which has no existing follow-up reminder. Dashboard progression rates use all non-saved applications as the denominator and current active milestone statuses as the numerator. Resume outcome rates use only submitted applications associated with that resume version; saved and unassigned applications are excluded, and versions without submitted applications show unavailable rates. Source outcome analytics groups source names without regard to case or surrounding whitespace, excludes saved and unassigned applications from rate denominators, and treats current screening, assessment, interview, offer, and rejected statuses as responses. Sources without submitted applications show unavailable rates. The discovery endpoint accepts `search`, `status`, `source`, `appliedFrom`, `appliedTo`, `sortBy`, `sortOrder`, `page`, and `limit` query parameters and returns `{ data, pagination }`; supported page sizes are 10, 20, and 50. The original list endpoint remains available for existing clients. Status updates and their timeline events are saved in one database transaction. Deleting an application also deletes its timeline and reminders. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
+
+Gmail endpoints also require an authenticated session and remain scoped to the current user. Gmail authorization requests offline access to read-only metadata, encrypts OAuth credentials before storing them, and never returns tokens to React. The first sync stores up to 100 recent message IDs and thread IDs; later syncs use Gmail history and database uniqueness to avoid duplicates. Message bodies, subjects, snippets, and sender details are not stored, and synchronization does not classify email or change applications.
+
+## Gmail configuration
+
+Enable the Gmail API in a Google Cloud project and create a web OAuth client. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and an exact `GMAIL_CALLBACK_URL`. For direct local development the callback is `http://localhost:3000/api/gmail/callback`; the root Compose stack uses `http://localhost:5173/api/gmail/callback` through its frontend proxy.
+
+Google permits HTTP OAuth callbacks only for localhost. A public deployment needs an HTTPS domain and must register `https://your-domain/api/gmail/callback`. The requested `gmail.metadata` scope is restricted; public use may require Google OAuth verification and a security assessment. Without Gmail credentials, the application remains usable and the Gmail page explains that integration is unavailable.
 
 ## Development without Docker
 

@@ -40,6 +40,14 @@ const summary = {
       conversionRates: { screening: 57.1, interview: 28.6, offer: 14.3 },
     },
   ],
+  sourceOutcomes: [
+    {
+      source: 'LinkedIn',
+      submittedApplications: 7,
+      outcomeCounts: { response: 5, interview: 2, offer: 1 },
+      outcomeRates: { response: 71.4, interview: 28.6, offer: 14.3 },
+    },
+  ],
 } satisfies DashboardSummary
 
 function renderPage() {
@@ -74,6 +82,7 @@ describe('DashboardPage', () => {
     expect(within(screen.getByRole('article', { name: 'Offer progression' })).getByText('14.3%')).toBeInTheDocument()
     expect(screen.getByText(/7 submitted applications/)).toBeInTheDocument()
     expect(screen.getByRole('row', { name: 'Outcomes for Full-stack resume' })).toBeInTheDocument()
+    expect(screen.getByRole('row', { name: 'Outcomes for LinkedIn' })).toBeInTheDocument()
   })
 
   it('shows zero metrics and a creation action for an empty dashboard', () => {
@@ -91,6 +100,7 @@ describe('DashboardPage', () => {
         ),
         conversionRates: { screening: 0, interview: 0, offer: 0 },
         resumeOutcomes: [],
+        sourceOutcomes: [],
       },
     } as never)
 

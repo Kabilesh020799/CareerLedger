@@ -22,6 +22,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added persistent light and dark themes with device-preference detection, accessible controls before and after sign-in, and a contrast-aware purple and plum visual system.
 - Added private, reusable resume versions with editable positioning notes and optional application associations that are safely cleared when a version is deleted.
 - Added private resume outcome comparisons with submitted application counts and clearly denominated screening, interview, and offer rates, including explicit zero-data states.
+- Added private source outcome comparisons with normalized source names, submitted application counts, and clearly denominated response, interview, and offer rates.
+- Added private manual Gmail synchronization with separate metadata-only OAuth consent, encrypted server-side credentials, incremental history cursors, provider-ID deduplication, expired-cursor recovery, and optional deployment configuration.
 - Added responsive phone, tablet, and desktop layouts with compact mobile navigation, adaptive forms and actions, responsive dialogs, and contained scrolling for wide data views.
 
 ### Fixed

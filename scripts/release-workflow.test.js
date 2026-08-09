@@ -44,10 +44,10 @@ test("validates the versioned changelog before publishing images", () => {
   assert.match(verifyWorkflow, /npm run release:notes >\/dev\/null/);
 });
 
-test("configures the HTTP application origin without account secrets", () => {
+test("configures HTTP or HTTPS application origins without account secrets", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
   const authStep = workflow.indexOf(
-    "- name: Configure HTTP application environment",
+    "- name: Configure application environment",
   );
   const deployStep = workflow.indexOf("- name: Deploy immutable images");
 
@@ -57,7 +57,10 @@ test("configures the HTTP application origin without account secrets", () => {
   assert.doesNotMatch(workflow, /secrets\.APP_PASSWORD/);
   assert.doesNotMatch(workflow, /secrets\.SESSION_SECRET/);
   assert.doesNotMatch(workflow, /deploy\/Caddyfile/);
-  assert.match(workflow, /COOKIE_SECURE=false/);
+  assert.match(workflow, /http:\/\/\*\)/);
+  assert.match(workflow, /https:\/\/\*\)/);
+  assert.match(workflow, /cookie_secure=true/);
+  assert.match(workflow, /printf 'COOKIE_SECURE=%s/);
 });
 
 test("plans releases alongside verification but gates image publishing on both", () => {

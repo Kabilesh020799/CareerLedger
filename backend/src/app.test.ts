@@ -68,6 +68,11 @@ describe("authentication API boundary", () => {
     expect(response.status).toBe(401);
   });
 
+  it("protects Gmail synchronization from unauthenticated requests", async () => {
+    const response = await request(app).post("/api/gmail/sync");
+    expect(response.status).toBe(401);
+  });
+
   it("fails closed when Google credentials are missing", async () => {
     const response = await request(app).get("/api/auth/google");
 

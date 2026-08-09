@@ -8,6 +8,7 @@ import { EditApplicationPage } from './pages/EditApplicationPage'
 import { NewApplicationPage } from './pages/NewApplicationPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { LoginPage } from './pages/LoginPage'
+import { GmailSyncPage } from './pages/GmailSyncPage'
 import { ResumeVersionsPage } from './pages/ResumeVersionsPage'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 
@@ -21,6 +22,7 @@ function App() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="board" element={<ApplicationBoardPage />} />
           <Route path="resumes" element={<ResumeVersionsPage />} />
+          <Route path="gmail" element={<GmailSyncPage />} />
           <Route path="applications" element={<ApplicationsPage />} />
           <Route path="applications/new" element={<NewApplicationPage />} />
           <Route path="applications/:id" element={<ApplicationDetailsPage />} />

@@ -9,6 +9,7 @@ const navigation = [
   { label: 'Applications', to: '/applications' },
   { label: 'Board', to: '/board' },
   { label: 'Resumes', to: '/resumes' },
+  { label: 'Gmail', to: '/gmail' },
   { label: 'Dashboard', to: '/dashboard' },
 ]
 

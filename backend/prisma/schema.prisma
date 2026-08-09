@@ -35,21 +35,21 @@ enum ReminderType {
 }
 
 model Application {
-  id        String            @id @default(cuid())
-  company   String
-  jobTitle  String
-  location  String?
-  jobUrl    String?
-  source    String?
-  status    ApplicationStatus @default(SAVED)
-  notes     String?
-  appliedAt DateTime?
-  userId    String?
-  user      User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String                @id @default(cuid())
+  company         String
+  jobTitle        String
+  location        String?
+  jobUrl          String?
+  source          String?
+  status          ApplicationStatus     @default(SAVED)
+  notes           String?
+  appliedAt       DateTime?
+  userId          String?
+  user            User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   resumeVersionId String?
-  resumeVersion   ResumeVersion? @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
-  events    ApplicationEvent[]
-  reminders ApplicationReminder[]
+  resumeVersion   ResumeVersion?        @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
+  events          ApplicationEvent[]
+  reminders       ApplicationReminder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -84,8 +84,8 @@ model ApplicationReminder {
   description   String
   dueAt         DateTime
   completedAt   DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@index([applicationId, dueAt])
   @@index([completedAt, dueAt])
@@ -114,11 +114,37 @@ model User {
   name         String?
   avatarUrl    String?
 
-  applications Application[]
-  resumeVersions ResumeVersion[]
+  applications    Application[]
+  resumeVersions  ResumeVersion[]
+  gmailConnection GmailConnection?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model GmailConnection {
+  id                   String         @id @default(cuid())
+  userId               String         @unique
+  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gmailEmail           String
+  encryptedCredentials String
+  historyId            String?
+  lastSyncedAt         DateTime?
+  messages             GmailMessage[]
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+}
+
+model GmailMessage {
+  id             String          @id @default(cuid())
+  connectionId   String
+  connection     GmailConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  gmailMessageId String
+  threadId       String?
+  createdAt      DateTime        @default(now())
+
+  @@unique([connectionId, gmailMessageId])
+  @@index([connectionId, createdAt])
 }
 
 model Session {

@@ -15,7 +15,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'npm run db:seed && PORT=3001 FRONTEND_URL=http://127.0.0.1:4173 ENABLE_PASSWORD_LOGIN=true npx tsx src/server.ts',
+      command: 'npm run db:seed && PORT=3001 FRONTEND_URL=http://127.0.0.1:4173 ENABLE_PASSWORD_LOGIN=true GOOGLE_CLIENT_ID= GOOGLE_CLIENT_SECRET= npx tsx src/server.ts',
       cwd: '../backend',
       url: 'http://127.0.0.1:3001/api/health',
       reuseExistingServer: false,

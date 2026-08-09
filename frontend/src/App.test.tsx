@@ -56,6 +56,21 @@ vi.mock('./hooks/useDashboardSummary', () => ({
       },
       conversionRates: { screening: 0, interview: 0, offer: 0 },
       resumeOutcomes: [],
+      sourceOutcomes: [],
+    },
+  }),
+}))
+vi.mock('./hooks/useGmailStatus', () => ({
+  useGmailStatus: () => ({
+    isPending: false,
+    isError: false,
+    isSuccess: true,
+    data: {
+      configured: false,
+      connected: false,
+      gmailEmail: null,
+      lastSyncedAt: null,
+      synchronizedMessages: 0,
     },
   }),
 }))
@@ -111,6 +126,7 @@ describe('application routing', () => {
     expect(menuButton).toHaveAttribute('aria-expanded', 'false')
     await user.click(menuButton)
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Gmail' })).toHaveAttribute('href', '/gmail')
     await user.click(screen.getByRole('link', { name: 'Applications' }))
     expect(screen.getByRole('heading', { name: 'Applications' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Open navigation' })).toHaveAttribute('aria-expanded', 'false')

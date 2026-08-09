@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.gmailRouter = void 0;
+const express_1 = require("express");
+const gmail_controller_1 = require("../controllers/gmail.controller");
+exports.gmailRouter = (0, express_1.Router)();
+exports.gmailRouter.get("/status", gmail_controller_1.gmailController.status);
+exports.gmailRouter.get("/connect", gmail_controller_1.gmailController.connect);
+exports.gmailRouter.get("/callback", gmail_controller_1.gmailController.callback);
+exports.gmailRouter.post("/sync", gmail_controller_1.gmailController.synchronize);
+exports.gmailRouter.delete("/connection", gmail_controller_1.gmailController.disconnect);

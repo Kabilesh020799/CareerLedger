@@ -12,6 +12,7 @@ export type DashboardSummary = {
     offer: number
   }
   resumeOutcomes: ResumeOutcome[]
+  sourceOutcomes: SourceOutcome[]
 }
 
 export type ResumeOutcome = {
@@ -25,6 +26,21 @@ export type ResumeOutcome = {
   }
   conversionRates: {
     screening: number | null
+    interview: number | null
+    offer: number | null
+  }
+}
+
+export type SourceOutcome = {
+  source: string
+  submittedApplications: number
+  outcomeCounts: {
+    response: number
+    interview: number
+    offer: number
+  }
+  outcomeRates: {
+    response: number | null
     interview: number | null
     offer: number | null
   }

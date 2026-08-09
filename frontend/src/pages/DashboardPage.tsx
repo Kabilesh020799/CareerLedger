@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { DashboardReminders } from '../components/reminders/DashboardReminders'
 import { FollowUpSuggestions } from '../components/reminders/FollowUpSuggestions'
 import { ResumeOutcomeAnalytics } from '../components/dashboard/ResumeOutcomeAnalytics'
+import { SourceOutcomeAnalytics } from '../components/dashboard/SourceOutcomeAnalytics'
 import { useDashboardSummary } from '../hooks/useDashboardSummary'
 import type { DashboardSummary } from '../types/dashboard'
 import { getApiErrorMessage } from '../utils/apiError'
@@ -41,6 +42,7 @@ export function DashboardPage() {
       {summaryQuery.isSuccess && (
         <>
           <DashboardContent summary={summaryQuery.data} />
+          <SourceOutcomeAnalytics outcomes={summaryQuery.data.sourceOutcomes} />
           <ResumeOutcomeAnalytics outcomes={summaryQuery.data.resumeOutcomes} />
           <FollowUpSuggestions />
           <DashboardReminders />
