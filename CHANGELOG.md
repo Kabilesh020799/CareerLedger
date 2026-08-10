@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.15.1] - 2026-08-10
+
+### Fixed
+
+- Gave the light-theme control enough room in the account-action row so its icon and label remain comfortably readable.
+
 ## [3.15.0] - 2026-08-10
 
 ### Added

@@ -37,3 +37,4 @@ Feature: Choose an application color theme
     Given I am signed in on a desktop screen
     When I switch from light theme to dark theme
     Then the sign-out and theme buttons should remain on the same row
+    And the theme label should have enough space to remain readable

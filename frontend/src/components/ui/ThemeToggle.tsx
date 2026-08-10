@@ -10,7 +10,8 @@ export function ThemeToggle() {
     <Button
       aria-label={`Switch to ${nextMode} theme`}
       flex="1"
-      minW="0"
+      minW="7.5rem"
+      px="3"
       size="sm"
       variant="outline"
       whiteSpace="nowrap"
