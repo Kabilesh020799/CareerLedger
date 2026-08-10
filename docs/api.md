@@ -17,3 +17,5 @@ Browser capture uses the `extensionToken` bearer scheme instead of the session c
 The capture request accepts reviewed posting fields plus optional structured `skills`, `experienceRequirements`, salary range/currency/period, and `REMOTE`, `HYBRID`, or `ONSITE` work mode. The interactive schema and validation limits are available in Swagger at `/api-docs`.
 
 Notification endpoints use the authenticated session. Settings report whether SMTP and Web Push are available without returning secrets. Subscription endpoints register or remove only the current user's browser endpoint. Complete request shapes are documented in Swagger at `/api-docs`.
+
+Password login applies Redis-backed progressive delay and temporary limits to both the normalized account and originating network address. Invalid credentials always return the same `401` body. An exceeded limit returns `429` and a `Retry-After` header containing the remaining lockout time. Redis degradation does not expose internal errors or prevent a valid login.

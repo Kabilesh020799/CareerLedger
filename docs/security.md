@@ -8,6 +8,10 @@ Production Terraform state belongs in the dedicated private S3 state bucket with
 
 The API stores sessions in PostgreSQL and sends the browser an HTTP-only cookie named `job-tracker-session`. Production cookies are secure when the public origin uses HTTPS. Passwords are stored as bcrypt hashes. Google OAuth is optional.
 
+Password login uses Redis-backed abuse protection before bcrypt authentication. Every attempt is counted atomically against an opaque account reference and network-address reference. Accounts permit eight attempts and network addresses permit thirty attempts per 15-minute expiry window; later attempts receive a progressive delay, and exceeded limits return `429` with `Retry-After`. A successful login clears the account counter but not the shared network counter. Invalid and unknown credentials return the same public response. Security events use session-secret-keyed references and never include usernames, network addresses, passwords, or Redis error contents. Redis failures fail open to preserve account availability and emit a sanitized `auth.login.protection_unavailable` event for operational alerting.
+
+Set `ENABLE_PASSWORD_LOGIN=false` when password authentication is not required. Google configuration does not silently change this setting, preventing an operator from accidentally locking out an existing deployment.
+
 The repository includes public demo credentials for demonstration only. Do not store private job-search data behind that shared account.
 
 ## Authorization

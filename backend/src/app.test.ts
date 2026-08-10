@@ -21,7 +21,24 @@ vi.mock("./config/prisma", () => ({
   },
 }));
 
+vi.mock("./services/login-abuse-protection.service", () => ({
+  loginAbuseProtectionService: {
+    begin: vi.fn().mockResolvedValue({
+      allowed: true,
+      delayMs: 0,
+      attempt: {
+        accountKey: "account-key",
+        accountReference: "account-reference",
+        ipReference: "ip-reference",
+      },
+    }),
+    recordFailure: vi.fn().mockResolvedValue(undefined),
+    recordSuccess: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 import { createApp } from "./app";
+import { loginAbuseProtectionService } from "./services/login-abuse-protection.service";
 
 describe("authentication API boundary", () => {
   const app = createApp();
@@ -103,5 +120,37 @@ describe("authentication API boundary", () => {
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ error: "Invalid username or password" });
+  });
+
+  it("returns the same failure for malformed password credentials", async () => {
+    const response = await request(app)
+      .post("/api/auth/login")
+      .send({ username: "demo" });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: "Invalid username or password" });
+  });
+
+  it("returns a retry interval when login protection blocks an attempt", async () => {
+    vi.mocked(loginAbuseProtectionService.begin).mockResolvedValueOnce({
+      allowed: false,
+      delayMs: 0,
+      retryAfterSeconds: 600,
+      attempt: {
+        accountKey: "account-key",
+        accountReference: "account-reference",
+        ipReference: "ip-reference",
+      },
+    });
+
+    const response = await request(app)
+      .post("/api/auth/login")
+      .send({ username: "demo", password: "incorrect" });
+
+    expect(response.status).toBe(429);
+    expect(response.headers["retry-after"]).toBe("600");
+    expect(response.body).toEqual({
+      error: "Too many login attempts. Try again later.",
+    });
   });
 });

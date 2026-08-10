@@ -98,11 +98,14 @@ export function ApplicationForm({
         </FormField>
 
         <FormField label="Status" error={errors.status?.message}>
-          <Box as="select" {...register('status')} aria-label="Status" borderColor="border" borderWidth="1px" borderRadius="md" h="10" px="3" width="full" bg="bg">
-            {applicationStatuses.map((status) => (
-              <option key={status} value={status}>{statusLabels[status]}</option>
-            ))}
-          </Box>
+          <NativeSelect.Root>
+            <NativeSelect.Field {...register('status')} aria-label="Status">
+              {applicationStatuses.map((status) => (
+                <option key={status} value={status}>{statusLabels[status]}</option>
+              ))}
+            </NativeSelect.Field>
+            <NativeSelect.Indicator />
+          </NativeSelect.Root>
         </FormField>
 
         <FormField label="Resume tag" error={errors.resumeVersionId?.message}>

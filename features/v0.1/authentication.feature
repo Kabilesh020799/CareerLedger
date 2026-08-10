@@ -24,6 +24,25 @@ Feature: Secure user-owned application data
     Then the response status should be 401
     And the response should not identify which credential was incorrect
 
+  Scenario: Slow repeated password attempts
+    Given password login is enabled
+    When repeated login attempts use the same account or network address
+    Then later attempts should be progressively delayed
+    And temporary attempt limits should be tracked in private Redis storage
+
+  Scenario: Temporarily block abusive password attempts
+    Given an account or network address has exceeded its login attempt limit
+    When another password login is attempted
+    Then the response status should be 429
+    And the response should state when another attempt may be made
+    And security logs should contain only opaque account and network references
+
+  Scenario: Avoid an authentication outage when protection storage fails
+    Given password login protection cannot reach Redis
+    When valid credentials are submitted
+    Then normal authentication should remain available
+    And a sanitized protection-unavailable event should be logged
+
   Scenario: Sign in to the production HTTP deployment
     Given password login is enabled in production
     And the built-in demo user was bootstrapped

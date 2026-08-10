@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Box, Button, Field, Input, SimpleGrid, Stack } from '@chakra-ui/react'
+import { Box, Button, Field, Input, NativeSelect, SimpleGrid, Stack } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
 import { useForm } from 'react-hook-form'
@@ -77,20 +77,20 @@ export function ApplicationDiscoveryControls({
             </FilterField>
 
             <FilterField label="Status" error={errors.status?.message}>
-              <Select {...register('status')} aria-label="Status">
-                <option value="">All statuses</option>
-                {applicationStatuses.map((status) => (
-                  <option key={status} value={status}>{statusLabels.get(status)}</option>
-                ))}
-              </Select>
+              <ApplicationSelect {...register('status')} aria-label="Status">
+                  <option value="">All statuses</option>
+                  {applicationStatuses.map((status) => (
+                    <option key={status} value={status}>{statusLabels.get(status)}</option>
+                  ))}
+              </ApplicationSelect>
             </FilterField>
 
             <FilterField label="Sort by" error={errors.sortBy?.message}>
-              <Select {...register('sortBy')} aria-label="Sort by">
+              <ApplicationSelect {...register('sortBy')} aria-label="Sort by">
                 {applicationSortFields.map((field) => (
                   <option key={field} value={field}>{sortLabels.get(field)}</option>
                 ))}
-              </Select>
+              </ApplicationSelect>
             </FilterField>
 
           </SimpleGrid>
@@ -99,8 +99,8 @@ export function ApplicationDiscoveryControls({
             <FilterField label="Source" error={errors.source?.message}><Input {...register('source')} placeholder="LinkedIn, referral…" /></FilterField>
             <FilterField label="Applied from" error={errors.appliedFrom?.message}><Input {...register('appliedFrom')} type="date" /></FilterField>
             <FilterField label="Applied to" error={errors.appliedTo?.message}><Input {...register('appliedTo')} type="date" /></FilterField>
-            <FilterField label="Order" error={errors.sortOrder?.message}><Select {...register('sortOrder')} aria-label="Order"><option value="desc">Descending</option><option value="asc">Ascending</option></Select></FilterField>
-            <FilterField label="Results per page" error={errors.limit?.message}><Select {...register('limit', { valueAsNumber: true })} aria-label="Results per page"><option value="10">10</option><option value="20">20</option><option value="50">50</option></Select></FilterField>
+            <FilterField label="Order" error={errors.sortOrder?.message}><ApplicationSelect {...register('sortOrder')} aria-label="Order"><option value="desc">Descending</option><option value="asc">Ascending</option></ApplicationSelect></FilterField>
+            <FilterField label="Results per page" error={errors.limit?.message}><ApplicationSelect {...register('limit', { valueAsNumber: true })} aria-label="Results per page"><option value="10">10</option><option value="20">20</option><option value="50">50</option></ApplicationSelect></FilterField>
           </SimpleGrid>}
 
           <Stack direction={{ base: 'column', sm: 'row' }} gap="3">
@@ -130,18 +130,11 @@ function FilterField({ label, error, children }: FilterFieldProps) {
   )
 }
 
-function Select(props: React.ComponentProps<typeof Box>) {
+function ApplicationSelect(props: React.ComponentProps<typeof NativeSelect.Field>) {
   return (
-    <Box
-      as="select"
-      bg="bg"
-      borderColor="border"
-      borderRadius="md"
-      borderWidth="1px"
-      h="10"
-      px="3"
-      width="full"
-      {...props}
-    />
+    <NativeSelect.Root>
+      <NativeSelect.Field {...props} />
+      <NativeSelect.Indicator />
+    </NativeSelect.Root>
   )
 }

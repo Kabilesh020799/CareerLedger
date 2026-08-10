@@ -1,0 +1,148 @@
+import { createHmac } from "node:crypto";
+import IORedis from "ioredis";
+import { authConfig } from "../config/auth";
+import { redisConfig } from "../config/redis";
+
+const WINDOW_SECONDS = 15 * 60;
+const ACCOUNT_ATTEMPT_LIMIT = 8;
+const IP_ATTEMPT_LIMIT = 30;
+const MAX_PROGRESSIVE_DELAY_MS = 1_200;
+
+const incrementScript = `
+local accountCount = redis.call("INCR", KEYS[1])
+if accountCount == 1 then redis.call("EXPIRE", KEYS[1], ARGV[1]) end
+local ipCount = redis.call("INCR", KEYS[2])
+if ipCount == 1 then redis.call("EXPIRE", KEYS[2], ARGV[1]) end
+return {accountCount, ipCount, redis.call("TTL", KEYS[1]), redis.call("TTL", KEYS[2])}
+`;
+
+type RedisLoginClient = Pick<IORedis, "eval" | "del" | "connect" | "status" | "on">;
+
+export type LoginAttempt = {
+  accountKey: string;
+  accountReference: string;
+  ipReference: string;
+};
+
+export type LoginAttemptDecision = {
+  allowed: boolean;
+  delayMs: number;
+  retryAfterSeconds?: number;
+  attempt: LoginAttempt;
+};
+
+function opaqueReference(value: string) {
+  return createHmac("sha256", authConfig.sessionSecret)
+    .update(value)
+    .digest("hex")
+    .slice(0, 16);
+}
+
+function normalizedAccount(username: unknown) {
+  return typeof username === "string" && username.trim()
+    ? username.trim().toLocaleLowerCase("en-US")
+    : "invalid-account-input";
+}
+
+function audit(event: string, details: Record<string, string | number | boolean>) {
+  console.warn(JSON.stringify({ event, ...details }));
+}
+
+function defaultClient() {
+  const redis = new IORedis(redisConfig.url, {
+    connectTimeout: 1_000,
+    lazyConnect: true,
+    maxRetriesPerRequest: 1,
+  });
+  redis.on("error", () => undefined);
+  return redis;
+}
+
+export function createLoginAbuseProtectionService(
+  createClient: () => RedisLoginClient = defaultClient,
+  writeAudit: typeof audit = audit,
+) {
+  let redis: RedisLoginClient | undefined;
+
+  async function client() {
+    if (!redis || redis.status === "end") redis = createClient();
+    if (redis.status === "wait") await redis.connect();
+    return redis;
+  }
+
+  return {
+    async begin(ip: string, username: unknown): Promise<LoginAttemptDecision> {
+      const accountReference = opaqueReference(normalizedAccount(username));
+      const ipReference = opaqueReference(ip || "unknown-ip");
+      const accountKey = `auth:login:account:${accountReference}`;
+      const ipKey = `auth:login:ip:${ipReference}`;
+      const attempt = { accountKey, accountReference, ipReference };
+
+      try {
+        const result = await (await client()).eval(
+          incrementScript,
+          2,
+          accountKey,
+          ipKey,
+          WINDOW_SECONDS,
+        );
+        if (!Array.isArray(result) || result.length !== 4) {
+          throw new Error("Unexpected Redis login-protection response");
+        }
+        const [accountCount, ipCount, accountTtl, ipTtl] = result.map(Number);
+        const blocked =
+          accountCount > ACCOUNT_ATTEMPT_LIMIT || ipCount > IP_ATTEMPT_LIMIT;
+        const pressure = Math.max(accountCount, Math.ceil(ipCount / 4));
+        const delayMs = Math.min(
+          Math.max(0, pressure - 1) * 150,
+          MAX_PROGRESSIVE_DELAY_MS,
+        );
+
+        if (blocked) {
+          const retryAfterSeconds = Math.max(
+            1,
+            accountCount > ACCOUNT_ATTEMPT_LIMIT ? accountTtl : ipTtl,
+          );
+          writeAudit("auth.login.blocked", {
+            accountReference,
+            ipReference,
+            retryAfterSeconds,
+          });
+          return { allowed: false, delayMs, retryAfterSeconds, attempt };
+        }
+
+        return { allowed: true, delayMs, attempt };
+      } catch {
+        writeAudit("auth.login.protection_unavailable", {
+          accountReference,
+          ipReference,
+        });
+        return { allowed: true, delayMs: 0, attempt };
+      }
+    },
+
+    async recordFailure(attempt: LoginAttempt) {
+      writeAudit("auth.login.failed", {
+        accountReference: attempt.accountReference,
+        ipReference: attempt.ipReference,
+      });
+    },
+
+    async recordSuccess(attempt: LoginAttempt) {
+      try {
+        await (await client()).del(attempt.accountKey);
+      } catch {
+        writeAudit("auth.login.protection_unavailable", {
+          accountReference: attempt.accountReference,
+          ipReference: attempt.ipReference,
+        });
+      }
+      writeAudit("auth.login.succeeded", {
+        accountReference: attempt.accountReference,
+        ipReference: attempt.ipReference,
+      });
+    },
+  };
+}
+
+export const loginAbuseProtectionService = createLoginAbuseProtectionService();

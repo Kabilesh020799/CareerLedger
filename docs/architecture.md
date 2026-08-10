@@ -53,6 +53,10 @@ Google OAuth credentials are encrypted before storage. Manual synchronization fe
 
 When a user enables automatic synchronization, the API persists the chosen interval and upserts a user-scoped BullMQ scheduler in Redis. A separate worker processes jobs with exponential retry backoff. Each job checks that the database schedule is still enabled before calling the same incremental synchronization service used by manual sync. Redis stores queue state; PostgreSQL remains authoritative for schedule settings, Gmail cursors, messages, and public failure status. API startup reconciles enabled database schedules into Redis after restarts.
 
+## Password-login protection
+
+Before password verification, the authentication controller asks the login-abuse service to atomically count opaque account and network references in Redis. The service applies progressive delay and temporary account/IP limits, while the credential service continues to use a fallback bcrypt comparison to avoid username-enumeration timing differences. Successful authentication clears the account counter. Sanitized JSON security events make failures, blocks, and Redis degradation observable without logging raw identifiers or credentials.
+
 ## Production topology
 
 CloudFront terminates browser HTTPS and forwards traffic to the EC2-hosted frontend proxy. The production Compose network keeps the API and database internal. GitHub Actions publishes versioned images, temporarily permits runner SSH access, deploys the selected version, verifies health, and rolls back on failure.

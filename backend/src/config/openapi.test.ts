@@ -27,4 +27,17 @@ describe("OpenAPI documentation", () => {
     expect(operation).toBeDefined();
     expect(operation && "$ref" in operation ? undefined : operation?.summary).toBeTruthy();
   });
+
+  it("documents password-login throttling and its retry interval", () => {
+    const operation = generatedOpenApiDocument.paths["/api/auth/login"]?.post;
+    const responses = operation && !("$ref" in operation) ? operation.responses : undefined;
+
+    expect(responses?.["429"]).toMatchObject({
+      headers: {
+        "Retry-After": {
+          schema: { type: "integer" },
+        },
+      },
+    });
+  });
 });

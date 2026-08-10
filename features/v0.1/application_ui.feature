@@ -45,6 +45,11 @@ Feature: Manage applications in the React interface
     Then search, status, and sorting should remain immediately available
     And source, dates, order, and result count should remain collapsed until I request more filters
 
+  Scenario: Display consistent application dropdowns
+    Given I am filtering or editing applications
+    Then each dropdown should display a consistently aligned selection indicator
+    And its selected value should remain readable
+
   Scenario: View an empty applications page
     Given no applications exist
     When I open the applications page

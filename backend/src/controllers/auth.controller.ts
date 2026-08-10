@@ -1,7 +1,14 @@
 import type { NextFunction, Request, Response } from "express";
 import { authConfig } from "../config/auth";
 import { credentialAuthService } from "../services/credential-auth.service";
+import { loginAbuseProtectionService } from "../services/login-abuse-protection.service";
 import { passwordLoginSchema } from "../validators/auth.validator";
+
+const invalidCredentialsResponse = { error: "Invalid username or password" };
+
+function delay(milliseconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
 
 export const authController = {
   session(req: Request, res: Response) {
@@ -13,24 +20,35 @@ export const authController = {
   },
 
   async passwordLogin(req: Request, res: Response, next: NextFunction) {
+    const decision = await loginAbuseProtectionService.begin(
+      req.ip ?? req.socket.remoteAddress ?? "unknown-ip",
+      req.body?.username,
+    );
+    if (decision.delayMs > 0) await delay(decision.delayMs);
+    if (!decision.allowed) {
+      res.setHeader("Retry-After", String(decision.retryAfterSeconds));
+      res.status(429).json({ error: "Too many login attempts. Try again later." });
+      return;
+    }
+
     const parsed = passwordLoginSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        error: "Invalid login data",
-        details: parsed.error.flatten(),
-      });
+      await loginAbuseProtectionService.recordFailure(decision.attempt);
+      res.status(401).json(invalidCredentialsResponse);
       return;
     }
 
     try {
       const user = await credentialAuthService.authenticate(parsed.data);
       if (!user) {
-        res.status(401).json({ error: "Invalid username or password" });
+        await loginAbuseProtectionService.recordFailure(decision.attempt);
+        res.status(401).json(invalidCredentialsResponse);
         return;
       }
 
       req.login(user, (error) => {
         if (error) return next(error);
+        void loginAbuseProtectionService.recordSuccess(decision.attempt);
         res.json({ user });
       });
     } catch (error) {

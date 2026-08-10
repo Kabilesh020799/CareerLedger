@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.15.2] - 2026-08-10
+
+### Fixed
+
+- Aligned application-filter and application-form dropdown chevrons consistently with their selected values.
+
+### Security
+
+- Protected password login with Redis-backed progressive delays, temporary account and network limits, uniform credential failures, and sanitized audit events.
+
 ## [3.15.1] - 2026-08-10
 
 ### Fixed
@@ -225,7 +235,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.13.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.2...HEAD
+[3.15.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.1...v3.15.2
+[3.15.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.0...v3.15.1
+[3.15.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.14.0...v3.15.0
+[3.14.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.13.0...v3.14.0
 [3.13.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.12.2...v3.13.0
 [3.12.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.12.1...v3.12.2
 [3.12.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.12.0...v3.12.1
