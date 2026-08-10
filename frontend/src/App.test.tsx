@@ -136,7 +136,7 @@ describe('application routing', () => {
     expect(menuButton).toHaveAttribute('aria-expanded', 'false')
     await user.click(menuButton)
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Gmail' })).toHaveAttribute('href', '/gmail')
+    expect(screen.getByRole('link', { name: 'Email sync' })).toHaveAttribute('href', '/gmail')
     await user.click(screen.getByRole('link', { name: 'Applications' }))
     expect(screen.getByRole('heading', { name: 'Applications' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Open navigation' })).toHaveAttribute('aria-expanded', 'false')
@@ -167,8 +167,8 @@ describe('application routing', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open navigation' }))
 
-    expect(screen.getByLabelText('2 pending Gmail updates')).toHaveTextContent('2')
-    expect(screen.getByRole('link', { name: /Gmail/ })).toHaveAttribute('href', '/gmail')
+    expect(screen.getByLabelText('2 pending email updates')).toHaveTextContent('2')
+    expect(screen.getByRole('link', { name: /Email sync/ })).toHaveAttribute('href', '/gmail')
   })
 
   it('shows a recovery link for an unknown route', () => {

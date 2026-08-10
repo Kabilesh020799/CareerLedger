@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Alert, Box, Button, Field, Input, NativeSelect, SimpleGrid, Stack, Text, Textarea } from '@chakra-ui/react'
+import { Alert, Box, Button, Field, Flex, Heading, Input, NativeSelect, SimpleGrid, Stack, Text, Textarea } from '@chakra-ui/react'
 import { useForm } from 'react-hook-form'
 import {
   applicationFormSchema,
@@ -42,11 +42,13 @@ export function ApplicationForm({
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationFormSchema),
     defaultValues: initialValues,
   })
+  const selectedResume = watch('resume')?.item(0)
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -61,6 +63,7 @@ export function ApplicationForm({
         </Alert.Root>
       )}
 
+      <FormSection title="Job details" description="The role and company you want to track.">
       <SimpleGrid columns={{ base: 1, md: 2 }} gap="5">
         <FormField label="Company" error={errors.company?.message} required>
           <Input {...register('company')} autoComplete="organization" />
@@ -82,6 +85,11 @@ export function ApplicationForm({
           <Input {...register('jobUrl')} type="url" placeholder="https://…" />
         </FormField>
 
+      </SimpleGrid>
+      </FormSection>
+
+      <FormSection title="Application progress" description="Where this opportunity is in your pipeline.">
+      <SimpleGrid columns={{ base: 1, md: 2 }} gap="5">
         <FormField label="Applied date" error={errors.appliedAt?.message}>
           <Input {...register('appliedAt')} type="date" />
         </FormField>
@@ -114,12 +122,16 @@ export function ApplicationForm({
           )}
         </FormField>
       </SimpleGrid>
+      </FormSection>
 
-      <FormField label="Notes" error={errors.notes?.message}>
-        <Textarea {...register('notes')} minH="8rem" resize="vertical" />
-      </FormField>
+      <FormSection title="Notes" description="Interview context, contacts, or anything worth remembering.">
+        <FormField label="Notes" error={errors.notes?.message}>
+          <Textarea {...register('notes')} minH="8rem" placeholder="Add context or next steps…" resize="vertical" />
+        </FormField>
+      </FormSection>
 
       {allowResumeAttachment && (
+        <FormSection title="Documents" description="Attach the resume used for this application.">
         <FormField
           label={currentResumeFileName ? 'Replace resume' : 'Attach resume'}
           error={errors.resume?.message}
@@ -129,24 +141,27 @@ export function ApplicationForm({
               Current file: {currentResumeFileName}
             </Text>
           )}
-          <Input
-            {...register('resume')}
-            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            p="1.5"
-            type="file"
-          />
-          <Text color="fg.muted" fontSize="sm">
-            PDF, DOC, or DOCX up to 5 MB. Selecting a file {currentResumeFileName ? 'replaces the current resume and ' : ''}saves it as Role_Company.
-          </Text>
+          <Box borderColor={selectedResume ? 'purple.emphasized' : 'border'} borderRadius="lg" borderStyle="dashed" borderWidth="2px" bg={selectedResume ? 'purple.subtle' : 'bg.subtle'} p="5" textAlign="center">
+            <Input {...register('resume')} accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" cursor="pointer" p="1.5" type="file" />
+            <Text color="fg.muted" fontSize="sm" mt="2">{selectedResume ? `${selectedResume.name} selected` : 'Choose a file'}</Text>
+            <Text color="fg.subtle" fontSize="xs" mt="1">PDF, DOC, or DOCX up to 5 MB. Selecting a file saves it as Role_Company.</Text>
+          </Box>
         </FormField>
+        </FormSection>
       )}
 
-        <Button alignSelf={{ base: 'stretch', sm: 'start' }} colorPalette="purple" loading={isSubmitting} type="submit">
+        <Flex bg="bg.panel" borderColor="border" borderTopWidth="1px" bottom={{ base: '18', lg: '0' }} justify="flex-end" mx={{ base: '-5', md: '-8' }} px={{ base: '5', md: '8' }} py="4" position="sticky" zIndex="base">
+        <Button minH="11" w={{ base: 'full', sm: 'auto' }} colorPalette="purple" loading={isSubmitting} type="submit">
           {submitLabel}
         </Button>
+        </Flex>
       </Stack>
     </form>
   )
+}
+
+function FormSection({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+  return <Stack gap="4"><Box><Heading as="h3" fontSize="md">{title}</Heading><Text color="fg.muted" fontSize="sm" mt="1">{description}</Text></Box>{children}</Stack>
 }
 
 type FormFieldProps = {

@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Alert, Button, Field, Flex, Heading, Input, Spinner, Stack, Text } from '@chakra-ui/react'
+import { Alert, Badge, Box, Button, Field, Flex, Heading, Input, SimpleGrid, Spinner, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useBrowserExtensionTokens, useCreateBrowserExtensionToken, useRevokeBrowserExtensionToken } from '../hooks/useBrowserExtensionTokens'
 import { getApiErrorMessage } from '../utils/apiError'
+import { PageHeader } from '../components/ui/PageHeader'
 
 const tokenSchema = z.object({ name: z.string().trim().min(1, 'Name is required').max(80) })
 type TokenForm = z.infer<typeof tokenSchema>
@@ -26,10 +27,14 @@ export function BrowserExtensionPage() {
 
   return (
     <Stack gap="6">
-      <Stack gap="1"><Heading as="h2" size="2xl">Browser extension</Heading><Text color="fg.muted">Create revocable access for capturing job postings without sharing your password or browser session.</Text></Stack>
+      <PageHeader title="Browser extension" description="Capture job postings securely without sharing your password or browser session." eyebrow="Automation" />
+
+      <SimpleGrid columns={{ base: 1, md: 3 }} gap="3">
+        {['Install the extension', 'Create and copy a token', 'Capture your first job'].map((step, index) => <Flex align="center" bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" gap="3" key={step} p="4"><Flex align="center" bg="purple.subtle" borderRadius="full" color="purple.fg" fontWeight="bold" h="8" justify="center" w="8">{index + 1}</Flex><Text fontSize="sm" fontWeight="semibold">{step}</Text></Flex>)}
+      </SimpleGrid>
 
       <Stack as="form" bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" gap="4" p={{ base: '5', md: '8' }} onSubmit={submit}>
-        <Heading as="h3" size="lg">Create extension token</Heading>
+        <Box><Badge colorPalette="purple" mb="2" variant="subtle">Step 2</Badge><Heading as="h3" size="lg">Connect this browser</Heading><Text color="fg.muted" fontSize="sm" mt="1">Name the browser so you can recognize and revoke its access later.</Text></Box>
         <Field.Root invalid={Boolean(errors.name)}><Field.Label>Device name</Field.Label><Input {...register('name')} /><Field.ErrorText>{errors.name?.message}</Field.ErrorText></Field.Root>
         <Button alignSelf="start" colorPalette="purple" loading={createToken.isPending} type="submit">Create token</Button>
         {createToken.isError && <Alert.Root status="error"><Alert.Indicator /><Alert.Description>{getApiErrorMessage(createToken.error, 'Could not create token.')}</Alert.Description></Alert.Root>}
@@ -38,7 +43,7 @@ export function BrowserExtensionPage() {
         )}
       </Stack>
 
-      <Stack gap="3"><Heading as="h3" size="lg">Active tokens</Heading>
+      <Stack gap="3"><Flex align="center" justify="space-between"><Heading as="h3" size="lg">Connected browsers</Heading><Badge variant="subtle">{tokens.data?.length ?? 0} active</Badge></Flex>
         {tokens.isPending && <Spinner aria-label="Loading extension tokens" />}
         {tokens.isError && <Alert.Root status="error"><Alert.Indicator /><Alert.Description>Tokens could not be loaded.</Alert.Description></Alert.Root>}
         {tokens.isSuccess && tokens.data.length === 0 && <Text color="fg.muted">No extension tokens created.</Text>}

@@ -7,13 +7,23 @@ import { ThemeToggle } from '../components/ui/ThemeToggle'
 import { useGmailUpdateReviews } from '../hooks/useGmailUpdateReviews'
 
 const navigation = [
-  { label: 'Applications', to: '/applications' },
-  { label: 'Board', to: '/board' },
-  { label: 'Resumes', to: '/resumes' },
-  { label: 'Gmail', to: '/gmail' },
-  { label: 'Extension', to: '/browser-extension' },
-  { label: 'Notifications', to: '/notifications' },
-  { label: 'Dashboard', to: '/dashboard' },
+  { label: 'Overview', items: [{ label: 'Dashboard', to: '/dashboard', icon: '⌂' }] },
+  { label: 'Applications', items: [
+    { label: 'Applications', to: '/applications', icon: '▤' },
+    { label: 'Board', to: '/board', icon: '▦' },
+  ] },
+  { label: 'Documents', items: [{ label: 'Resumes', to: '/resumes', icon: '▱' }] },
+  { label: 'Automation', items: [
+    { label: 'Email sync', to: '/gmail', icon: '✉' },
+    { label: 'Browser extension', to: '/browser-extension', icon: '◇' },
+  ] },
+  { label: 'Account', items: [{ label: 'Notifications', to: '/notifications', icon: '◉' }] },
+]
+
+const mobileNavigation = [
+  { label: 'Dashboard', to: '/dashboard', icon: '⌂' },
+  { label: 'Applications', to: '/applications', icon: '▤' },
+  { label: 'Board', to: '/board', icon: '▦' },
 ]
 
 export function AppLayout() {
@@ -46,15 +56,15 @@ export function AppLayout() {
         flexShrink="0"
         position={{ base: 'sticky', lg: 'static' }}
         top="0"
-        w={{ base: 'full', lg: '17rem' }}
+        w={{ base: 'full', lg: '16rem' }}
         zIndex="docked"
       >
-        <Stack gap={{ base: '0', lg: '8' }} px={{ base: '4', sm: '6' }} py={{ base: '3', lg: '7' }} position={{ lg: 'sticky' }} top="0">
+        <Stack gap={{ base: '0', lg: '7' }} minH={{ lg: '100vh' }} px={{ base: '4', sm: '6', lg: '5' }} py={{ base: '3', lg: '6' }} position={{ lg: 'sticky' }} top="0">
           <Flex align="center" gap="3" justify="space-between">
             <Flex align="center" gap="3" minW="0">
-            <Flex align="center" bg="purple.solid" borderRadius="xl" color="purple.contrast" fontWeight="bold" h="10" justify="center" shadow="sm" w="10">JT</Flex>
+            <Flex align="center" bg="purple.solid" borderRadius="lg" color="purple.contrast" fontWeight="bold" h="9" justify="center" shadow="sm" w="9">JT</Flex>
             <Box minW="0">
-              <Heading as="h1" color="purple.fg" size="lg" whiteSpace="nowrap">Job Tracker</Heading>
+              <Heading as="h1" fontSize="md" letterSpacing="-0.02em" whiteSpace="nowrap">Job Tracker</Heading>
               <Text color="fg.muted" display={{ base: 'none', lg: 'block' }} fontSize="sm" mt="1">Keep your search moving.</Text>
             </Box>
             </Flex>
@@ -68,7 +78,7 @@ export function AppLayout() {
               onClick={() => setNavigationOpen((open) => !open)}
             >
               <Text aria-hidden="true" fontSize="lg">{navigationOpen ? '×' : '☰'}</Text>
-              Menu
+              <Text display={{ base: 'none', sm: 'block' }}>Menu</Text>
             </Button>
           </Flex>
 
@@ -87,16 +97,18 @@ export function AppLayout() {
             right={{ base: '0', lg: 'auto' }}
             top={{ base: 'full', lg: 'auto' }}
           >
-            <Stack gap="6">
-              <Stack as="nav" aria-label="Primary navigation" gap="2">
-                {navigation.map((item) => (
-                  <Link asChild key={item.to} borderRadius="lg" minH="11" px="3" py="2.5" fontWeight="medium" color="fg.muted" _currentPage={{ bg: 'purple.subtle', color: 'purple.fg' }} _hover={{ bg: 'purple.subtle', color: 'purple.fg', textDecoration: 'none' }}>
-                    <NavLink to={item.to}>
-                      <Flex align="center" gap="3" justify="space-between" w="full">
-                        <Text>{item.label}</Text>
-                        {item.to === '/gmail' && pendingGmailUpdates > 0 && (
+            <Stack gap="6" justify="space-between" minH={{ lg: 'calc(100vh - 7rem)' }}>
+              <Stack as="nav" aria-label="Primary navigation" gap="5">
+                {navigation.map((group) => (
+                  <Stack gap="1" key={group.label}>
+                    <Text color="fg.subtle" fontSize="2xs" fontWeight="bold" letterSpacing="0.1em" px="3" textTransform="uppercase">{group.label}</Text>
+                    {group.items.map((item) => <Link asChild key={item.to} borderRadius="lg" minH="10" px="3" py="2" fontSize="sm" fontWeight="medium" color="fg.muted" _currentPage={{ bg: 'purple.subtle', color: 'purple.fg' }} _hover={{ bg: 'bg.muted', color: 'fg', textDecoration: 'none' }}>
+                      <NavLink to={item.to}>
+                        <Flex align="center" gap="3" justify="space-between" w="full">
+                          <Flex align="center" gap="3"><Text aria-hidden="true" color="fg.subtle" fontSize="md" w="4">{item.icon}</Text><Text>{item.label}</Text></Flex>
+                          {item.to === '/gmail' && pendingGmailUpdates > 0 && (
                           <Badge
-                            aria-label={`${pendingGmailUpdates} pending Gmail ${pendingGmailUpdates === 1 ? 'update' : 'updates'}`}
+                            aria-label={`${pendingGmailUpdates} pending email ${pendingGmailUpdates === 1 ? 'update' : 'updates'}`}
                             borderRadius="full"
                             colorPalette="orange"
                             minW="6"
@@ -107,9 +119,10 @@ export function AppLayout() {
                             {pendingGmailUpdates > 99 ? '99+' : pendingGmailUpdates}
                           </Badge>
                         )}
-                      </Flex>
-                    </NavLink>
-                  </Link>
+                        </Flex>
+                      </NavLink>
+                    </Link>)}
+                  </Stack>
                 ))}
               </Stack>
 
@@ -118,7 +131,7 @@ export function AppLayout() {
                   {session.data?.user?.name ?? session.data?.user?.email}
                 </Text>
                 <Flex gap="2" wrap="nowrap" w="full">
-                  <Button flex="1" minW="0" whiteSpace="nowrap" variant="outline" size="sm" onClick={signOut} loading={logout.isPending}>
+                  <Button flex="1" minH="10" minW="0" whiteSpace="nowrap" variant="outline" size="sm" onClick={signOut} loading={logout.isPending}>
                     Sign out
                   </Button>
                   <ThemeToggle />
@@ -131,10 +144,14 @@ export function AppLayout() {
       </Box>
 
       <Box as="main" flex="1" minW="0" overflowWrap="break-word" w="full">
-        <Container maxW="7xl" px={{ base: '4', sm: '6', lg: '10' }} py={{ base: '6', sm: '8', lg: '12' }}>
+        <Container maxW="8xl" px={{ base: '4', sm: '6', lg: '10' }} pb={{ base: '24', lg: '12' }} pt={{ base: '6', sm: '8', lg: '10' }}>
           <Outlet />
         </Container>
       </Box>
+      <Flex as="nav" aria-label="Mobile navigation" align="center" bg="bg.panel" borderColor="border" borderTopWidth="1px" bottom="0" display={{ base: 'flex', lg: 'none' }} h="18" justify="space-around" left="0" position="fixed" right="0" zIndex="docked">
+        {mobileNavigation.map((item) => <Link asChild key={item.to} color="fg.muted" _currentPage={{ color: 'purple.fg' }} _hover={{ textDecoration: 'none' }}><NavLink aria-label={`${item.label} tab`} to={item.to}><Stack align="center" gap="0.5" minW="20"><Text aria-hidden="true" fontSize="lg">{item.icon}</Text><Text fontSize="2xs" fontWeight="semibold">{item.label}</Text></Stack></NavLink></Link>)}
+        <Button aria-controls="responsive-primary-navigation" aria-expanded={navigationOpen} color="fg.muted" h="auto" minW="20" p="0" variant="plain" onClick={() => setNavigationOpen((open) => !open)}><Stack align="center" gap="0.5"><Text aria-hidden="true" fontSize="lg">•••</Text><Text fontSize="2xs" fontWeight="semibold">More</Text></Stack></Button>
+      </Flex>
     </Flex>
   )
 }

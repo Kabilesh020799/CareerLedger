@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Flex, Heading, SimpleGrid, Spinner, Stack, Text } from '@chakra-ui/react'
+import { Alert, Box, Button, Flex, Heading, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
 import { DashboardReminders } from '../components/reminders/DashboardReminders'
 import { FollowUpSuggestions } from '../components/reminders/FollowUpSuggestions'
@@ -7,21 +7,18 @@ import { SourceOutcomeAnalytics } from '../components/dashboard/SourceOutcomeAna
 import { useDashboardSummary } from '../hooks/useDashboardSummary'
 import type { DashboardSummary } from '../types/dashboard'
 import { getApiErrorMessage } from '../utils/apiError'
+import { LoadingSkeleton } from '../components/ui/LoadingSkeleton'
+import { PageHeader } from '../components/ui/PageHeader'
 
 export function DashboardPage() {
   const summaryQuery = useDashboardSummary()
 
   return (
     <Stack gap="7">
-      <Stack gap="1">
-        <Heading as="h2" size="2xl">Dashboard</Heading>
-        <Text color="fg.muted">A current snapshot of your application pipeline.</Text>
-      </Stack>
+      <PageHeader title="Dashboard" description="Your pipeline, priorities, and next actions at a glance." eyebrow="Overview" />
 
       {summaryQuery.isPending && (
-        <Flex align="center" aria-label="Loading dashboard" justify="center" minH="20rem">
-          <Spinner color="purple.fg" size="xl" />
-        </Flex>
+        <LoadingSkeleton label="Loading dashboard" />
       )}
 
       {summaryQuery.isError && (
@@ -65,7 +62,7 @@ function DashboardContent({ summary }: { summary: DashboardSummary }) {
 
   return (
     <Stack gap="7">
-      <SimpleGrid columns={{ base: 1, sm: 2, xl: 4 }} gap="4">
+      <SimpleGrid columns={{ base: 2, lg: 4 }} gap={{ base: '3', md: '4' }}>
         {metrics.map((metric) => (
           <MetricCard key={metric.label} {...metric} />
         ))}
@@ -128,12 +125,13 @@ function MetricCard({ label, value }: { label: string; value: number }) {
       borderColor="border"
       borderRadius="xl"
       borderWidth="1px"
-      gap="2"
-      p="5"
-      shadow="sm"
+      gap="1"
+      minH={{ base: '24', md: '28' }}
+      p={{ base: '4', md: '5' }}
+      shadow="card"
     >
-      <Text color="fg.muted" fontSize="sm" fontWeight="medium">{label}</Text>
-      <Text color="fg" fontSize="3xl" fontWeight="bold">{value}</Text>
+      <Text color="fg.muted" fontSize={{ base: 'xs', md: 'sm' }} fontWeight="medium">{label}</Text>
+      <Text color="fg" fontSize={{ base: '2xl', md: '3xl' }} fontWeight="bold" letterSpacing="-0.04em">{value}</Text>
     </Stack>
   )
 }

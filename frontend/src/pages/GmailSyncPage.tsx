@@ -12,6 +12,8 @@ import { useUpdateGmailSchedule } from '../hooks/useUpdateGmailSchedule'
 import type { GmailSyncInterval } from '../types/gmail'
 import { gmailConnectUrl } from '../services/gmail.service'
 import { getApiErrorMessage } from '../utils/apiError'
+import { LoadingSkeleton } from '../components/ui/LoadingSkeleton'
+import { PageHeader } from '../components/ui/PageHeader'
 
 const authorizationErrors: Record<string, string> = {
   denied: 'Gmail access was not approved.',
@@ -43,12 +45,7 @@ export function GmailSyncPage() {
 
   return (
     <Stack gap="7">
-      <Stack gap="1">
-        <Heading as="h2" size="2xl">Gmail synchronization</Heading>
-        <Text color="fg.muted">
-          Synchronize Gmail, review detected recruitment updates, and decide what changes your applications.
-        </Text>
-      </Stack>
+      <PageHeader title="Email sync" description="Find recruitment updates in Gmail and review them before anything changes." eyebrow="Automation" />
 
       {searchParams.get('connected') === 'true' && (
         <Alert.Root status="success" borderRadius="lg">
@@ -73,9 +70,7 @@ export function GmailSyncPage() {
       )}
 
       {statusQuery.isPending && (
-        <Flex align="center" aria-label="Loading Gmail status" justify="center" minH="18rem">
-          <Spinner color="purple.fg" size="xl" />
-        </Flex>
+        <LoadingSkeleton variant="cards" />
       )}
 
       {statusQuery.isError && (
@@ -95,9 +90,9 @@ export function GmailSyncPage() {
         <Alert.Root status="info" borderRadius="lg">
           <Alert.Indicator />
           <Alert.Content>
-            <Alert.Title>Gmail integration is unavailable</Alert.Title>
+            <Alert.Title>Email sync is not configured</Alert.Title>
             <Alert.Description>
-              An administrator must configure Google OAuth credentials and a Gmail callback URL.
+              Ask an administrator to configure Google OAuth credentials and the callback URL. No action is required from your account.
             </Alert.Description>
           </Alert.Content>
         </Alert.Root>

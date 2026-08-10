@@ -1,5 +1,5 @@
-import { Alert, Box, Button, Flex, Heading, Spinner, Stack, Table, Text } from '@chakra-ui/react'
-import { useMemo } from 'react'
+import { Alert, Badge, Box, Button, Flex, Heading, SimpleGrid, Stack, Table, Text } from '@chakra-ui/react'
+import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ApplicationDiscoveryControls } from '../components/applications/ApplicationDiscoveryControls'
 import { StatusBadge } from '../components/applications/StatusBadge'
@@ -12,6 +12,8 @@ import {
 } from '../schemas/application-discovery.schema'
 import type { ApplicationDiscoveryQuery } from '../types/application'
 import { getApiErrorMessage } from '../utils/apiError'
+import { LoadingSkeleton, Surface } from '../components/ui/LoadingSkeleton'
+import { PageHeader } from '../components/ui/PageHeader'
 
 function formatDate(value: string | null) {
   if (!value) return '—'
@@ -26,6 +28,7 @@ export function ApplicationsPage() {
   )
   const applicationsQuery = useApplications(query)
   const hasFilters = hasApplicationDiscoveryFilters(query)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const setQuery = (nextQuery: ApplicationDiscoveryQuery) => {
     setSearchParams(applicationDiscoveryToSearchParams(nextQuery))
@@ -37,26 +40,18 @@ export function ApplicationsPage() {
 
   return (
     <Stack gap="6">
-      <Flex align={{ base: 'start', sm: 'center' }} direction={{ base: 'column', sm: 'row' }} gap="4" justify="space-between">
-        <Stack gap="1">
-          <Heading as="h2" size="2xl">Applications</Heading>
-          <Text color="fg.muted">Track every opportunity in one place.</Text>
-        </Stack>
-        <Button asChild colorPalette="purple" w={{ base: 'full', sm: 'auto' }}>
-          <Link to="/applications/new">Add application</Link>
-        </Button>
-      </Flex>
+      <PageHeader title="Applications" description="Track, prioritize, and move every opportunity forward." action={{ label: 'Add application', to: '/applications/new' }} />
 
-      <ApplicationDiscoveryControls
-        query={query}
-        onChange={setQuery}
-        onClear={clearFilters}
-      />
+      <Flex align="center" justify="space-between" gap="3">
+        <Text color="fg.muted" fontSize="sm">{applicationsQuery.data?.pagination.total ?? 0} application{applicationsQuery.data?.pagination.total === 1 ? '' : 's'}</Text>
+        <Button aria-expanded={filtersOpen} display={{ base: 'inline-flex', md: 'none' }} size="sm" variant="outline" onClick={() => setFiltersOpen((value) => !value)}>Filters {hasFilters && <Badge colorPalette="purple" ml="2" variant="solid">On</Badge>}</Button>
+      </Flex>
+      <Box display={{ base: filtersOpen ? 'block' : 'none', md: 'block' }}>
+        <ApplicationDiscoveryControls query={query} onChange={(value) => { setQuery(value); setFiltersOpen(false) }} onClear={clearFilters} />
+      </Box>
 
       {applicationsQuery.isPending && (
-        <Flex align="center" justify="center" minH="16rem" aria-label="Loading applications">
-          <Spinner color="purple.fg" size="xl" />
-        </Flex>
+        <LoadingSkeleton label="Loading applications" variant="table" />
       )}
 
       {applicationsQuery.isError && (
@@ -108,6 +103,7 @@ export function ApplicationsPage() {
             borderColor="border"
             borderWidth="1px"
             borderRadius="xl"
+            display={{ base: 'none', md: 'block' }}
             maxW="full"
             overflowX="auto"
             overscrollBehaviorX="contain"
@@ -128,7 +124,7 @@ export function ApplicationsPage() {
             <Table.Body>
               {applicationsQuery.data.data.map((application) => (
                 <Table.Row key={application.id}>
-                  <Table.Cell fontWeight="medium">{application.company}</Table.Cell>
+                  <Table.Cell fontWeight="semibold"><Link to={`/applications/${application.id}`}>{application.company}</Link></Table.Cell>
                   <Table.Cell>{application.jobTitle}</Table.Cell>
                   <Table.Cell><StatusBadge status={application.status} /></Table.Cell>
                   <Table.Cell>{formatDate(application.appliedAt)}</Table.Cell>
@@ -143,6 +139,22 @@ export function ApplicationsPage() {
             </Table.Body>
             </Table.Root>
           </Box>
+
+          <SimpleGrid display={{ base: 'grid', md: 'none' }} gap="3">
+            {applicationsQuery.data.data.map((application) => (
+              <Surface as="article" key={application.id} p="4">
+                <Link aria-label={`Open ${application.company} application`} to={`/applications/${application.id}`}>
+                  <Stack gap="3">
+                    <Flex align="start" gap="3" justify="space-between">
+                      <Box minW="0"><Heading as="h3" fontSize="md" truncate>{application.company}</Heading><Text color="fg.muted" fontSize="sm" mt="0.5">{application.jobTitle}</Text></Box>
+                      <StatusBadge status={application.status} />
+                    </Flex>
+                    <Flex color="fg.subtle" fontSize="xs" gap="3" justify="space-between"><Text>{application.source ?? 'Source not added'}</Text><Text>{formatDate(application.appliedAt)}</Text></Flex>
+                  </Stack>
+                </Link>
+              </Surface>
+            ))}
+          </SimpleGrid>
 
           <Flex
             align={{ base: 'start', sm: 'center' }}

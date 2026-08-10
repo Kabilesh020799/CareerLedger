@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Flex, Heading, SimpleGrid, Spinner, Stack, Text } from '@chakra-ui/react'
+import { Alert, Box, Button, Flex, Heading, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DeleteApplicationDialog } from '../components/applications/DeleteApplicationDialog'
 import { ApplicationTimeline } from '../components/applications/ApplicationTimeline'
@@ -8,6 +8,7 @@ import { useApplication } from '../hooks/useApplication'
 import { useDeleteApplication } from '../hooks/useDeleteApplication'
 import { useDownloadApplicationResume } from '../hooks/useDownloadApplicationResume'
 import { getApiErrorMessage } from '../utils/apiError'
+import { LoadingSkeleton, Surface } from '../components/ui/LoadingSkeleton'
 
 function formatDate(value: string | null) {
   if (!value) return 'Not provided'
@@ -31,7 +32,7 @@ export function ApplicationDetailsPage() {
   const downloadResume = useDownloadApplicationResume()
 
   if (applicationQuery.isPending) {
-    return <Flex minH="18rem" align="center" justify="center" aria-label="Loading application"><Spinner color="purple.fg" size="xl" /></Flex>
+    return <LoadingSkeleton variant="details" />
   }
 
   if (applicationQuery.isError) {
@@ -51,15 +52,16 @@ export function ApplicationDetailsPage() {
 
   return (
     <Stack gap="6">
-      <Button asChild alignSelf="start" variant="plain" px="0">
+      <Button asChild alignSelf="start" color="fg.muted" size="sm" variant="plain" px="0">
         <Link to="/applications">← Back to applications</Link>
       </Button>
 
       <Flex align={{ base: 'start', md: 'center' }} direction={{ base: 'column', md: 'row' }} gap="4" justify="space-between">
-        <Box>
+        <Stack gap="2">
+          <StatusBadge status={application.status} />
           <Heading as="h2" size="2xl">{application.jobTitle}</Heading>
           <Text color="fg.muted" fontSize="lg" mt="1">{application.company}</Text>
-        </Box>
+        </Stack>
         <Flex gap="3" w={{ base: 'full', sm: 'auto' }} wrap="wrap">
           <Button asChild flex={{ base: '1', sm: 'initial' }} variant="outline">
             <Link to={`/applications/${application.id}/edit`}>Edit</Link>
@@ -76,55 +78,39 @@ export function ApplicationDetailsPage() {
         <Alert.Root status="error"><Alert.Indicator /><Alert.Title>{getApiErrorMessage(deleteApplication.error, 'Unable to delete application.')}</Alert.Title></Alert.Root>
       )}
 
-      <Box bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" p={{ base: '5', md: '8' }}>
+      <Surface p={{ base: '5', md: '7' }}>
+        <SectionHeading title="Overview" description="The essential information for this opportunity." />
         <SimpleGrid columns={{ base: 1, md: 2 }} gap="7">
-          <Detail label="Status"><StatusBadge status={application.status} /></Detail>
           <Detail label="Applied date">{formatDate(application.appliedAt)}</Detail>
-          <Detail label="Location">{application.location ?? 'Not provided'}</Detail>
-          <Detail label="Work mode">{application.workMode ? application.workMode === 'ONSITE' ? 'On-site' : application.workMode[0] + application.workMode.slice(1).toLowerCase() : 'Not provided'}</Detail>
-          <Detail label="Salary">{formatSalary(application.salaryMin, application.salaryMax, application.salaryCurrency, application.salaryPeriod)}</Detail>
-          <Detail label="Source">{application.source ?? 'Not provided'}</Detail>
-          <Detail label="Resume version">{application.resumeVersion?.name ?? 'Not provided'}</Detail>
-          <Detail label="Attached resume">
-            {application.resumeAttachment ? (
-              <Stack align="start" gap="2">
-                <Text>{application.resumeAttachment.fileName}</Text>
-                <Button
-                  loading={downloadResume.isPending}
-                  onClick={() => downloadResume.mutate({
-                    applicationId: application.id,
-                    fileName: application.resumeAttachment!.fileName,
-                  })}
-                  size="sm"
-                  variant="outline"
-                >
-                  Download resume
-                </Button>
-                {downloadResume.isError && (
-                  <Text color="fg.error" fontSize="sm">
-                    {getApiErrorMessage(downloadResume.error, 'Unable to download resume.')}
-                  </Text>
-                )}
-              </Stack>
-            ) : 'Not provided'}
-          </Detail>
+          {application.location && <Detail label="Location">{application.location}</Detail>}
+          {application.workMode && <Detail label="Work mode">{application.workMode === 'ONSITE' ? 'On-site' : application.workMode[0] + application.workMode.slice(1).toLowerCase()}</Detail>}
+          {(application.salaryMin != null || application.salaryMax != null) && <Detail label="Salary">{formatSalary(application.salaryMin, application.salaryMax, application.salaryCurrency, application.salaryPeriod)}</Detail>}
+          {application.source && <Detail label="Source">{application.source}</Detail>}
           <Detail label="Job URL">
             {application.jobUrl ? <a href={application.jobUrl} target="_blank" rel="noreferrer">Open job posting</a> : 'Not provided'}
           </Detail>
-          <Detail label="Created">{formatDate(application.createdAt)}</Detail>
-          {application.capturedAt && <Detail label="Captured">{formatDate(application.capturedAt)}</Detail>}
         </SimpleGrid>
-        <Box borderTopWidth="1px" mt="8" pt="6">
+        {(application.skills?.length || application.experienceRequirements || application.jobDescription) && <Box borderTopWidth="1px" mt="8" pt="6">
+          <SectionHeading title="Job requirements" />
           <SimpleGrid columns={{ base: 1, md: 2 }} gap="7">
-            <Detail label="Skills">{application.skills?.length ? application.skills.join(', ') : 'Not provided'}</Detail>
-            <Detail label="Experience requirements">{application.experienceRequirements ?? 'Not provided'}</Detail>
+            {Boolean(application.skills?.length) && <Detail label="Skills">{application.skills!.join(', ')}</Detail>}
+            {application.experienceRequirements && <Detail label="Experience requirements">{application.experienceRequirements}</Detail>}
           </SimpleGrid>
-        </Box>
-        <Box borderTopWidth="1px" mt="8" pt="6">
+          {application.jobDescription && <Box mt="6"><Detail label="Captured job description"><Text lineClamp="8" whiteSpace="pre-wrap">{application.jobDescription}</Text></Detail></Box>}
+        </Box>}
+        {application.notes && <Box borderTopWidth="1px" mt="8" pt="6">
+          <SectionHeading title="Notes" />
           <Detail label="Notes">{application.notes ?? 'No notes added.'}</Detail>
-        </Box>
-        {application.jobDescription && <Box borderTopWidth="1px" mt="8" pt="6"><Detail label="Captured job description"><Text whiteSpace="pre-wrap">{application.jobDescription}</Text></Detail></Box>}
-      </Box>
+        </Box>}
+      </Surface>
+
+      {(application.resumeVersion || application.resumeAttachment) && <Surface p={{ base: '5', md: '7' }}>
+        <SectionHeading title="Documents" description="Resume material associated with this application." />
+        <SimpleGrid columns={{ base: 1, md: 2 }} gap="5">
+          {application.resumeVersion && <Detail label="Resume version">{application.resumeVersion.name}</Detail>}
+          {application.resumeAttachment && <Detail label="Attached resume"><Stack align="start" gap="2"><Text fontWeight="medium">{application.resumeAttachment.fileName}</Text><Button loading={downloadResume.isPending} onClick={() => downloadResume.mutate({ applicationId: application.id, fileName: application.resumeAttachment!.fileName })} size="sm" variant="outline">Download resume</Button>{downloadResume.isError && <Text color="fg.error" fontSize="sm">{getApiErrorMessage(downloadResume.error, 'Unable to download resume.')}</Text>}</Stack></Detail>}
+        </SimpleGrid>
+      </Surface>}
 
       <ApplicationReminders applicationId={application.id} />
       <ApplicationTimeline applicationId={application.id} />
@@ -134,4 +120,8 @@ export function ApplicationDetailsPage() {
 
 function Detail({ label, children }: { label: string; children: React.ReactNode }) {
   return <Stack gap="1"><Text color="fg.subtle" fontSize="sm" fontWeight="medium">{label}</Text><Box>{children}</Box></Stack>
+}
+
+function SectionHeading({ title, description }: { title: string; description?: string }) {
+  return <Box mb="5"><Heading as="h3" fontSize="md">{title}</Heading>{description && <Text color="fg.muted" fontSize="sm" mt="1">{description}</Text>}</Box>
 }

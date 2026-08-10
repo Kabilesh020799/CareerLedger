@@ -86,7 +86,7 @@ describe('GmailSyncPage', () => {
 
     renderPage()
 
-    expect(screen.getByText('Gmail integration is unavailable')).toBeInTheDocument()
+    expect(screen.getByText('Email sync is not configured')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Authorize Gmail' })).not.toBeInTheDocument()
   })
 

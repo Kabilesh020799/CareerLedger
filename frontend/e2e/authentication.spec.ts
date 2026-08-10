@@ -40,15 +40,15 @@ test('sign in with the demo user and access its applications', async ({ page }) 
   await signIn(page)
 
   await expect(page.getByRole('heading', { name: 'Applications' })).toBeVisible()
-  await expect(page.getByText('Shopify')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Shopify' })).toBeVisible()
 })
 
-test('view Gmail synchronization configuration status', async ({ page }) => {
+test('view email synchronization configuration status', async ({ page }) => {
   await signIn(page)
-  await page.getByRole('link', { name: 'Gmail' }).click()
+  await page.getByRole('link', { name: 'Email sync' }).click()
 
-  await expect(page.getByRole('heading', { name: 'Gmail synchronization' })).toBeVisible()
-  await expect(page.getByText('Gmail integration is unavailable')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Email sync' })).toBeVisible()
+  await expect(page.getByText('Email sync is not configured')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Authorize Gmail' })).toHaveCount(0)
 })
 
@@ -202,12 +202,12 @@ test('search, filter, sort, and retain application discovery controls', async ({
 
   await expect(page).toHaveURL(/search=shopify/)
   await expect(page).toHaveURL(/status=INTERVIEW/)
-  await expect(page.getByText('Shopify')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Shopify' })).toBeVisible()
   await expect(page.getByText('RBC')).not.toBeVisible()
 
   await page.reload()
   await expect(page.getByLabel('Search')).toHaveValue('shopify')
-  await expect(page.getByText('Shopify')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Shopify' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Clear filters' }).first().click()
   await expect(page).not.toHaveURL(/search=/)

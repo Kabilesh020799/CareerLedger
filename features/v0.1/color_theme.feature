@@ -16,6 +16,12 @@ Feature: Choose an application color theme
     Then the application should immediately use dark surfaces and readable text
     And the theme control should offer the light theme
 
+  Scenario: Preserve semantic colors in either theme
+    Given application statuses and system messages are visible
+    When I switch between light and dark themes
+    Then neutral surfaces should remain visually distinct
+    And status, success, warning, and error colors should retain their meaning and readable contrast
+
   Scenario: Remember the selected theme
     Given I selected the dark theme
     When I reload the application

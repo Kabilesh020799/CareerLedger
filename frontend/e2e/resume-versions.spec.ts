@@ -38,7 +38,7 @@ test('manage a resume version and associate it with an application', async ({ pa
   await expect(page.getByRole('heading', { name: 'Platform Engineer' })).toBeVisible()
   const applicationUrl = page.url()
 
-  await expect(page.getByText('Resume version', { exact: true }).locator('..')).toContainText('Not provided')
+  await expect(page.getByText('Resume version', { exact: true })).toHaveCount(0)
   await page.getByRole('link', { name: 'Edit' }).click()
   await page.getByLabel('Resume version').selectOption({ label: revisedName })
   await page.getByRole('button', { name: 'Save changes' }).click()
@@ -58,7 +58,7 @@ test('manage a resume version and associate it with an application', async ({ pa
   await expect(revisedCard).not.toBeVisible()
 
   await page.goto(applicationUrl)
-  await expect(page.getByText('Resume version', { exact: true }).locator('..')).toContainText('Not provided')
+  await expect(page.getByText('Resume version', { exact: true })).toHaveCount(0)
   await expect(page.getByText(company, { exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'Delete', exact: true }).first().click()

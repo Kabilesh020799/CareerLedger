@@ -10,6 +10,12 @@ Feature: Manage applications in the React interface
     When I choose to view applications
     Then I should arrive at the applications page
 
+  Scenario: Understand the workspace navigation
+    Given I am signed in
+    When I open the primary navigation
+    Then destinations should be grouped by overview, applications, documents, automation, and account
+    And pending email updates should be visible beside email sync
+
   Scenario: Open an unknown page
     When I open an unknown frontend route
     Then I should see a page-not-found message
@@ -20,6 +26,19 @@ Feature: Manage applications in the React interface
     When I open the applications page
     Then I should see columns for company, position, status, applied date, source, and actions
     And each application should appear in the table
+
+  Scenario: View applications on a phone
+    Given applications exist
+    And I am using a narrow phone screen
+    When I open the applications page
+    Then each application should appear as a readable card
+    And I should be able to open the application without horizontally scrolling a table
+
+  Scenario: Reveal filters on a phone
+    Given I am using a narrow phone screen
+    When I open the applications page
+    Then advanced discovery controls should remain collapsed
+    And I should be able to reveal and apply them with the filters control
 
   Scenario: View an empty applications page
     Given no applications exist
@@ -42,7 +61,8 @@ Feature: Manage applications in the React interface
   Scenario: Open application details
     Given an application exists
     When I select that application from the applications page
-    Then I should see all recorded application details
+    Then I should see recorded application details grouped by overview, requirements, notes, and documents
+    And missing optional sections should not distract from recorded information
 
   Scenario: Edit an application
     Given I am viewing an application

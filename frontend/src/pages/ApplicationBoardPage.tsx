@@ -1,10 +1,12 @@
-import { Alert, Button, Flex, Heading, Spinner, Stack, Text } from '@chakra-ui/react'
+import { Alert, Button, Heading, Stack, Text } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
 import { ApplicationBoard } from '../components/applications/ApplicationBoard'
 import { useApplicationBoard } from '../hooks/useApplicationBoard'
 import { useMoveApplication } from '../hooks/useMoveApplication'
 import type { ApplicationStatus } from '../types/application'
 import { getApiErrorMessage } from '../utils/apiError'
+import { LoadingSkeleton } from '../components/ui/LoadingSkeleton'
+import { PageHeader } from '../components/ui/PageHeader'
 
 export function ApplicationBoardPage() {
   const boardQuery = useApplicationBoard()
@@ -16,20 +18,7 @@ export function ApplicationBoardPage() {
 
   return (
     <Stack gap="6">
-      <Flex
-        align={{ base: 'start', sm: 'center' }}
-        direction={{ base: 'column', sm: 'row' }}
-        gap="4"
-        justify="space-between"
-      >
-        <Stack gap="1">
-          <Heading as="h2" size="2xl">Application board</Heading>
-          <Text color="fg.muted">Move opportunities as they progress through your pipeline.</Text>
-        </Stack>
-        <Button asChild colorPalette="purple" w={{ base: 'full', sm: 'auto' }}>
-          <Link to="/applications/new">Add application</Link>
-        </Button>
-      </Flex>
+      <PageHeader title="Application board" description="Move opportunities through each stage of your pipeline." action={{ label: 'Add application', to: '/applications/new' }} />
 
       {moveApplication.isError && (
         <Alert.Root status="error" borderRadius="lg">
@@ -55,9 +44,7 @@ export function ApplicationBoardPage() {
       </Text>
 
       {boardQuery.isPending && (
-        <Flex align="center" aria-label="Loading application board" justify="center" minH="20rem">
-          <Spinner color="purple.fg" size="xl" />
-        </Flex>
+        <LoadingSkeleton label="Loading application board" variant="cards" />
       )}
 
       {boardQuery.isError && (

@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.12.2] - 2026-08-10
+
+### Changed
+
+- Redesigned the application workspace with a calmer neutral-and-purple color system, grouped icon navigation, clearer page hierarchy, compact dashboard metrics, guided automation settings, and a focused sign-in experience.
+- Replaced the phone application table with accessible application cards, added persistent mobile workflow shortcuts and collapsible filters, and reorganized application forms and details for faster scanning and completion.
+
+### Fixed
+
+- Replaced blank loading screens with page-shaped skeletons, improved unavailable notification and email-sync states, preserved keyboard focus and reduced-motion behavior, and prevented the login theme control from being obscured.
+
 ## [3.12.1] - 2026-08-10
 
 ### Fixed
@@ -172,7 +183,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.12.1...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.12.2...HEAD
+[3.12.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.12.1...v3.12.2
 [3.12.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.12.0...v3.12.1
 [3.12.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.11.0...v3.12.0
 [3.11.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.10.0...v3.11.0

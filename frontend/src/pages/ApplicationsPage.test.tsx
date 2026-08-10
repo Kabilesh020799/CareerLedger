@@ -67,9 +67,8 @@ describe('ApplicationsPage', () => {
     renderPage('/applications?search=missing&status=INTERVIEW')
 
     expect(screen.getByRole('heading', { name: 'No matching applications' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Search')).toHaveValue('missing')
-
-    await user.click(screen.getAllByRole('button', { name: 'Clear filters' })[1])
+    expect(screen.getByRole('button', { name: /Filters/ })).toHaveTextContent('On')
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }))
     await waitFor(() => {
       expect(useApplications).toHaveBeenLastCalledWith({
         sortBy: 'createdAt',
@@ -101,10 +100,10 @@ describe('ApplicationsPage', () => {
     vi.mocked(useApplications).mockReturnValue(successResult() as never)
 
     renderPage()
-    expect(screen.getByText('Acme Corp')).toBeInTheDocument()
-    expect(screen.getByText('Software Engineer')).toBeInTheDocument()
+    expect(screen.getAllByText('Acme Corp')).toHaveLength(2)
+    expect(screen.getAllByText('Software Engineer')).toHaveLength(2)
     expect(screen.getByText('Showing 1 of 1 applications')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'View' })).toHaveAttribute('href', '/applications/application-1')
+    expect(screen.getByRole('link', { name: 'Open Acme Corp application' })).toHaveAttribute('href', '/applications/application-1')
   })
 
   it('applies discovery controls and resets the page in the URL query', async () => {
@@ -112,6 +111,7 @@ describe('ApplicationsPage', () => {
     vi.mocked(useApplications).mockReturnValue(successResult() as never)
     renderPage('/applications?page=2')
 
+    await user.click(screen.getByRole('button', { name: 'Filters' }))
     await user.type(screen.getByLabelText('Search'), 'Acme')
     await user.selectOptions(screen.getByLabelText('Status'), 'APPLIED')
     await user.selectOptions(screen.getByLabelText('Sort by'), 'company')

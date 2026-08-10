@@ -1,13 +1,15 @@
-import { Alert, Box, Button, Flex, Heading, Spinner, Stack, Text } from '@chakra-ui/react'
+import { Alert, Badge, Box, Button, Flex, Heading, Stack, Text } from '@chakra-ui/react'
 import { useBrowserPushSubscription, useNotificationSettings, useUpdateNotificationSettings } from '../hooks/useNotificationSettings'
 import { getApiErrorMessage } from '../utils/apiError'
+import { LoadingSkeleton } from '../components/ui/LoadingSkeleton'
+import { PageHeader } from '../components/ui/PageHeader'
 
 export function NotificationSettingsPage() {
   const settings = useNotificationSettings()
   const update = useUpdateNotificationSettings()
   const subscription = useBrowserPushSubscription()
 
-  if (settings.isPending) return <Flex minH="18rem" align="center" justify="center"><Spinner size="xl" /></Flex>
+  if (settings.isPending) return <LoadingSkeleton variant="cards" />
   if (settings.isError) return <Alert.Root status="error"><Alert.Indicator /><Alert.Title>Unable to load notification settings</Alert.Title><Button ml="auto" onClick={() => settings.refetch()}>Retry</Button></Alert.Root>
 
   const value = settings.data
@@ -21,7 +23,7 @@ export function NotificationSettingsPage() {
   }
 
   return <Stack gap="6">
-    <Box><Heading as="h2" size="2xl">Notifications</Heading><Text color="fg.muted" mt="2">Choose how Job Tracker alerts you when an application reminder becomes due.</Text></Box>
+    <PageHeader title="Notifications" description="Choose how Job Tracker alerts you when a reminder becomes due." eyebrow="Account" />
     {(update.isError || subscription.isError) && <Alert.Root status="error"><Alert.Indicator /><Alert.Title>{getApiErrorMessage(update.error ?? subscription.error, 'Unable to update notification delivery.')}</Alert.Title></Alert.Root>}
     <Stack gap="4">
       <ChannelCard title="Email reminders" description="Send due reminders to the email address on your account." available={value.emailAvailable} enabled={value.emailEnabled} loading={update.isPending} onToggle={toggleEmail} unavailable="An administrator must configure SMTP before email delivery can be enabled." />
@@ -33,7 +35,7 @@ export function NotificationSettingsPage() {
 
 function ChannelCard({ title, description, available, enabled, loading, onToggle, unavailable }: { title: string; description: string; available: boolean; enabled: boolean; loading: boolean; onToggle: () => void; unavailable: string }) {
   return <Flex align={{ base: 'start', sm: 'center' }} bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" direction={{ base: 'column', sm: 'row' }} gap="4" justify="space-between" p={{ base: '5', md: '6' }}>
-    <Box><Heading as="h3" size="md">{title}</Heading><Text color="fg.muted" mt="1">{description}</Text>{!available && <Text color="fg.warning" fontSize="sm" mt="2">{unavailable}</Text>}</Box>
-    <Button disabled={!available} loading={loading} onClick={onToggle} variant={enabled ? 'outline' : 'solid'}>{enabled ? 'Disable' : 'Enable'}</Button>
+    <Box><Flex align="center" gap="2"><Heading as="h3" size="md">{title}</Heading><Badge colorPalette={available ? enabled ? 'green' : 'gray' : 'orange'} variant="subtle">{available ? enabled ? 'Enabled' : 'Available' : 'Unavailable'}</Badge></Flex><Text color="fg.muted" mt="1">{description}</Text>{!available && <Text color="fg.warning" fontSize="sm" mt="2">{unavailable}</Text>}</Box>
+    <Button colorPalette={enabled ? 'gray' : 'purple'} disabled={!available} loading={loading} minW="24" onClick={onToggle} variant={enabled ? 'outline' : 'solid'}>{enabled ? 'Disable' : 'Enable'}</Button>
   </Flex>
 }

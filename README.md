@@ -38,7 +38,8 @@ docker compose down --volumes
 ## Features
 
 - Create, search, filter, sort, edit, and delete applications.
-- Use a responsive table and status board across phone, tablet, and desktop layouts.
+- Use a responsive workspace with grouped desktop navigation, mobile shortcuts, application cards on phones, and a status board across phone, tablet, and desktop layouts.
+- Work in a consistent accessible light or dark design system with semantic application-status colors, focused page hierarchy, responsive forms, and page-shaped loading states.
 - Track application timelines, notes, status changes, follow-ups, and deadlines.
 - Receive due follow-ups and deadlines through opt-in email or browser push notifications with automatic retry.
 - Upload, replace, download, and review private PDF, DOC, and DOCX resumes up to 5 MB.

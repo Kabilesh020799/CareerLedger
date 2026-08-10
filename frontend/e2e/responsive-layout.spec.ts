@@ -47,8 +47,8 @@ test('phone workflows fit the viewport and wide data scrolls locally', async ({ 
     ['/applications/demo-shopify-frontend', 'Frontend Developer'],
     ['/applications/demo-shopify-frontend/edit', 'Edit application'],
     ['/dashboard', 'Dashboard'],
-    ['/resumes', 'Resume versions'],
-    ['/gmail', 'Gmail synchronization'],
+    ['/resumes', 'Resumes'],
+    ['/gmail', 'Email sync'],
   ] as const
 
   for (const [route, heading] of routes) {
@@ -59,7 +59,7 @@ test('phone workflows fit the viewport and wide data scrolls locally', async ({ 
 
   await page.goto('/applications')
   await expect(page.getByRole('heading', { name: 'Applications' })).toBeVisible()
-  await expectInternalHorizontalScroll(page.getByRole('region', { name: 'Scrollable applications table' }))
+  await expect(page.getByRole('link', { name: 'Open Shopify application' })).toBeVisible()
 
   const suffix = Date.now()
   let applicationId: string | undefined

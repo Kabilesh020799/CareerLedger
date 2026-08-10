@@ -8,24 +8,37 @@ const appTheme = defineConfig({
     },
   },
   theme: {
+    tokens: {
+      fonts: {
+        body: { value: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" },
+        heading: { value: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" },
+      },
+      radii: {
+        card: { value: '14px' },
+      },
+      shadows: {
+        card: { value: '0 1px 2px rgba(17, 14, 25, 0.04), 0 8px 24px rgba(17, 14, 25, 0.04)' },
+      },
+    },
     semanticTokens: {
       colors: {
         bg: {
-          DEFAULT: { value: { _light: '#ffffff', _dark: '#13111a' } },
-          subtle: { value: { _light: '#f8f6fc', _dark: '#0f0d15' } },
-          muted: { value: { _light: '#f0ecf7', _dark: '#1d1926' } },
-          emphasized: { value: { _light: '#e5deef', _dark: '#2b2538' } },
-          panel: { value: { _light: '#ffffff', _dark: '#17131f' } },
+          DEFAULT: { value: { _light: '#ffffff', _dark: '#181720' } },
+          subtle: { value: { _light: '#f7f8fc', _dark: '#0d0d12' } },
+          muted: { value: { _light: '#f0f1f6', _dark: '#121119' } },
+          emphasized: { value: { _light: '#e9e8ef', _dark: '#302d39' } },
+          panel: { value: { _light: '#ffffff', _dark: '#181720' } },
+          elevated: { value: { _light: '#ffffff', _dark: '#201e29' } },
         },
         fg: {
-          DEFAULT: { value: { _light: '#201b29', _dark: '#f5f3fa' } },
-          muted: { value: { _light: '#665f70', _dark: '#aaa4b5' } },
-          subtle: { value: { _light: '#8a8294', _dark: '#827b8f' } },
+          DEFAULT: { value: { _light: '#17151f', _dark: '#f5f3f8' } },
+          muted: { value: { _light: '#686474', _dark: '#b3afbc' } },
+          subtle: { value: { _light: '#8c8798', _dark: '#85808d' } },
         },
         border: {
-          DEFAULT: { value: { _light: '#e4deeb', _dark: '#2f293b' } },
-          muted: { value: { _light: '#eeeaf3', _dark: '#241f2e' } },
-          emphasized: { value: { _light: '#d1c7dd', _dark: '#453b57' } },
+          DEFAULT: { value: { _light: '#e5e3ea', _dark: '#302d39' } },
+          muted: { value: { _light: '#efedf2', _dark: '#24222c' } },
+          emphasized: { value: { _light: '#cbc7d2', _dark: '#494552' } },
         },
       },
     },

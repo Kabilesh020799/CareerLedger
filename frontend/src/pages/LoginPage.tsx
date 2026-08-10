@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Alert, Box, Button, Container, Field, Heading, Input, Separator, Stack, Text } from '@chakra-ui/react'
+import { Alert, Box, Button, Container, Field, Flex, Heading, Input, Separator, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useForm } from 'react-hook-form'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { usePasswordLogin } from '../hooks/usePasswordLogin'
@@ -38,15 +38,21 @@ export function LoginPage() {
   if (session.data?.user) return <Navigate to="/applications" replace />
 
   return (
-    <Box minH="100vh" bg="bg.subtle" color="fg" display="grid" placeItems="center" px={{ base: '4', sm: '5' }} py={{ base: '20', sm: '12' }} position="relative">
-      <Box position="absolute" right={{ base: '4', md: '7' }} top={{ base: '4', md: '7' }}>
+    <Box minH="100vh" bg="bg.subtle" color="fg" display="grid" placeItems="center" px={{ base: '4', sm: '6' }} py={{ base: '20', lg: '10' }} position="relative">
+      <Box position="absolute" right={{ base: '4', md: '7' }} top={{ base: '4', md: '7' }} zIndex="docked">
         <ThemeToggle />
       </Box>
-      <Container maxW="md">
-        <Stack bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="2xl" boxShadow="lg" gap="6" p={{ base: '6', sm: '7', md: '10' }}>
+      <Container maxW="6xl">
+        <SimpleGrid bg="bg.panel" borderColor="border" borderRadius="2xl" borderWidth="1px" boxShadow="xl" columns={{ base: 1, lg: 2 }} overflow="hidden">
+        <Stack bg="purple.solid" color="purple.contrast" display={{ base: 'none', lg: 'flex' }} gap="8" justify="space-between" minH="40rem" p="12">
+          <Stack gap="5"><Flex align="center" bg="whiteAlpha.300" borderRadius="xl" fontSize="xl" fontWeight="bold" h="12" justify="center" w="12">JT</Flex><Heading fontSize="4xl" letterSpacing="-0.04em" maxW="sm">Keep every opportunity moving.</Heading><Text color="whiteAlpha.800" fontSize="lg" maxW="md">One focused workspace for applications, follow-ups, documents, and recruitment updates.</Text></Stack>
+          <Text color="whiteAlpha.700" fontSize="sm">Your job search stays private to your account.</Text>
+        </Stack>
+        <Stack gap="6" justify="center" p={{ base: '6', sm: '9', md: '12' }}>
           <Stack gap="2">
-            <Heading color="purple.fg">Job Tracker</Heading>
-            <Text color="fg.muted">Sign in to access your applications.</Text>
+            <Heading as="h1" color="purple.fg" fontSize="sm" letterSpacing="0.08em" textTransform="uppercase">Job Tracker</Heading>
+            <Heading as="h2" fontSize={{ base: '2xl', md: '3xl' }}>Welcome back</Heading>
+            <Text color="fg.muted">Sign in to continue your job search.</Text>
           </Stack>
 
           {insecureHttpDeployment && (
@@ -70,8 +76,6 @@ export function LoginPage() {
           {passwordLoginEnabled && (
             <form onSubmit={handleSubmit(submitPasswordLogin)} noValidate>
               <Stack gap="4">
-                <Text fontWeight="semibold">Account login</Text>
-
                 {passwordLogin.isError && (
                   <Alert.Root status="error" borderRadius="md">
                     <Alert.Indicator />
@@ -96,7 +100,7 @@ export function LoginPage() {
                   <Field.ErrorText>{errors.password?.message}</Field.ErrorText>
                 </Field.Root>
 
-                <Button type="submit" colorPalette="purple" loading={passwordLogin.isPending}>
+                <Button type="submit" colorPalette="purple" loading={passwordLogin.isPending} minH="11">
                   Sign in
                 </Button>
               </Stack>
@@ -111,10 +115,11 @@ export function LoginPage() {
             </Button>
           )}
 
-          <Text color="fg.subtle" fontSize="sm">
+          <Text color="fg.subtle" fontSize="xs">
             Your applications are private to your signed-in account.
           </Text>
         </Stack>
+        </SimpleGrid>
       </Container>
     </Box>
   )

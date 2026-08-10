@@ -15,6 +15,7 @@ import {
 import type { ResumeVersion } from '../types/resume'
 import { apiBaseUrl } from '../services/api'
 import { getApiErrorMessage } from '../utils/apiError'
+import { PageHeader } from '../components/ui/PageHeader'
 
 export function ResumeVersionsPage() {
   const resumeVersions = useResumeVersions()
@@ -27,10 +28,7 @@ export function ResumeVersionsPage() {
 
   return (
     <Stack gap="7">
-      <Stack gap="1">
-        <Heading as="h2" size="2xl">Resume versions</Heading>
-        <Text color="fg.muted">Manage reusable resume metadata and every document you have uploaded.</Text>
-      </Stack>
+      <PageHeader title="Resumes" description="View uploaded documents and organize reusable résumé versions." eyebrow="Documents" />
 
       <Stack gap="4">
         <Stack gap="1">
