@@ -1,12 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Alert, Box, Button, Field, Flex, Heading, Input, NativeSelect, SimpleGrid, Stack, Text, Textarea } from '@chakra-ui/react'
-import { useForm } from 'react-hook-form'
+import { Alert, Box, Button, Field, Flex, Heading, Input, SimpleGrid, Stack, Text, Textarea } from '@chakra-ui/react'
+import { Controller, useForm } from 'react-hook-form'
 import {
   applicationFormSchema,
   type ApplicationFormValues,
 } from '../../schemas/application.schema'
 import { applicationStatuses } from '../../types/application'
 import { useResumeVersions } from '../../hooks/useResumeVersions'
+import { CustomSelect } from '../ui/CustomSelect'
 import { Link } from 'react-router-dom'
 
 type ApplicationFormProps = {
@@ -43,6 +44,7 @@ export function ApplicationForm({
 }: ApplicationFormProps) {
   const resumeVersions = useResumeVersions()
   const {
+    control,
     register,
     handleSubmit,
     watch,
@@ -98,28 +100,11 @@ export function ApplicationForm({
         </FormField>
 
         <FormField label="Status" error={errors.status?.message}>
-          <NativeSelect.Root>
-            <NativeSelect.Field {...register('status')} aria-label="Status">
-              {applicationStatuses.map((status) => (
-                <option key={status} value={status}>{statusLabels[status]}</option>
-              ))}
-            </NativeSelect.Field>
-            <NativeSelect.Indicator />
-          </NativeSelect.Root>
+          <Controller control={control} name="status" render={({ field }) => <CustomSelect aria-label="Status" name={field.name} options={applicationStatuses.map((status) => ({ label: statusLabels[status], value: status }))} value={field.value} onChange={field.onChange} />} />
         </FormField>
 
         <FormField label="Resume tag" error={errors.resumeVersionId?.message}>
-          <NativeSelect.Root disabled={resumeVersions.isPending || resumeVersions.isError}>
-            <NativeSelect.Field {...register('resumeVersionId')} aria-label="Resume tag">
-              <option value="">No resume tag</option>
-              {resumeVersions.data?.map((resumeVersion) => (
-                <option key={resumeVersion.id} value={resumeVersion.id}>
-                  {resumeVersion.name}
-                </option>
-              ))}
-            </NativeSelect.Field>
-            <NativeSelect.Indicator />
-          </NativeSelect.Root>
+          <Controller control={control} name="resumeVersionId" render={({ field }) => <CustomSelect aria-label="Resume tag" disabled={resumeVersions.isPending || resumeVersions.isError} name={field.name} options={(resumeVersions.data ?? []).map((resumeVersion) => ({ label: resumeVersion.name, value: resumeVersion.id }))} placeholder="No resume tag" value={field.value ?? ''} onChange={field.onChange} />} />
           {resumeVersions.isError && (
             <Text color="fg.error" fontSize="sm">Resume tags could not be loaded.</Text>
           )}

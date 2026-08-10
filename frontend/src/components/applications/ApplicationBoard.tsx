@@ -1,4 +1,4 @@
-import { Badge, Button, Flex, Heading, Link as ChakraLink, NativeSelect, Stack, Text } from '@chakra-ui/react'
+import { Badge, Button, Flex, Heading, Link as ChakraLink, Stack, Text } from '@chakra-ui/react'
 import { useMemo, useState, type DragEvent } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -10,6 +10,7 @@ import {
   applicationStatusLabels,
   groupApplicationsByStatus,
 } from '../../utils/applicationBoard'
+import { CustomSelect } from '../ui/CustomSelect'
 
 type ApplicationBoardProps = {
   applications: Application[]
@@ -186,23 +187,7 @@ function ApplicationBoardCard({
         )}
       </Stack>
 
-      <NativeSelect.Root disabled={disabled} size="sm">
-        <NativeSelect.Field
-          aria-label={`Move ${application.company} to status`}
-          value={application.status}
-          onChange={(event) => onMove(
-            application.id,
-            event.currentTarget.value as ApplicationStatus,
-          )}
-        >
-          {applicationStatuses.map((status) => (
-            <option key={status} value={status}>
-              {applicationStatusLabels[status]}
-            </option>
-          ))}
-        </NativeSelect.Field>
-        <NativeSelect.Indicator />
-      </NativeSelect.Root>
+      <CustomSelect aria-label={`Move ${application.company} to status`} disabled={disabled} options={applicationStatuses.map((status) => ({ label: applicationStatusLabels[status], value: status }))} value={application.status} onChange={(value) => onMove(application.id, value as ApplicationStatus)} />
     </Stack>
   )
 }

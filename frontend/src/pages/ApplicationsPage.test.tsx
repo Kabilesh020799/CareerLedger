@@ -113,10 +113,13 @@ describe('ApplicationsPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Filters' }))
     await user.type(screen.getByLabelText('Search'), 'Acme')
-    await user.selectOptions(screen.getByLabelText('Status'), 'APPLIED')
-    await user.selectOptions(screen.getByLabelText('Sort by'), 'company')
+    await user.click(screen.getByRole('combobox', { name: 'Status' }))
+    await user.click(screen.getByRole('option', { name: 'Applied' }))
+    await user.click(screen.getByRole('combobox', { name: 'Sort by' }))
+    await user.click(screen.getByRole('option', { name: 'Company' }))
     await user.click(screen.getByRole('button', { name: 'More filters' }))
-    await user.selectOptions(screen.getByLabelText('Order'), 'asc')
+    await user.click(screen.getByRole('combobox', { name: 'Order' }))
+    await user.click(screen.getByRole('option', { name: 'Ascending' }))
     await user.click(screen.getByRole('button', { name: 'Apply filters' }))
 
     await waitFor(() => {

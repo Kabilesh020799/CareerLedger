@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Flex, Heading, NativeSelect, SimpleGrid, Stack, Text } from '@chakra-ui/react'
+import { Alert, Box, Button, Flex, Heading, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DeleteApplicationDialog } from '../components/applications/DeleteApplicationDialog'
 import { ApplicationTimeline } from '../components/applications/ApplicationTimeline'
@@ -12,6 +12,7 @@ import { LoadingSkeleton, Surface } from '../components/ui/LoadingSkeleton'
 import { useMoveApplication } from '../hooks/useMoveApplication'
 import { applicationStatuses, type ApplicationStatus } from '../types/application'
 import { BellPlus, Edit3, MessageSquarePlus } from 'lucide-react'
+import { CustomSelect } from '../components/ui/CustomSelect'
 
 const statusLabels: Record<ApplicationStatus, string> = {
   SAVED: 'Saved', APPLIED: 'Applied', SCREENING: 'Screening', ASSESSMENT: 'Assessment',
@@ -87,12 +88,7 @@ export function ApplicationDetailsPage() {
         <Flex align={{ base: 'stretch', md: 'center' }} direction={{ base: 'column', md: 'row' }} gap="3" justify="space-between">
           <Box minW={{ md: '15rem' }}>
             <Text color="fg.muted" fontSize="xs" fontWeight="bold" mb="1" textTransform="uppercase">Quick status</Text>
-            <NativeSelect.Root disabled={moveApplication.isPending} size="sm">
-              <NativeSelect.Field aria-label="Change application status" value={application.status} onChange={(event) => moveApplication.mutate({ id: application.id, status: event.currentTarget.value as ApplicationStatus })}>
-                {applicationStatuses.map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}
-              </NativeSelect.Field>
-              <NativeSelect.Indicator />
-            </NativeSelect.Root>
+            <CustomSelect aria-label="Change application status" disabled={moveApplication.isPending} options={applicationStatuses.map((status) => ({ label: statusLabels[status], value: status }))} value={application.status} onChange={(value) => moveApplication.mutate({ id: application.id, status: value as ApplicationStatus })} />
           </Box>
           <Flex gap="2" wrap="wrap">
             <Button asChild size="sm" variant="outline"><a href="#timeline"><MessageSquarePlus aria-hidden size={17} />Add note</a></Button>

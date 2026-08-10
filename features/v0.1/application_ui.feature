@@ -47,7 +47,8 @@ Feature: Manage applications in the React interface
 
   Scenario: Display consistent application dropdowns
     Given I am filtering or editing applications
-    Then each dropdown should display a consistently aligned selection indicator
+    Then each dropdown should open a custom accessible selection menu
+    And each trigger should display a consistently aligned selection indicator
     And its selected value should remain readable
 
   Scenario: View an empty applications page

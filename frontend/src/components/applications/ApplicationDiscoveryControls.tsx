@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Box, Button, Field, Input, NativeSelect, SimpleGrid, Stack } from '@chakra-ui/react'
+import { Box, Button, Field, Input, SimpleGrid, Stack } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import {
   applicationDiscoveryFormSchema,
   applicationDiscoveryFormToQuery,
@@ -14,6 +14,7 @@ import {
   applicationStatuses,
   type ApplicationDiscoveryQuery,
 } from '../../types/application'
+import { CustomSelect } from '../ui/CustomSelect'
 
 type ApplicationDiscoveryControlsProps = {
   query: ApplicationDiscoveryQuery
@@ -46,6 +47,7 @@ export function ApplicationDiscoveryControls({
 }: ApplicationDiscoveryControlsProps) {
   const [advancedOpen, setAdvancedOpen] = useState(Boolean(query.source || query.appliedFrom || query.appliedTo || query.limit !== 20 || query.sortOrder !== 'desc'))
   const {
+    control,
     register,
     reset,
     handleSubmit,
@@ -77,20 +79,11 @@ export function ApplicationDiscoveryControls({
             </FilterField>
 
             <FilterField label="Status" error={errors.status?.message}>
-              <ApplicationSelect {...register('status')} aria-label="Status">
-                  <option value="">All statuses</option>
-                  {applicationStatuses.map((status) => (
-                    <option key={status} value={status}>{statusLabels.get(status)}</option>
-                  ))}
-              </ApplicationSelect>
+              <Controller control={control} name="status" render={({ field }) => <CustomSelect aria-label="Status" name={field.name} options={applicationStatuses.map((status) => ({ label: statusLabels.get(status) ?? status, value: status }))} placeholder="All statuses" value={field.value} onChange={field.onChange} />} />
             </FilterField>
 
             <FilterField label="Sort by" error={errors.sortBy?.message}>
-              <ApplicationSelect {...register('sortBy')} aria-label="Sort by">
-                {applicationSortFields.map((field) => (
-                  <option key={field} value={field}>{sortLabels.get(field)}</option>
-                ))}
-              </ApplicationSelect>
+              <Controller control={control} name="sortBy" render={({ field }) => <CustomSelect aria-label="Sort by" name={field.name} options={applicationSortFields.map((value) => ({ label: sortLabels.get(value) ?? value, value }))} value={field.value} onChange={field.onChange} />} />
             </FilterField>
 
           </SimpleGrid>
@@ -99,8 +92,8 @@ export function ApplicationDiscoveryControls({
             <FilterField label="Source" error={errors.source?.message}><Input {...register('source')} placeholder="LinkedIn, referral…" /></FilterField>
             <FilterField label="Applied from" error={errors.appliedFrom?.message}><Input {...register('appliedFrom')} type="date" /></FilterField>
             <FilterField label="Applied to" error={errors.appliedTo?.message}><Input {...register('appliedTo')} type="date" /></FilterField>
-            <FilterField label="Order" error={errors.sortOrder?.message}><ApplicationSelect {...register('sortOrder')} aria-label="Order"><option value="desc">Descending</option><option value="asc">Ascending</option></ApplicationSelect></FilterField>
-            <FilterField label="Results per page" error={errors.limit?.message}><ApplicationSelect {...register('limit', { valueAsNumber: true })} aria-label="Results per page"><option value="10">10</option><option value="20">20</option><option value="50">50</option></ApplicationSelect></FilterField>
+            <FilterField label="Order" error={errors.sortOrder?.message}><Controller control={control} name="sortOrder" render={({ field }) => <CustomSelect aria-label="Order" name={field.name} options={[{ label: 'Descending', value: 'desc' }, { label: 'Ascending', value: 'asc' }]} value={field.value} onChange={field.onChange} />} /></FilterField>
+            <FilterField label="Results per page" error={errors.limit?.message}><Controller control={control} name="limit" render={({ field }) => <CustomSelect aria-label="Results per page" name={field.name} options={['10', '20', '50'].map((value) => ({ label: value, value }))} value={String(field.value)} onChange={(value) => field.onChange(Number(value))} />} /></FilterField>
           </SimpleGrid>}
 
           <Stack direction={{ base: 'column', sm: 'row' }} gap="3">
@@ -127,14 +120,5 @@ function FilterField({ label, error, children }: FilterFieldProps) {
       {children}
       <Field.ErrorText>{error}</Field.ErrorText>
     </Field.Root>
-  )
-}
-
-function ApplicationSelect(props: React.ComponentProps<typeof NativeSelect.Field>) {
-  return (
-    <NativeSelect.Root>
-      <NativeSelect.Field {...props} />
-      <NativeSelect.Indicator />
-    </NativeSelect.Root>
   )
 }

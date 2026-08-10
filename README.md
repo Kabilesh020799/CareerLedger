@@ -54,6 +54,7 @@ docker compose down --volumes
 - Switch between light and dark themes.
 - Keep applications, Gmail data, resumes, reminders, and analytics scoped to the signed-in user.
 - Protect password login with progressive delays, temporary account and network limits, uniform credential failures, and sanitized security events.
+- Use custom accessible dropdown menus for application filtering and form selections.
 
 Supported application statuses: `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW`, `OFFER`, `REJECTED`, and `WITHDRAWN`.
 
