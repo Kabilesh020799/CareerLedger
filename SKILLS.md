@@ -11,10 +11,13 @@ Every feature change must follow these focused guides:
 - [Definition of done](docs/standards/definition-of-done.md)
 - [Frontend UI standard](docs/standards/frontend-ui.md)
 - [Release versioning skill](skills/update-release-version/SKILL.md)
+- [Commit and push skill](skills/commit-and-push-changes/SKILL.md)
 
 Write or update the feature specification before implementation, add unit tests with changed logic, and document delivered user-visible features in the root `README.md` before reporting a feature complete. Create the root README when the first feature needs to be documented. Describe only implemented behavior; keep roadmap features out of the user-facing feature list.
 
 Use the release-version skill to classify SemVer and maintain the matching categorized section in `CHANGELOG.md`; GitHub Releases publish that section verbatim.
+
+After a feature or bug fix satisfies the definition of done, use the commit-and-push skill to stage only task-owned files, write a behavior-focused Conventional Commit with release information, and push the current branch without force.
 
 ## Core skills for V0.1
 
@@ -254,7 +257,7 @@ Add useful structured logging and error monitoring when production operation beg
 
 ### CI/CD
 
-The pull-request pipeline installs dependencies, lints, type-checks, tests, and builds both packages. The [release-version skill](skills/update-release-version/SKILL.md) classifies completed changes, updates the root version, and maintains categorized changelog entries. A new root version pushed to `master` publishes versioned Docker images, deploys production, and creates the GitHub Release from the matching `CHANGELOG.md` section.
+The pull-request pipeline installs dependencies, lints, type-checks, tests, and builds both packages. The [release-version skill](skills/update-release-version/SKILL.md) classifies completed changes, updates the root version, and maintains categorized changelog entries. The [commit-and-push skill](skills/commit-and-push-changes/SKILL.md) publishes verified features and fixes with informative commits and non-force pushes. A new root version pushed to `master` publishes versioned Docker images, deploys production, and creates the GitHub Release from the matching `CHANGELOG.md` section.
 
 ## Skill selection rule
 

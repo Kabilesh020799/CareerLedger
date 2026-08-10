@@ -90,6 +90,8 @@ Detailed requirements are maintained in:
 - [Automated testing standard](docs/standards/testing.md)
 - [Definition of done](docs/standards/definition-of-done.md)
 - [Frontend UI standard](docs/standards/frontend-ui.md)
+- [Release version skill](skills/update-release-version/SKILL.md)
+- [Commit and push skill](skills/commit-and-push-changes/SKILL.md)
 
 1. Choose one small behavior from the current milestone.
 2. Update or add a Gherkin scenario when observable behavior changes.
@@ -100,8 +102,10 @@ Detailed requirements are maintained in:
 7. Test success, validation, not-found, loading, and failure paths as relevant.
 8. Run the checks for every affected package.
 9. Keep unrelated refactors out of the change.
+10. Apply the release version skill for completed application or operational changes.
+11. Apply the commit and push skill after a feature or bug fix is complete and verified.
 
-Use short, focused branches such as `feature/application-form` or `fix/status-validation`. Write commits in the imperative mood, for example `Add application update validation`.
+Use short, focused branches such as `feature/application-form` or `fix/status-validation`. For completed features and bug fixes, use a behavior-focused Conventional Commit subject and a concise body that records the delivered result and planned release version. Follow the [commit message policy](skills/commit-and-push-changes/references/commit-message-policy.md).
 
 ## Coding standards
 

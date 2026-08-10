@@ -112,6 +112,12 @@ Do not report a feature as complete when only one layer is implemented. Clearly 
 
 Before finalizing completed work, follow the repository's [release-version skill](skills/update-release-version/SKILL.md). Classify the combined unreleased changes, update only the root `package.json` when a major, minor, or patch release is required, and add categorized user-facing entries to `CHANGELOG.md`. Leave the version and changelog unchanged for documentation, tests, Gherkin clarification, or agent-guidance-only changes.
 
+## Commit and push completed work
+
+After every new feature or bug fix satisfies the definition of done and release versioning is complete, follow the repository's [commit-and-push skill](skills/commit-and-push-changes/SKILL.md). The repository owner authorizes a normal, non-force push of the completed commit to the current configured branch. Use an informative Conventional Commit subject and body that describe the delivered behavior and release version.
+
+Do not push incomplete or failing work, secrets, unrelated user changes, documentation-only maintenance unless explicitly requested, or any change when the user explicitly says not to commit or push. Never force-push, bypass hooks, or create release tags manually.
+
 ## Definition of done
 
 A selected feature is done when its relevant scenarios are satisfied, changed logic has unit coverage, the root README documents the delivered user-visible behavior, types and builds pass, expected errors are handled, data behavior is verified, the release impact has been classified and versioned when required, no unrelated roadmap scope was introduced, and the contributor can reproduce any required setup or migration commands.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit and Push Changes"
+  short_description: "Verify, document, commit, and push completed work"
+  default_prompt: "Use $commit-and-push-changes to verify this completed feature, create an informative commit, and push it safely."
