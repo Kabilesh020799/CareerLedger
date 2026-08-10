@@ -1,2 +1,15 @@
 .env
 deploy/.auth.env
+
+# Terraform local state, plans, provider downloads, and private inputs
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

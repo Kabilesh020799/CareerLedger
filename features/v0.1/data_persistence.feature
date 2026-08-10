@@ -91,3 +91,11 @@ Feature: Persist application data
     When the PostgreSQL container is restarted
     And the API reconnects to PostgreSQL
     Then the saved application should still be available
+
+  Scenario: Adopt existing AWS infrastructure without replacing production
+    Given the production AWS resources already exist outside Terraform state
+    When an operator prepares the documented Terraform adoption plan
+    Then the plan should import EC2, Elastic IP, CloudFront, WAF, S3, IAM, and GitHub OIDC resources
+    And remote state should be encrypted, versioned, private, and locked
+    And the operator should not apply a plan that replaces or deletes a production resource
+    And application releases and Docker data should remain outside Terraform

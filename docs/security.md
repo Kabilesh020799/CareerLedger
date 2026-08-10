@@ -1,5 +1,9 @@
 # Security and privacy
 
+## Infrastructure state
+
+Production Terraform state belongs in the dedicated private S3 state bucket with encryption, versioning, Block Public Access, and native lockfiles enabled. State, saved plans, and `.tfvars` files are ignored because they can contain infrastructure metadata or sensitive values. Terraform does not manage SSH private keys, Gmail OAuth secrets, application credentials, or database contents.
+
 ## Authentication
 
 The API stores sessions in PostgreSQL and sends the browser an HTTP-only cookie named `job-tracker-session`. Production cookies are secure when the public origin uses HTTPS. Passwords are stored as bcrypt hashes. Google OAuth is optional.

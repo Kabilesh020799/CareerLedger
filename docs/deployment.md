@@ -2,6 +2,8 @@
 
 Pull requests targeting `master` run verification only. Every push to `master` is verified and reads the root `package.json` version. If that version has not been released, GitHub Actions creates the GitHub Release, publishes versioned Docker images to GitHub Container Registry, and deploys that exact version to the production instance through SSH. A push that keeps an already released version does not publish or deploy again.
 
+AWS resources are described separately in [`infrastructure/`](../infrastructure/README.md). Terraform owns the EC2 instance, Elastic IP, security-group baseline, private resume bucket, CloudFront distribution and WAF attachment, instance role, and GitHub OIDC deployment role after they are explicitly imported. GitHub Actions continues to own application releases and temporary SSH rules; Docker Compose continues to own containers and volumes. Never apply the production Terraform configuration until the adoption plan contains no replacement or deletion.
+
 ## 1. Prepare the instance
 
 Install Docker Engine with the Compose plugin using the instructions for the instance's Linux distribution. Create a non-root deployment user and grant it permission to run Docker.

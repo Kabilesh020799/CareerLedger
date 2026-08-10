@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.10.0] - 2026-08-10
+
+### Added
+
+- Added review-first Terraform adoption for the existing AWS production stack, including protected EC2, Elastic IP, CloudFront and WAF, private S3 storage, IAM roles, GitHub OIDC, and encrypted versioned remote state with native locking.
+
 ## [3.9.2] - 2026-08-10
 
 ### Changed
@@ -143,7 +149,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.2...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.10.0...HEAD
+[3.10.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.2...v3.10.0
 [3.9.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.1...v3.9.2
 [3.9.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.0...v3.9.1
 [3.9.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.8.0...v3.9.0

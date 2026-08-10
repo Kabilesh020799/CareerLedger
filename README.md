@@ -141,6 +141,8 @@ The production Compose stack runs frontend, backend, and PostgreSQL on EC2. Post
 
 Pushes to `master` run verification first. When the root `package.json` version has not been released, GitHub Actions publishes versioned images, deploys them to EC2, and creates the matching GitHub Release from `CHANGELOG.md`. Deployment uses short-lived GitHub OIDC credentials and temporary runner SSH access.
 
+The existing AWS infrastructure is described in [infrastructure](infrastructure/README.md). Terraform adopts EC2, Elastic IP, CloudFront, WAF, S3, IAM, and GitHub OIDC resources into encrypted, versioned remote state with native S3 locking. Terraform does not deploy the application or manage Docker volumes and must not be applied until its import plan has been reviewed for replacement or deletion.
+
 The built-in demo credentials are public. Do not use this deployment for sensitive personal data without changing the authentication and deployment configuration.
 
 Read [docs/deployment.md](docs/deployment.md) before configuring a new instance.
@@ -155,6 +157,7 @@ Read [docs/deployment.md](docs/deployment.md) before configuring a new instance.
 - [Roadmap specifications](features/roadmap)
 - [Development standards](docs/standards)
 - [Production deployment guide](docs/deployment.md)
+- [Terraform infrastructure guide](infrastructure/README.md)
 - [Backend API and Swagger guide](docs/api.md)
 - [Architecture](docs/architecture.md)
 - [Database model](docs/database.md)

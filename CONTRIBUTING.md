@@ -86,6 +86,8 @@ npm run dev
 
 ## Development workflow
 
+Infrastructure changes belong under `infrastructure/`. Run `terraform fmt -check -recursive infrastructure` and `terraform validate` with Terraform 1.10 or newer. For production adoption or changes, review a saved plan and never accept resource replacement, deletion, permanent SSH access, or committed state/secrets without explicit operator approval.
+
 Detailed requirements are maintained in:
 
 - [Feature specification standard](docs/standards/feature-files.md)
