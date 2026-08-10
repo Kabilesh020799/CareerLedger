@@ -26,3 +26,8 @@ Feature: Choose an application color theme
     When I navigate using a keyboard or screen reader
     Then I should find a labelled theme control
     And I should be able to activate it
+
+  Scenario: Keep account actions aligned when the theme label changes
+    Given I am signed in on a desktop screen
+    When I switch from light theme to dark theme
+    Then the sign-out and theme buttons should remain on the same row

@@ -117,8 +117,8 @@ export function AppLayout() {
                 <Text fontSize="sm" fontWeight="medium" truncate>
                   {session.data?.user?.name ?? session.data?.user?.email}
                 </Text>
-                <Flex gap="2" wrap="wrap">
-                  <Button variant="outline" size="sm" onClick={signOut} loading={logout.isPending}>
+                <Flex gap="2" wrap="nowrap" w="full">
+                  <Button flex="1" minW="0" whiteSpace="nowrap" variant="outline" size="sm" onClick={signOut} loading={logout.isPending}>
                     Sign out
                   </Button>
                   <ThemeToggle />

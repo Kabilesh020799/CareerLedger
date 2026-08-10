@@ -8,8 +8,11 @@ export function ThemeToggle() {
   return (
     <Button
       aria-label={`Switch to ${nextMode} theme`}
+      flex="1"
+      minW="0"
       size="sm"
       variant="outline"
+      whiteSpace="nowrap"
       onClick={toggleColorMode}
     >
       <span aria-hidden="true">{colorMode === 'light' ? '☾' : '☀'}</span>

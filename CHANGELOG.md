@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.12.1] - 2026-08-10
+
+### Fixed
+
+- Kept the sign-out and theme controls aligned when the dark theme changes the toggle label to “Light theme.”
+
 ## [3.12.0] - 2026-08-10
 
 ### Added
@@ -166,7 +172,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.12.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.12.1...HEAD
+[3.12.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.12.0...v3.12.1
 [3.12.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.11.0...v3.12.0
 [3.11.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.10.0...v3.11.0
 [3.10.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.2...v3.10.0
