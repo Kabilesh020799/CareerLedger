@@ -1,9 +1,10 @@
-import { Box, Button, Container, Flex, Heading, Link, Stack, Text } from '@chakra-ui/react'
+import { Badge, Box, Button, Container, Flex, Heading, Link, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useLogout } from '../hooks/useLogout'
 import { useSession } from '../hooks/useSession'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
+import { useGmailUpdateReviews } from '../hooks/useGmailUpdateReviews'
 
 const navigation = [
   { label: 'Applications', to: '/applications' },
@@ -18,7 +19,9 @@ export function AppLayout() {
   const logout = useLogout()
   const navigate = useNavigate()
   const location = useLocation()
+  const gmailReviews = useGmailUpdateReviews()
   const [navigationOpen, setNavigationOpen] = useState(false)
+  const pendingGmailUpdates = gmailReviews.data?.length ?? 0
 
   useEffect(() => {
     setNavigationOpen(false)
@@ -86,7 +89,24 @@ export function AppLayout() {
               <Stack as="nav" aria-label="Primary navigation" gap="2">
                 {navigation.map((item) => (
                   <Link asChild key={item.to} borderRadius="lg" minH="11" px="3" py="2.5" fontWeight="medium" color="fg.muted" _currentPage={{ bg: 'purple.subtle', color: 'purple.fg' }} _hover={{ bg: 'purple.subtle', color: 'purple.fg', textDecoration: 'none' }}>
-                    <NavLink to={item.to}>{item.label}</NavLink>
+                    <NavLink to={item.to}>
+                      <Flex align="center" gap="3" justify="space-between" w="full">
+                        <Text>{item.label}</Text>
+                        {item.to === '/gmail' && pendingGmailUpdates > 0 && (
+                          <Badge
+                            aria-label={`${pendingGmailUpdates} pending Gmail ${pendingGmailUpdates === 1 ? 'update' : 'updates'}`}
+                            borderRadius="full"
+                            colorPalette="orange"
+                            minW="6"
+                            px="2"
+                            textAlign="center"
+                            variant="solid"
+                          >
+                            {pendingGmailUpdates > 99 ? '99+' : pendingGmailUpdates}
+                          </Badge>
+                        )}
+                      </Flex>
+                    </NavLink>
                   </Link>
                 ))}
               </Stack>

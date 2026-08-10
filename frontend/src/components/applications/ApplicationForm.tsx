@@ -13,6 +13,7 @@ type ApplicationFormProps = {
   submitLabel: string
   isSubmitting: boolean
   serverError?: string
+  allowResumeAttachment?: boolean
   onSubmit: (values: ApplicationFormValues) => Promise<void>
 }
 
@@ -32,6 +33,7 @@ export function ApplicationForm({
   submitLabel,
   isSubmitting,
   serverError,
+  allowResumeAttachment = false,
   onSubmit,
 }: ApplicationFormProps) {
   const resumeVersions = useResumeVersions()
@@ -114,6 +116,20 @@ export function ApplicationForm({
       <FormField label="Notes" error={errors.notes?.message}>
         <Textarea {...register('notes')} minH="8rem" resize="vertical" />
       </FormField>
+
+      {allowResumeAttachment && (
+        <FormField label="Attach resume" error={errors.resume?.message}>
+          <Input
+            {...register('resume')}
+            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            p="1.5"
+            type="file"
+          />
+          <Text color="fg.muted" fontSize="sm">
+            PDF, DOC, or DOCX up to 5 MB. The saved file is renamed to Role_Company.
+          </Text>
+        </FormField>
+      )}
 
         <Button alignSelf={{ base: 'stretch', sm: 'start' }} colorPalette="purple" loading={isSubmitting} type="submit">
           {submitLabel}

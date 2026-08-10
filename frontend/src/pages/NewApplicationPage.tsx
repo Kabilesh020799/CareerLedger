@@ -2,7 +2,7 @@ import { Box, Button, Heading, Stack, Text } from '@chakra-ui/react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ApplicationForm } from '../components/applications/ApplicationForm'
 import { useCreateApplication } from '../hooks/useCreateApplication'
-import { applicationFormToInput, emptyApplicationForm } from '../schemas/application.schema'
+import { applicationFormResume, applicationFormToInput, emptyApplicationForm } from '../schemas/application.schema'
 import { getApiErrorMessage } from '../utils/apiError'
 
 export function NewApplicationPage() {
@@ -25,8 +25,12 @@ export function NewApplicationPage() {
           submitLabel="Create application"
           isSubmitting={createApplication.isPending}
           serverError={createApplication.isError ? getApiErrorMessage(createApplication.error, 'Please try again.') : undefined}
+          allowResumeAttachment
           onSubmit={async (values) => {
-            const application = await createApplication.mutateAsync(applicationFormToInput(values))
+            const application = await createApplication.mutateAsync({
+              input: applicationFormToInput(values),
+              resume: applicationFormResume(values),
+            })
             navigate(`/applications/${application.id}`)
           }}
         />

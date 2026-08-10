@@ -5,6 +5,8 @@ import type {
   CreateApplicationInput,
   UpdateApplicationInput,
 } from "../validators/application.validator";
+import type { ApplicationResumeUpload } from "../validators/application-resume.validator";
+import { applicationResumeCreateData } from "./application-resume.service";
 
 export const applicationService = {
   list(userId: string) {
@@ -64,7 +66,11 @@ export const applicationService = {
     };
   },
 
-  create(userId: string, data: CreateApplicationInput) {
+  create(
+    userId: string,
+    data: CreateApplicationInput,
+    resume?: ApplicationResumeUpload,
+  ) {
     return prisma.$transaction(async (transaction) => {
       if (data.resumeVersionId) {
         const resumeVersion = await transaction.resumeVersion.findFirst({
@@ -75,7 +81,21 @@ export const applicationService = {
       }
 
       return transaction.application.create({
-        data: { ...data, userId },
+        data: {
+          ...data,
+          userId,
+          ...(resume
+            ? {
+                resumeAttachment: {
+                  create: applicationResumeCreateData(
+                    data.jobTitle,
+                    data.company,
+                    resume,
+                  ),
+                },
+              }
+            : {}),
+        },
         include: applicationInclude,
       });
     });
@@ -135,6 +155,14 @@ export const applicationService = {
 const applicationInclude = {
   resumeVersion: {
     select: { id: true, name: true, notes: true },
+  },
+  resumeAttachment: {
+    select: {
+      fileName: true,
+      mimeType: true,
+      size: true,
+      createdAt: true,
+    },
   },
 } satisfies Prisma.ApplicationInclude;
 

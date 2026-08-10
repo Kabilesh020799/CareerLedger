@@ -6,6 +6,7 @@ import { applicationService } from '../services/application.service'
 import { useCreateApplication } from './useCreateApplication'
 import { useCreateApplicationEvent } from './useCreateApplicationEvent'
 import { useDeleteApplication } from './useDeleteApplication'
+import { useDownloadApplicationResume } from './useDownloadApplicationResume'
 import { useUpdateApplication } from './useUpdateApplication'
 
 vi.mock('../services/application.service', () => ({
@@ -14,6 +15,7 @@ vi.mock('../services/application.service', () => ({
     createEvent: vi.fn(),
     update: vi.fn(),
     remove: vi.fn(),
+    downloadResume: vi.fn(),
   },
 }))
 
@@ -49,7 +51,14 @@ describe('application mutation hooks', () => {
     const { wrapper, invalidate } = setup()
     const { result } = renderHook(useCreateApplication, { wrapper })
 
-    await act(() => result.current.mutateAsync({ company: 'Acme Corp', jobTitle: 'Software Engineer' }))
+    await act(() => result.current.mutateAsync({
+      input: { company: 'Acme Corp', jobTitle: 'Software Engineer' },
+    }))
+
+    expect(applicationService.create).toHaveBeenCalledWith(
+      { company: 'Acme Corp', jobTitle: 'Software Engineer' },
+      undefined,
+    )
 
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications'] })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['dashboard'] })
@@ -97,6 +106,29 @@ describe('application mutation hooks', () => {
       queryKey: ['applications', application.id, 'events'],
     })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['reminders'] })
+  })
+
+  it('downloads a resume using its generated filename', async () => {
+    const resume = new Blob(['resume'], { type: 'application/pdf' })
+    vi.mocked(applicationService.downloadResume).mockResolvedValue(resume)
+    const createObjectUrl = vi.fn(() => 'blob:resume')
+    const revokeObjectUrl = vi.fn()
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    vi.stubGlobal('URL', { ...URL, createObjectURL: createObjectUrl, revokeObjectURL: revokeObjectUrl })
+    const { wrapper } = setup()
+    const { result } = renderHook(useDownloadApplicationResume, { wrapper })
+
+    await act(() => result.current.mutateAsync({
+      applicationId: 'application-1',
+      fileName: 'Software_Engineer_Acme_Corp.pdf',
+    }))
+
+    expect(applicationService.downloadResume).toHaveBeenCalledWith('application-1')
+    expect(createObjectUrl).toHaveBeenCalledWith(resume)
+    expect(click).toHaveBeenCalledOnce()
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:resume')
+    click.mockRestore()
+    vi.unstubAllGlobals()
   })
 
   it('removes deleted details and refreshes the list', async () => {

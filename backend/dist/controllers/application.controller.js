@@ -2,8 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.applicationController = void 0;
 const application_service_1 = require("../services/application.service");
+const application_resume_service_1 = require("../services/application-resume.service");
 const application_discovery_validator_1 = require("../validators/application-discovery.validator");
 const application_validator_1 = require("../validators/application.validator");
+const application_resume_validator_1 = require("../validators/application-resume.validator");
 function validationError(res, error) {
     return res.status(400).json({
         error: "Invalid application data",
@@ -40,7 +42,12 @@ exports.applicationController = {
         const parsed = application_validator_1.createApplicationSchema.safeParse(req.body);
         if (!parsed.success)
             return validationError(res, parsed.error.flatten());
-        const application = await application_service_1.applicationService.create(getUserId(req), parsed.data);
+        const resume = (0, application_resume_validator_1.validateApplicationResume)(req.file);
+        if (!resume.success) {
+            res.status(400).json({ error: resume.error });
+            return;
+        }
+        const application = await application_service_1.applicationService.create(getUserId(req), parsed.data, resume.data);
         if (!application) {
             res.status(400).json({ error: "Resume version not found" });
             return;
@@ -54,6 +61,17 @@ exports.applicationController = {
             return;
         }
         res.json(application);
+    },
+    async downloadResume(req, res) {
+        const resume = await application_resume_service_1.applicationResumeService.findForApplication(getUserId(req), getId(req));
+        if (!resume) {
+            res.status(404).json({ error: "Resume not found" });
+            return;
+        }
+        res.setHeader("Content-Type", resume.mimeType);
+        res.setHeader("Content-Length", String(resume.size));
+        res.setHeader("Content-Disposition", `attachment; filename="${resume.fileName}"`);
+        res.send(Buffer.from(resume.content));
     },
     async update(req, res) {
         const parsed = application_validator_1.updateApplicationSchema.safeParse(req.body);

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applicationFormSchema,
   applicationFormToInput,
+  applicationResumeMaxBytes,
   type ApplicationFormValues,
 } from './application.schema'
 
@@ -70,5 +71,27 @@ describe('applicationFormSchema', () => {
       appliedAt: expect.stringContaining('2026-08-06'),
       resumeVersionId: 'resume-1',
     })
+  })
+
+  it('accepts supported resume files and rejects invalid or oversized files', () => {
+    const pdf = new File(['resume'], 'resume.pdf', { type: 'application/pdf' })
+    const invalid = new File(['resume'], 'resume.txt', { type: 'text/plain' })
+    const oversized = new File([new Uint8Array(applicationResumeMaxBytes + 1)], 'resume.pdf', {
+      type: 'application/pdf',
+    })
+    const fileList = (file: File) => ({ item: () => file, length: 1, 0: file }) as unknown as FileList
+
+    expect(applicationFormSchema.safeParse({
+      ...validApplication,
+      resume: fileList(pdf),
+    }).success).toBe(true)
+    expect(applicationFormSchema.safeParse({
+      ...validApplication,
+      resume: fileList(invalid),
+    }).success).toBe(false)
+    expect(applicationFormSchema.safeParse({
+      ...validApplication,
+      resume: fileList(oversized),
+    }).success).toBe(false)
   })
 })

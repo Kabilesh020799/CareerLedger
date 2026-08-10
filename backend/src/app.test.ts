@@ -44,9 +44,13 @@ describe("authentication API boundary", () => {
 
   it("returns 401 before an unauthenticated request reaches application routes", async () => {
     const response = await request(app).get("/api/applications");
+    const resume = await request(app).get(
+      "/api/applications/application-1/resume",
+    );
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ error: "Authentication required" });
+    expect(resume.status).toBe(401);
   });
 
   it("protects dashboard analytics from unauthenticated requests", async () => {

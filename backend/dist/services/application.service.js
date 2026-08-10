@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.applicationService = void 0;
 const prisma_1 = require("../config/prisma");
+const application_resume_service_1 = require("./application-resume.service");
 exports.applicationService = {
     list(userId) {
         return prisma_1.prisma.application.findMany({
@@ -56,7 +57,7 @@ exports.applicationService = {
             },
         };
     },
-    create(userId, data) {
+    create(userId, data, resume) {
         return prisma_1.prisma.$transaction(async (transaction) => {
             if (data.resumeVersionId) {
                 const resumeVersion = await transaction.resumeVersion.findFirst({
@@ -67,7 +68,17 @@ exports.applicationService = {
                     return null;
             }
             return transaction.application.create({
-                data: { ...data, userId },
+                data: {
+                    ...data,
+                    userId,
+                    ...(resume
+                        ? {
+                            resumeAttachment: {
+                                create: (0, application_resume_service_1.applicationResumeCreateData)(data.jobTitle, data.company, resume),
+                            },
+                        }
+                        : {}),
+                },
                 include: applicationInclude,
             });
         });
@@ -120,6 +131,14 @@ exports.applicationService = {
 const applicationInclude = {
     resumeVersion: {
         select: { id: true, name: true, notes: true },
+    },
+    resumeAttachment: {
+        select: {
+            fileName: true,
+            mimeType: true,
+            size: true,
+            createdAt: true,
+        },
     },
 };
 function applicationOrderBy(sortBy, sortOrder) {

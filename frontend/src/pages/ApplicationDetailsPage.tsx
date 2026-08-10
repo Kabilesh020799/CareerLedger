@@ -6,6 +6,7 @@ import { StatusBadge } from '../components/applications/StatusBadge'
 import { ApplicationReminders } from '../components/reminders/ApplicationReminders'
 import { useApplication } from '../hooks/useApplication'
 import { useDeleteApplication } from '../hooks/useDeleteApplication'
+import { useDownloadApplicationResume } from '../hooks/useDownloadApplicationResume'
 import { getApiErrorMessage } from '../utils/apiError'
 
 function formatDate(value: string | null) {
@@ -18,6 +19,7 @@ export function ApplicationDetailsPage() {
   const navigate = useNavigate()
   const applicationQuery = useApplication(id)
   const deleteApplication = useDeleteApplication()
+  const downloadResume = useDownloadApplicationResume()
 
   if (applicationQuery.isPending) {
     return <Flex minH="18rem" align="center" justify="center" aria-label="Loading application"><Spinner color="purple.fg" size="xl" /></Flex>
@@ -72,6 +74,29 @@ export function ApplicationDetailsPage() {
           <Detail label="Location">{application.location ?? 'Not provided'}</Detail>
           <Detail label="Source">{application.source ?? 'Not provided'}</Detail>
           <Detail label="Resume version">{application.resumeVersion?.name ?? 'Not provided'}</Detail>
+          <Detail label="Attached resume">
+            {application.resumeAttachment ? (
+              <Stack align="start" gap="2">
+                <Text>{application.resumeAttachment.fileName}</Text>
+                <Button
+                  loading={downloadResume.isPending}
+                  onClick={() => downloadResume.mutate({
+                    applicationId: application.id,
+                    fileName: application.resumeAttachment!.fileName,
+                  })}
+                  size="sm"
+                  variant="outline"
+                >
+                  Download resume
+                </Button>
+                {downloadResume.isError && (
+                  <Text color="fg.error" fontSize="sm">
+                    {getApiErrorMessage(downloadResume.error, 'Unable to download resume.')}
+                  </Text>
+                )}
+              </Stack>
+            ) : 'Not provided'}
+          </Detail>
           <Detail label="Job URL">
             {application.jobUrl ? <a href={application.jobUrl} target="_blank" rel="noreferrer">Open job posting</a> : 'Not provided'}
           </Detail>

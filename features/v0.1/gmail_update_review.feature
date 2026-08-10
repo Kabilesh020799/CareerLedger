@@ -34,6 +34,16 @@ Feature: Review recruitment updates discovered from Gmail
     Then a pending new-application suggestion should be shown
     And no application should be created automatically
 
+  Scenario: Notify me about pending Gmail reviews in navigation
+    Given I have pending Gmail updates for matched applications and proposed new applications
+    When I view the application navigation
+    Then the Gmail tab should show the total number of pending updates
+
+  Scenario: Clear the Gmail navigation notification after review
+    Given the Gmail tab shows pending updates
+    When I confirm or ignore every pending update
+    Then the Gmail tab should no longer show a pending-update notification
+
   Scenario: Confirm a matched status update
     Given a pending Gmail update is matched to my application
     When I confirm its proposed status
@@ -71,4 +81,3 @@ Feature: Review recruitment updates discovered from Gmail
     When a Gmail message is processed
     Then its body and transient snippet should not be stored
     And only detected recruitment updates should retain the subject and sender needed for review
-

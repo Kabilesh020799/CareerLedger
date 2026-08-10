@@ -2,9 +2,10 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { AppProvider } from './components/ui/AppProvider'
+import { useGmailUpdateReviews } from './hooks/useGmailUpdateReviews'
 
 vi.mock('./hooks/useApplications', () => ({
   useApplications: () => ({
@@ -74,6 +75,7 @@ vi.mock('./hooks/useGmailStatus', () => ({
     },
   }),
 }))
+vi.mock('./hooks/useGmailUpdateReviews', () => ({ useGmailUpdateReviews: vi.fn() }))
 
 vi.mock('./components/reminders/DashboardReminders', () => ({
   DashboardReminders: () => <div>Reminder overview</div>,
@@ -116,6 +118,14 @@ function renderApp(path: string) {
 }
 
 describe('application routing', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(useGmailUpdateReviews).mockReturnValue({
+      data: [],
+      isPending: false,
+      isError: false,
+    } as never)
+  })
   afterEach(cleanup)
 
   it('shows primary navigation and navigates to applications', async () => {
@@ -141,6 +151,24 @@ describe('application routing', () => {
 
     expect(screen.getByRole('heading', { name: 'Application board' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'No applications on your board' })).toBeInTheDocument()
+  })
+
+  it('shows all matched and new-application Gmail reviews in the navigation badge', async () => {
+    const user = userEvent.setup()
+    vi.mocked(useGmailUpdateReviews).mockReturnValue({
+      data: [
+        { id: 'matched-review', application: { id: 'application-1' } },
+        { id: 'new-application-review', application: null },
+      ],
+      isPending: false,
+      isError: false,
+    } as never)
+    renderApp('/dashboard')
+
+    await user.click(screen.getByRole('button', { name: 'Open navigation' }))
+
+    expect(screen.getByLabelText('2 pending Gmail updates')).toHaveTextContent('2')
+    expect(screen.getByRole('link', { name: /Gmail/ })).toHaveAttribute('href', '/gmail')
   })
 
   it('shows a recovery link for an unknown route', () => {

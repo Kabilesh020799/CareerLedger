@@ -48,7 +48,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.SessionScalarFieldEnum = exports.GmailUpdateReviewScalarFieldEnum = exports.GmailMessageScalarFieldEnum = exports.GmailConnectionScalarFieldEnum = exports.UserScalarFieldEnum = exports.ApplicationEventScalarFieldEnum = exports.ApplicationReminderScalarFieldEnum = exports.ResumeVersionScalarFieldEnum = exports.ApplicationScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
+exports.NullsOrder = exports.QueryMode = exports.SortOrder = exports.SessionScalarFieldEnum = exports.GmailUpdateReviewScalarFieldEnum = exports.GmailMessageScalarFieldEnum = exports.GmailConnectionScalarFieldEnum = exports.UserScalarFieldEnum = exports.ApplicationEventScalarFieldEnum = exports.ApplicationReminderScalarFieldEnum = exports.ResumeVersionScalarFieldEnum = exports.ApplicationResumeScalarFieldEnum = exports.ApplicationScalarFieldEnum = exports.TransactionIsolationLevel = exports.ModelName = exports.AnyNull = exports.JsonNull = exports.DbNull = exports.NullTypes = exports.Decimal = void 0;
 const runtime = __importStar(require("@prisma/client/runtime/index-browser"));
 exports.Decimal = runtime.Decimal;
 exports.NullTypes = {
@@ -76,6 +76,7 @@ exports.JsonNull = runtime.JsonNull;
 exports.AnyNull = runtime.AnyNull;
 exports.ModelName = {
     Application: 'Application',
+    ApplicationResume: 'ApplicationResume',
     ResumeVersion: 'ResumeVersion',
     ApplicationReminder: 'ApplicationReminder',
     ApplicationEvent: 'ApplicationEvent',
@@ -106,6 +107,16 @@ exports.ApplicationScalarFieldEnum = {
     appliedAt: 'appliedAt',
     userId: 'userId',
     resumeVersionId: 'resumeVersionId',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+exports.ApplicationResumeScalarFieldEnum = {
+    id: 'id',
+    applicationId: 'applicationId',
+    fileName: 'fileName',
+    mimeType: 'mimeType',
+    size: 'size',
+    content: 'content',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };

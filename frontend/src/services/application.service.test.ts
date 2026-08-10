@@ -72,6 +72,21 @@ describe('applicationService', () => {
     expect(api.post).toHaveBeenCalledWith('/applications', input)
   })
 
+  it('creates an application with a multipart resume attachment', async () => {
+    vi.mocked(api.post).mockResolvedValue({ data: application })
+    const input = { company: 'Acme Corp', jobTitle: 'Software Engineer', notes: null }
+    const resume = new File(['resume'], 'current.pdf', { type: 'application/pdf' })
+
+    await applicationService.create(input, resume)
+
+    const requestBody = vi.mocked(api.post).mock.calls[0][1]
+    expect(requestBody).toBeInstanceOf(FormData)
+    expect((requestBody as FormData).get('company')).toBe('Acme Corp')
+    expect((requestBody as FormData).get('jobTitle')).toBe('Software Engineer')
+    expect((requestBody as FormData).get('notes')).toBeNull()
+    expect((requestBody as FormData).get('resume')).toBe(resume)
+  })
+
   it('updates and deletes an application through the API', async () => {
     vi.mocked(api.patch).mockResolvedValue({ data: { ...application, status: 'INTERVIEW' } })
     vi.mocked(api.delete).mockResolvedValue({})
@@ -97,5 +112,15 @@ describe('applicationService', () => {
 
     expect(api.get).toHaveBeenCalledWith('/applications/application-1/events')
     expect(api.post).toHaveBeenCalledWith('/applications/application-1/events', input)
+  })
+
+  it('downloads an application resume as a blob', async () => {
+    const resume = new Blob(['resume'], { type: 'application/pdf' })
+    vi.mocked(api.get).mockResolvedValue({ data: resume })
+
+    await expect(applicationService.downloadResume('application-1')).resolves.toBe(resume)
+    expect(api.get).toHaveBeenCalledWith('/applications/application-1/resume', {
+      responseType: 'blob',
+    })
   })
 })

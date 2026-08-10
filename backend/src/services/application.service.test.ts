@@ -38,6 +38,14 @@ const applicationInclude = {
   resumeVersion: {
     select: { id: true, name: true, notes: true },
   },
+  resumeAttachment: {
+    select: {
+      fileName: true,
+      mimeType: true,
+      size: true,
+      createdAt: true,
+    },
+  },
 };
 
 describe("application ownership", () => {
@@ -144,6 +152,39 @@ describe("application ownership", () => {
         company: "Acme",
         jobTitle: "Engineer",
         userId: "user-1",
+      },
+      include: applicationInclude,
+    });
+  });
+
+  it("stores an attached resume with a role and company filename", async () => {
+    transactionMock.application.create.mockResolvedValue({ id: "application-1" });
+    const content = Buffer.from("%PDF-1.7\nresume");
+
+    await applicationService.create(
+      "user-1",
+      { company: "Acme Corp", jobTitle: "Software Engineer" },
+      {
+        content,
+        extension: ".pdf",
+        mimeType: "application/pdf",
+        size: content.length,
+      },
+    );
+
+    expect(transactionMock.application.create).toHaveBeenCalledWith({
+      data: {
+        company: "Acme Corp",
+        jobTitle: "Software Engineer",
+        userId: "user-1",
+        resumeAttachment: {
+          create: {
+            fileName: "Software_Engineer_Acme_Corp.pdf",
+            mimeType: "application/pdf",
+            size: content.length,
+            content: Uint8Array.from(content),
+          },
+        },
       },
       include: applicationInclude,
     });

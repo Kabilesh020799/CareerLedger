@@ -9,6 +9,15 @@ import type {
   UpdateApplicationInput,
 } from '../types/application'
 
+function applicationFormData(input: CreateApplicationInput, resume: File) {
+  const formData = new FormData()
+  for (const [key, value] of Object.entries(input)) {
+    if (value !== null && value !== undefined) formData.append(key, String(value))
+  }
+  formData.append('resume', resume)
+  return formData
+}
+
 export const applicationService = {
   async list() {
     const response = await api.get<Application[]>('/applications')
@@ -27,8 +36,11 @@ export const applicationService = {
     return response.data
   },
 
-  async create(input: CreateApplicationInput) {
-    const response = await api.post<Application>('/applications', input)
+  async create(input: CreateApplicationInput, resume?: File) {
+    const response = await api.post<Application>(
+      '/applications',
+      resume ? applicationFormData(input, resume) : input,
+    )
     return response.data
   },
 
@@ -39,6 +51,13 @@ export const applicationService = {
 
   async remove(id: string) {
     await api.delete(`/applications/${id}`)
+  },
+
+  async downloadResume(id: string) {
+    const response = await api.get<Blob>(`/applications/${id}/resume`, {
+      responseType: 'blob',
+    })
+    return response.data
   },
 
   async listEvents(id: string) {

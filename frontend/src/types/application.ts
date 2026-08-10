@@ -27,6 +27,12 @@ export type Application = {
     name: string
     notes: string | null
   } | null
+  resumeAttachment?: {
+    fileName: string
+    mimeType: string
+    size: number
+    createdAt: string
+  } | null
   createdAt: string
   updatedAt: string
 }
@@ -44,6 +50,11 @@ export type CreateApplicationInput = {
 }
 
 export type UpdateApplicationInput = Partial<CreateApplicationInput>
+
+export type CreateApplicationRequest = {
+  input: CreateApplicationInput
+  resume?: File
+}
 
 export const applicationSortFields = [
   'appliedAt',
