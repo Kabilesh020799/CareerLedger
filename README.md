@@ -143,6 +143,8 @@ Pushes to `master` run verification first. When the root `package.json` version 
 
 The existing AWS infrastructure is described in [infrastructure](infrastructure/README.md). Terraform adopts EC2, Elastic IP, CloudFront, WAF, S3, IAM, and GitHub OIDC resources into encrypted, versioned remote state with native S3 locking. Terraform does not deploy the application or manage Docker volumes and must not be applied until its import plan has been reviewed for replacement or deletion.
 
+To create an isolated production environment and start every service with one interactive command, authenticate the AWS CLI and GitHub CLI, install Terraform 1.10+, and run `./scripts/provision-production.sh`. The command shows saved Terraform plans for approval, provisions the stack without SSH, starts Docker Compose through Systems Manager, configures GitHub deployment variables, and waits for the public HTTPS health check.
+
 The built-in demo credentials are public. Do not use this deployment for sensitive personal data without changing the authentication and deployment configuration.
 
 Read [docs/deployment.md](docs/deployment.md) before configuring a new instance.

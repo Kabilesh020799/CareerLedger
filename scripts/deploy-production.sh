@@ -6,6 +6,7 @@ APP_DIR="${APP_DIR:-/opt/job-application-tracker}"
 COMPOSE_FILE="${APP_DIR}/compose.production.yml"
 ENV_FILE="${APP_DIR}/.env"
 NEW_TAG="${1:-}"
+SKIP_IMAGE_PULL="${SKIP_IMAGE_PULL:-false}"
 
 if [ -z "$NEW_TAG" ]; then
   echo "Usage: deploy-production.sh <image-tag>" >&2
@@ -107,7 +108,9 @@ rollback() {
   if [ -n "$OLD_TAG" ] && [ "$OLD_TAG" != "$NEW_TAG" ]; then
     echo "Deployment failed; restoring image tag $OLD_TAG" >&2
     set_image_tag "$OLD_TAG"
-    docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull backend frontend
+    if [ "$SKIP_IMAGE_PULL" != "true" ]; then
+      docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull backend frontend
+    fi
     docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans --wait --wait-timeout 180
   fi
 
@@ -118,7 +121,9 @@ trap rollback INT TERM HUP EXIT
 
 set_image_tag "$NEW_TAG"
 
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull backend frontend
+if [ "$SKIP_IMAGE_PULL" != "true" ]; then
+  docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull backend frontend
+fi
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans --wait --wait-timeout 180
 
 health_response="$(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T frontend wget -qO- http://127.0.0.1/api/health)"

@@ -39,6 +39,8 @@ const productionComposePath = path.join(
   "deploy",
   "compose.production.yml",
 );
+const provisionScriptPath = path.join(__dirname, "provision-production.sh");
+const standaloneDirectory = path.join(__dirname, "..", "infrastructure", "standalone");
 
 test("publishes the GitHub Release only after production deployment", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
@@ -172,7 +174,7 @@ test("propagates CloudFront HTTPS to secure production sessions", () => {
   );
 });
 
-test("opens SSH only for the active GitHub runner and always removes it", () => {
+test("deploys through SSM while retaining temporary SSH fallback cleanup", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
   const allowStep = workflow.indexOf("- name: Allow this runner to reach SSH");
   const deployStep = workflow.indexOf("- name: Deploy immutable images");
@@ -184,9 +186,30 @@ test("opens SSH only for the active GitHub runner and always removes it", () => 
     /aws-actions\/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c/,
   );
   assert.match(workflow, /IpRanges=\[\{CidrIp=\$runner_cidr\}\]/);
-  assert.match(workflow, /if: always\(\) && steps\.allow_ssh\.outputs\.runner_cidr != ''/);
+  assert.match(workflow, /vars\.DEPLOY_METHOD == 'ssm'/);
+  assert.match(workflow, /aws ssm put-parameter/);
+  assert.match(workflow, /aws ssm send-command/);
+  assert.match(workflow, /aws ssm delete-parameters/);
+  assert.match(workflow, /if: always\(\) && vars\.DEPLOY_METHOD != 'ssm' && steps\.allow_ssh\.outputs\.runner_cidr != ''/);
   assert.match(workflow, /IpRanges=\[\{CidrIp=\$RUNNER_CIDR\}\]/);
   assert.match(workflow, /ConnectTimeout=15/);
   assert.ok(allowStep < deployStep, "runner SSH access must precede deployment");
   assert.ok(deployStep < cleanupStep, "runner SSH access must be removed after deployment");
+});
+
+test("provisions a complete reviewed stack without SSH", () => {
+  const provision = fs.readFileSync(provisionScriptPath, "utf8");
+  const network = fs.readFileSync(path.join(standaloneDirectory, "network.tf"), "utf8");
+  const iam = fs.readFileSync(path.join(standaloneDirectory, "iam.tf"), "utf8");
+  const cloudInit = fs.readFileSync(path.join(standaloneDirectory, "cloud-init.sh"), "utf8");
+
+  assert.match(provision, /plan -out=standalone\.tfplan/);
+  assert.match(provision, /Apply this production infrastructure plan\?/);
+  assert.doesNotMatch(provision, /-auto-approve/);
+  assert.match(provision, /aws ssm send-command/);
+  assert.match(provision, /api\/health/);
+  assert.doesNotMatch(network, /from_port\s*=\s*22/);
+  assert.match(iam, /AmazonSSMManagedInstanceCore/);
+  assert.match(cloudInit, /systemctl enable --now docker/);
+  assert.match(cloudInit, /sha256sum --check/);
 });

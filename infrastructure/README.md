@@ -2,6 +2,12 @@
 
 Terraform describes the existing AWS production infrastructure. It manages infrastructure only; GitHub Actions continues to build and deploy Docker images and Docker Compose continues to own PostgreSQL and Redis containers and volumes.
 
+For a new self-contained environment, the `standalone/` stack and `scripts/provision-production.sh` provide the supported one-command path. The command creates remote state, networking, EC2, S3, CloudFront, WAF, IAM, and SSM deployment access; bootstraps Docker; starts every Compose service; configures GitHub environment variables; and waits for HTTPS health. It creates billable AWS resources and asks for confirmation before each saved plan.
+
+```bash
+./scripts/provision-production.sh
+```
+
 ## Safety model
 
 - Production EC2, Elastic IP, CloudFront, S3, and IAM resources use `prevent_destroy` where losing them would interrupt service or data access.

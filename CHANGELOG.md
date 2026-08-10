@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.11.0] - 2026-08-10
+
+### Added
+
+- Added a one-command, review-first production provisioner that creates an isolated AWS network, EC2 host, encrypted storage, private resume bucket, CloudFront and WAF protection, installs Docker, starts the complete Compose stack, configures GitHub deployment variables, and verifies public HTTPS health.
+
+### Changed
+
+- Changed greenfield deployments to use AWS Systems Manager instead of SSH, with short-lived GHCR and application configuration passed through encrypted Parameter Store values and deleted after deployment.
+
 ## [3.10.0] - 2026-08-10
 
 ### Added
@@ -149,7 +159,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.10.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.11.0...HEAD
+[3.11.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.10.0...v3.11.0
 [3.10.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.2...v3.10.0
 [3.9.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.1...v3.9.2
 [3.9.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.0...v3.9.1

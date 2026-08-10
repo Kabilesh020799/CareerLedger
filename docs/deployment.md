@@ -4,6 +4,8 @@ Pull requests targeting `master` run verification only. Every push to `master` i
 
 AWS resources are described separately in [`infrastructure/`](../infrastructure/README.md). Terraform owns the EC2 instance, Elastic IP, security-group baseline, private resume bucket, CloudFront distribution and WAF attachment, instance role, and GitHub OIDC deployment role after they are explicitly imported. GitHub Actions continues to own application releases and temporary SSH rules; Docker Compose continues to own containers and volumes. Never apply the production Terraform configuration until the adoption plan contains no replacement or deletion.
 
+For a new isolated environment, run `./scripts/provision-production.sh` from a clean revision already pushed to `master`. It provisions the complete `infrastructure/standalone` stack, updates non-secret GitHub environment variables, builds and starts the first release through SSM, and verifies HTTPS health. It prompts before both saved Terraform plans and never uses `-auto-approve`. Override its defaults with `AWS_REGION`, `TF_STATE_BUCKET`, `RESUME_BUCKET`, `NAME_PREFIX`, `INSTANCE_TYPE`, or `ROOT_VOLUME_SIZE`.
+
 ## 1. Prepare the instance
 
 Install Docker Engine with the Compose plugin using the instructions for the instance's Linux distribution. Create a non-root deployment user and grant it permission to run Docker.

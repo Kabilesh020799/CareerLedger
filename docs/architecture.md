@@ -60,3 +60,7 @@ CloudFront terminates browser HTTPS and forwards traffic to the EC2-hosted front
 ## Browser capture
 
 The extension content script reads only the active tab after a user action and returns proposed fields to the popup. The popup owns the token and sends a confirmed snapshot directly to the capture API. Session-authenticated web routes create/list/revoke tokens; the capture route accepts only a valid capture token and scopes the new application to its owner.
+
+## Production provisioning and deployment
+
+The standalone Terraform stack creates the AWS network, EC2 host, encrypted EBS storage, private S3 resume bucket, CloudFront distribution, WAF, and least-privilege IAM roles. Cloud-init installs Docker but does not receive application secrets. The provisioning command starts the first Compose deployment through Systems Manager; later GitHub releases use OIDC, SSM commands, and short-lived encrypted Parameter Store values. PostgreSQL and Redis remain private Docker services whose named volumes live on the protected EC2 root volume.

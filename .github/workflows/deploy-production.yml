@@ -152,6 +152,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Allow this runner to reach SSH
+        if: vars.DEPLOY_METHOD != 'ssm'
         id: allow_ssh
         env:
           DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
@@ -170,6 +171,7 @@ jobs:
           echo "runner_cidr=$runner_cidr" >> "$GITHUB_OUTPUT"
 
       - name: Configure SSH
+        if: vars.DEPLOY_METHOD != 'ssm'
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
@@ -181,6 +183,7 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
 
       - name: Install deployment files
+        if: vars.DEPLOY_METHOD != 'ssm'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -192,6 +195,7 @@ jobs:
           ssh -o ConnectTimeout=15 -o ConnectionAttempts=2 -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "chmod 700 /opt/job-application-tracker/deploy-production.sh"
 
       - name: Configure application environment
+        if: vars.DEPLOY_METHOD != 'ssm'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -240,6 +244,7 @@ jobs:
           } | ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "umask 077; cat > /opt/job-application-tracker/.auth.env"
 
       - name: Authenticate instance to GHCR
+        if: vars.DEPLOY_METHOD != 'ssm'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -250,6 +255,7 @@ jobs:
           printf '%s' "$GHCR_TOKEN" | ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
 
       - name: Deploy immutable images
+        if: vars.DEPLOY_METHOD != 'ssm'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -257,6 +263,58 @@ jobs:
         run: |
           port="${DEPLOY_PORT:-22}"
           ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "/opt/job-application-tracker/deploy-production.sh '${{ needs.plan_release.outputs.release_tag }}'"
+
+      - name: Store short-lived SSM deployment parameters
+        if: vars.DEPLOY_METHOD == 'ssm'
+        id: ssm_parameters
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+          RESUME_BUCKET: ${{ vars.RESUME_BUCKET }}
+          PARAMETER_PREFIX: ${{ vars.DEPLOY_PARAMETER_PREFIX }}
+        run: |
+          token_parameter="${PARAMETER_PREFIX}/${GITHUB_RUN_ID}/ghcr"
+          auth_parameter="${PARAMETER_PREFIX}/${GITHUB_RUN_ID}/auth"
+          auth_content="$(printf 'FRONTEND_URL=%s\nCOOKIE_SECURE=true\nGOOGLE_CLIENT_ID=%s\nGOOGLE_CLIENT_SECRET=%s\nGMAIL_CALLBACK_URL=%s/api/gmail/callback\nAWS_REGION=%s\nRESUME_BUCKET=%s\nRESUME_UPLOAD_EXPIRES_SECONDS=300\n' \
+            "${PRODUCTION_URL%/}" "$GOOGLE_CLIENT_ID" "$GOOGLE_CLIENT_SECRET" "${PRODUCTION_URL%/}" "${{ vars.AWS_REGION }}" "$RESUME_BUCKET")"
+          aws ssm put-parameter --name "$token_parameter" --type SecureString --value "$GHCR_TOKEN" --overwrite >/dev/null
+          aws ssm put-parameter --name "$auth_parameter" --type SecureString --value "$auth_content" --overwrite >/dev/null
+          echo "token_parameter=$token_parameter" >> "$GITHUB_OUTPUT"
+          echo "auth_parameter=$auth_parameter" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy immutable images through Systems Manager
+        if: vars.DEPLOY_METHOD == 'ssm'
+        env:
+          INSTANCE_ID: ${{ vars.DEPLOY_INSTANCE_ID }}
+          TOKEN_PARAMETER: ${{ steps.ssm_parameters.outputs.token_parameter }}
+          AUTH_PARAMETER: ${{ steps.ssm_parameters.outputs.auth_parameter }}
+          RELEASE_TAG: ${{ needs.plan_release.outputs.release_tag }}
+        run: |
+          command="set -eu; app_dir=/opt/job-application-tracker; install -d -m 700 \$app_dir; curl -fsSL '$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/raw/$GITHUB_SHA/deploy/compose.production.yml' -o \$app_dir/compose.production.yml; curl -fsSL '$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/raw/$GITHUB_SHA/scripts/deploy-production.sh' -o \$app_dir/deploy-production.sh; chmod 700 \$app_dir/deploy-production.sh; aws ssm get-parameter --name '$AUTH_PARAMETER' --with-decryption --query Parameter.Value --output text > \$app_dir/.auth.env; chmod 600 \$app_dir/.auth.env; aws ssm get-parameter --name '$TOKEN_PARAMETER' --with-decryption --query Parameter.Value --output text | docker login ghcr.io -u '$GITHUB_ACTOR' --password-stdin; \$app_dir/deploy-production.sh '$RELEASE_TAG'"
+          jq -n --arg command "$command" '{commands: [$command]}' > ssm-parameters.json
+          command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript --parameters file://ssm-parameters.json --query Command.CommandId --output text)"
+          for attempt in $(seq 1 120); do
+            status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || true)"
+            case "$status" in
+              Success) exit 0 ;;
+              Failed|Cancelled|TimedOut)
+                aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query StandardErrorContent --output text >&2
+                exit 1
+                ;;
+            esac
+            sleep 10
+          done
+          echo "SSM deployment timed out." >&2
+          exit 1
+
+      - name: Remove short-lived SSM deployment parameters
+        if: always() && vars.DEPLOY_METHOD == 'ssm' && steps.ssm_parameters.outputs.token_parameter != ''
+        env:
+          TOKEN_PARAMETER: ${{ steps.ssm_parameters.outputs.token_parameter }}
+          AUTH_PARAMETER: ${{ steps.ssm_parameters.outputs.auth_parameter }}
+        run: aws ssm delete-parameters --names "$TOKEN_PARAMETER" "$AUTH_PARAMETER"
 
       - name: Publish successful GitHub Release
         env:
@@ -271,7 +329,7 @@ jobs:
             --notes-file release-notes.md
 
       - name: Remove this runner's SSH access
-        if: always() && steps.allow_ssh.outputs.runner_cidr != ''
+        if: always() && vars.DEPLOY_METHOD != 'ssm' && steps.allow_ssh.outputs.runner_cidr != ''
         env:
           DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
           DEPLOY_SECURITY_GROUP_ID: ${{ vars.DEPLOY_SECURITY_GROUP_ID }}

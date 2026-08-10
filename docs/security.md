@@ -2,7 +2,7 @@
 
 ## Infrastructure state
 
-Production Terraform state belongs in the dedicated private S3 state bucket with encryption, versioning, Block Public Access, and native lockfiles enabled. State, saved plans, and `.tfvars` files are ignored because they can contain infrastructure metadata or sensitive values. Terraform does not manage SSH private keys, Gmail OAuth secrets, application credentials, or database contents.
+Production Terraform state belongs in the dedicated private S3 state bucket with encryption, versioning, Block Public Access, and native lockfiles enabled. State, saved plans, and `.tfvars` files are ignored because they can contain infrastructure metadata or sensitive values. Terraform does not manage Gmail OAuth secrets, application credentials, or database contents.
 
 ## Authentication
 
@@ -32,6 +32,8 @@ Background jobs contain only the owning user ID. Redis is private to the Compose
 ## Secrets
 
 Keep `.env`, PEM files, session secrets, database passwords, OAuth secrets, and deployment keys out of Git. Production uses GitHub environment secrets, an EC2 instance role for S3, and GitHub OIDC for temporary AWS deployment access.
+
+Greenfield production does not open SSH. GitHub Actions uses OIDC to send an SSM command. Its short-lived GHCR token and generated application environment are stored as encrypted Parameter Store values, read only by the target instance role, and deleted after the deployment attempt.
 
 ## Browser extension access
 

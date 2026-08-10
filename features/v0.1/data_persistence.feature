@@ -99,3 +99,13 @@ Feature: Persist application data
     And remote state should be encrypted, versioned, private, and locked
     And the operator should not apply a plan that replaces or deletes a production resource
     And application releases and Docker data should remain outside Terraform
+
+  Scenario: Provision a complete production environment with one command
+    Given I am authenticated to AWS and GitHub with the required permissions
+    And the selected production revision is already pushed
+    When I run the production provisioning command and approve its saved plans
+    Then an isolated AWS network, EC2 instance, Elastic IP, resume bucket, CloudFront distribution, WAF, and least-privilege IAM roles should be created
+    And Docker should be installed without opening SSH
+    And PostgreSQL, Redis, backend, Gmail worker, and frontend containers should become healthy
+    And the public application health endpoint should respond through HTTPS
+    And later releases should deploy through Systems Manager using short-lived encrypted parameters
