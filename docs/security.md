@@ -20,6 +20,7 @@ Application, resume, reminder, dashboard, and Gmail routes require authenticatio
 - Validate filename extension, declared MIME type, and file signature.
 - Keep S3 Block Public Access enabled.
 - Use short-lived presigned upload and download permissions.
+- Load in-app previews through the authenticated application API into temporary browser object URLs, and revoke those URLs when the preview closes.
 - Restrict the EC2 role to the bucket's `resumes/*` prefix.
 - Expire abandoned `resumes/pending/` objects through an S3 lifecycle rule.
 

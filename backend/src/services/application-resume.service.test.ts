@@ -82,6 +82,7 @@ describe("application resume service", () => {
       "resumes/user-1/upload.pdf",
       "Engineer_Acme.pdf",
       "application/pdf",
+      false,
     );
   });
 });

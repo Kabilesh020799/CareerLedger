@@ -1,20 +1,20 @@
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProvider } from '../components/ui/AppProvider'
-import { useCreateResumeVersion } from '../hooks/useCreateResumeVersion'
 import { useDeleteResumeVersion } from '../hooks/useDeleteResumeVersion'
 import { useResumeVersions } from '../hooks/useResumeVersions'
 import { useUploadedResumes } from '../hooks/useUploadedResumes'
 import { useUpdateResumeVersion } from '../hooks/useUpdateResumeVersion'
 import { ResumeVersionsPage } from './ResumeVersionsPage'
+import { applicationService } from '../services/application.service'
 import { apiBaseUrl } from '../services/api'
 
 vi.mock('../hooks/useResumeVersions', () => ({ useResumeVersions: vi.fn() }))
 vi.mock('../hooks/useUploadedResumes', () => ({ useUploadedResumes: vi.fn() }))
-vi.mock('../hooks/useCreateResumeVersion', () => ({ useCreateResumeVersion: vi.fn() }))
 vi.mock('../hooks/useUpdateResumeVersion', () => ({ useUpdateResumeVersion: vi.fn() }))
 vi.mock('../hooks/useDeleteResumeVersion', () => ({ useDeleteResumeVersion: vi.fn() }))
+vi.mock('../services/application.service', () => ({ applicationService: { downloadResume: vi.fn() } }))
 
 const resumeVersion = {
   id: 'resume-1',
@@ -24,7 +24,6 @@ const resumeVersion = {
   updatedAt: '2026-08-09T12:00:00.000Z',
 }
 
-const createMutation = { mutateAsync: vi.fn(), isPending: false, error: null }
 const updateMutation = { mutateAsync: vi.fn(), isPending: false, variables: undefined, error: null }
 const deleteMutation = { mutate: vi.fn(), isPending: false, variables: undefined, error: null }
 
@@ -35,9 +34,9 @@ function renderPage() {
 describe('ResumeVersionsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    createMutation.mutateAsync.mockResolvedValue(resumeVersion)
+    vi.stubGlobal('URL', { ...URL, createObjectURL: vi.fn(() => 'blob:resume-preview'), revokeObjectURL: vi.fn() })
+    vi.mocked(applicationService.downloadResume).mockResolvedValue(new Blob(['resume'], { type: 'application/pdf' }))
     updateMutation.mutateAsync.mockResolvedValue(resumeVersion)
-    vi.mocked(useCreateResumeVersion).mockReturnValue(createMutation as never)
     vi.mocked(useUpdateResumeVersion).mockReturnValue(updateMutation as never)
     vi.mocked(useDeleteResumeVersion).mockReturnValue(deleteMutation as never)
     vi.mocked(useUploadedResumes).mockReturnValue({
@@ -47,10 +46,12 @@ describe('ResumeVersionsPage', () => {
       data: [],
     } as never)
   })
-  afterEach(cleanup)
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+  })
 
-  it('creates a validated resume version', async () => {
-    const user = userEvent.setup()
+  it('keeps the metadata-only add block out of the document library', () => {
     vi.mocked(useResumeVersions).mockReturnValue({
       isPending: false,
       isError: false,
@@ -59,16 +60,8 @@ describe('ResumeVersionsPage', () => {
     } as never)
     renderPage()
 
-    await user.click(screen.getByRole('button', { name: 'Add resume version' }))
-    expect(screen.getByText('Name is required')).toBeInTheDocument()
-    await user.type(screen.getByLabelText(/^Name/), 'Full-stack resume')
-    await user.type(screen.getByLabelText('Notes'), 'TypeScript focus')
-    await user.click(screen.getByRole('button', { name: 'Add resume version' }))
-
-    expect(createMutation.mutateAsync).toHaveBeenCalledWith({
-      name: 'Full-stack resume',
-      notes: 'TypeScript focus',
-    })
+    expect(screen.queryByRole('heading', { name: 'Add resume version' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add resume version' })).not.toBeInTheDocument()
   })
 
   it('edits and deletes an existing resume version', async () => {
@@ -97,7 +90,8 @@ describe('ResumeVersionsPage', () => {
     expect(deleteMutation.mutate).toHaveBeenCalledWith('resume-1')
   })
 
-  it('shows uploaded resumes with a private view link', () => {
+  it('shows uploaded resumes in a private preview portal', async () => {
+    const user = userEvent.setup()
     vi.mocked(useResumeVersions).mockReturnValue({
       isPending: false,
       isError: false,
@@ -121,7 +115,10 @@ describe('ResumeVersionsPage', () => {
     renderPage()
 
     expect(screen.getByRole('article', { name: 'Engineer_Acme.pdf' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'View resume' })).toHaveAttribute(
+    await user.click(screen.getByRole('button', { name: 'View resume' }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByTitle('Preview of Engineer_Acme.pdf')).toHaveAttribute('src', 'blob:resume-preview'))
+    expect(screen.getByRole('link', { name: 'Open in new tab' })).toHaveAttribute(
       'href',
       `${apiBaseUrl}/applications/application-1/resume`,
     )

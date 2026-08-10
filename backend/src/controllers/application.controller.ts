@@ -140,6 +140,7 @@ export const applicationController = {
     const resume = await applicationResumeService.findForApplication(
       getUserId(req),
       getId(req),
+      true,
     );
     if (!resume) {
       res.status(404).json({ error: "Resume not found" });
@@ -155,7 +156,7 @@ export const applicationController = {
     res.setHeader("Content-Length", String(resume.size));
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="${resume.fileName}"`,
+      `inline; filename="${resume.fileName}"`,
     );
     res.send(Buffer.from(resume.content));
   },

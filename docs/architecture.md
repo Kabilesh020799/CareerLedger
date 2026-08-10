@@ -45,7 +45,7 @@ Browser -> save application with pending key
 Express -> verify object -> promote to active key -> save attachment metadata
 ```
 
-Downloads use short-lived signed URLs. Local development can store file bytes in PostgreSQL when `RESUME_BUCKET` is unset. Files are limited to 5 MB and validated by extension, MIME type, and signature.
+Downloads use short-lived signed URLs. The résumé library fetches owned PDF bytes through the authenticated API and renders a temporary browser object URL in an in-app preview; closing the preview revokes that URL. Local development can store file bytes in PostgreSQL when `RESUME_BUCKET` is unset. Files are limited to 5 MB and validated by extension, MIME type, and signature.
 
 ## Gmail synchronization
 

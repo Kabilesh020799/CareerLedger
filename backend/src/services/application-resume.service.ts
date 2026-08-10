@@ -43,7 +43,7 @@ export function applicationResumeCreateData(
 }
 
 export const applicationResumeService = {
-  async findForApplication(userId: string, applicationId: string) {
+  async findForApplication(userId: string, applicationId: string, inline = false) {
     const resume = await prisma.applicationResume.findFirst({
       where: {
         applicationId,
@@ -67,6 +67,7 @@ export const applicationResumeService = {
           resume.storageKey,
           resume.fileName,
           resume.mimeType,
+          inline,
         ),
       };
     }

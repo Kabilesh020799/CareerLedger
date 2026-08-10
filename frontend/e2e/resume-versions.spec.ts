@@ -16,11 +16,11 @@ test('manage a resume version and associate it with an application', async ({ pa
   const company = `Resume verification ${suffix}`
 
   await signIn(page)
+  const createResumeResponse = await page.request.post('http://127.0.0.1:3001/api/resumes', {
+    data: { name: initialName, notes: 'TypeScript and React focus' },
+  })
+  expect(createResumeResponse.ok()).toBe(true)
   await page.getByRole('link', { name: 'Resumes' }).click()
-
-  await page.getByLabel(/^Name/).fill(initialName)
-  await page.getByLabel('Notes').fill('TypeScript and React focus')
-  await page.getByRole('button', { name: 'Add resume version' }).click()
 
   const resumeCard = page.getByRole('article', { name: initialName })
   await expect(resumeCard).toContainText('TypeScript and React focus')

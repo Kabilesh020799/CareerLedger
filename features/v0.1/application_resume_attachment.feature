@@ -82,7 +82,12 @@ Feature: Attach a resume to an application
     Given I have uploaded resumes to applications I own
     When I open the Resumes page
     Then I should see each uploaded resume with its application and upload date
-    And I should be able to view each uploaded resume privately
+    And I should be able to open a PDF resume in a private in-application preview
+    And I should be able to open the document in a new tab when an embedded preview is unavailable
+
+  Scenario: Keep the resume library focused on uploaded documents
+    When I open the Resumes page
+    Then I should not see the metadata-only add resume version block
 
   Scenario: Application save fails after a direct resume upload
     Given I uploaded a resume but the application could not be saved

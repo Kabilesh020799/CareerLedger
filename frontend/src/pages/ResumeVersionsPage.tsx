@@ -1,30 +1,27 @@
-import { Alert, Box, Button, Flex, Heading, Link, SimpleGrid, Spinner, Stack, Text } from '@chakra-ui/react'
+import { Alert, Box, Button, Flex, Heading, SimpleGrid, Spinner, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
 import { DeleteResumeVersionDialog } from '../components/resumes/DeleteResumeVersionDialog'
 import { ResumeVersionForm } from '../components/resumes/ResumeVersionForm'
-import { useCreateResumeVersion } from '../hooks/useCreateResumeVersion'
 import { useDeleteResumeVersion } from '../hooks/useDeleteResumeVersion'
 import { useResumeVersions } from '../hooks/useResumeVersions'
 import { useUploadedResumes } from '../hooks/useUploadedResumes'
 import { useUpdateResumeVersion } from '../hooks/useUpdateResumeVersion'
 import {
-  emptyResumeVersionForm,
   resumeVersionFormToInput,
   resumeVersionToFormValues,
 } from '../schemas/resume-version.schema'
 import type { ResumeVersion } from '../types/resume'
-import { apiBaseUrl } from '../services/api'
 import { getApiErrorMessage } from '../utils/apiError'
 import { PageHeader } from '../components/ui/PageHeader'
+import { ResumePreviewDialog } from '../components/resumes/ResumePreviewDialog'
 
 export function ResumeVersionsPage() {
   const resumeVersions = useResumeVersions()
   const uploadedResumes = useUploadedResumes()
-  const createResumeVersion = useCreateResumeVersion()
   const updateResumeVersion = useUpdateResumeVersion()
   const deleteResumeVersion = useDeleteResumeVersion()
   const [editingId, setEditingId] = useState<string>()
-  const mutationError = createResumeVersion.error ?? updateResumeVersion.error ?? deleteResumeVersion.error
+  const mutationError = updateResumeVersion.error ?? deleteResumeVersion.error
 
   return (
     <Stack gap="7">
@@ -71,46 +68,13 @@ export function ResumeVersionsPage() {
                     <Text color="fg.muted" fontSize="sm" mt="1">{resume.application.jobTitle} · {resume.application.company}</Text>
                     <Text color="fg.muted" fontSize="xs" mt="2">{formatResumeSize(resume.size)} · Uploaded {formatResumeDate(resume.createdAt)}</Text>
                   </Box>
-                  <Link
-                    alignSelf="flex-start"
-                    href={`${apiBaseUrl}/applications/${resume.applicationId}/resume`}
-                    rel="noreferrer"
-                    target="_blank"
-                    borderColor="border"
-                    borderRadius="md"
-                    borderWidth="1px"
-                    color="fg"
-                    fontSize="sm"
-                    fontWeight="semibold"
-                    px="3"
-                    py="2"
-                  >
-                    View resume
-                  </Link>
+                  <ResumePreviewDialog resume={resume} />
                 </Stack>
               </Box>
             ))}
           </SimpleGrid>
         )}
       </Stack>
-
-      <Box bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" p={{ base: '5', md: '7' }}>
-        <Stack gap="5">
-          <Stack gap="1">
-            <Heading as="h3" size="lg">Add resume version</Heading>
-            <Text color="fg.muted" fontSize="sm">This stores version metadata only; document upload can be added separately.</Text>
-          </Stack>
-          <ResumeVersionForm
-            initialValues={emptyResumeVersionForm}
-            isSubmitting={createResumeVersion.isPending}
-            resetAfterSubmit
-            submitLabel="Add resume version"
-            onSubmit={async (values) => {
-              await createResumeVersion.mutateAsync(resumeVersionFormToInput(values))
-            }}
-          />
-        </Stack>
-      </Box>
 
       {mutationError && (
         <Alert.Root status="error" borderRadius="md">
@@ -143,7 +107,7 @@ export function ResumeVersionsPage() {
       {resumeVersions.isSuccess && resumeVersions.data.length === 0 && (
         <Box bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" p="6">
           <Heading as="h3" size="md">No resume versions yet</Heading>
-          <Text color="fg.muted" fontSize="sm" mt="1">Add the first version above, then select it on an application.</Text>
+          <Text color="fg.muted" fontSize="sm" mt="1">Uploaded documents will appear in the library above.</Text>
         </Box>
       )}
 

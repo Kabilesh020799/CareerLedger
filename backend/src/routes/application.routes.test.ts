@@ -311,12 +311,13 @@ describe("application resume routes", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers["content-disposition"]).toBe(
-      'attachment; filename="Software_Engineer_Acme_Corp.pdf"',
+      'inline; filename="Software_Engineer_Acme_Corp.pdf"',
     );
     expect(Buffer.from(response.body)).toEqual(content);
     expect(applicationResumeServiceMock.findForApplication).toHaveBeenCalledWith(
       "user-1",
       "application-1",
+      true,
     );
   });
 

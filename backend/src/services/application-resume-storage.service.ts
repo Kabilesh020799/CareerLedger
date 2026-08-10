@@ -193,13 +193,13 @@ export const applicationResumeStorageService = {
     return true;
   },
 
-  createDownloadUrl(storageKey: string, fileName: string, mimeType: string) {
+  createDownloadUrl(storageKey: string, fileName: string, mimeType: string, inline = false) {
     return getSignedUrl(
       s3,
       new GetObjectCommand({
         Bucket: requireStorageConfiguration(),
         Key: storageKey,
-        ResponseContentDisposition: `attachment; filename="${fileName}"`,
+        ResponseContentDisposition: `${inline ? 'inline' : 'attachment'}; filename="${fileName}"`,
         ResponseContentType: mimeType,
       }),
       { expiresIn: applicationResumeStorageConfig.uploadExpiresSeconds },

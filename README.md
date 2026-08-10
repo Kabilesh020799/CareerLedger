@@ -43,7 +43,7 @@ docker compose down --volumes
 - Track application timelines, notes, status changes, follow-ups, and deadlines.
 - Receive due follow-ups and deadlines through opt-in email or browser push notifications with automatic retry.
 - Upload, replace, download, and review private PDF, DOC, and DOCX resumes up to 5 MB.
-- Review all uploaded resumes on the Resumes page with application details and private view links.
+- Review uploaded PDF resumes in a private in-application preview portal, with application details and a new-tab fallback for other document formats.
 - Store new production resume bytes in private S3 using short-lived browser permissions and the EC2 instance role.
 - Keep legacy database-backed resumes downloadable and migrate them to S3 at startup.
 - Create reusable resume versions and compare their application outcomes.
