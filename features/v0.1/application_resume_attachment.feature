@@ -78,6 +78,12 @@ Feature: Attach a resume to an application
     When I download the application's resume
     Then the browser should download the original document
 
+  Scenario: Review my uploaded resumes from the Resumes page
+    Given I have uploaded resumes to applications I own
+    When I open the Resumes page
+    Then I should see each uploaded resume with its application and upload date
+    And I should be able to view each uploaded resume privately
+
   Scenario: Application save fails after a direct resume upload
     Given I uploaded a resume but the application could not be saved
     Then the unfinished upload should be deleted

@@ -19,6 +19,9 @@ exports.resumeVersionController = {
     async list(req, res) {
         res.json(await resume_version_service_1.resumeVersionService.list(getUserId(req)));
     },
+    async listUploaded(req, res) {
+        res.json(await resume_version_service_1.resumeVersionService.listUploaded(getUserId(req)));
+    },
     async create(req, res) {
         const parsed = resume_version_validator_1.createResumeVersionSchema.safeParse(req.body);
         if (!parsed.success) {

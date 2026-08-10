@@ -7,10 +7,12 @@ import { useCreateResumeVersion } from './useCreateResumeVersion'
 import { useDeleteResumeVersion } from './useDeleteResumeVersion'
 import { useResumeVersions } from './useResumeVersions'
 import { useUpdateResumeVersion } from './useUpdateResumeVersion'
+import { useUploadedResumes } from './useUploadedResumes'
 
 vi.mock('../services/resume-version.service', () => ({
   resumeVersionService: {
     list: vi.fn(),
+    listUploaded: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     remove: vi.fn(),
@@ -38,6 +40,15 @@ describe('resume version hooks', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(resumeVersionService.list).toHaveBeenCalledOnce()
+  })
+
+  it('loads uploaded resumes', async () => {
+    vi.mocked(resumeVersionService.listUploaded).mockResolvedValue([])
+    const { wrapper } = setup()
+    const { result } = renderHook(useUploadedResumes, { wrapper })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(resumeVersionService.listUploaded).toHaveBeenCalledOnce()
   })
 
   it('creates and refreshes resume versions', async () => {

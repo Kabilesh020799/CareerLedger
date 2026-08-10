@@ -15,6 +15,23 @@ exports.resumeVersionService = {
             orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
         });
     },
+    listUploaded(userId) {
+        return prisma_1.prisma.applicationResume.findMany({
+            where: { application: { userId } },
+            select: {
+                id: true,
+                applicationId: true,
+                fileName: true,
+                mimeType: true,
+                size: true,
+                createdAt: true,
+                application: {
+                    select: { company: true, jobTitle: true },
+                },
+            },
+            orderBy: { createdAt: "desc" },
+        });
+    },
     async create(userId, data) {
         try {
             const resumeVersion = await prisma_1.prisma.resumeVersion.create({

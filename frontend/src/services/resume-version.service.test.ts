@@ -27,4 +27,12 @@ describe('resumeVersionService', () => {
     })
     expect(api.delete).toHaveBeenCalledWith('/resumes/resume-1')
   })
+
+  it('lists uploaded resumes for the current user', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: [] })
+
+    await resumeVersionService.listUploaded()
+
+    expect(api.get).toHaveBeenCalledWith('/resumes/uploads')
+  })
 })

@@ -2,12 +2,18 @@ import { api } from './api'
 import type {
   CreateResumeVersionInput,
   ResumeVersion,
+  UploadedResume,
   UpdateResumeVersionInput,
 } from '../types/resume'
 
 export const resumeVersionService = {
   async list() {
     const response = await api.get<ResumeVersion[]>('/resumes')
+    return response.data
+  },
+
+  async listUploaded() {
+    const response = await api.get<UploadedResume[]>('/resumes/uploads')
     return response.data
   },
 

@@ -10,6 +10,7 @@ const prismaMock = vi.hoisted(() => ({
     create: vi.fn(),
     deleteMany: vi.fn(),
   },
+  applicationResume: { findMany: vi.fn() },
   $transaction: vi.fn(),
 }));
 
@@ -51,6 +52,26 @@ describe("resumeVersionService", () => {
         name: "Full-stack resume",
         notes: "TypeScript focus",
       },
+    });
+  });
+
+  it("lists only uploaded resumes from the current user's applications", async () => {
+    prismaMock.applicationResume.findMany.mockResolvedValue([]);
+
+    await resumeVersionService.listUploaded("user-1");
+
+    expect(prismaMock.applicationResume.findMany).toHaveBeenCalledWith({
+      where: { application: { userId: "user-1" } },
+      select: {
+        id: true,
+        applicationId: true,
+        fileName: true,
+        mimeType: true,
+        size: true,
+        createdAt: true,
+        application: { select: { company: true, jobTitle: true } },
+      },
+      orderBy: { createdAt: "desc" },
     });
   });
 

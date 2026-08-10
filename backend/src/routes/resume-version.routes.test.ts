@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const serviceMock = vi.hoisted(() => ({
   list: vi.fn(),
+  listUploaded: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   remove: vi.fn(),
@@ -44,6 +45,26 @@ describe("resume version API", () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual([{ id: "resume-1" }]);
     expect(serviceMock.list).toHaveBeenCalledWith("user-1");
+  });
+
+  it("lists uploaded resumes owned by the current user", async () => {
+    serviceMock.listUploaded.mockResolvedValue([
+      {
+        id: "attachment-1",
+        applicationId: "application-1",
+        fileName: "Engineer_Acme.pdf",
+        mimeType: "application/pdf",
+        size: 2048,
+        createdAt: "2026-08-10T00:00:00.000Z",
+        application: { company: "Acme", jobTitle: "Engineer" },
+      },
+    ]);
+
+    const response = await request(app).get("/api/resumes/uploads");
+
+    expect(response.status).toBe(200);
+    expect(response.body[0].fileName).toBe("Engineer_Acme.pdf");
+    expect(serviceMock.listUploaded).toHaveBeenCalledWith("user-1");
   });
 
   it("validates and creates a resume version", async () => {

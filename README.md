@@ -80,6 +80,7 @@ Inside Docker, the frontend sends `/api` requests through Nginx to the backend. 
 - Create applications with validated fields and an optional PDF, DOC, or DOCX resume attachment up to 5 MB, uploaded directly to private S3 storage in production.
 - Upload or replace the attached resume while editing an application without disturbing the current file when no replacement is selected.
 - Download the privately stored resume from application details using its automatic `Role_Company` filename.
+- Review every resume uploaded to your applications from the Resumes page, with its company, role, upload date, and private view link.
 - Open application details.
 - Edit application details and status.
 - Review a newest-first timeline of application activity.
@@ -139,6 +140,7 @@ Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW
 | `PATCH` | `/api/reminders/:id` | Complete or reopen a reminder |
 | `DELETE` | `/api/reminders/:id` | Delete a reminder |
 | `GET` | `/api/resumes` | List the current user's resume versions |
+| `GET` | `/api/resumes/uploads` | List the current user's uploaded resume attachments |
 | `POST` | `/api/resumes` | Create a resume version |
 | `PATCH` | `/api/resumes/:id` | Update a resume version |
 | `DELETE` | `/api/resumes/:id` | Delete a resume version |

@@ -5,10 +5,13 @@ import { AppProvider } from '../components/ui/AppProvider'
 import { useCreateResumeVersion } from '../hooks/useCreateResumeVersion'
 import { useDeleteResumeVersion } from '../hooks/useDeleteResumeVersion'
 import { useResumeVersions } from '../hooks/useResumeVersions'
+import { useUploadedResumes } from '../hooks/useUploadedResumes'
 import { useUpdateResumeVersion } from '../hooks/useUpdateResumeVersion'
 import { ResumeVersionsPage } from './ResumeVersionsPage'
+import { apiBaseUrl } from '../services/api'
 
 vi.mock('../hooks/useResumeVersions', () => ({ useResumeVersions: vi.fn() }))
+vi.mock('../hooks/useUploadedResumes', () => ({ useUploadedResumes: vi.fn() }))
 vi.mock('../hooks/useCreateResumeVersion', () => ({ useCreateResumeVersion: vi.fn() }))
 vi.mock('../hooks/useUpdateResumeVersion', () => ({ useUpdateResumeVersion: vi.fn() }))
 vi.mock('../hooks/useDeleteResumeVersion', () => ({ useDeleteResumeVersion: vi.fn() }))
@@ -37,6 +40,12 @@ describe('ResumeVersionsPage', () => {
     vi.mocked(useCreateResumeVersion).mockReturnValue(createMutation as never)
     vi.mocked(useUpdateResumeVersion).mockReturnValue(updateMutation as never)
     vi.mocked(useDeleteResumeVersion).mockReturnValue(deleteMutation as never)
+    vi.mocked(useUploadedResumes).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: [],
+    } as never)
   })
   afterEach(cleanup)
 
@@ -86,5 +95,35 @@ describe('ResumeVersionsPage', () => {
     await user.click(within(card).getByRole('button', { name: 'Delete' }))
     await user.click(screen.getByRole('button', { name: 'Delete resume version' }))
     expect(deleteMutation.mutate).toHaveBeenCalledWith('resume-1')
+  })
+
+  it('shows uploaded resumes with a private view link', () => {
+    vi.mocked(useResumeVersions).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: [],
+    } as never)
+    vi.mocked(useUploadedResumes).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: [{
+        id: 'attachment-1',
+        applicationId: 'application-1',
+        fileName: 'Engineer_Acme.pdf',
+        mimeType: 'application/pdf',
+        size: 2048,
+        createdAt: '2026-08-10T00:00:00.000Z',
+        application: { company: 'Acme', jobTitle: 'Engineer' },
+      }],
+    } as never)
+    renderPage()
+
+    expect(screen.getByRole('article', { name: 'Engineer_Acme.pdf' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'View resume' })).toHaveAttribute(
+      'href',
+      `${apiBaseUrl}/applications/application-1/resume`,
+    )
   })
 })

@@ -24,6 +24,10 @@ export const resumeVersionController = {
     res.json(await resumeVersionService.list(getUserId(req)));
   },
 
+  async listUploaded(req: Request, res: Response) {
+    res.json(await resumeVersionService.listUploaded(getUserId(req)));
+  },
+
   async create(req: Request, res: Response) {
     const parsed = createResumeVersionSchema.safeParse(req.body);
     if (!parsed.success) {

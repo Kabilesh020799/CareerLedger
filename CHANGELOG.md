@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-08-10
+
+### Added
+
+- Added a user-scoped uploaded-resume library on the Resumes page, showing each document's filename, application, size, upload date, and private view link.
+- Added an authenticated API endpoint for listing the current user's uploaded resume attachments.
+
 ## [3.6.0] - 2026-08-09
 
 ### Added
@@ -105,7 +112,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.6.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.7.0...HEAD
+[3.7.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.6.0...v3.7.0
 [3.6.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.5.0...v3.6.0
 [3.5.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.4.0...v3.5.0
 [3.4.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.3.0...v3.4.0

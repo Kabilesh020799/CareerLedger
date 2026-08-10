@@ -5,6 +5,7 @@ const express_1 = require("express");
 const resume_version_controller_1 = require("../controllers/resume-version.controller");
 exports.resumeVersionRouter = (0, express_1.Router)();
 exports.resumeVersionRouter.get("/", resume_version_controller_1.resumeVersionController.list);
+exports.resumeVersionRouter.get("/uploads", resume_version_controller_1.resumeVersionController.listUploaded);
 exports.resumeVersionRouter.post("/", resume_version_controller_1.resumeVersionController.create);
 exports.resumeVersionRouter.patch("/:id", resume_version_controller_1.resumeVersionController.update);
 exports.resumeVersionRouter.delete("/:id", resume_version_controller_1.resumeVersionController.remove);
