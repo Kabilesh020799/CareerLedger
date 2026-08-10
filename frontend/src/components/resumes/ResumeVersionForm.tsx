@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button, Field, Input, Stack, Textarea } from '@chakra-ui/react'
+import { Button, Field, Input, Stack } from '@chakra-ui/react'
 import { useForm } from 'react-hook-form'
 import {
   resumeVersionFormSchema,
@@ -42,19 +42,9 @@ export function ResumeVersionForm({
     <form onSubmit={handleSubmit(submit)} noValidate>
       <Stack gap="4">
         <Field.Root invalid={Boolean(errors.name)} required>
-          <Field.Label>Name<Field.RequiredIndicator /></Field.Label>
-          <Input {...register('name')} placeholder="Full-stack resume" />
+          <Field.Label>Tag name<Field.RequiredIndicator /></Field.Label>
+          <Input {...register('name')} placeholder="Backend" />
           <Field.ErrorText>{errors.name?.message}</Field.ErrorText>
-        </Field.Root>
-        <Field.Root invalid={Boolean(errors.notes)}>
-          <Field.Label>Notes</Field.Label>
-          <Textarea
-            {...register('notes')}
-            minH="6rem"
-            placeholder="Technologies, roles, or achievements emphasized in this version"
-            resize="vertical"
-          />
-          <Field.ErrorText>{errors.notes?.message}</Field.ErrorText>
         </Field.Root>
         <Stack direction={{ base: 'column', sm: 'row' }} gap="3">
           <Button colorPalette="purple" loading={isSubmitting} type="submit">

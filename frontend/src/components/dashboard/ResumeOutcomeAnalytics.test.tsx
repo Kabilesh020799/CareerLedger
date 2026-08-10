@@ -15,7 +15,7 @@ function renderAnalytics(outcomes: Parameters<typeof ResumeOutcomeAnalytics>[0][
 describe('ResumeOutcomeAnalytics', () => {
   afterEach(cleanup)
 
-  it('compares milestone counts and rates across resume versions', () => {
+  it('compares milestone counts and rates across resume tags', () => {
     renderAnalytics([
       {
         resumeVersionId: 'resume-1',
@@ -54,6 +54,6 @@ describe('ResumeOutcomeAnalytics', () => {
     renderAnalytics([])
 
     expect(screen.getByRole('heading', { name: 'No resume outcome data yet' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Manage resume versions' })).toHaveAttribute('href', '/resumes')
+    expect(screen.getByRole('link', { name: 'Manage resume tags' })).toHaveAttribute('href', '/resumes')
   })
 })

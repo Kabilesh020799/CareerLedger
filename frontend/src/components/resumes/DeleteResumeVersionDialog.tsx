@@ -21,17 +21,17 @@ export function DeleteResumeVersionDialog({
         <Dialog.Positioner>
           <Dialog.Content maxH="calc(100dvh - 2rem)" maxW={{ base: 'calc(100vw - 2rem)', sm: 'md' }} overflowY="auto">
             <Dialog.Header>
-              <Dialog.Title>Delete resume version?</Dialog.Title>
+              <Dialog.Title>Delete resume tag?</Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
               <Text>
-                “{name}” will be removed. Associated applications will remain without a resume version.
+                “{name}” will be removed. Associated applications will remain without a resume tag.
               </Text>
             </Dialog.Body>
             <Dialog.Footer alignItems={{ base: 'stretch', sm: 'center' }} flexDirection={{ base: 'column-reverse', sm: 'row' }}>
               <Dialog.ActionTrigger asChild><Button w={{ base: 'full', sm: 'auto' }} variant="outline">Cancel</Button></Dialog.ActionTrigger>
               <Button colorPalette="red" loading={isDeleting} w={{ base: 'full', sm: 'auto' }} onClick={onConfirm}>
-                Delete resume version
+                Delete resume tag
               </Button>
             </Dialog.Footer>
             <Dialog.CloseTrigger asChild><CloseButton size="sm" /></Dialog.CloseTrigger>

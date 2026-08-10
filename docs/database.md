@@ -25,9 +25,9 @@ ResumeObjectDeletion
 
 ## Models
 
-- `User`: login identity and owner of applications, reusable resume versions, and Gmail data.
+- `User`: login identity and owner of applications, reusable resume tags (`ResumeVersion` records), and Gmail data.
 - `Session`: server-side authenticated session with an expiry timestamp.
-- `Application`: company, role, location, URL, source, status, notes, applied date, optional resume version, and an optional captured posting snapshot. Structured capture fields include a skills list, experience requirements, salary minimum/maximum/currency/period, and `REMOTE`, `HYBRID`, or `ONSITE` work mode.
+- `Application`: company, role, location, URL, source, status, notes, applied date, optional resume tag, and an optional captured posting snapshot. Structured capture fields include a skills list, experience requirements, salary minimum/maximum/currency/period, and `REMOTE`, `HYBRID`, or `ONSITE` work mode.
 - `ApplicationEvent`: chronological note or status transition. Status events record both previous and new status.
 - `ApplicationReminder`: follow-up or deadline with due and completion timestamps.
 - `ApplicationResume`: one uploaded file per application. Stores either legacy database bytes or a private S3 key.

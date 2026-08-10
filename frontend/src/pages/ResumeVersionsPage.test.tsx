@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProvider } from '../components/ui/AppProvider'
 import { useDeleteResumeVersion } from '../hooks/useDeleteResumeVersion'
+import { useCreateResumeVersion } from '../hooks/useCreateResumeVersion'
 import { useResumeVersions } from '../hooks/useResumeVersions'
 import { useUploadedResumes } from '../hooks/useUploadedResumes'
 import { useUpdateResumeVersion } from '../hooks/useUpdateResumeVersion'
@@ -14,6 +15,7 @@ vi.mock('../hooks/useResumeVersions', () => ({ useResumeVersions: vi.fn() }))
 vi.mock('../hooks/useUploadedResumes', () => ({ useUploadedResumes: vi.fn() }))
 vi.mock('../hooks/useUpdateResumeVersion', () => ({ useUpdateResumeVersion: vi.fn() }))
 vi.mock('../hooks/useDeleteResumeVersion', () => ({ useDeleteResumeVersion: vi.fn() }))
+vi.mock('../hooks/useCreateResumeVersion', () => ({ useCreateResumeVersion: vi.fn() }))
 vi.mock('../services/application.service', () => ({ applicationService: { downloadResume: vi.fn() } }))
 
 const resumeVersion = {
@@ -26,6 +28,7 @@ const resumeVersion = {
 
 const updateMutation = { mutateAsync: vi.fn(), isPending: false, variables: undefined, error: null }
 const deleteMutation = { mutate: vi.fn(), isPending: false, variables: undefined, error: null }
+const createMutation = { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false, error: null }
 
 function renderPage() {
   return render(<AppProvider><ResumeVersionsPage /></AppProvider>)
@@ -37,6 +40,8 @@ describe('ResumeVersionsPage', () => {
     vi.stubGlobal('URL', { ...URL, createObjectURL: vi.fn(() => 'blob:resume-preview'), revokeObjectURL: vi.fn() })
     vi.mocked(applicationService.downloadResume).mockResolvedValue(new Blob(['resume'], { type: 'application/pdf' }))
     updateMutation.mutateAsync.mockResolvedValue(resumeVersion)
+    createMutation.mutateAsync.mockResolvedValue(resumeVersion)
+    vi.mocked(useCreateResumeVersion).mockReturnValue(createMutation as never)
     vi.mocked(useUpdateResumeVersion).mockReturnValue(updateMutation as never)
     vi.mocked(useDeleteResumeVersion).mockReturnValue(deleteMutation as never)
     vi.mocked(useUploadedResumes).mockReturnValue({
@@ -51,7 +56,8 @@ describe('ResumeVersionsPage', () => {
     vi.unstubAllGlobals()
   })
 
-  it('keeps the metadata-only add block out of the document library', () => {
+  it('creates suggested and custom tags without changing the uploaded resume library', async () => {
+    const user = userEvent.setup()
     vi.mocked(useResumeVersions).mockReturnValue({
       isPending: false,
       isError: false,
@@ -60,8 +66,11 @@ describe('ResumeVersionsPage', () => {
     } as never)
     renderPage()
 
-    expect(screen.queryByRole('heading', { name: 'Add resume version' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Add resume version' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '+ Backend' }))
+    expect(createMutation.mutate).toHaveBeenCalledWith({ name: 'Backend', notes: null })
+    await user.type(screen.getByLabelText(/^Tag name/), 'Leadership')
+    await user.click(screen.getByRole('button', { name: 'Add custom tag' }))
+    expect(createMutation.mutateAsync).toHaveBeenCalledWith({ name: 'Leadership', notes: null })
   })
 
   it('edits and deletes an existing resume version', async () => {
@@ -76,17 +85,17 @@ describe('ResumeVersionsPage', () => {
 
     const card = screen.getByRole('article', { name: 'Full-stack resume' })
     await user.click(within(card).getByRole('button', { name: 'Edit' }))
-    const name = within(card).getByLabelText(/^Name/)
+    const name = within(card).getByLabelText(/^Tag name/)
     await user.clear(name)
     await user.type(name, 'Backend resume')
-    await user.click(within(card).getByRole('button', { name: 'Save resume version' }))
+    await user.click(within(card).getByRole('button', { name: 'Save tag' }))
     expect(updateMutation.mutateAsync).toHaveBeenCalledWith({
       id: 'resume-1',
-      input: { name: 'Backend resume', notes: 'TypeScript and React focus' },
+      input: { name: 'Backend resume', notes: null },
     })
 
     await user.click(within(card).getByRole('button', { name: 'Delete' }))
-    await user.click(screen.getByRole('button', { name: 'Delete resume version' }))
+    await user.click(screen.getByRole('button', { name: 'Delete resume tag' }))
     expect(deleteMutation.mutate).toHaveBeenCalledWith('resume-1')
   })
 

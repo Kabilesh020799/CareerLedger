@@ -107,7 +107,7 @@ export function ApplicationDetailsPage() {
       {(application.resumeVersion || application.resumeAttachment) && <Surface p={{ base: '5', md: '7' }}>
         <SectionHeading title="Documents" description="Resume material associated with this application." />
         <SimpleGrid columns={{ base: 1, md: 2 }} gap="5">
-          {application.resumeVersion && <Detail label="Resume version">{application.resumeVersion.name}</Detail>}
+          {application.resumeVersion && <Detail label="Resume tag">{application.resumeVersion.name}</Detail>}
           {application.resumeAttachment && <Detail label="Attached resume"><Stack align="start" gap="2"><Text fontWeight="medium">{application.resumeAttachment.fileName}</Text><Button loading={downloadResume.isPending} onClick={() => downloadResume.mutate({ applicationId: application.id, fileName: application.resumeAttachment!.fileName })} size="sm" variant="outline">Download resume</Button>{downloadResume.isError && <Text color="fg.error" fontSize="sm">{getApiErrorMessage(downloadResume.error, 'Unable to download resume.')}</Text>}</Stack></Detail>}
         </SimpleGrid>
       </Surface>}

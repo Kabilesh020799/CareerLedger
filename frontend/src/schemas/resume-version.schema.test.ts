@@ -4,30 +4,29 @@ import {
   resumeVersionFormToInput,
 } from './resume-version.schema'
 
-describe('resume version form', () => {
-  it('validates and normalizes a resume version', () => {
+describe('resume tag form', () => {
+  it('validates and normalizes a resume tag', () => {
     const values = resumeVersionFormSchema.parse({
       name: ' Full-stack resume ',
-      notes: ' TypeScript focus ',
     })
 
     expect(resumeVersionFormToInput(values)).toEqual({
       name: 'Full-stack resume',
-      notes: 'TypeScript focus',
+      notes: null,
     })
   })
 
   it('rejects missing and overly long names', () => {
-    expect(resumeVersionFormSchema.safeParse({ name: '', notes: '' }).success)
+    expect(resumeVersionFormSchema.safeParse({ name: '' }).success)
       .toBe(false)
     expect(
-      resumeVersionFormSchema.safeParse({ name: 'x'.repeat(81), notes: '' })
+      resumeVersionFormSchema.safeParse({ name: 'x'.repeat(81) })
         .success,
     ).toBe(false)
   })
 
-  it('normalizes empty notes to null', () => {
-    expect(resumeVersionFormToInput({ name: 'Backend resume', notes: ' ' }))
+  it('stores tags without notes', () => {
+    expect(resumeVersionFormToInput({ name: 'Backend resume' }))
       .toEqual({ name: 'Backend resume', notes: null })
   })
 })

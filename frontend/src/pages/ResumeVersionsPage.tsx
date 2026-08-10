@@ -3,12 +3,15 @@ import { useState } from 'react'
 import { DeleteResumeVersionDialog } from '../components/resumes/DeleteResumeVersionDialog'
 import { ResumeVersionForm } from '../components/resumes/ResumeVersionForm'
 import { useDeleteResumeVersion } from '../hooks/useDeleteResumeVersion'
+import { useCreateResumeVersion } from '../hooks/useCreateResumeVersion'
 import { useResumeVersions } from '../hooks/useResumeVersions'
 import { useUploadedResumes } from '../hooks/useUploadedResumes'
 import { useUpdateResumeVersion } from '../hooks/useUpdateResumeVersion'
 import {
   resumeVersionFormToInput,
   resumeVersionToFormValues,
+  suggestedResumeTags,
+  emptyResumeVersionForm,
 } from '../schemas/resume-version.schema'
 import type { ResumeVersion } from '../types/resume'
 import { getApiErrorMessage } from '../utils/apiError'
@@ -18,14 +21,15 @@ import { ResumePreviewDialog } from '../components/resumes/ResumePreviewDialog'
 export function ResumeVersionsPage() {
   const resumeVersions = useResumeVersions()
   const uploadedResumes = useUploadedResumes()
+  const createResumeVersion = useCreateResumeVersion()
   const updateResumeVersion = useUpdateResumeVersion()
   const deleteResumeVersion = useDeleteResumeVersion()
   const [editingId, setEditingId] = useState<string>()
-  const mutationError = updateResumeVersion.error ?? deleteResumeVersion.error
+  const mutationError = createResumeVersion.error ?? updateResumeVersion.error ?? deleteResumeVersion.error
 
   return (
     <Stack gap="7">
-      <PageHeader title="Resumes" description="View uploaded documents and organize reusable résumé versions." eyebrow="Documents" />
+      <PageHeader title="Resumes" description="Preview uploaded documents and tag résumé strategies for outcome analytics." eyebrow="Documents" />
 
       <Stack gap="4">
         <Stack gap="1">
@@ -76,20 +80,63 @@ export function ResumeVersionsPage() {
         )}
       </Stack>
 
+      <Stack gap="4">
+        <Stack gap="1">
+          <Heading as="h3" size="lg">Resume tags</Heading>
+          <Text color="fg.muted" fontSize="sm">Label the résumé strategy used for an application. Tags do not replace or modify uploaded files.</Text>
+        </Stack>
+
+        <Box bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" p={{ base: '4', md: '5' }}>
+          <Stack gap="5">
+            <Box>
+              <Text fontWeight="semibold" mb="2">Suggested tags</Text>
+              <Flex gap="2" wrap="wrap">
+                {suggestedResumeTags.map((tag) => {
+                  const exists = resumeVersions.data?.some((resumeVersion) => resumeVersion.name.toLowerCase() === tag.toLowerCase())
+                  return (
+                    <Button
+                      disabled={exists || createResumeVersion.isPending}
+                      key={tag}
+                      size="sm"
+                      variant={exists ? 'subtle' : 'outline'}
+                      onClick={() => createResumeVersion.mutate({ name: tag, notes: null })}
+                    >
+                      {exists ? `${tag} · Added` : `+ ${tag}`}
+                    </Button>
+                  )
+                })}
+              </Flex>
+            </Box>
+            <Box maxW="28rem">
+              <Text fontWeight="semibold" mb="2">Create a custom tag</Text>
+              <ResumeVersionForm
+                initialValues={emptyResumeVersionForm}
+                isSubmitting={createResumeVersion.isPending}
+                resetAfterSubmit
+                submitLabel="Add custom tag"
+                onSubmit={async (values) => {
+                  await createResumeVersion.mutateAsync(resumeVersionFormToInput(values))
+                }}
+              />
+            </Box>
+          </Stack>
+        </Box>
+      </Stack>
+
       {mutationError && (
         <Alert.Root status="error" borderRadius="md">
           <Alert.Indicator />
           <Alert.Content>
-            <Alert.Title>Unable to save resume versions</Alert.Title>
+            <Alert.Title>Unable to save resume tags</Alert.Title>
             <Alert.Description>{getApiErrorMessage(mutationError, 'Please try again.')}</Alert.Description>
           </Alert.Content>
         </Alert.Root>
       )}
 
       {resumeVersions.isPending && (
-        <Flex align="center" aria-label="Loading resume versions" gap="3">
+        <Flex align="center" aria-label="Loading resume tags" gap="3">
           <Spinner color="purple.fg" />
-          <Text color="fg.muted">Loading resume versions…</Text>
+          <Text color="fg.muted">Loading resume tags…</Text>
         </Flex>
       )}
 
@@ -97,7 +144,7 @@ export function ResumeVersionsPage() {
         <Alert.Root status="error" borderRadius="md">
           <Alert.Indicator />
           <Alert.Content>
-            <Alert.Title>Unable to load resume versions</Alert.Title>
+            <Alert.Title>Unable to load resume tags</Alert.Title>
             <Alert.Description>{getApiErrorMessage(resumeVersions.error, 'Please try again.')}</Alert.Description>
           </Alert.Content>
           <Button ml="auto" size="sm" variant="outline" onClick={() => resumeVersions.refetch()}>Retry</Button>
@@ -106,8 +153,8 @@ export function ResumeVersionsPage() {
 
       {resumeVersions.isSuccess && resumeVersions.data.length === 0 && (
         <Box bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" p="6">
-          <Heading as="h3" size="md">No resume versions yet</Heading>
-          <Text color="fg.muted" fontSize="sm" mt="1">Uploaded documents will appear in the library above.</Text>
+          <Heading as="h3" size="md">No resume tags yet</Heading>
+          <Text color="fg.muted" fontSize="sm" mt="1">Choose a suggested tag or create one that matches your résumé strategy.</Text>
         </Box>
       )}
 
@@ -172,18 +219,13 @@ function ResumeVersionCard({
         <ResumeVersionForm
           initialValues={resumeVersionToFormValues(resumeVersion)}
           isSubmitting={isUpdating}
-          submitLabel="Save resume version"
+          submitLabel="Save tag"
           onCancel={onCancel}
           onSubmit={onUpdate}
         />
       ) : (
         <Stack gap="4">
-          <Box>
-            <Heading as="h3" size="md">{resumeVersion.name}</Heading>
-            <Text color="fg.muted" fontSize="sm" mt="2">
-              {resumeVersion.notes ?? 'No notes added.'}
-            </Text>
-          </Box>
+          <Heading as="h3" size="md">{resumeVersion.name}</Heading>
           <Stack direction={{ base: 'column', sm: 'row' }} gap="2">
             <Button size="sm" variant="outline" onClick={onEdit}>Edit</Button>
             <DeleteResumeVersionDialog

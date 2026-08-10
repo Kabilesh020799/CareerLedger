@@ -102,10 +102,10 @@ export function ApplicationForm({
           </Box>
         </FormField>
 
-        <FormField label="Resume version" error={errors.resumeVersionId?.message}>
+        <FormField label="Resume tag" error={errors.resumeVersionId?.message}>
           <NativeSelect.Root disabled={resumeVersions.isPending || resumeVersions.isError}>
-            <NativeSelect.Field {...register('resumeVersionId')} aria-label="Resume version">
-              <option value="">No resume version</option>
+            <NativeSelect.Field {...register('resumeVersionId')} aria-label="Resume tag">
+              <option value="">No resume tag</option>
               {resumeVersions.data?.map((resumeVersion) => (
                 <option key={resumeVersion.id} value={resumeVersion.id}>
                   {resumeVersion.name}
@@ -115,10 +115,10 @@ export function ApplicationForm({
             <NativeSelect.Indicator />
           </NativeSelect.Root>
           {resumeVersions.isError && (
-            <Text color="fg.error" fontSize="sm">Resume versions could not be loaded.</Text>
+            <Text color="fg.error" fontSize="sm">Resume tags could not be loaded.</Text>
           )}
           {resumeVersions.isSuccess && resumeVersions.data.length === 0 && (
-            <Text color="fg.muted" fontSize="sm">Add versions from the Resumes page.</Text>
+            <Text color="fg.muted" fontSize="sm">Add tags from the Resumes page.</Text>
           )}
         </FormField>
       </SimpleGrid>

@@ -9,24 +9,22 @@ async function signIn(page: Page) {
   await expect(page).toHaveURL(/\/applications$/)
 }
 
-test('manage a resume version and associate it with an application', async ({ page }) => {
+test('manage a resume tag and associate it with an application', async ({ page }) => {
   const suffix = Date.now()
   const initialName = `Full-stack resume ${suffix}`
   const revisedName = `Backend resume ${suffix}`
   const company = `Resume verification ${suffix}`
 
   await signIn(page)
-  const createResumeResponse = await page.request.post('http://127.0.0.1:3001/api/resumes', {
-    data: { name: initialName, notes: 'TypeScript and React focus' },
-  })
-  expect(createResumeResponse.ok()).toBe(true)
   await page.getByRole('link', { name: 'Resumes' }).click()
+  await page.getByLabel('Tag name').fill(initialName)
+  await page.getByRole('button', { name: 'Add custom tag' }).click()
 
   const resumeCard = page.getByRole('article', { name: initialName })
-  await expect(resumeCard).toContainText('TypeScript and React focus')
+  await expect(resumeCard).toBeVisible()
   await resumeCard.getByRole('button', { name: 'Edit' }).click()
-  await resumeCard.getByLabel(/^Name/).fill(revisedName)
-  await resumeCard.getByRole('button', { name: 'Save resume version' }).click()
+  await resumeCard.getByLabel(/^Tag name/).fill(revisedName)
+  await resumeCard.getByRole('button', { name: 'Save tag' }).click()
   await expect(page.getByRole('article', { name: revisedName })).toBeVisible()
 
   await page.getByRole('link', { name: 'Applications' }).click()
@@ -38,12 +36,12 @@ test('manage a resume version and associate it with an application', async ({ pa
   await expect(page.getByRole('heading', { name: 'Platform Engineer' })).toBeVisible()
   const applicationUrl = page.url()
 
-  await expect(page.getByText('Resume version', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('Resume tag', { exact: true })).toHaveCount(0)
   await page.getByRole('link', { name: 'Edit' }).click()
-  await page.getByLabel('Resume version').selectOption({ label: revisedName })
+  await page.getByLabel('Resume tag').selectOption({ label: revisedName })
   await page.getByRole('button', { name: 'Save changes' }).click()
   await expect(page).toHaveURL(applicationUrl)
-  await expect(page.getByText('Resume version', { exact: true }).locator('..')).toContainText(revisedName)
+  await expect(page.getByText('Resume tag', { exact: true }).locator('..')).toContainText(revisedName)
 
   await page.getByRole('link', { name: 'Dashboard' }).click()
   const outcomeRow = page.getByRole('row', { name: `Outcomes for ${revisedName}` })
@@ -54,11 +52,11 @@ test('manage a resume version and associate it with an application', async ({ pa
   await page.getByRole('link', { name: 'Resumes' }).click()
   const revisedCard = page.getByRole('article', { name: revisedName })
   await revisedCard.getByRole('button', { name: 'Delete' }).click()
-  await page.getByRole('button', { name: 'Delete resume version' }).click()
+  await page.getByRole('button', { name: 'Delete resume tag' }).click()
   await expect(revisedCard).not.toBeVisible()
 
   await page.goto(applicationUrl)
-  await expect(page.getByText('Resume version', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('Resume tag', { exact: true })).toHaveCount(0)
   await expect(page.getByText(company, { exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'Delete', exact: true }).first().click()

@@ -6,9 +6,9 @@ export function ResumeOutcomeAnalytics({ outcomes }: { outcomes: ResumeOutcome[]
   return (
     <Stack gap="4">
       <Stack gap="1">
-        <Heading as="h3" size="lg">Resume outcomes</Heading>
+        <Heading as="h3" size="lg">Resume tag outcomes</Heading>
         <Text color="fg.muted" fontSize="sm">
-          Milestone progress by resume version. Rates use submitted applications for that version; saved and unassigned applications are excluded.
+          Milestone progress by resume tag. Rates use submitted applications for that tag; saved and unassigned applications are excluded.
         </Text>
       </Stack>
 
@@ -25,10 +25,10 @@ export function ResumeOutcomeAnalytics({ outcomes }: { outcomes: ResumeOutcome[]
         >
           <Heading as="h4" size="md">No resume outcome data yet</Heading>
           <Text color="fg.muted" fontSize="sm">
-            Create a resume version and associate it with applications to compare results.
+            Create a resume tag and associate it with applications to compare results.
           </Text>
           <Button asChild colorPalette="purple" size="sm">
-            <Link to="/resumes">Manage resume versions</Link>
+            <Link to="/resumes">Manage resume tags</Link>
           </Button>
         </Stack>
       ) : (
@@ -47,7 +47,7 @@ export function ResumeOutcomeAnalytics({ outcomes }: { outcomes: ResumeOutcome[]
           <Table.Root aria-label="Resume outcome comparison" minW="44rem" size="md" variant="line">
             <Table.Header>
               <Table.Row>
-                <Table.ColumnHeader>Resume version</Table.ColumnHeader>
+                <Table.ColumnHeader>Resume tag</Table.ColumnHeader>
                 <Table.ColumnHeader textAlign="end">Submitted</Table.ColumnHeader>
                 <Table.ColumnHeader textAlign="end">Screening</Table.ColumnHeader>
                 <Table.ColumnHeader textAlign="end">Interview</Table.ColumnHeader>

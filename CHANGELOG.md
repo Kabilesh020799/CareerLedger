@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.14.0] - 2026-08-10
+
+### Added
+
+- Restored résumé strategy management as lightweight tags with Backend, Frontend, Full-stack, and General suggestions plus custom tag creation.
+
+### Changed
+
+- Kept uploaded résumé documents in a separate private preview library while using résumé tags for application assignment and outcome analytics.
+- Removed notes from the résumé tag interface and clarified tag terminology across forms, application details, dashboard analytics, documentation, and API descriptions.
+
 ## [3.13.0] - 2026-08-10
 
 ### Added

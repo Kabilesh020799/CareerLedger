@@ -40,7 +40,7 @@ Feature: Use the application across screen sizes
 
   Scenario: Complete forms and confirmations on a phone
     Given I am using a narrow phone screen
-    When I create or edit an application, resume version, reminder, or timeline note
+    When I create or edit an application, resume tag, reminder, or timeline note
     Then fields should use a single readable column
     And action buttons should fit or wrap within the screen
     And confirmation dialogs should remain fully visible and operable

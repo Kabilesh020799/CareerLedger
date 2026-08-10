@@ -46,7 +46,7 @@ docker compose down --volumes
 - Review uploaded PDF resumes in a private in-application preview portal, with application details and a new-tab fallback for other document formats.
 - Store new production resume bytes in private S3 using short-lived browser permissions and the EC2 instance role.
 - Keep legacy database-backed resumes downloadable and migrate them to S3 at startup.
-- Create reusable resume versions and compare their application outcomes.
+- Keep uploaded résumé documents in a private preview library, label résumé strategies with suggested or custom tags, and compare outcomes by tag.
 - Review dashboard pipeline, source, resume, and milestone analytics.
 - Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates, including common application acknowledgements such as “Thank you for your application.”
 - Capture job postings from a clean light/dark Manifest V3 extension workflow, review or refresh extracted details, and preserve skills, experience requirements, salary, location, work mode, original URL, description, and capture date with revocable user-scoped access.
@@ -97,7 +97,7 @@ All application, resume, reminder, dashboard, and Gmail data endpoints require a
 | Applications | `GET/POST /api/applications`, `GET/PATCH/DELETE /api/applications/:id`, `GET /api/applications/search` |
 | Resume uploads | `POST/DELETE /api/applications/resume-uploads`, `GET /api/applications/:id/resume`, `GET /api/applications/:id/resume-download` |
 | Uploaded resume library | `GET /api/resumes/uploads` |
-| Resume versions | `GET/POST /api/resumes`, `PATCH/DELETE /api/resumes/:id` |
+| Resume tags (API name: resume versions) | `GET/POST /api/resumes`, `PATCH/DELETE /api/resumes/:id` |
 | Timeline | `GET/POST /api/applications/:id/events` |
 | Reminders | `GET /api/reminders`, `GET /api/reminders/suggestions`, `POST /api/reminders/suggestions/:id`, `PATCH/DELETE /api/reminders/:id` |
 | Notifications | `GET/PATCH /api/notifications/settings`, `POST/DELETE /api/notifications/subscriptions` |
@@ -146,7 +146,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Playwright migrates and seeds the test database, starts the backend and frontend on ports `3001` and `4173`, and covers login/logout, application CRUD and validation, board/timeline/reminder workflows, resume versions, dashboards, notification capabilities, themes, and responsive layouts. Pull-request verification runs this suite against isolated PostgreSQL and uploads traces, screenshots, videos, and the HTML report after failures.
+Playwright migrates and seeds the test database, starts the backend and frontend on ports `3001` and `4173`, and covers login/logout, application CRUD and validation, board/timeline/reminder workflows, resume tags and uploads, dashboards, notification capabilities, themes, and responsive layouts. Pull-request verification runs this suite against isolated PostgreSQL and uploads traces, screenshots, videos, and the HTML report after failures.
 
 ## Production deployment
 
