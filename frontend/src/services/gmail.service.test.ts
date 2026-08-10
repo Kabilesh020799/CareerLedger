@@ -3,7 +3,7 @@ import { api } from './api'
 import { gmailService } from './gmail.service'
 
 vi.mock('./api', () => ({
-  api: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
+  api: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
   apiBaseUrl: 'http://localhost:3000/api',
 }))
 
@@ -24,5 +24,28 @@ describe('gmailService', () => {
     expect(api.get).toHaveBeenCalledWith('/gmail/status')
     expect(api.post).toHaveBeenCalledWith('/gmail/sync')
     expect(api.delete).toHaveBeenCalledWith('/gmail/connection')
+  })
+
+  it('lists and resolves private Gmail update reviews', async () => {
+    const reviews = [{ id: 'review-1', suggestedStatus: 'INTERVIEW' }]
+    const resolved = { review: { id: 'review-1', status: 'CONFIRMED' } }
+    vi.mocked(api.get).mockResolvedValue({ data: reviews })
+    vi.mocked(api.patch).mockResolvedValue({ data: resolved })
+
+    await expect(gmailService.listReviews()).resolves.toEqual(reviews)
+    await expect(
+      gmailService.resolveReview('review-1', {
+        action: 'CONFIRM',
+        applicationId: 'application-1',
+        status: 'INTERVIEW',
+      }),
+    ).resolves.toEqual(resolved)
+
+    expect(api.get).toHaveBeenCalledWith('/gmail/reviews')
+    expect(api.patch).toHaveBeenCalledWith('/gmail/reviews/review-1', {
+      action: 'CONFIRM',
+      applicationId: 'application-1',
+      status: 'INTERVIEW',
+    })
   })
 })

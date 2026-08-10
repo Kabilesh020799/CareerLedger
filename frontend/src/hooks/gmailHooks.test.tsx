@@ -6,6 +6,8 @@ import { gmailService } from '../services/gmail.service'
 import { gmailQueryKeys } from './gmailQueryKeys'
 import { useDisconnectGmail } from './useDisconnectGmail'
 import { useGmailStatus } from './useGmailStatus'
+import { useGmailUpdateReviews } from './useGmailUpdateReviews'
+import { useResolveGmailUpdateReview } from './useResolveGmailUpdateReview'
 import { useSyncGmail } from './useSyncGmail'
 
 vi.mock('../services/gmail.service', () => ({
@@ -13,6 +15,8 @@ vi.mock('../services/gmail.service', () => ({
     status: vi.fn(),
     synchronize: vi.fn(),
     disconnect: vi.fn(),
+    listReviews: vi.fn(),
+    resolveReview: vi.fn(),
   },
 }))
 
@@ -49,6 +53,8 @@ describe('Gmail hooks', () => {
       fetchedMessages: 1,
       newMessages: 1,
       duplicateMessages: 0,
+      analyzedMessages: 1,
+      detectedUpdates: 1,
       lastSyncedAt: '2026-08-09T21:00:00.000Z',
     })
     vi.mocked(gmailService.disconnect).mockResolvedValue()
@@ -61,5 +67,31 @@ describe('Gmail hooks', () => {
 
     expect(invalidate).toHaveBeenCalledTimes(2)
     expect(invalidate).toHaveBeenCalledWith({ queryKey: gmailQueryKeys.all })
+  })
+
+  it('loads reviews and refreshes Gmail and application state after a decision', async () => {
+    vi.mocked(gmailService.listReviews).mockResolvedValue([])
+    vi.mocked(gmailService.resolveReview).mockResolvedValue({
+      review: { id: 'review-1' },
+      application: null,
+    } as never)
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
+
+    const reviews = renderHook(() => useGmailUpdateReviews(true), { wrapper })
+    await waitFor(() => expect(reviews.result.current.isSuccess).toBe(true))
+
+    const resolve = renderHook(useResolveGmailUpdateReview, { wrapper })
+    await act(() =>
+      resolve.result.current.mutateAsync({
+        id: 'review-1',
+        input: { action: 'IGNORE' },
+      }),
+    )
+
+    expect(gmailService.resolveReview).toHaveBeenCalledWith('review-1', {
+      action: 'IGNORE',
+    })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: gmailQueryKeys.all })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications'] })
   })
 })

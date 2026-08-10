@@ -85,6 +85,15 @@ exports.gmailApiService = {
             throw error;
         }
     },
+    async metadata(credentials, messages) {
+        const currentCredentials = await refreshIfNeeded(credentials);
+        const metadata = [];
+        for (let index = 0; index < messages.length; index += 10) {
+            const batch = messages.slice(index, index + 10);
+            metadata.push(...(await Promise.all(batch.map((message) => fetchMessageMetadata(currentCredentials.accessToken, message)))));
+        }
+        return { credentials: currentCredentials, messages: metadata };
+    },
     async revoke(credentials) {
         const token = credentials.refreshToken || credentials.accessToken;
         await fetch(revokeEndpoint, {
@@ -117,6 +126,36 @@ async function fullSynchronization(credentials) {
         messages: messageReferences,
         fullSync: true,
     };
+}
+async function fetchMessageMetadata(accessToken, reference) {
+    const parameters = new URLSearchParams({ format: "metadata" });
+    for (const header of ["Subject", "From", "Date"]) {
+        parameters.append("metadataHeaders", header);
+    }
+    const message = await gmailRequest(`/messages/${encodeURIComponent(reference.id)}?${parameters}`, accessToken);
+    const headers = new Map((message.payload?.headers ?? [])
+        .filter((header) => header.name && header.value)
+        .map((header) => [header.name.toLocaleLowerCase("en-US"), header.value]));
+    return {
+        id: reference.id,
+        threadId: message.threadId ?? reference.threadId,
+        subject: truncate(headers.get("subject") ?? "(No subject)", 500),
+        sender: truncate(headers.get("from") ?? "Unknown sender", 320),
+        receivedAt: parseMessageDate(message.internalDate, headers.get("date")),
+        snippet: truncate(message.snippet ?? "", 2_000),
+    };
+}
+function parseMessageDate(internalDate, dateHeader) {
+    const milliseconds = internalDate ? Number(internalDate) : Number.NaN;
+    const date = Number.isFinite(milliseconds)
+        ? new Date(milliseconds)
+        : dateHeader
+            ? new Date(dateHeader)
+            : null;
+    return date && !Number.isNaN(date.getTime()) ? date : null;
+}
+function truncate(value, maximum) {
+    return value.trim().slice(0, maximum);
 }
 async function incrementalSynchronization(credentials, startHistoryId) {
     const references = [];

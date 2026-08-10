@@ -101,6 +101,8 @@ Inside Docker, the frontend sends `/api` requests through Nginx to the backend. 
 - Persist authenticated sessions in PostgreSQL using an HTTP-only cookie.
 - Connect Gmail through separate OAuth consent and manually synchronize recent and newly added message references.
 - Deduplicate Gmail messages by provider ID, resume incremental synchronization from Gmail history, and recover automatically when a history cursor expires.
+- Detect common application, assessment, interview, offer, rejection, and screening updates from synchronized Gmail metadata using deterministic rules.
+- Review private Gmail suggestions, correct their application or status, confirm them with timeline history, ignore them, or create a proposed application only after confirmation.
 
 Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW`, `OFFER`, `REJECTED`, and `WITHDRAWN`.
 
@@ -138,11 +140,13 @@ Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW
 | `GET` | `/api/gmail/connect` | Start Gmail metadata authorization |
 | `GET` | `/api/gmail/callback` | Complete Gmail authorization |
 | `POST` | `/api/gmail/sync` | Manually synchronize Gmail message references |
+| `GET` | `/api/gmail/reviews` | List the current user's pending Gmail update reviews |
+| `PATCH` | `/api/gmail/reviews/:id` | Confirm, correct, create from, or ignore a Gmail update review |
 | `DELETE` | `/api/gmail/connection` | Revoke and delete the current user's Gmail connection |
 
 All application, timeline, reminder, resume, and dashboard endpoints require an authenticated session. Requests cannot list, aggregate, or mutate records owned by another user. Resume endpoints store version names and notes, not uploaded documents. An application can optionally reference one of its owner's resume versions; deleting that version clears the reference without deleting the application. Follow-up suggestions are evaluated when requested and require an `APPLIED` application whose latest application or timeline activity is more than seven days old and which has no existing follow-up reminder. Dashboard progression rates use all non-saved applications as the denominator and current active milestone statuses as the numerator. Resume outcome rates use only submitted applications associated with that resume version; saved and unassigned applications are excluded, and versions without submitted applications show unavailable rates. Source outcome analytics groups source names without regard to case or surrounding whitespace, excludes saved and unassigned applications from rate denominators, and treats current screening, assessment, interview, offer, and rejected statuses as responses. Sources without submitted applications show unavailable rates. The discovery endpoint accepts `search`, `status`, `source`, `appliedFrom`, `appliedTo`, `sortBy`, `sortOrder`, `page`, and `limit` query parameters and returns `{ data, pagination }`; supported page sizes are 10, 20, and 50. The original list endpoint remains available for existing clients. Status updates and their timeline events are saved in one database transaction. Deleting an application also deletes its timeline and reminders. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
 
-Gmail endpoints also require an authenticated session and remain scoped to the current user. Gmail authorization requests offline access to read-only metadata, encrypts OAuth credentials before storing them, and never returns tokens to React. The first sync stores up to 100 recent message IDs and thread IDs; later syncs use Gmail history and database uniqueness to avoid duplicates. Message bodies, subjects, snippets, and sender details are not stored, and synchronization does not classify email or change applications.
+Gmail endpoints also require an authenticated session and remain scoped to the current user. Gmail authorization requests offline access to read-only metadata, encrypts OAuth credentials before storing them, and never returns tokens to React. The first sync stores up to 100 recent message IDs and thread IDs; later syncs use Gmail history and database uniqueness to avoid duplicates. New references and any pre-feature backlog are analyzed once. Message bodies and transient snippets are never stored; only detected recruitment updates retain the subject and sender required for review. Deterministic matching considers owned applications only, and no application changes until the user confirms. Confirmation saves the review decision, application change, and applicable timeline event in one transaction.
 
 ## Gmail configuration
 

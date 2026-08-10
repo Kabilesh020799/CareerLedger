@@ -1,0 +1,198 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { prismaMock, transactionMock } = vi.hoisted(() => {
+  const transaction = {
+    gmailUpdateReview: {
+      findFirst: vi.fn(),
+      update: vi.fn(),
+    },
+    application: {
+      findFirst: vi.fn(),
+      update: vi.fn(),
+      create: vi.fn(),
+    },
+    applicationEvent: { create: vi.fn() },
+  };
+  return {
+    transactionMock: transaction,
+    prismaMock: {
+      gmailUpdateReview: { findMany: vi.fn() },
+      $transaction: vi.fn(),
+    },
+  };
+});
+
+vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
+
+import {
+  GmailUpdateReviewConflictError,
+  GmailUpdateReviewNotFoundError,
+  gmailUpdateReviewService,
+} from "./gmail-update-review.service";
+
+const pendingReview = {
+  id: "review-1",
+  userId: "user-1",
+  status: "PENDING",
+  receivedAt: new Date("2026-08-09T12:00:00.000Z"),
+};
+
+const reviewInclude = {
+  application: {
+    select: { id: true, company: true, jobTitle: true, status: true },
+  },
+};
+
+describe("gmailUpdateReviewService", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    prismaMock.$transaction.mockImplementation((callback) =>
+      callback(transactionMock),
+    );
+  });
+
+  it("lists only the current user's pending reviews", async () => {
+    prismaMock.gmailUpdateReview.findMany.mockResolvedValue([]);
+
+    await gmailUpdateReviewService.list("user-1");
+
+    expect(prismaMock.gmailUpdateReview.findMany).toHaveBeenCalledWith({
+      where: { userId: "user-1", status: "PENDING" },
+      include: reviewInclude,
+      orderBy: [{ receivedAt: "desc" }, { createdAt: "desc" }],
+    });
+  });
+
+  it("updates an owned application, records its event, and confirms the review atomically", async () => {
+    transactionMock.gmailUpdateReview.findFirst.mockResolvedValue(pendingReview);
+    transactionMock.application.findFirst.mockResolvedValue({
+      id: "application-1",
+      status: "APPLIED",
+    });
+    transactionMock.application.update.mockResolvedValue({
+      id: "application-1",
+      status: "INTERVIEW",
+    });
+    transactionMock.gmailUpdateReview.update.mockResolvedValue({
+      ...pendingReview,
+      status: "CONFIRMED",
+    });
+
+    await gmailUpdateReviewService.resolve(
+      "user-1",
+      "review-1",
+      { action: "CONFIRM", applicationId: "application-1", status: "INTERVIEW" },
+      new Date("2026-08-10T00:00:00.000Z"),
+    );
+
+    expect(transactionMock.application.findFirst).toHaveBeenCalledWith({
+      where: { id: "application-1", userId: "user-1" },
+    });
+    expect(transactionMock.applicationEvent.create).toHaveBeenCalledWith({
+      data: {
+        applicationId: "application-1",
+        type: "STATUS_CHANGE",
+        description: "Status changed from APPLIED to INTERVIEW after Gmail review",
+        fromStatus: "APPLIED",
+        toStatus: "INTERVIEW",
+        occurredAt: pendingReview.receivedAt,
+      },
+    });
+    expect(transactionMock.gmailUpdateReview.update).toHaveBeenCalledWith({
+      where: { id: "review-1" },
+      data: {
+        applicationId: "application-1",
+        suggestedStatus: "INTERVIEW",
+        status: "CONFIRMED",
+        resolvedAt: new Date("2026-08-10T00:00:00.000Z"),
+      },
+      include: reviewInclude,
+    });
+  });
+
+  it("creates an owned application and review event only after confirmation", async () => {
+    transactionMock.gmailUpdateReview.findFirst.mockResolvedValue(pendingReview);
+    transactionMock.application.create.mockResolvedValue({
+      id: "application-new",
+      company: "Acme",
+      jobTitle: "Engineer",
+      status: "APPLIED",
+    });
+    transactionMock.gmailUpdateReview.update.mockResolvedValue({
+      ...pendingReview,
+      status: "CONFIRMED",
+    });
+
+    await gmailUpdateReviewService.resolve("user-1", "review-1", {
+      action: "CREATE_APPLICATION",
+      company: "Acme",
+      jobTitle: "Engineer",
+      status: "APPLIED",
+    });
+
+    expect(transactionMock.application.create).toHaveBeenCalledWith({
+      data: {
+        userId: "user-1",
+        company: "Acme",
+        jobTitle: "Engineer",
+        source: "Gmail",
+        status: "APPLIED",
+        appliedAt: pendingReview.receivedAt,
+      },
+    });
+    expect(transactionMock.applicationEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        applicationId: "application-new",
+        type: "NOTE",
+        description: "Application created from a confirmed Gmail update",
+      }),
+    });
+  });
+
+  it("ignores a review without changing an application", async () => {
+    transactionMock.gmailUpdateReview.findFirst.mockResolvedValue(pendingReview);
+    transactionMock.gmailUpdateReview.update.mockResolvedValue({
+      ...pendingReview,
+      status: "IGNORED",
+    });
+
+    const result = await gmailUpdateReviewService.resolve(
+      "user-1",
+      "review-1",
+      { action: "IGNORE" },
+    );
+
+    expect(result.application).toBeNull();
+    expect(transactionMock.application.update).not.toHaveBeenCalled();
+    expect(transactionMock.applicationEvent.create).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing, inaccessible, and already resolved reviews", async () => {
+    transactionMock.gmailUpdateReview.findFirst.mockResolvedValueOnce(null);
+    await expect(
+      gmailUpdateReviewService.resolve("user-1", "other-review", {
+        action: "IGNORE",
+      }),
+    ).rejects.toBeInstanceOf(GmailUpdateReviewNotFoundError);
+
+    transactionMock.gmailUpdateReview.findFirst.mockResolvedValueOnce({
+      ...pendingReview,
+      status: "CONFIRMED",
+    });
+    await expect(
+      gmailUpdateReviewService.resolve("user-1", "review-1", {
+        action: "IGNORE",
+      }),
+    ).rejects.toBeInstanceOf(GmailUpdateReviewConflictError);
+
+    transactionMock.gmailUpdateReview.findFirst.mockResolvedValueOnce(pendingReview);
+    transactionMock.application.findFirst.mockResolvedValueOnce(null);
+    await expect(
+      gmailUpdateReviewService.resolve("user-1", "review-1", {
+        action: "CONFIRM",
+        applicationId: "other-user-application",
+        status: "OFFER",
+      }),
+    ).rejects.toBeInstanceOf(GmailUpdateReviewNotFoundError);
+  });
+});

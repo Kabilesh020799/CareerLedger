@@ -8,4 +8,6 @@ exports.gmailRouter.get("/status", gmail_controller_1.gmailController.status);
 exports.gmailRouter.get("/connect", gmail_controller_1.gmailController.connect);
 exports.gmailRouter.get("/callback", gmail_controller_1.gmailController.callback);
 exports.gmailRouter.post("/sync", gmail_controller_1.gmailController.synchronize);
+exports.gmailRouter.get("/reviews", gmail_controller_1.gmailController.listReviews);
+exports.gmailRouter.patch("/reviews/:id", gmail_controller_1.gmailController.resolveReview);
 exports.gmailRouter.delete("/connection", gmail_controller_1.gmailController.disconnect);

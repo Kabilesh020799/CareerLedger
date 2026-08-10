@@ -11,6 +11,11 @@ const serviceMock = vi.hoisted(() => ({
   disconnect: vi.fn(),
 }));
 
+const reviewServiceMock = vi.hoisted(() => ({
+  list: vi.fn(),
+  resolve: vi.fn(),
+}));
+
 vi.mock("../config/gmail", () => ({
   gmailConfig: { frontendUrl: "http://frontend.test" },
 }));
@@ -23,12 +28,23 @@ vi.mock("../services/gmail.service", () => {
     GmailNotConnectedError,
   };
 });
+vi.mock("../services/gmail-update-review.service", () => {
+  class GmailUpdateReviewNotFoundError extends Error {}
+  class GmailUpdateReviewConflictError extends Error {}
+  return {
+    gmailUpdateReviewService: reviewServiceMock,
+    GmailUpdateReviewNotFoundError,
+    GmailUpdateReviewConflictError,
+  };
+});
 
 import { GmailNotConnectedError } from "../services/gmail.service";
+import { GmailUpdateReviewConflictError } from "../services/gmail-update-review.service";
 import { gmailRouter } from "./gmail.routes";
 
 function createTestApp() {
   const app = express();
+  app.use(express.json());
   app.use(
     session({
       secret: "gmail-route-test-session-secret",
@@ -137,5 +153,57 @@ describe("Gmail API routes", () => {
 
     expect(response.status).toBe(204);
     expect(serviceMock.disconnect).toHaveBeenCalledWith("user-1");
+  });
+
+  it("lists only the authenticated user's pending update reviews", async () => {
+    reviewServiceMock.list.mockResolvedValue([
+      { id: "review-1", suggestedStatus: "INTERVIEW" },
+    ]);
+
+    const response = await request(app).get("/api/gmail/reviews");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([
+      { id: "review-1", suggestedStatus: "INTERVIEW" },
+    ]);
+    expect(reviewServiceMock.list).toHaveBeenCalledWith("user-1");
+  });
+
+  it("validates and resolves an edited Gmail update", async () => {
+    reviewServiceMock.resolve.mockResolvedValue({
+      review: { id: "review-1", status: "CONFIRMED" },
+      application: { id: "application-1", status: "OFFER" },
+    });
+
+    const response = await request(app)
+      .patch("/api/gmail/reviews/review-1")
+      .send({
+        action: "CONFIRM",
+        applicationId: "application-1",
+        status: "OFFER",
+      });
+
+    expect(response.status).toBe(200);
+    expect(reviewServiceMock.resolve).toHaveBeenCalledWith(
+      "user-1",
+      "review-1",
+      { action: "CONFIRM", applicationId: "application-1", status: "OFFER" },
+    );
+  });
+
+  it("rejects invalid and already resolved decisions", async () => {
+    const invalid = await request(app)
+      .patch("/api/gmail/reviews/review-1")
+      .send({ action: "CONFIRM", status: "UNKNOWN" });
+    expect(invalid.status).toBe(400);
+    expect(reviewServiceMock.resolve).not.toHaveBeenCalled();
+
+    reviewServiceMock.resolve.mockRejectedValue(
+      new GmailUpdateReviewConflictError("Review was already resolved"),
+    );
+    const conflict = await request(app)
+      .patch("/api/gmail/reviews/review-1")
+      .send({ action: "IGNORE" });
+    expect(conflict.status).toBe(409);
   });
 });

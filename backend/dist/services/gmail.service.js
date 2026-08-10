@@ -6,6 +6,7 @@ const gmail_1 = require("../config/gmail");
 const prisma_1 = require("../config/prisma");
 const encrypted_json_1 = require("../utils/encrypted-json");
 const gmail_api_service_1 = require("./gmail-api.service");
+const gmail_update_review_service_1 = require("./gmail-update-review.service");
 class GmailNotConfiguredError extends Error {
 }
 exports.GmailNotConfiguredError = GmailNotConfiguredError;
@@ -101,10 +102,55 @@ exports.gmailService = {
             throw new GmailNotConnectedError("Gmail is not connected");
         const credentials = (0, encrypted_json_1.decryptJson)(connection.encryptedCredentials);
         const synchronization = await gmail_api_service_1.gmailApiService.synchronize(credentials, connection.historyId);
+        const [existingMessages, unprocessedMessages] = await Promise.all([
+            synchronization.messages.length
+                ? prisma_1.prisma.gmailMessage.findMany({
+                    where: {
+                        connectionId: connection.id,
+                        gmailMessageId: {
+                            in: synchronization.messages.map((message) => message.id),
+                        },
+                    },
+                    select: { gmailMessageId: true },
+                })
+                : [],
+            prisma_1.prisma.gmailMessage.findMany({
+                where: { connectionId: connection.id, processedAt: null },
+                select: { gmailMessageId: true, threadId: true },
+                orderBy: { createdAt: "asc" },
+                take: 100,
+            }),
+        ]);
+        const existingIds = new Set(existingMessages.map((message) => message.gmailMessageId));
+        const newReferences = synchronization.messages.filter((message) => !existingIds.has(message.id));
+        const referencesToProcess = [
+            ...new Map([...unprocessedMessages.map((message) => ({
+                    id: message.gmailMessageId,
+                    threadId: message.threadId,
+                })), ...newReferences].map((message) => [message.id, message])).values(),
+        ];
+        const [metadataResult, applications] = referencesToProcess.length
+            ? await Promise.all([
+                gmail_api_service_1.gmailApiService.metadata(synchronization.credentials, referencesToProcess),
+                prisma_1.prisma.application.findMany({
+                    where: { userId },
+                    select: {
+                        id: true,
+                        company: true,
+                        jobTitle: true,
+                        appliedAt: true,
+                        createdAt: true,
+                    },
+                }),
+            ])
+            : [{ credentials: synchronization.credentials, messages: [] }, []];
+        const suggestions = metadataResult.messages
+            .map((message) => (0, gmail_update_review_service_1.buildGmailUpdateSuggestion)(message, applications))
+            .filter((suggestion) => suggestion !== null);
         const result = await prisma_1.prisma.$transaction(async (transaction) => {
-            const created = synchronization.messages.length
+            const created = newReferences.length
                 ? await transaction.gmailMessage.createMany({
-                    data: synchronization.messages.map((message) => ({
+                    data: newReferences.map((message) => ({
                         connectionId: connection.id,
                         gmailMessageId: message.id,
                         threadId: message.threadId,
@@ -112,21 +158,54 @@ exports.gmailService = {
                     skipDuplicates: true,
                 })
                 : { count: 0 };
+            const storedMessages = referencesToProcess.length
+                ? await transaction.gmailMessage.findMany({
+                    where: {
+                        connectionId: connection.id,
+                        gmailMessageId: {
+                            in: referencesToProcess.map((message) => message.id),
+                        },
+                    },
+                    select: { id: true, gmailMessageId: true },
+                })
+                : [];
+            const messageIds = new Map(storedMessages.map((message) => [message.gmailMessageId, message.id]));
+            const reviewData = suggestions.flatMap((suggestion) => {
+                const gmailMessageId = messageIds.get(suggestion.providerMessageId);
+                if (!gmailMessageId)
+                    return [];
+                const { providerMessageId: _providerMessageId, ...data } = suggestion;
+                return [{ ...data, gmailMessageId, userId }];
+            });
+            const detected = reviewData.length
+                ? await transaction.gmailUpdateReview.createMany({
+                    data: reviewData,
+                    skipDuplicates: true,
+                })
+                : { count: 0 };
+            if (storedMessages.length) {
+                await transaction.gmailMessage.updateMany({
+                    where: { id: { in: storedMessages.map((message) => message.id) } },
+                    data: { processedAt: now },
+                });
+            }
             await transaction.gmailConnection.update({
                 where: { id: connection.id },
                 data: {
-                    encryptedCredentials: (0, encrypted_json_1.encryptJson)(synchronization.credentials),
+                    encryptedCredentials: (0, encrypted_json_1.encryptJson)(metadataResult.credentials),
                     historyId: synchronization.historyId,
                     lastSyncedAt: now,
                 },
             });
-            return created;
+            return { created: created.count, detected: detected.count };
         });
         return {
             synchronizationType: synchronization.fullSync ? "full" : "incremental",
             fetchedMessages: synchronization.messages.length,
-            newMessages: result.count,
-            duplicateMessages: synchronization.messages.length - result.count,
+            newMessages: result.created,
+            duplicateMessages: synchronization.messages.length - result.created,
+            analyzedMessages: metadataResult.messages.length,
+            detectedUpdates: result.detected,
             lastSyncedAt: now.toISOString(),
         };
     },

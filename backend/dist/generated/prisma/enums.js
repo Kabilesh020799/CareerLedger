@@ -9,7 +9,7 @@
 * 🟢 You can import this file directly.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ReminderType = exports.ApplicationEventType = exports.ApplicationStatus = void 0;
+exports.GmailUpdateReviewStatus = exports.ReminderType = exports.ApplicationEventType = exports.ApplicationStatus = void 0;
 exports.ApplicationStatus = {
     SAVED: 'SAVED',
     APPLIED: 'APPLIED',
@@ -27,4 +27,9 @@ exports.ApplicationEventType = {
 exports.ReminderType = {
     FOLLOW_UP: 'FOLLOW_UP',
     DEADLINE: 'DEADLINE'
+};
+exports.GmailUpdateReviewStatus = {
+    PENDING: 'PENDING',
+    CONFIRMED: 'CONFIRMED',
+    IGNORED: 'IGNORED'
 };

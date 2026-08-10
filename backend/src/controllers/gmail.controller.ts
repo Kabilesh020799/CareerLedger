@@ -9,11 +9,22 @@ import {
   GmailNotConnectedError,
   gmailService,
 } from "../services/gmail.service";
+import {
+  GmailUpdateReviewConflictError,
+  GmailUpdateReviewNotFoundError,
+  gmailUpdateReviewService,
+} from "../services/gmail-update-review.service";
 import { gmailCallbackQuerySchema } from "../validators/gmail.validator";
+import { resolveGmailUpdateReviewSchema } from "../validators/gmail-update-review.validator";
 
 function getUser(req: Request) {
   if (!req.user) throw new Error("Authenticated user is missing");
   return req.user;
+}
+
+function getId(req: Request) {
+  const id = req.params.id;
+  return Array.isArray(id) ? id[0] : id;
 }
 
 function redirectToGmail(res: Response, parameter: string) {
@@ -123,6 +134,45 @@ export const gmailController = {
       await gmailService.disconnect(getUser(req).id);
       res.status(204).send();
     } catch (error) {
+      next(error);
+    }
+  },
+
+  async listReviews(req: Request, res: Response, next: NextFunction) {
+    try {
+      res.json(await gmailUpdateReviewService.list(getUser(req).id));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async resolveReview(req: Request, res: Response, next: NextFunction) {
+    const parsed = resolveGmailUpdateReviewSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Invalid Gmail update decision",
+        details: parsed.error.flatten(),
+      });
+      return;
+    }
+
+    try {
+      res.json(
+        await gmailUpdateReviewService.resolve(
+          getUser(req).id,
+          getId(req),
+          parsed.data,
+        ),
+      );
+    } catch (error) {
+      if (error instanceof GmailUpdateReviewNotFoundError) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
+      if (error instanceof GmailUpdateReviewConflictError) {
+        res.status(409).json({ error: error.message });
+        return;
+      }
       next(error);
     }
   },

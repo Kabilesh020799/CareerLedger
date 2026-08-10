@@ -4,11 +4,17 @@ exports.gmailController = void 0;
 const gmail_1 = require("../config/gmail");
 const gmail_api_service_1 = require("../services/gmail-api.service");
 const gmail_service_1 = require("../services/gmail.service");
+const gmail_update_review_service_1 = require("../services/gmail-update-review.service");
 const gmail_validator_1 = require("../validators/gmail.validator");
+const gmail_update_review_validator_1 = require("../validators/gmail-update-review.validator");
 function getUser(req) {
     if (!req.user)
         throw new Error("Authenticated user is missing");
     return req.user;
+}
+function getId(req) {
+    const id = req.params.id;
+    return Array.isArray(id) ? id[0] : id;
 }
 function redirectToGmail(res, parameter) {
     res.redirect(`${gmail_1.gmailConfig.frontendUrl}/gmail?${parameter}`);
@@ -104,6 +110,38 @@ exports.gmailController = {
             res.status(204).send();
         }
         catch (error) {
+            next(error);
+        }
+    },
+    async listReviews(req, res, next) {
+        try {
+            res.json(await gmail_update_review_service_1.gmailUpdateReviewService.list(getUser(req).id));
+        }
+        catch (error) {
+            next(error);
+        }
+    },
+    async resolveReview(req, res, next) {
+        const parsed = gmail_update_review_validator_1.resolveGmailUpdateReviewSchema.safeParse(req.body);
+        if (!parsed.success) {
+            res.status(400).json({
+                error: "Invalid Gmail update decision",
+                details: parsed.error.flatten(),
+            });
+            return;
+        }
+        try {
+            res.json(await gmail_update_review_service_1.gmailUpdateReviewService.resolve(getUser(req).id, getId(req), parsed.data));
+        }
+        catch (error) {
+            if (error instanceof gmail_update_review_service_1.GmailUpdateReviewNotFoundError) {
+                res.status(404).json({ error: error.message });
+                return;
+            }
+            if (error instanceof gmail_update_review_service_1.GmailUpdateReviewConflictError) {
+                res.status(409).json({ error: error.message });
+                return;
+            }
             next(error);
         }
     },

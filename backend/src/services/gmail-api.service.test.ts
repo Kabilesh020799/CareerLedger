@@ -143,6 +143,42 @@ describe("gmailApiService", () => {
     expect(secondUrl).toContain("pageToken=next-page");
   });
 
+  it("fetches only review-safe metadata without requesting message bodies", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      jsonResponse({
+        id: "message-1",
+        threadId: "thread-1",
+        internalDate: "1786276800000",
+        snippet: "We would like to schedule an interview.",
+        payload: {
+          headers: [
+            { name: "Subject", value: "Interview for Software Engineer" },
+            { name: "From", value: "Acme Recruiting <jobs@acme.com>" },
+          ],
+        },
+      }),
+    );
+
+    const result = await gmailApiService.metadata(credentials, [
+      { id: "message-1", threadId: "thread-1" },
+    ]);
+
+    expect(result.messages).toEqual([
+      {
+        id: "message-1",
+        threadId: "thread-1",
+        subject: "Interview for Software Engineer",
+        sender: "Acme Recruiting <jobs@acme.com>",
+        receivedAt: new Date("2026-08-09T12:00:00.000Z"),
+        snippet: "We would like to schedule an interview.",
+      },
+    ]);
+    const requestUrl = String(vi.mocked(fetch).mock.calls[0]?.[0]);
+    expect(requestUrl).toContain("format=metadata");
+    expect(requestUrl).toContain("metadataHeaders=Subject");
+    expect(requestUrl).not.toContain("format=full");
+  });
+
   it("falls back to a full sync when Gmail expires the history identifier", async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(jsonResponse({ error: "history expired" }, 404))

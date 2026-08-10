@@ -34,22 +34,29 @@ enum ReminderType {
   DEADLINE
 }
 
+enum GmailUpdateReviewStatus {
+  PENDING
+  CONFIRMED
+  IGNORED
+}
+
 model Application {
-  id              String                @id @default(cuid())
-  company         String
-  jobTitle        String
-  location        String?
-  jobUrl          String?
-  source          String?
-  status          ApplicationStatus     @default(SAVED)
-  notes           String?
-  appliedAt       DateTime?
-  userId          String?
-  user            User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resumeVersionId String?
-  resumeVersion   ResumeVersion?        @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
-  events          ApplicationEvent[]
-  reminders       ApplicationReminder[]
+  id                 String                @id @default(cuid())
+  company            String
+  jobTitle           String
+  location           String?
+  jobUrl             String?
+  source             String?
+  status             ApplicationStatus     @default(SAVED)
+  notes              String?
+  appliedAt          DateTime?
+  userId             String?
+  user               User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeVersionId    String?
+  resumeVersion      ResumeVersion?        @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
+  events             ApplicationEvent[]
+  reminders          ApplicationReminder[]
+  gmailUpdateReviews GmailUpdateReview[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -114,9 +121,10 @@ model User {
   name         String?
   avatarUrl    String?
 
-  applications    Application[]
-  resumeVersions  ResumeVersion[]
-  gmailConnection GmailConnection?
+  applications       Application[]
+  resumeVersions     ResumeVersion[]
+  gmailConnection    GmailConnection?
+  gmailUpdateReviews GmailUpdateReview[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -136,15 +144,41 @@ model GmailConnection {
 }
 
 model GmailMessage {
-  id             String          @id @default(cuid())
+  id             String             @id @default(cuid())
   connectionId   String
-  connection     GmailConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  connection     GmailConnection    @relation(fields: [connectionId], references: [id], onDelete: Cascade)
   gmailMessageId String
   threadId       String?
-  createdAt      DateTime        @default(now())
+  processedAt    DateTime?
+  updateReview   GmailUpdateReview?
+  createdAt      DateTime           @default(now())
 
   @@unique([connectionId, gmailMessageId])
   @@index([connectionId, createdAt])
+}
+
+model GmailUpdateReview {
+  id                String                  @id @default(cuid())
+  userId            String
+  user              User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gmailMessageId    String                  @unique
+  gmailMessage      GmailMessage            @relation(fields: [gmailMessageId], references: [id], onDelete: Cascade)
+  applicationId     String?
+  application       Application?            @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  suggestedStatus   ApplicationStatus
+  suggestedCompany  String?
+  suggestedJobTitle String?
+  subject           String
+  sender            String
+  receivedAt        DateTime?
+  matchConfidence   Int
+  status            GmailUpdateReviewStatus @default(PENDING)
+  resolvedAt        DateTime?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  @@index([userId, status, createdAt])
+  @@index([applicationId])
 }
 
 model Session {
