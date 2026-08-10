@@ -59,13 +59,18 @@ describe("loginAbuseProtectionService", () => {
     });
   });
 
-  it("clears the account counter after successful authentication", async () => {
+  it("removes a successful attempt from the account and shared IP pressure", async () => {
     const { client, service } = setup();
     const decision = await service.begin("203.0.113.10", "demo");
 
     await service.recordSuccess(decision.attempt);
 
-    expect(client.del).toHaveBeenCalledWith(decision.attempt.accountKey);
+    expect(client.eval).toHaveBeenLastCalledWith(
+      expect.stringContaining('redis.call("DECR", KEYS[2])'),
+      2,
+      decision.attempt.accountKey,
+      decision.attempt.ipKey,
+    );
   });
 
   it("fails open with a sanitized event when Redis is unavailable", async () => {

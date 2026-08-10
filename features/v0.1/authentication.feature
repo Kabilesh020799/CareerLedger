@@ -37,6 +37,12 @@ Feature: Secure user-owned application data
     And the response should state when another attempt may be made
     And security logs should contain only opaque account and network references
 
+  Scenario: Do not count successful sign-ins as network abuse
+    Given password login is enabled
+    When valid users sign in repeatedly from the same network address
+    Then successful sign-ins should not exhaust the network attempt limit
+    And failed attempts from that network should remain counted
+
   Scenario: Avoid an authentication outage when protection storage fails
     Given password login protection cannot reach Redis
     When valid credentials are submitted

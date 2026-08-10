@@ -12,6 +12,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Replaced browser-native application dropdowns with accessible Chakra popup menus and custom selected-state indicators.
 
+### Fixed
+
+- Prevented successful password sign-ins from exhausting the shared network login limit while retaining protection against failed attempts.
+
 ## [3.15.2] - 2026-08-10
 
 ### Fixed

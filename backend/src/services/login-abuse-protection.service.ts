@@ -16,10 +16,22 @@ if ipCount == 1 then redis.call("EXPIRE", KEYS[2], ARGV[1]) end
 return {accountCount, ipCount, redis.call("TTL", KEYS[1]), redis.call("TTL", KEYS[2])}
 `;
 
-type RedisLoginClient = Pick<IORedis, "eval" | "del" | "connect" | "status" | "on">;
+const recordSuccessScript = `
+redis.call("DEL", KEYS[1])
+local ipCount = tonumber(redis.call("GET", KEYS[2]) or "0")
+if ipCount <= 1 then
+  redis.call("DEL", KEYS[2])
+else
+  redis.call("DECR", KEYS[2])
+end
+return 1
+`;
+
+type RedisLoginClient = Pick<IORedis, "eval" | "connect" | "status" | "on">;
 
 export type LoginAttempt = {
   accountKey: string;
+  ipKey: string;
   accountReference: string;
   ipReference: string;
 };
@@ -76,7 +88,7 @@ export function createLoginAbuseProtectionService(
       const ipReference = opaqueReference(ip || "unknown-ip");
       const accountKey = `auth:login:account:${accountReference}`;
       const ipKey = `auth:login:ip:${ipReference}`;
-      const attempt = { accountKey, accountReference, ipReference };
+      const attempt = { accountKey, ipKey, accountReference, ipReference };
 
       try {
         const result = await (await client()).eval(
@@ -130,7 +142,12 @@ export function createLoginAbuseProtectionService(
 
     async recordSuccess(attempt: LoginAttempt) {
       try {
-        await (await client()).del(attempt.accountKey);
+        await (await client()).eval(
+          recordSuccessScript,
+          2,
+          attempt.accountKey,
+          attempt.ipKey,
+        );
       } catch {
         writeAudit("auth.login.protection_unavailable", {
           accountReference: attempt.accountReference,
