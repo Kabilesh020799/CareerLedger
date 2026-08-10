@@ -1,185 +1,108 @@
 # Job Application Tracker
 
-A full-stack application for creating, reviewing, updating, and deleting job applications. The stack uses React, Chakra UI, Express, Prisma, and PostgreSQL.
+An account-private job application tracker for managing applications, resumes, timelines, reminders, Gmail updates, and outcome analytics.
 
-## Start the complete application
+The stack is React, Chakra UI, Express, Prisma, and PostgreSQL. Docker Compose runs the complete application.
 
-The only prerequisites are Docker and Docker Compose. The application includes this built-in demo account in local and production environments:
+## Quick start
+
+Requirements: Docker and Docker Compose.
+
+```bash
+docker compose up --build
+```
+
+Open <http://localhost:5173> and sign in with the built-in demo account:
 
 ```text
 Username: demo
 Password: JobTrackerDemo123!
 ```
 
-The bootstrap code stores the password as a bcrypt hash in PostgreSQL. These credentials are intentionally public and are suitable only for a demo deployment.
+These credentials are intentionally public and suitable only for a demo deployment. Do not use them for sensitive data.
 
-From the repository root, run:
+Useful local URLs:
 
-```bash
-docker compose up
-```
+| Service | URL |
+| --- | --- |
+| Application | <http://localhost:5173> |
+| API health | <http://localhost:3000/api/health> |
+| Prisma Studio | `cd backend && npx prisma studio` |
 
-Open:
-
-- Application: <http://localhost:5173>
-- API health check: <http://localhost:3000/api/health>
-
-The first startup builds both applications, creates PostgreSQL, applies Prisma migrations, and seeds six applications owned by the demo user.
-
-Run in the background with:
-
-```bash
-docker compose up -d
-```
-
-Rebuild after changing dependencies or Docker configuration:
-
-```bash
-docker compose up --build -d
-```
-
-Stop the application without deleting data:
-
-```bash
-docker compose down
-```
-
-Application data is stored in the `postgres-data` Docker volume and survives normal container restarts and `docker compose down`.
-
-To intentionally remove all local database data and start fresh:
+PostgreSQL data is persisted in the `postgres-data` Docker volume. Stop containers without deleting data with `docker compose down`. To intentionally reset the database:
 
 ```bash
 docker compose down --volumes
 ```
 
-This final command permanently deletes the local PostgreSQL volume.
+## Features
 
-## Services
+- Create, search, filter, sort, edit, and delete applications.
+- Use a responsive table and status board across phone, tablet, and desktop layouts.
+- Track application timelines, notes, status changes, follow-ups, and deadlines.
+- Upload, replace, download, and review private PDF, DOC, and DOCX resumes up to 5 MB.
+- Review all uploaded resumes on the Resumes page with application details and private view links.
+- Store new production resume bytes in private S3 using short-lived browser permissions and the EC2 instance role.
+- Keep legacy database-backed resumes downloadable and migrate them to S3 at startup.
+- Create reusable resume versions and compare their application outcomes.
+- Review dashboard pipeline, source, resume, and milestone analytics.
+- Connect Gmail for manual metadata synchronization, deduplication, and user-confirmed application updates.
+- Switch between light and dark themes.
+- Keep applications, Gmail data, resumes, reminders, and analytics scoped to the signed-in user.
 
-| Service | Address | Purpose |
-| --- | --- | --- |
-| Frontend | `http://localhost:5173` | React application served by Nginx |
-| Backend | `http://localhost:3000` | Express REST API |
-| PostgreSQL | `localhost:5432` | Persistent application database |
+Supported application statuses: `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW`, `OFFER`, `REJECTED`, and `WITHDRAWN`.
 
-Inside Docker, the frontend sends `/api` requests through Nginx to the backend. The backend waits for PostgreSQL to become healthy before applying migrations. The frontend waits for a healthy backend.
+## Configuration
 
-## Available functionality
+Local configuration is documented in [backend/.env.example](backend/.env.example) and [frontend/.env.example](frontend/.env.example). The Docker Compose defaults work without additional configuration.
 
-- View applications in a table.
-- Search applications by company, job title, or location without case sensitivity.
-- Combine status, source, and inclusive applied-date filters.
-- Sort applications by applied date, creation date, update date, or company.
-- Navigate server-paginated results with URL-persistent discovery controls.
-- View all applications on an eight-column status board with per-column counts.
-- Move board cards by drag-and-drop or an accessible status selector, with immediate feedback and automatic rollback on failure.
-- Review user-scoped status totals, applications created since Monday, and current screening, interview, and offer progression rates on the dashboard.
-- Compare response, interview, and offer counts and rates across normalized application sources, using each source's submitted applications as its denominator.
-- Compare submitted application counts and screening, interview, and offer rates across private resume versions.
-- See loading, empty, and API error states.
-- Create applications with validated fields and an optional PDF, DOC, or DOCX resume attachment up to 5 MB, uploaded directly to private S3 storage in production.
-- Upload or replace the attached resume while editing an application without disturbing the current file when no replacement is selected.
-- Download the privately stored resume from application details using its automatic `Role_Company` filename.
-- Review every resume uploaded to your applications from the Resumes page, with its company, role, upload date, and private view link.
-- Open application details.
-- Edit application details and status.
-- Review a newest-first timeline of application activity.
-- Add dated notes to an application's timeline.
-- Record status changes automatically with their previous and new statuses.
-- Add follow-up and deadline reminders to an application.
-- Complete, reopen, or delete reminders from application details.
-- Review overdue and upcoming reminders on the dashboard and jump to their applications.
-- See dashboard follow-up suggestions for applied applications with no activity or prior follow-up for more than seven days.
-- Turn a follow-up suggestion into a reminder due the next day with one action.
-- Switch between a polished light theme and a low-glare dark theme from the sign-in page or application navigation.
-- Start with the device color preference and remember an explicitly selected theme across reloads.
-- Use every primary workflow on phones, tablets, and computers with adaptive navigation, responsive forms and grids, and contained scrolling for wide data views.
-- Create, rename, annotate, and delete private resume versions.
-- Associate an optional resume version with each application and preserve the application if that version is deleted.
-- Delete applications after confirmation.
-- Persist records in PostgreSQL.
-- Sign in and sign out with Google.
-- Sign in with the built-in demo account locally or in production.
-- Keep every application private to the account that created it.
-- Persist authenticated sessions in PostgreSQL using an HTTP-only cookie.
-- Connect Gmail through separate OAuth consent and manually synchronize recent and newly added message references.
-- Deduplicate Gmail messages by provider ID, resume incremental synchronization from Gmail history, and recover automatically when a history cursor expires.
-- Detect common application, assessment, interview, offer, rejection, and screening updates from synchronized Gmail metadata using deterministic rules.
-- Review private Gmail suggestions, correct their application or status, confirm them with timeline history, ignore them, or create a proposed application only after confirmation.
-- See the total number of pending Gmail suggestions on the Gmail navigation tab, including suggestions that propose creating a new application.
+For production resume storage, configure:
 
-Supported statuses are `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW`, `OFFER`, `REJECTED`, and `WITHDRAWN`.
+```text
+AWS_REGION=us-east-1
+RESUME_BUCKET=jatbucket2799
+RESUME_UPLOAD_EXPIRES_SECONDS=300
+```
 
-## API endpoints
+The EC2 instance role must allow `s3:PutObject`, `s3:GetObject`, and `s3:DeleteObject` for `arn:aws:s3:::<bucket>/resumes/*`. Do not add static AWS keys to GitHub, Docker Compose, or application environment files.
 
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `GET` | `/api/health` | Check API availability |
-| `GET` | `/api/auth/google` | Start Google sign-in |
-| `GET` | `/api/auth/google/callback` | Complete Google sign-in |
-| `POST` | `/api/auth/login` | Sign in with a username and password when enabled |
-| `GET` | `/api/auth/session` | Read the current public user session |
-| `POST` | `/api/auth/logout` | End the current session |
-| `GET` | `/api/applications` | List applications |
-| `GET` | `/api/applications/search` | Search, filter, sort, and paginate applications |
-| `POST` | `/api/applications` | Create an application, optionally with a verified resume upload (or multipart `resume` when object storage is disabled) |
-| `POST` | `/api/applications/resume-uploads` | Prepare a private, short-lived direct resume upload |
-| `DELETE` | `/api/applications/resume-uploads` | Abandon an unfinished direct resume upload |
-| `GET` | `/api/applications/:id` | Retrieve an application |
-| `GET` | `/api/applications/:id/resume` | Download the authenticated user's attached resume |
-| `GET` | `/api/applications/:id/resume-download` | Prepare a private resume download |
-| `PATCH` | `/api/applications/:id` | Update an application, optionally replacing its verified resume upload |
-| `DELETE` | `/api/applications/:id` | Delete an application |
-| `GET` | `/api/applications/:id/events` | List an application's timeline events |
-| `POST` | `/api/applications/:id/events` | Add a manual note to an application's timeline |
-| `GET` | `/api/applications/:id/reminders` | List an application's reminders |
-| `POST` | `/api/applications/:id/reminders` | Add a follow-up or deadline reminder |
-| `GET` | `/api/reminders` | List the current user's open reminders |
-| `GET` | `/api/reminders/suggestions` | List inactive applications eligible for a follow-up |
-| `POST` | `/api/reminders/suggestions/:id` | Create a reminder from a follow-up suggestion |
-| `PATCH` | `/api/reminders/:id` | Complete or reopen a reminder |
-| `DELETE` | `/api/reminders/:id` | Delete a reminder |
-| `GET` | `/api/resumes` | List the current user's resume versions |
-| `GET` | `/api/resumes/uploads` | List the current user's uploaded resume attachments |
-| `POST` | `/api/resumes` | Create a resume version |
-| `PATCH` | `/api/resumes/:id` | Update a resume version |
-| `DELETE` | `/api/resumes/:id` | Delete a resume version |
-| `GET` | `/api/dashboard/summary` | Retrieve current user-scoped pipeline totals and rates |
-| `GET` | `/api/gmail/status` | Read private Gmail connection and synchronization status |
-| `GET` | `/api/gmail/connect` | Start Gmail metadata authorization |
-| `GET` | `/api/gmail/callback` | Complete Gmail authorization |
-| `POST` | `/api/gmail/sync` | Manually synchronize Gmail message references |
-| `GET` | `/api/gmail/reviews` | List the current user's pending Gmail update reviews |
-| `PATCH` | `/api/gmail/reviews/:id` | Confirm, correct, create from, or ignore a Gmail update review |
-| `DELETE` | `/api/gmail/connection` | Revoke and delete the current user's Gmail connection |
+The S3 bucket should keep Block Public Access enabled, allow CORS from the exact application origin, and expire `resumes/pending/` objects after one day. See [the deployment guide](docs/deployment.md) for the complete policy, CORS, instance, and GitHub setup.
 
-All application, timeline, reminder, resume, and dashboard endpoints require an authenticated session. Requests cannot list, aggregate, or mutate records owned by another user. Resume-version endpoints store reusable version names and notes; application creation and editing separately accept one optional PDF, DOC, or DOCX attachment up to 5 MB. When S3 is configured, the browser receives narrowly scoped, five-minute permission to upload one object directly; the backend then verifies its ownership, size, MIME type, extension, and file signature before attaching it. Supplying an attachment while editing replaces the previous document; omitting it preserves the current document. PostgreSQL stores attachment metadata while a private S3 bucket stores new document bytes. Existing database-backed attachments remain downloadable and are migrated idempotently at production startup. The stored download filename is generated from the job title and company. Replaced and deleted S3 objects are recorded for durable cleanup and retried after transient failures. An application can optionally reference one of its owner's resume versions; deleting that version clears the reference without deleting the application. Follow-up suggestions are evaluated when requested and require an `APPLIED` application whose latest application or timeline activity is more than seven days old and which has no existing follow-up reminder. Dashboard progression rates use all non-saved applications as the denominator and current active milestone statuses as the numerator. Resume outcome rates use only submitted applications associated with that resume version; saved and unassigned applications are excluded, and versions without submitted applications show unavailable rates. Source outcome analytics groups source names without regard to case or surrounding whitespace, excludes saved and unassigned applications from rate denominators, and treats current screening, assessment, interview, offer, and rejected statuses as responses. Sources without submitted applications show unavailable rates. The discovery endpoint accepts `search`, `status`, `source`, `appliedFrom`, `appliedTo`, `sortBy`, `sortOrder`, `page`, and `limit` query parameters and returns `{ data, pagination }`; supported page sizes are 10, 20, and 50. The original list endpoint remains available for existing clients. Status updates and their timeline events are saved in one database transaction. Deleting an application also deletes its timeline, reminders, and attached resume. The known seeded demo records are assigned to the demo account during local seeding. Any other application created before ownership was introduced remains stored but quarantined as an unowned record.
+Without `RESUME_BUCKET`, local development uses PostgreSQL for resume bytes. This fallback also preserves compatibility with existing database-backed attachments.
 
-## Resume object storage
+Gmail requires a Google OAuth client and these variables:
 
-Production resume files live in a private S3 bucket. Configure `RESUME_BUCKET`, `AWS_REGION`, and optionally `RESUME_UPLOAD_EXPIRES_SECONDS` on the backend. The AWS SDK obtains temporary credentials from the attached EC2 instance role; never configure long-lived AWS access keys in GitHub, Compose, or application environment files. Without `RESUME_BUCKET`, local development continues to store attachments in PostgreSQL.
+```text
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+GMAIL_CALLBACK_URL
+```
 
-The bucket must block all public access, allow CORS only from the application origin, and grant the EC2 role `s3:PutObject`, `s3:GetObject`, and `s3:DeleteObject` for `resumes/*`. Configure an S3 lifecycle rule to expire `resumes/pending/` objects after one day so interrupted uploads cannot persist indefinitely. Active objects are kept under `resumes/active/` and are unaffected by that rule.
+Local callbacks may use `http://localhost:3000/api/gmail/callback`. Public OAuth deployments require an HTTPS domain and Google consent-screen configuration. Gmail remains optional.
 
-Gmail endpoints also require an authenticated session and remain scoped to the current user. Gmail authorization requests offline access to read-only metadata, encrypts OAuth credentials before storing them, and never returns tokens to React. The first sync stores up to 100 recent message IDs and thread IDs; later syncs use Gmail history and database uniqueness to avoid duplicates. New references and any pre-feature backlog are analyzed once. Message bodies and transient snippets are never stored; only detected recruitment updates retain the subject and sender required for review. Deterministic matching considers owned applications only, and no application changes until the user confirms. Confirmation saves the review decision, application change, and applicable timeline event in one transaction.
+## API overview
 
-## Gmail configuration
+All application, resume, reminder, dashboard, and Gmail data endpoints require an authenticated session and enforce ownership.
 
-Enable the Gmail API in a Google Cloud project and create a web OAuth client. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and an exact `GMAIL_CALLBACK_URL`. For direct local development the callback is `http://localhost:3000/api/gmail/callback`; the root Compose stack uses `http://localhost:5173/api/gmail/callback` through its frontend proxy.
+| Area | Endpoints |
+| --- | --- |
+| Health and auth | `GET /api/health`, `GET /api/auth/session`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/google` |
+| Applications | `GET/POST /api/applications`, `GET/PATCH/DELETE /api/applications/:id`, `GET /api/applications/search` |
+| Resume uploads | `POST/DELETE /api/applications/resume-uploads`, `GET /api/applications/:id/resume`, `GET /api/applications/:id/resume-download` |
+| Uploaded resume library | `GET /api/resumes/uploads` |
+| Resume versions | `GET/POST /api/resumes`, `PATCH/DELETE /api/resumes/:id` |
+| Timeline | `GET/POST /api/applications/:id/events` |
+| Reminders | `GET /api/reminders`, `GET /api/reminders/suggestions`, `POST /api/reminders/suggestions/:id`, `PATCH/DELETE /api/reminders/:id` |
+| Dashboard | `GET /api/dashboard/summary` |
+| Gmail | `GET /api/gmail/status`, `GET /api/gmail/connect`, `POST /api/gmail/sync`, `GET /api/gmail/reviews`, `PATCH /api/gmail/reviews/:id`, `DELETE /api/gmail/connection` |
 
-Google permits HTTP OAuth callbacks only for localhost. A public deployment needs an HTTPS domain and must register `https://your-domain/api/gmail/callback`. The requested `gmail.metadata` scope is restricted; public use may require Google OAuth verification and a security assessment. Without Gmail credentials, the application remains usable and the Gmail page explains that integration is unavailable.
+## Development
 
-## Development without Docker
-
-Start only PostgreSQL:
+Run PostgreSQL through Docker and start the applications separately:
 
 ```bash
 docker compose up -d postgres
-```
 
-Then run the backend and frontend separately:
-
-```bash
 cd backend
 npm install
 cp .env.example .env
@@ -188,6 +111,8 @@ npm run db:seed
 npm run dev
 ```
 
+In another terminal:
+
 ```bash
 cd frontend
 npm install
@@ -195,36 +120,26 @@ cp .env.example .env
 npm run dev
 ```
 
-## Verification
+Run the standard checks:
 
 ```bash
-cd backend
-npm test
-npm run typecheck
-npm run build
+cd backend && npm test && npm run typecheck && npm run build
+cd ../frontend && npm test && npm run lint && npm run build
 ```
 
-```bash
-cd frontend
-npm test
-npm run lint
-npm run build
-npm run test:e2e
-```
+## Production deployment
 
-## Production releases
+Production is served at <https://d2g95c1jos960v.cloudfront.net>.
 
-The root `package.json` owns the application release version, and the matching section in `CHANGELOG.md` owns its categorized GitHub Release notes. Every push to `master` is verified. When its version has not been released before, GitHub Actions validates the changelog, publishes versioned frontend and backend images, deploys that version to EC2, and creates the corresponding `vMAJOR.MINOR.PATCH` GitHub Release. The first deployment generates protected PostgreSQL and session credentials on the instance, bootstraps the built-in demo user, and starts the database container with a persistent volume. Pushes with an unchanged version stop after verification.
+The production Compose stack runs frontend, backend, and PostgreSQL on EC2. PostgreSQL uses a named Docker volume and survives normal deployments and instance restarts. CloudFront provides the browser-facing HTTPS URL and forwards `/api` to the EC2 frontend proxy.
 
-Production is available at <https://d2g95c1jos960v.cloudfront.net>. CloudFront terminates browser-facing HTTPS and forwards uncached application requests to the EC2 frontend, which serves React and proxies `/api` to the private backend container. PostgreSQL remains private inside the Compose network.
+Pushes to `master` run verification first. When the root `package.json` version has not been released, GitHub Actions publishes versioned images, deploys them to EC2, and creates the matching GitHub Release from `CHANGELOG.md`. Deployment uses short-lived GitHub OIDC credentials and temporary runner SSH access.
 
-Direct public HTTP access to the EC2 address is disabled; use the CloudFront URL. Deployments use short-lived GitHub OIDC credentials to permit SSH only from the active runner, then remove that ingress rule automatically.
+The built-in demo credentials are public. Do not use this deployment for sensitive personal data without changing the authentication and deployment configuration.
 
-The CloudFront-to-EC2 origin connection currently uses HTTP, so encryption is not end-to-end even though browser traffic and secure session cookies use HTTPS. The built-in demo credentials are public. Do not store sensitive data behind this shared demonstration account.
+Read [docs/deployment.md](docs/deployment.md) before configuring a new instance.
 
-See the [production deployment guide](docs/deployment.md) for the one-time instance and GitHub environment configuration.
-
-## Project documentation
+## Documentation
 
 - [Contributing guide](CONTRIBUTING.md)
 - [Release changelog](CHANGELOG.md)
