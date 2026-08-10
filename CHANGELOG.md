@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.6.0] - 2026-08-09
+
+### Added
+
+- Added direct resume uploads to private S3 storage using short-lived, user-scoped permissions and the EC2 instance role, with authenticated signed downloads and no permanent AWS credentials in the browser or deployment environment.
+- Added idempotent migration of existing PostgreSQL-backed resume files into S3 and durable cleanup for replaced or deleted objects.
+
+### Fixed
+
+- Fixed the production proxy upload limit so the documented 5 MB resume size is accepted and oversized multipart uploads receive a JSON error.
+
 ## [3.5.0] - 2026-08-09
 
 ### Added
@@ -94,7 +105,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.5.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.6.0...HEAD
+[3.6.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.5.0...v3.6.0
 [3.5.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.4.0...v3.5.0
 [3.4.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.3.0...v3.4.0
 [3.3.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.2.0...v3.3.0

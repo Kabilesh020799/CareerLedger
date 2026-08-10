@@ -5,8 +5,9 @@ import type {
   CreateApplicationInput,
   UpdateApplicationInput,
 } from "../validators/application.validator";
-import type { ApplicationResumeUpload } from "../validators/application-resume.validator";
+import type { ApplicationResumeAttachmentInput } from "../validators/application-resume.validator";
 import { applicationResumeCreateData } from "./application-resume.service";
+import { applicationResumeStorageService } from "./application-resume-storage.service";
 
 export const applicationService = {
   list(userId: string) {
@@ -69,12 +70,13 @@ export const applicationService = {
   create(
     userId: string,
     data: CreateApplicationInput,
-    resume?: ApplicationResumeUpload,
+    resume?: ApplicationResumeAttachmentInput,
   ) {
     return prisma.$transaction(async (transaction) => {
-      if (data.resumeVersionId) {
+      const { resumeUploadKey: _resumeUploadKey, ...applicationData } = data;
+      if (applicationData.resumeVersionId) {
         const resumeVersion = await transaction.resumeVersion.findFirst({
-          where: { id: data.resumeVersionId, userId },
+          where: { id: applicationData.resumeVersionId, userId },
           select: { id: true },
         });
         if (!resumeVersion) return null;
@@ -82,14 +84,14 @@ export const applicationService = {
 
       return transaction.application.create({
         data: {
-          ...data,
+          ...applicationData,
           userId,
           ...(resume
             ? {
                 resumeAttachment: {
                   create: applicationResumeCreateData(
-                    data.jobTitle,
-                    data.company,
+                    applicationData.jobTitle,
+                    applicationData.company,
                     resume,
                   ),
                 },
@@ -112,18 +114,20 @@ export const applicationService = {
     userId: string,
     id: string,
     data: UpdateApplicationInput,
-    resume?: ApplicationResumeUpload,
+    resume?: ApplicationResumeAttachmentInput,
   ) {
-    return prisma.$transaction(async (transaction) => {
+    const result = await prisma.$transaction(async (transaction) => {
+      const { resumeUploadKey: _resumeUploadKey, ...applicationData } = data;
       const existing = await transaction.application.findFirst({
         where: { id, userId },
+        include: { resumeAttachment: { select: { storageKey: true } } },
       });
 
       if (!existing) return null;
 
-      if (data.resumeVersionId) {
+      if (applicationData.resumeVersionId) {
         const resumeVersion = await transaction.resumeVersion.findFirst({
-          where: { id: data.resumeVersionId, userId },
+          where: { id: applicationData.resumeVersionId, userId },
           select: { id: true },
         });
         if (!resumeVersion) return false;
@@ -132,19 +136,19 @@ export const applicationService = {
       const application = await transaction.application.update({
         where: { id },
         data: {
-          ...data,
+          ...applicationData,
           ...(resume
             ? {
                 resumeAttachment: {
                   upsert: {
                     create: applicationResumeCreateData(
-                      data.jobTitle ?? existing.jobTitle,
-                      data.company ?? existing.company,
+                      applicationData.jobTitle ?? existing.jobTitle,
+                      applicationData.company ?? existing.company,
                       resume,
                     ),
                     update: applicationResumeCreateData(
-                      data.jobTitle ?? existing.jobTitle,
-                      data.company ?? existing.company,
+                      applicationData.jobTitle ?? existing.jobTitle,
+                      applicationData.company ?? existing.company,
                       resume,
                     ),
                   },
@@ -155,25 +159,78 @@ export const applicationService = {
         include: applicationInclude,
       });
 
-      if (data.status && data.status !== existing.status) {
+      if (
+        applicationData.status &&
+        applicationData.status !== existing.status
+      ) {
         await transaction.applicationEvent.create({
           data: {
             applicationId: id,
             type: "STATUS_CHANGE",
-            description: `Status changed from ${existing.status} to ${data.status}`,
+            description: `Status changed from ${existing.status} to ${applicationData.status}`,
             fromStatus: existing.status,
-            toStatus: data.status,
+            toStatus: applicationData.status,
           },
         });
       }
 
-      return application;
+      const previousStorageKey = existing.resumeAttachment?.storageKey;
+      const nextStorageKey =
+        resume && "storageKey" in resume ? resume.storageKey : undefined;
+      const storageKeyToDelete =
+        resume && previousStorageKey && previousStorageKey !== nextStorageKey
+          ? previousStorageKey
+          : undefined;
+      if (storageKeyToDelete) {
+        await transaction.resumeObjectDeletion.upsert({
+          where: { storageKey: storageKeyToDelete },
+          create: { storageKey: storageKeyToDelete },
+          update: {},
+        });
+      }
+
+      return { application, storageKeyToDelete };
     });
+
+    if (result === null || result === false) return result;
+    if (result.storageKeyToDelete) {
+      await applicationResumeStorageService.processQueuedDeletion(
+        result.storageKeyToDelete,
+      );
+    }
+    return result.application;
   },
 
   async remove(userId: string, id: string) {
-    const result = await prisma.application.deleteMany({ where: { id, userId } });
-    return result.count > 0;
+    const result = await prisma.$transaction(async (transaction) => {
+      const existing = await transaction.application.findFirst({
+        where: { id, userId },
+        select: {
+          id: true,
+          resumeAttachment: { select: { storageKey: true } },
+        },
+      });
+      if (!existing) return null;
+
+      const storageKey = existing.resumeAttachment?.storageKey;
+      if (storageKey) {
+        await transaction.resumeObjectDeletion.upsert({
+          where: { storageKey },
+          create: { storageKey },
+          update: {},
+        });
+      }
+      await transaction.application.delete({ where: { id } });
+      return { storageKey };
+    });
+
+    if (!result) return false;
+    if (result.storageKey) {
+      await applicationResumeStorageService.processQueuedDeletion(
+        result.storageKey,
+      );
+    }
+    return true;
   },
 };
 

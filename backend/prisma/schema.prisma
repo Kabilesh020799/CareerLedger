@@ -77,9 +77,19 @@ model ApplicationResume {
   fileName      String
   mimeType      String
   size          Int
-  content       Bytes
+  content       Bytes?
+  storageKey    String?     @unique
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+}
+
+model ResumeObjectDeletion {
+  id         String   @id @default(cuid())
+  storageKey String   @unique
+  attempts   Int      @default(0)
+  lastError  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model ResumeVersion {

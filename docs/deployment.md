@@ -16,6 +16,8 @@ chmod 700 /opt/job-application-tracker
 
 The first deployment automatically creates `/opt/job-application-tracker/.env` with random URL-safe PostgreSQL and session credentials and permissions of `600`. GitHub Actions separately installs `/opt/job-application-tracker/.auth.env` with the public application URL and secure cookie mode. It starts PostgreSQL through Compose, creates the persistent volume, and applies migrations. Later deployments update only `IMAGE_TAG`; they preserve the generated credentials and named volumes. Existing deployments that do not yet have `SESSION_SECRET` receive one automatically on their next deployment.
 
+Attach an EC2 instance role that can perform `s3:PutObject`, `s3:GetObject`, and `s3:DeleteObject` on the private resume bucket's `resumes/*` prefix. Keep all S3 Block Public Access controls enabled. Because the backend runs in Docker and uses IMDSv2 credentials, enable the metadata endpoint, require IMDSv2, and set the metadata response hop limit to `2`. No static AWS access keys are needed.
+
 `deploy/.env.production.example` remains available as a reference or for deliberately supplying credentials before the first deployment. Do not commit or transmit the production environment file.
 
 ## 2. Create a deployment SSH key
@@ -60,10 +62,13 @@ Add environment variables:
 | `DEPLOY_SECURITY_GROUP_ID` | EC2 security group whose SSH ingress is managed during deployment |
 | `DEPLOY_PORT` | SSH port, normally `22` |
 | `PRODUCTION_URL` | Public HTTPS origin, currently `https://d2g95c1jos960v.cloudfront.net` |
+| `RESUME_BUCKET` | Optional private S3 bucket for resume objects, currently `jatbucket2799`; database storage remains available when omitted |
 
 Restrict the environment to the `master` branch. Add required approval if deployments should pause for confirmation after images are published.
 
 The deployment job uses GitHub OIDC to assume a least-privilege IAM role. That role can only authorize and revoke ingress on the application's security group. At the start of a deployment, the workflow permits SSH from the active GitHub runner's public IPv4 `/32`; its final step removes that rule even when deployment fails. No long-lived AWS access key is stored in GitHub, and port 22 does not need permanent public ingress.
+
+Configure the resume bucket CORS policy to allow `GET`, `HEAD`, and `POST` only from the production CloudFront origin. Add a lifecycle rule that expires objects under `resumes/pending/` after one day. The application promotes verified uploads to `resumes/active/`, so active attachments are not affected. On startup, the backend idempotently moves legacy PostgreSQL-backed resume bytes into S3 and retains the database copy whenever an upload cannot be completed.
 
 To enable Gmail synchronization, enable the Gmail API in the Google Cloud project, configure its OAuth consent screen, and register the exact redirect URI `https://your-domain/api/gmail/callback`. Add test users while the consent screen remains in testing. Gmail metadata is a restricted scope and a public app that stores restricted-scope data may require Google verification and a security assessment.
 

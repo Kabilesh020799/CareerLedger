@@ -6,12 +6,16 @@ const { prismaMock, transactionMock } = vi.hoisted(() => {
       create: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     resumeVersion: {
       findFirst: vi.fn(),
     },
     applicationEvent: {
       create: vi.fn(),
+    },
+    resumeObjectDeletion: {
+      upsert: vi.fn(),
     },
   };
 
@@ -31,6 +35,14 @@ const { prismaMock, transactionMock } = vi.hoisted(() => {
 });
 
 vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
+
+const applicationResumeStorageServiceMock = vi.hoisted(() => ({
+  processQueuedDeletion: vi.fn(),
+}));
+
+vi.mock("./application-resume-storage.service", () => ({
+  applicationResumeStorageService: applicationResumeStorageServiceMock,
+}));
 
 import { applicationService } from "./application.service";
 
@@ -54,6 +66,7 @@ describe("application ownership", () => {
     prismaMock.$transaction.mockImplementation((callback) =>
       callback(transactionMock),
     );
+    applicationResumeStorageServiceMock.processQueuedDeletion.mockResolvedValue(true);
   });
 
   it("lists only records owned by the authenticated user", async () => {
@@ -183,6 +196,7 @@ describe("application ownership", () => {
             mimeType: "application/pdf",
             size: content.length,
             content: Uint8Array.from(content),
+            storageKey: null,
           },
         },
       },
@@ -243,6 +257,7 @@ describe("application ownership", () => {
     expect(result).toBeNull();
     expect(transactionMock.application.findFirst).toHaveBeenCalledWith({
       where: { id: "application-2", userId: "user-1" },
+      include: { resumeAttachment: { select: { storageKey: true } } },
     });
     expect(transactionMock.application.update).not.toHaveBeenCalled();
     expect(transactionMock.applicationEvent.create).not.toHaveBeenCalled();
@@ -311,6 +326,7 @@ describe("application ownership", () => {
       mimeType: "application/pdf",
       size: content.length,
       content: Uint8Array.from(content),
+      storageKey: null,
     };
     expect(transactionMock.application.update).toHaveBeenCalledWith({
       where: { id: "application-1" },
@@ -321,6 +337,43 @@ describe("application ownership", () => {
           upsert: {
             create: storedResume,
             update: storedResume,
+          },
+        },
+      },
+      include: applicationInclude,
+    });
+  });
+
+  it("stores an S3 object key without copying resume bytes into PostgreSQL", async () => {
+    transactionMock.application.create.mockResolvedValue({ id: "application-1" });
+
+    await applicationService.create(
+      "user-1",
+      {
+        company: "Acme Corp",
+        jobTitle: "Software Engineer",
+        resumeUploadKey: "resumes/user-1/upload.pdf",
+      },
+      {
+        storageKey: "resumes/user-1/upload.pdf",
+        extension: ".pdf",
+        mimeType: "application/pdf",
+        size: 2048,
+      },
+    );
+
+    expect(transactionMock.application.create).toHaveBeenCalledWith({
+      data: {
+        company: "Acme Corp",
+        jobTitle: "Software Engineer",
+        userId: "user-1",
+        resumeAttachment: {
+          create: {
+            fileName: "Software_Engineer_Acme_Corp.pdf",
+            mimeType: "application/pdf",
+            size: 2048,
+            content: null,
+            storageKey: "resumes/user-1/upload.pdf",
           },
         },
       },
@@ -382,14 +435,73 @@ describe("application ownership", () => {
     expect(prismaMock.$transaction).toHaveBeenCalledOnce();
   });
 
+  it("queues and processes deletion of a replaced S3 resume", async () => {
+    transactionMock.application.findFirst.mockResolvedValue({
+      id: "application-1",
+      company: "Acme",
+      jobTitle: "Engineer",
+      status: "APPLIED",
+      resumeAttachment: { storageKey: "resumes/user-1/old.pdf" },
+    });
+    transactionMock.application.update.mockResolvedValue({ id: "application-1" });
+
+    await applicationService.update(
+      "user-1",
+      "application-1",
+      { resumeUploadKey: "resumes/user-1/new.pdf" },
+      {
+        storageKey: "resumes/user-1/new.pdf",
+        extension: ".pdf",
+        mimeType: "application/pdf",
+        size: 1024,
+      },
+    );
+
+    expect(transactionMock.resumeObjectDeletion.upsert).toHaveBeenCalledWith({
+      where: { storageKey: "resumes/user-1/old.pdf" },
+      create: { storageKey: "resumes/user-1/old.pdf" },
+      update: {},
+    });
+    expect(
+      applicationResumeStorageServiceMock.processQueuedDeletion,
+    ).toHaveBeenCalledWith("resumes/user-1/old.pdf");
+  });
+
   it("cannot delete another user's application", async () => {
-    prismaMock.application.deleteMany.mockResolvedValue({ count: 0 });
+    transactionMock.application.findFirst.mockResolvedValue(null);
 
     const result = await applicationService.remove("user-1", "application-2");
 
     expect(result).toBe(false);
-    expect(prismaMock.application.deleteMany).toHaveBeenCalledWith({
+    expect(transactionMock.application.findFirst).toHaveBeenCalledWith({
       where: { id: "application-2", userId: "user-1" },
+      select: {
+        id: true,
+        resumeAttachment: { select: { storageKey: true } },
+      },
     });
+  });
+
+  it("queues an S3 object deletion in the application delete transaction", async () => {
+    transactionMock.application.findFirst.mockResolvedValue({
+      id: "application-1",
+      resumeAttachment: { storageKey: "resumes/user-1/upload.pdf" },
+    });
+
+    await expect(
+      applicationService.remove("user-1", "application-1"),
+    ).resolves.toBe(true);
+
+    expect(transactionMock.resumeObjectDeletion.upsert).toHaveBeenCalledWith({
+      where: { storageKey: "resumes/user-1/upload.pdf" },
+      create: { storageKey: "resumes/user-1/upload.pdf" },
+      update: {},
+    });
+    expect(transactionMock.application.delete).toHaveBeenCalledWith({
+      where: { id: "application-1" },
+    });
+    expect(
+      applicationResumeStorageServiceMock.processQueuedDeletion,
+    ).toHaveBeenCalledWith("resumes/user-1/upload.pdf");
   });
 });

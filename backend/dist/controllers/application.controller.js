@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.applicationController = void 0;
 const application_service_1 = require("../services/application.service");
 const application_resume_service_1 = require("../services/application-resume.service");
+const application_resume_storage_service_1 = require("../services/application-resume-storage.service");
 const application_discovery_validator_1 = require("../validators/application-discovery.validator");
 const application_validator_1 = require("../validators/application.validator");
 const application_resume_validator_1 = require("../validators/application-resume.validator");
@@ -20,6 +21,42 @@ function getUserId(req) {
     if (!req.user)
         throw new Error("Authenticated user is missing");
     return req.user.id;
+}
+async function resolveResume(req, userId, storageKey) {
+    if (req.file && storageKey) {
+        return {
+            success: false,
+            error: "Choose only one resume upload method",
+        };
+    }
+    if (req.file && application_resume_storage_service_1.applicationResumeStorageService.isConfigured()) {
+        return {
+            success: false,
+            error: "Prepare the resume upload before saving the application",
+        };
+    }
+    if (storageKey) {
+        return application_resume_storage_service_1.applicationResumeStorageService.finalizeUpload(userId, storageKey);
+    }
+    return (0, application_resume_validator_1.validateApplicationResume)(req.file);
+}
+async function abandonResolvedUpload(userId, storageKey) {
+    if (!storageKey)
+        return;
+    try {
+        await application_resume_storage_service_1.applicationResumeStorageService.abandonUpload(userId, storageKey);
+    }
+    catch {
+        // The bucket lifecycle policy remains the final fallback for unfinished uploads.
+    }
+}
+function resolvedStorageKey(resume, requestedStorageKey) {
+    if (resume.success &&
+        resume.data &&
+        "storageKey" in resume.data) {
+        return resume.data.storageKey;
+    }
+    return requestedStorageKey;
 }
 exports.applicationController = {
     async list(req, res) {
@@ -42,13 +79,24 @@ exports.applicationController = {
         const parsed = application_validator_1.createApplicationSchema.safeParse(req.body);
         if (!parsed.success)
             return validationError(res, parsed.error.flatten());
-        const resume = (0, application_resume_validator_1.validateApplicationResume)(req.file);
+        const userId = getUserId(req);
+        const resume = await resolveResume(req, userId, parsed.data.resumeUploadKey);
+        const cleanupStorageKey = resolvedStorageKey(resume, parsed.data.resumeUploadKey);
         if (!resume.success) {
+            await abandonResolvedUpload(userId, cleanupStorageKey);
             res.status(400).json({ error: resume.error });
             return;
         }
-        const application = await application_service_1.applicationService.create(getUserId(req), parsed.data, resume.data);
+        let application;
+        try {
+            application = await application_service_1.applicationService.create(userId, parsed.data, resume.data);
+        }
+        catch (error) {
+            await abandonResolvedUpload(userId, cleanupStorageKey);
+            throw error;
+        }
         if (!application) {
+            await abandonResolvedUpload(userId, cleanupStorageKey);
             res.status(400).json({ error: "Resume version not found" });
             return;
         }
@@ -68,26 +116,53 @@ exports.applicationController = {
             res.status(404).json({ error: "Resume not found" });
             return;
         }
+        if (resume.kind === "s3") {
+            res.redirect(302, resume.url);
+            return;
+        }
         res.setHeader("Content-Type", resume.mimeType);
         res.setHeader("Content-Length", String(resume.size));
         res.setHeader("Content-Disposition", `attachment; filename="${resume.fileName}"`);
         res.send(Buffer.from(resume.content));
     },
+    async getResumeDownload(req, res) {
+        const resume = await application_resume_service_1.applicationResumeService.findForApplication(getUserId(req), getId(req));
+        if (!resume) {
+            res.status(404).json({ error: "Resume not found" });
+            return;
+        }
+        res.json({
+            mode: resume.kind,
+            url: resume.kind === "s3" ? resume.url : null,
+        });
+    },
     async update(req, res) {
         const parsed = application_validator_1.updateApplicationSchema.safeParse(req.body);
         if (!parsed.success)
             return validationError(res, parsed.error.flatten());
-        const resume = (0, application_resume_validator_1.validateApplicationResume)(req.file);
+        const userId = getUserId(req);
+        const resume = await resolveResume(req, userId, parsed.data.resumeUploadKey);
+        const cleanupStorageKey = resolvedStorageKey(resume, parsed.data.resumeUploadKey);
         if (!resume.success) {
+            await abandonResolvedUpload(userId, cleanupStorageKey);
             res.status(400).json({ error: resume.error });
             return;
         }
-        const application = await application_service_1.applicationService.update(getUserId(req), getId(req), parsed.data, resume.data);
+        let application;
+        try {
+            application = await application_service_1.applicationService.update(userId, getId(req), parsed.data, resume.data);
+        }
+        catch (error) {
+            await abandonResolvedUpload(userId, cleanupStorageKey);
+            throw error;
+        }
         if (application === false) {
+            await abandonResolvedUpload(userId, cleanupStorageKey);
             res.status(400).json({ error: "Resume version not found" });
             return;
         }
         if (!application) {
+            await abandonResolvedUpload(userId, cleanupStorageKey);
             res.status(404).json({ error: "Application not found" });
             return;
         }

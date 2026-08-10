@@ -4,7 +4,14 @@ const prismaMock = vi.hoisted(() => ({
   applicationResume: { findFirst: vi.fn() },
 }));
 
+const applicationResumeStorageServiceMock = vi.hoisted(() => ({
+  createDownloadUrl: vi.fn(),
+}));
+
 vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
+vi.mock("./application-resume-storage.service", () => ({
+  applicationResumeStorageService: applicationResumeStorageServiceMock,
+}));
 
 import {
   applicationResumeService,
@@ -45,7 +52,36 @@ describe("application resume service", () => {
         mimeType: true,
         size: true,
         content: true,
+        storageKey: true,
       },
     });
+  });
+
+  it("creates a private download URL for an S3-backed attachment", async () => {
+    prismaMock.applicationResume.findFirst.mockResolvedValue({
+      fileName: "Engineer_Acme.pdf",
+      mimeType: "application/pdf",
+      size: 1024,
+      content: null,
+      storageKey: "resumes/user-1/upload.pdf",
+    });
+    applicationResumeStorageServiceMock.createDownloadUrl.mockResolvedValue(
+      "https://bucket.example/signed",
+    );
+
+    await expect(
+      applicationResumeService.findForApplication("user-1", "application-1"),
+    ).resolves.toEqual({
+      kind: "s3",
+      fileName: "Engineer_Acme.pdf",
+      url: "https://bucket.example/signed",
+    });
+    expect(
+      applicationResumeStorageServiceMock.createDownloadUrl,
+    ).toHaveBeenCalledWith(
+      "resumes/user-1/upload.pdf",
+      "Engineer_Acme.pdf",
+      "application/pdf",
+    );
   });
 });

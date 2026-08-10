@@ -23,6 +23,7 @@ exports.createApplicationSchema = zod_1.z.object({
     notes: nullableText,
     appliedAt: zod_1.z.coerce.date().nullable().optional(),
     resumeVersionId: zod_1.z.string().trim().min(1).nullable().optional(),
+    resumeUploadKey: zod_1.z.string().trim().min(1).max(500).optional(),
 });
 exports.updateApplicationSchema = exports.createApplicationSchema
     .partial()

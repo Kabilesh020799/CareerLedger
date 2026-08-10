@@ -1,8 +1,9 @@
 import { prisma } from "../config/prisma";
 import type {
+  ApplicationResumeAttachmentInput,
   ApplicationResumeExtension,
-  ApplicationResumeUpload,
 } from "../validators/application-resume.validator";
+import { applicationResumeStorageService } from "./application-resume-storage.service";
 
 const maxNameSegmentLength = 80;
 
@@ -29,19 +30,21 @@ export function buildApplicationResumeFileName(
 export function applicationResumeCreateData(
   jobTitle: string,
   company: string,
-  upload: ApplicationResumeUpload,
+  upload: ApplicationResumeAttachmentInput,
 ) {
   return {
     fileName: buildApplicationResumeFileName(jobTitle, company, upload.extension),
     mimeType: upload.mimeType,
     size: upload.size,
-    content: Uint8Array.from(upload.content),
+    ...("content" in upload
+      ? { content: Uint8Array.from(upload.content), storageKey: null }
+      : { content: null, storageKey: upload.storageKey }),
   };
 }
 
 export const applicationResumeService = {
-  findForApplication(userId: string, applicationId: string) {
-    return prisma.applicationResume.findFirst({
+  async findForApplication(userId: string, applicationId: string) {
+    const resume = await prisma.applicationResume.findFirst({
       where: {
         applicationId,
         application: { userId },
@@ -51,7 +54,30 @@ export const applicationResumeService = {
         mimeType: true,
         size: true,
         content: true,
+        storageKey: true,
       },
     });
+
+    if (!resume) return null;
+    if (resume.storageKey) {
+      return {
+        kind: "s3" as const,
+        fileName: resume.fileName,
+        url: await applicationResumeStorageService.createDownloadUrl(
+          resume.storageKey,
+          resume.fileName,
+          resume.mimeType,
+        ),
+      };
+    }
+    if (!resume.content) return null;
+
+    return {
+      kind: "database" as const,
+      fileName: resume.fileName,
+      mimeType: resume.mimeType,
+      size: resume.size,
+      content: resume.content,
+    };
   },
 };

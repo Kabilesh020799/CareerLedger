@@ -199,6 +199,8 @@ jobs:
           PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          RESUME_BUCKET: ${{ vars.RESUME_BUCKET }}
+          APPLICATION_AWS_REGION: ${{ vars.AWS_REGION }}
         run: |
           case "$PRODUCTION_URL" in
             http://*)
@@ -217,6 +219,14 @@ jobs:
             ""|*/*) echo "PRODUCTION_URL must contain only an origin." >&2; exit 1 ;;
           esac
 
+          case "$RESUME_BUCKET" in
+            "") ;;
+            *[!a-z0-9.-]*) echo "RESUME_BUCKET must be a valid S3 bucket name." >&2; exit 1 ;;
+          esac
+          case "$APPLICATION_AWS_REGION" in
+            ""|*[!a-z0-9-]*) echo "AWS_REGION must be a valid AWS region." >&2; exit 1 ;;
+          esac
+
           port="${DEPLOY_PORT:-22}"
           {
             printf 'FRONTEND_URL=%s\n' "${PRODUCTION_URL%/}"
@@ -224,6 +234,9 @@ jobs:
             printf 'GOOGLE_CLIENT_ID=%s\n' "$GOOGLE_CLIENT_ID"
             printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET"
             printf 'GMAIL_CALLBACK_URL=%s/api/gmail/callback\n' "${PRODUCTION_URL%/}"
+            printf 'AWS_REGION=%s\n' "$APPLICATION_AWS_REGION"
+            printf 'RESUME_BUCKET=%s\n' "$RESUME_BUCKET"
+            printf 'RESUME_UPLOAD_EXPIRES_SECONDS=300\n'
           } | ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "umask 077; cat > /opt/job-application-tracker/.auth.env"
 
       - name: Authenticate instance to GHCR

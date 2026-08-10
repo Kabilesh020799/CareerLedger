@@ -16,6 +16,13 @@ const applicationResumeServiceMock = vi.hoisted(() => ({
   findForApplication: vi.fn(),
 }));
 
+const applicationResumeStorageServiceMock = vi.hoisted(() => ({
+  isConfigured: vi.fn(),
+  prepareUpload: vi.fn(),
+  finalizeUpload: vi.fn(),
+  abandonUpload: vi.fn(),
+}));
+
 vi.mock("../services/application.service", () => ({
   applicationService: applicationServiceMock,
 }));
@@ -28,6 +35,9 @@ vi.mock("../services/application-resume.service", async (importOriginal) => {
     applicationResumeService: applicationResumeServiceMock,
   };
 });
+vi.mock("../services/application-resume-storage.service", () => ({
+  applicationResumeStorageService: applicationResumeStorageServiceMock,
+}));
 
 import { applicationRouter } from "./application.routes";
 
@@ -51,7 +61,93 @@ function createTestApp() {
 describe("application resume routes", () => {
   const app = createTestApp();
 
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    applicationResumeStorageServiceMock.isConfigured.mockReturnValue(false);
+    applicationResumeStorageServiceMock.abandonUpload.mockResolvedValue(true);
+  });
+
+  it("prepares a private S3 upload for a supported resume", async () => {
+    applicationResumeStorageServiceMock.isConfigured.mockReturnValue(true);
+    applicationResumeStorageServiceMock.prepareUpload.mockResolvedValue({
+      success: true,
+      data: {
+        mode: "s3",
+        storageKey: "resumes/user-1/upload.pdf",
+        url: "https://bucket.example/upload",
+        fields: { key: "resumes/user-1/upload.pdf" },
+        expiresAt: "2026-08-10T03:00:00.000Z",
+      },
+    });
+
+    const response = await request(app)
+      .post("/api/applications/resume-uploads")
+      .send({
+        fileName: "resume.pdf",
+        mimeType: "application/pdf",
+        size: 1024,
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.mode).toBe("s3");
+    expect(applicationResumeStorageServiceMock.prepareUpload).toHaveBeenCalledWith(
+      "user-1",
+      {
+        fileName: "resume.pdf",
+        mimeType: "application/pdf",
+        size: 1024,
+      },
+    );
+  });
+
+  it("uses database uploads when S3 is not configured", async () => {
+    applicationResumeStorageServiceMock.isConfigured.mockReturnValue(false);
+
+    const response = await request(app)
+      .post("/api/applications/resume-uploads")
+      .send({
+        fileName: "resume.pdf",
+        mimeType: "application/pdf",
+        size: 1024,
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ mode: "database" });
+  });
+
+  it("attaches a verified direct upload when creating an application", async () => {
+    applicationResumeStorageServiceMock.finalizeUpload.mockResolvedValue({
+      success: true,
+      data: {
+        storageKey: "resumes/user-1/upload.pdf",
+        extension: ".pdf",
+        mimeType: "application/pdf",
+        size: 2048,
+      },
+    });
+    applicationServiceMock.create.mockResolvedValue({ id: "application-1" });
+
+    const response = await request(app).post("/api/applications").send({
+      company: "Acme Corp",
+      jobTitle: "Software Engineer",
+      resumeUploadKey: "resumes/user-1/upload.pdf",
+    });
+
+    expect(response.status).toBe(201);
+    expect(applicationResumeStorageServiceMock.finalizeUpload).toHaveBeenCalledWith(
+      "user-1",
+      "resumes/user-1/upload.pdf",
+    );
+    expect(applicationServiceMock.create).toHaveBeenCalledWith(
+      "user-1",
+      {
+        company: "Acme Corp",
+        jobTitle: "Software Engineer",
+        resumeUploadKey: "resumes/user-1/upload.pdf",
+      },
+      expect.objectContaining({ storageKey: "resumes/user-1/upload.pdf" }),
+    );
+  });
 
   it("creates an application and stores a valid resume attachment", async () => {
     const content = Buffer.from("%PDF-1.7\nresume content");
@@ -89,6 +185,25 @@ describe("application resume routes", () => {
         size: content.length,
       },
     );
+  });
+
+  it("requires direct upload preparation when S3 storage is configured", async () => {
+    applicationResumeStorageServiceMock.isConfigured.mockReturnValue(true);
+
+    const response = await request(app)
+      .post("/api/applications")
+      .field("company", "Acme Corp")
+      .field("jobTitle", "Engineer")
+      .attach("resume", Buffer.from("%PDF-1.7\nresume content"), {
+        filename: "resume.pdf",
+        contentType: "application/pdf",
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe(
+      "Prepare the resume upload before saving the application",
+    );
+    expect(applicationServiceMock.create).not.toHaveBeenCalled();
   });
 
   it("continues to create applications from JSON without a resume", async () => {
@@ -183,6 +298,7 @@ describe("application resume routes", () => {
   it("downloads an owned resume with its generated filename", async () => {
     const content = Buffer.from("%PDF-1.7\nstored resume");
     applicationResumeServiceMock.findForApplication.mockResolvedValue({
+      kind: "database",
       fileName: "Software_Engineer_Acme_Corp.pdf",
       mimeType: "application/pdf",
       size: content.length,
@@ -202,6 +318,41 @@ describe("application resume routes", () => {
       "user-1",
       "application-1",
     );
+  });
+
+  it("redirects an owned S3 resume to a short-lived download URL", async () => {
+    applicationResumeServiceMock.findForApplication.mockResolvedValue({
+      kind: "s3",
+      fileName: "Software_Engineer_Acme_Corp.pdf",
+      url: "https://jatbucket2799.s3.amazonaws.com/signed",
+    });
+
+    const response = await request(app).get(
+      "/api/applications/application-1/resume",
+    );
+
+    expect(response.status).toBe(302);
+    expect(response.headers.location).toBe(
+      "https://jatbucket2799.s3.amazonaws.com/signed",
+    );
+  });
+
+  it("returns a short-lived S3 download preparation", async () => {
+    applicationResumeServiceMock.findForApplication.mockResolvedValue({
+      kind: "s3",
+      fileName: "Software_Engineer_Acme_Corp.pdf",
+      url: "https://jatbucket2799.s3.amazonaws.com/signed",
+    });
+
+    const response = await request(app).get(
+      "/api/applications/application-1/resume-download",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      mode: "s3",
+      url: "https://jatbucket2799.s3.amazonaws.com/signed",
+    });
   });
 
   it("does not reveal missing or inaccessible resume attachments", async () => {

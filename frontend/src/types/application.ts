@@ -49,6 +49,20 @@ export type CreateApplicationInput = {
   resumeVersionId?: string | null
 }
 
+export type ResumeUploadPreparation =
+  | { mode: 'database' }
+  | {
+      mode: 's3'
+      storageKey: string
+      url: string
+      fields: Record<string, string>
+      expiresAt: string
+    }
+
+export type ResumeDownloadPreparation =
+  | { mode: 'database'; url: null }
+  | { mode: 's3'; url: string }
+
 export type UpdateApplicationInput = Partial<CreateApplicationInput>
 
 export type CreateApplicationRequest = {

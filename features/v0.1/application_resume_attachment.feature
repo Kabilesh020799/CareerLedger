@@ -14,6 +14,13 @@ Feature: Attach a resume to an application
     And the resume should be stored with the application
     And its filename should be "Software_Engineer_Acme_Corp.pdf"
     And downloading the resume should return the original document
+    And the stored resume should not be publicly accessible
+
+  Scenario: Upload a valid resume through private object storage
+    When I create an application with a valid resume up to 5 MB
+    Then I should receive short-lived permission for only that upload
+    And the application should reference the privately stored resume
+    And no permanent storage credentials should be exposed to the browser
 
   Scenario: Create an application without a resume
     When I create an application without attaching a resume
@@ -42,6 +49,7 @@ Feature: Attach a resume to an application
     Then the application should be updated
     And the new resume should replace the previous document
     And its filename should use the edited role and company
+    And the previous privately stored document should be scheduled for deletion
 
   Scenario: Edit an application without replacing its resume
     Given I created an application with a resume
@@ -64,3 +72,13 @@ Feature: Attach a resume to an application
     Given I created an application with a resume
     When I delete that application
     Then the application and its attached resume should be deleted
+
+  Scenario: Continue downloading a resume stored before object storage was enabled
+    Given I created an application with a database-stored resume before the storage migration
+    When I download the application's resume
+    Then the browser should download the original document
+
+  Scenario: Application save fails after a direct resume upload
+    Given I uploaded a resume but the application could not be saved
+    Then the unfinished upload should be deleted
+    And no application should reference it

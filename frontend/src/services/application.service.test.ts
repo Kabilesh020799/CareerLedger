@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import axios from 'axios'
 import { api } from './api'
 import { applicationService } from './application.service'
+
+vi.mock('axios', () => ({
+  default: { get: vi.fn(), post: vi.fn() },
+}))
 
 vi.mock('./api', () => ({
   api: {
@@ -72,19 +77,55 @@ describe('applicationService', () => {
     expect(api.post).toHaveBeenCalledWith('/applications', input)
   })
 
-  it('creates an application with a multipart resume attachment', async () => {
-    vi.mocked(api.post).mockResolvedValue({ data: application })
+  it('keeps database uploads available when S3 is not configured', async () => {
+    vi.mocked(api.post)
+      .mockResolvedValueOnce({ data: { mode: 'database' } })
+      .mockResolvedValueOnce({ data: application })
     const input = { company: 'Acme Corp', jobTitle: 'Software Engineer', notes: null }
     const resume = new File(['resume'], 'current.pdf', { type: 'application/pdf' })
 
     await applicationService.create(input, resume)
 
-    const requestBody = vi.mocked(api.post).mock.calls[0][1]
+    expect(api.post).toHaveBeenNthCalledWith(1, '/applications/resume-uploads', {
+      fileName: 'current.pdf',
+      mimeType: 'application/pdf',
+      size: resume.size,
+    })
+    const requestBody = vi.mocked(api.post).mock.calls[1][1]
     expect(requestBody).toBeInstanceOf(FormData)
     expect((requestBody as FormData).get('company')).toBe('Acme Corp')
     expect((requestBody as FormData).get('jobTitle')).toBe('Software Engineer')
     expect((requestBody as FormData).get('notes')).toBeNull()
     expect((requestBody as FormData).get('resume')).toBe(resume)
+  })
+
+  it('uploads a new application resume directly to S3 before saving', async () => {
+    vi.mocked(api.post)
+      .mockResolvedValueOnce({
+        data: {
+          mode: 's3',
+          storageKey: 'resumes/pending/user-1/upload.pdf',
+          url: 'https://jatbucket2799.s3.amazonaws.com',
+          fields: { key: 'resumes/pending/user-1/upload.pdf' },
+          expiresAt: '2026-08-10T03:00:00.000Z',
+        },
+      })
+      .mockResolvedValueOnce({ data: application })
+    vi.mocked(axios.post).mockResolvedValue({ status: 204 })
+    const input = { company: 'Acme Corp', jobTitle: 'Software Engineer' }
+    const resume = new File(['resume'], 'current.pdf', { type: 'application/pdf' })
+
+    await expect(applicationService.create(input, resume)).resolves.toEqual(application)
+
+    expect(axios.post).toHaveBeenCalledWith(
+      'https://jatbucket2799.s3.amazonaws.com',
+      expect.any(FormData),
+      { withCredentials: false },
+    )
+    expect(api.post).toHaveBeenNthCalledWith(2, '/applications', {
+      ...input,
+      resumeUploadKey: 'resumes/pending/user-1/upload.pdf',
+    })
   })
 
   it('updates and deletes an application through the API', async () => {
@@ -98,7 +139,17 @@ describe('applicationService', () => {
     expect(api.delete).toHaveBeenCalledWith('/applications/application-1')
   })
 
-  it('updates an application with a multipart replacement resume', async () => {
+  it('uploads a replacement directly to S3 before updating the application', async () => {
+    vi.mocked(api.post).mockResolvedValue({
+      data: {
+        mode: 's3',
+        storageKey: 'resumes/user-1/upload.pdf',
+        url: 'https://jatbucket2799.s3.amazonaws.com',
+        fields: { key: 'resumes/user-1/upload.pdf', policy: 'signed-policy' },
+        expiresAt: '2026-08-10T03:00:00.000Z',
+      },
+    })
+    vi.mocked(axios.post).mockResolvedValue({ status: 204 })
     vi.mocked(api.patch).mockResolvedValue({ data: application })
     const input = { company: 'Acme Labs', jobTitle: 'Senior Engineer' }
     const resume = new File(['replacement'], 'replacement.pdf', {
@@ -107,11 +158,49 @@ describe('applicationService', () => {
 
     await applicationService.update(application.id, input, resume)
 
-    const requestBody = vi.mocked(api.patch).mock.calls[0][1]
-    expect(requestBody).toBeInstanceOf(FormData)
-    expect((requestBody as FormData).get('company')).toBe('Acme Labs')
-    expect((requestBody as FormData).get('jobTitle')).toBe('Senior Engineer')
-    expect((requestBody as FormData).get('resume')).toBe(resume)
+    expect(api.post).toHaveBeenCalledWith('/applications/resume-uploads', {
+      fileName: 'replacement.pdf',
+      mimeType: 'application/pdf',
+      size: resume.size,
+    })
+    const uploadBody = vi.mocked(axios.post).mock.calls[0][1]
+    expect(uploadBody).toBeInstanceOf(FormData)
+    expect((uploadBody as FormData).get('key')).toBe('resumes/user-1/upload.pdf')
+    expect((uploadBody as FormData).get('file')).toBe(resume)
+    expect(api.patch).toHaveBeenCalledWith('/applications/application-1', {
+      company: 'Acme Labs',
+      jobTitle: 'Senior Engineer',
+      resumeUploadKey: 'resumes/user-1/upload.pdf',
+    })
+  })
+
+  it('deletes an unfinished S3 upload when application save fails', async () => {
+    vi.mocked(api.post).mockResolvedValue({
+      data: {
+        mode: 's3',
+        storageKey: 'resumes/user-1/upload.pdf',
+        url: 'https://jatbucket2799.s3.amazonaws.com',
+        fields: { key: 'resumes/user-1/upload.pdf' },
+        expiresAt: '2026-08-10T03:00:00.000Z',
+      },
+    })
+    vi.mocked(axios.post).mockResolvedValue({ status: 204 })
+    vi.mocked(api.patch).mockRejectedValue(new Error('Save failed'))
+    vi.mocked(api.delete).mockResolvedValue({})
+    const resume = new File(['replacement'], 'replacement.pdf', {
+      type: 'application/pdf',
+    })
+
+    await expect(
+      applicationService.update(
+        application.id,
+        { company: 'Acme Labs' },
+        resume,
+      ),
+    ).rejects.toThrow('Save failed')
+    expect(api.delete).toHaveBeenCalledWith('/applications/resume-uploads', {
+      data: { storageKey: 'resumes/user-1/upload.pdf' },
+    })
   })
 
   it('lists and creates application timeline events', async () => {
@@ -132,11 +221,31 @@ describe('applicationService', () => {
 
   it('downloads an application resume as a blob', async () => {
     const resume = new Blob(['resume'], { type: 'application/pdf' })
-    vi.mocked(api.get).mockResolvedValue({ data: resume })
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({ data: { mode: 'database', url: null } })
+      .mockResolvedValueOnce({ data: resume })
 
     await expect(applicationService.downloadResume('application-1')).resolves.toBe(resume)
+    expect(api.get).toHaveBeenNthCalledWith(
+      1,
+      '/applications/application-1/resume-download',
+    )
     expect(api.get).toHaveBeenCalledWith('/applications/application-1/resume', {
       responseType: 'blob',
     })
+  })
+
+  it('downloads an S3 resume without sending application cookies', async () => {
+    const resume = new Blob(['resume'], { type: 'application/pdf' })
+    vi.mocked(api.get).mockResolvedValue({
+      data: { mode: 's3', url: 'https://jatbucket2799.s3.amazonaws.com/signed' },
+    })
+    vi.mocked(axios.get).mockResolvedValue({ data: resume })
+
+    await expect(applicationService.downloadResume('application-1')).resolves.toBe(resume)
+    expect(axios.get).toHaveBeenCalledWith(
+      'https://jatbucket2799.s3.amazonaws.com/signed',
+      { responseType: 'blob', withCredentials: false },
+    )
   })
 })

@@ -118,6 +118,32 @@ test("keeps the production frontend in the EC2 Compose release", () => {
   assert.match(deployScript, /docker compose[^\n]*pull backend frontend/);
 });
 
+test("configures private S3 resume storage without static AWS keys", () => {
+  const workflow = fs.readFileSync(workflowPath, "utf8");
+  const compose = fs.readFileSync(
+    path.join(__dirname, "..", "deploy", "compose.production.yml"),
+    "utf8",
+  );
+
+  assert.match(workflow, /RESUME_BUCKET: \$\{\{ vars\.RESUME_BUCKET \}\}/);
+  assert.match(workflow, /printf 'AWS_REGION=%s\\n'/);
+  assert.match(workflow, /printf 'RESUME_BUCKET=%s\\n'/);
+  assert.match(compose, /env_file:\s*\n\s*- \.auth\.env/);
+  assert.doesNotMatch(workflow, /AWS_ACCESS_KEY_ID/);
+  assert.doesNotMatch(workflow, /AWS_SECRET_ACCESS_KEY/);
+});
+
+test("keeps the database upload fallback aligned with the five-megabyte limit", () => {
+  const nginx = fs.readFileSync(frontendNginxPath, "utf8");
+
+  assert.match(nginx, /client_max_body_size\s+6m;/);
+  assert.match(nginx, /error_page\s+413\s+=\s+@resume_too_large;/);
+  assert.match(
+    nginx,
+    /return 413 '\{"error":"Resume must be 5 MB or smaller"\}';/,
+  );
+});
+
 test("propagates CloudFront HTTPS to secure production sessions", () => {
   const dockerfile = fs.readFileSync(frontendDockerfilePath, "utf8");
   const nginx = fs.readFileSync(frontendNginxPath, "utf8");
