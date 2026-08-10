@@ -12,10 +12,17 @@ Feature: Review recruitment updates discovered from Gmail
     Examples:
       | phrase                         | status     |
       | thank you for applying         | APPLIED    |
+      | thank you for your application | APPLIED    |
       | coding assessment              | ASSESSMENT |
       | schedule an interview          | INTERVIEW  |
       | we will not be moving forward  | REJECTED   |
       | pleased to offer               | OFFER      |
+
+  Scenario: Leave a missing role editable in an application acknowledgement
+    Given a synchronized Gmail message says "Thank you for your application to Pigmen"
+    When the message is processed
+    Then a pending update should suggest "APPLIED"
+    And no job title should be inferred from the acknowledgement wording
 
   Scenario: Ignore an unrelated synchronized message
     Given a synchronized Gmail message is not recruitment-related

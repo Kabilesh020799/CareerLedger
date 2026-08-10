@@ -9,6 +9,9 @@ import {
 describe("Gmail recruitment update classification", () => {
   it.each([
     ["Thank you for applying", "APPLIED"],
+    ["Thank you for your application to Pigmen", "APPLIED"],
+    ["Thanks for your application", "APPLIED"],
+    ["We have received your application", "APPLIED"],
     ["Complete your coding assessment", "ASSESSMENT"],
     ["Let us schedule an interview", "INTERVIEW"],
     ["We will not be moving forward", "REJECTED"],
@@ -79,5 +82,9 @@ describe("Gmail recruitment update classification", () => {
     expect(inferJobTitle("Interview for Senior Software Engineer role")).toBe(
       "Senior Software Engineer",
     );
+  });
+
+  it("does not mistake an application acknowledgement for a job title", () => {
+    expect(inferJobTitle("Thank you for your application to Pigmen")).toBe("");
   });
 });

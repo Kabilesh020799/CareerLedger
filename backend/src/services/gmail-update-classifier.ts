@@ -66,8 +66,11 @@ const classificationRules: Array<{
     status: "APPLIED",
     phrases: [
       "thank you for applying",
+      "thank you for your application",
+      "thanks for your application",
       "application received",
       "received your application",
+      "we have received your application",
       "application confirmation",
     ],
   },
@@ -123,6 +126,9 @@ export function inferJobTitle(subject: string) {
     .replace(/^(re|fw|fwd):\s*/i, "")
     .replace(/\s+/g, " ")
     .trim();
+  if (/^(?:thank you|thanks)\s+for\s+(?:submitting\s+)?your\s+application\b/i.test(normalizedSubject)) {
+    return "";
+  }
   const patterns = [
     /(?:application|interview|assessment|offer)\s+(?:for|for the)\s+(.+?)(?:\s+(?:role|position))?$/i,
     /^(.+?)\s+(?:interview|assessment|application|offer)(?:\s|$)/i,

@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.9.1] - 2026-08-10
+
+### Fixed
+
+- Fixed Gmail detection for common acknowledgements such as “Thank you for your application to Pigmen” and prevented acknowledgement wording from being suggested as a job title.
+
 ## [3.9.0] - 2026-08-10
 
 ### Added
@@ -131,7 +137,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.1...HEAD
+[3.9.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.0...v3.9.1
 [3.9.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.8.0...v3.9.0
 [3.8.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.7.0...v3.8.0
 [3.7.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.6.0...v3.7.0
