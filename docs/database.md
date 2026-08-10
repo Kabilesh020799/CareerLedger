@@ -30,7 +30,7 @@ ResumeObjectDeletion
 - `ApplicationResume`: one uploaded file per application. Stores either legacy database bytes or a private S3 key.
 - `ResumeVersion`: reusable user-defined resume label used to compare application outcomes.
 - `ResumeObjectDeletion`: durable retry queue for S3 objects that could not be deleted immediately.
-- `GmailConnection`: one encrypted Gmail authorization per user, including incremental sync state.
+- `GmailConnection`: one encrypted Gmail authorization per user, including incremental history state, automatic-sync interval, enablement, last worker attempt, and sanitized retry status.
 - `GmailMessage`: deduplicated reference to a synchronized Gmail message.
 - `GmailUpdateReview`: user-reviewed status suggestion or proposed new application derived from Gmail metadata.
 
@@ -39,3 +39,5 @@ Deleting a user cascades through owned records. Deleting an application cascades
 ## Persistence and backup
 
 Docker Compose stores PostgreSQL data in the named `postgres-data` volume. Normal container recreation and instance restart preserve it. `docker compose down --volumes` intentionally deletes local database data. Production backups must copy PostgreSQL data independently of Docker image releases and should be tested with a restore procedure before schema changes.
+
+Redis queue state uses the separate named `redis-data` volume. Enabled schedules are also persisted in PostgreSQL and reconciled into Redis, so Redis can be rebuilt without losing the user's scheduling preference or Gmail history cursor.

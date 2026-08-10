@@ -15,6 +15,7 @@ const documentedOperations = [
   ["/api/reminders/{id}", "patch"], ["/api/reminders/{id}", "delete"],
   ["/api/gmail/status", "get"], ["/api/gmail/connect", "get"], ["/api/gmail/callback", "get"],
   ["/api/gmail/sync", "post"], ["/api/gmail/reviews", "get"], ["/api/gmail/reviews/{id}", "patch"],
+  ["/api/gmail/schedule", "patch"],
   ["/api/gmail/connection", "delete"],
 ] as const;
 

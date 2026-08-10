@@ -33,6 +33,12 @@ const frontendNginxPath = path.join(
   "frontend",
   "nginx.conf",
 );
+const productionComposePath = path.join(
+  __dirname,
+  "..",
+  "deploy",
+  "compose.production.yml",
+);
 
 test("publishes the GitHub Release only after production deployment", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
@@ -116,6 +122,16 @@ test("keeps the production frontend in the EC2 Compose release", () => {
   assert.doesNotMatch(workflow, /PAGES_API_URL/);
   assert.match(workflow, /service: frontend/);
   assert.match(deployScript, /docker compose[^\n]*pull backend frontend/);
+});
+
+test("runs automatic Gmail synchronization on a private persistent queue", () => {
+  const compose = fs.readFileSync(productionComposePath, "utf8");
+
+  assert.match(compose, /gmail-worker:/);
+  assert.match(compose, /command: npm run start:worker/);
+  assert.match(compose, /REDIS_URL: redis:\/\/redis:6379/);
+  assert.match(compose, /redis-data:\/data/);
+  assert.doesNotMatch(compose, /6379:6379/);
 });
 
 test("configures private S3 resume storage without static AWS keys", () => {

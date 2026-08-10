@@ -154,16 +154,20 @@ model User {
 }
 
 model GmailConnection {
-  id                   String         @id @default(cuid())
-  userId               String         @unique
-  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gmailEmail           String
-  encryptedCredentials String
-  historyId            String?
-  lastSyncedAt         DateTime?
-  messages             GmailMessage[]
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
+  id                    String         @id @default(cuid())
+  userId                String         @unique
+  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gmailEmail            String
+  encryptedCredentials  String
+  historyId             String?
+  lastSyncedAt          DateTime?
+  autoSyncEnabled       Boolean        @default(false)
+  autoSyncIntervalMins  Int            @default(60)
+  lastAutoSyncAttemptAt DateTime?
+  lastAutoSyncError     String?
+  messages              GmailMessage[]
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 }
 
 model GmailMessage {

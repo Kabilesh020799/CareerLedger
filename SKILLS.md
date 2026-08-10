@@ -196,6 +196,16 @@ After a feature or bug fix satisfies the definition of done, use the documentati
 
 **Specification:** `features/v0.1/gmail_sync.feature`.
 
+### Automatic Gmail synchronization
+
+**Purpose:** Keep Gmail update reviews current through user-configured background synchronization.
+
+**Expected knowledge:** BullMQ job schedulers, Redis persistence, separate worker processes, exponential retry backoff, incremental Gmail history cursors, idempotency, and Docker health dependencies.
+
+**Critical rule:** persist schedule ownership and Gmail cursors in PostgreSQL, put only user identifiers in jobs, verify the schedule remains enabled before processing, retry temporary failures without advancing the successful cursor, and keep Redis private to the application network.
+
+**Specification:** `features/v0.1/gmail_automatic_sync.feature`.
+
 ## Roadmap skills
 
 ### Authentication and authorization
@@ -217,14 +227,6 @@ After a feature or bug fix satisfies the definition of done, use the documentati
 **Critical rules:** use deterministic rules before AI; require review for uncertain matches; never silently mutate records.
 
 **Specification:** `features/roadmap/gmail_sync.feature`.
-
-### Queues and workers
-
-**Purpose:** Process synchronization, retries, schedules, and reminders outside the API process when asynchronous load requires it.
-
-**Expected knowledge:** Redis, BullMQ, idempotency, retry and backoff policies, job observability, separate worker processes.
-
-**Critical rule:** do not introduce Redis or BullMQ until synchronous/manual Gmail behavior works and asynchronous processing has a demonstrated need.
 
 ### AI fallback
 

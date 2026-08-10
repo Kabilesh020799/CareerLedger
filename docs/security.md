@@ -23,6 +23,8 @@ Application, resume, reminder, dashboard, and Gmail routes require authenticatio
 
 OAuth credentials are encrypted at rest. Do not log access tokens, refresh tokens, or full email content. Synchronization stores identifiers and review metadata needed by the feature. Suggested updates never mutate an application until the user confirms them.
 
+Background jobs contain only the owning user ID. Redis is private to the Compose network and is not published on the host. Worker failures expose a fixed, sanitized status to users and never persist provider error bodies, tokens, or message content.
+
 ## Secrets
 
 Keep `.env`, PEM files, session secrets, database passwords, OAuth secrets, and deployment keys out of Git. Production uses GitHub environment secrets, an EC2 instance role for S3, and GitHub OIDC for temporary AWS deployment access.

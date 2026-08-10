@@ -9,10 +9,12 @@ import { useGmailStatus } from '../hooks/useGmailStatus'
 import { useGmailUpdateReviews } from '../hooks/useGmailUpdateReviews'
 import { useResolveGmailUpdateReview } from '../hooks/useResolveGmailUpdateReview'
 import { useSyncGmail } from '../hooks/useSyncGmail'
+import { useUpdateGmailSchedule } from '../hooks/useUpdateGmailSchedule'
 import { GmailSyncPage } from './GmailSyncPage'
 
 vi.mock('../hooks/useGmailStatus', () => ({ useGmailStatus: vi.fn() }))
 vi.mock('../hooks/useSyncGmail', () => ({ useSyncGmail: vi.fn() }))
+vi.mock('../hooks/useUpdateGmailSchedule', () => ({ useUpdateGmailSchedule: vi.fn() }))
 vi.mock('../hooks/useDisconnectGmail', () => ({ useDisconnectGmail: vi.fn() }))
 vi.mock('../hooks/useApplicationOptions', () => ({ useApplicationOptions: vi.fn() }))
 vi.mock('../hooks/useGmailUpdateReviews', () => ({ useGmailUpdateReviews: vi.fn() }))
@@ -39,6 +41,11 @@ describe('GmailSyncPage', () => {
       isError: false,
     } as never)
     vi.mocked(useDisconnectGmail).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+      isError: false,
+    } as never)
+    vi.mocked(useUpdateGmailSchedule).mockReturnValue({
       mutate: vi.fn(),
       isPending: false,
       isError: false,
@@ -145,6 +152,31 @@ describe('GmailSyncPage', () => {
     expect(screen.getByText(/3 messages checked and 2 new recruitment updates added for review/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Sync now' }))
     expect(mutate).toHaveBeenCalledOnce()
+  })
+
+  it('enables automatic synchronization with the selected interval', async () => {
+    const user = userEvent.setup()
+    const mutate = vi.fn()
+    vi.mocked(useGmailStatus).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: {
+        configured: true,
+        connected: true,
+        gmailEmail: 'gmail@example.com',
+        lastSyncedAt: null,
+        synchronizedMessages: 0,
+        automaticSync: { enabled: false, intervalMinutes: 60, lastAttemptAt: null, lastError: null },
+      },
+    } as never)
+    vi.mocked(useUpdateGmailSchedule).mockReturnValue({ mutate, isPending: false, isError: false } as never)
+
+    renderPage()
+    await user.selectOptions(screen.getByLabelText('Automatic synchronization interval'), '180')
+    await user.click(screen.getByRole('button', { name: 'Enable automatic sync' }))
+
+    expect(mutate).toHaveBeenCalledWith({ enabled: true, intervalMinutes: 180 })
   })
 
   it('shows a matched review and applies an editable decision', async () => {

@@ -1,4 +1,5 @@
-import { Alert, Button, Flex, Heading, Spinner, Stack, Text } from '@chakra-ui/react'
+import { Alert, Button, Flex, Heading, NativeSelect, Spinner, Stack, Text } from '@chakra-ui/react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { DisconnectGmailDialog } from '../components/gmail/DisconnectGmailDialog'
 import { GmailUpdateReviewCard } from '../components/gmail/GmailUpdateReviewCard'
@@ -7,6 +8,8 @@ import { useDisconnectGmail } from '../hooks/useDisconnectGmail'
 import { useGmailStatus } from '../hooks/useGmailStatus'
 import { useGmailUpdateReviews } from '../hooks/useGmailUpdateReviews'
 import { useSyncGmail } from '../hooks/useSyncGmail'
+import { useUpdateGmailSchedule } from '../hooks/useUpdateGmailSchedule'
+import type { GmailSyncInterval } from '../types/gmail'
 import { gmailConnectUrl } from '../services/gmail.service'
 import { getApiErrorMessage } from '../utils/apiError'
 
@@ -20,11 +23,23 @@ export function GmailSyncPage() {
   const statusQuery = useGmailStatus()
   const synchronize = useSyncGmail()
   const disconnect = useDisconnectGmail()
+  const updateSchedule = useUpdateGmailSchedule()
+  const [intervalMinutes, setIntervalMinutes] = useState<GmailSyncInterval>(60)
   const connected = Boolean(statusQuery.data?.connected)
   const reviewsQuery = useGmailUpdateReviews(connected)
   const applicationsQuery = useApplicationOptions(connected)
   const [searchParams] = useSearchParams()
   const authorizationError = searchParams.get('error')
+  const automaticSync = statusQuery.data?.automaticSync ?? {
+    enabled: false,
+    intervalMinutes: 60 as GmailSyncInterval,
+    lastAttemptAt: null,
+    lastError: null,
+  }
+
+  useEffect(() => {
+    setIntervalMinutes(automaticSync.intervalMinutes)
+  }, [automaticSync.intervalMinutes])
 
   return (
     <Stack gap="7">
@@ -157,6 +172,72 @@ export function GmailSyncPage() {
               onConfirm={() => disconnect.mutate()}
             />
           </Flex>
+
+          <Stack borderColor="border" borderRadius="lg" borderWidth="1px" gap="3" p="4">
+            <Heading as="h4" size="md">Automatic synchronization</Heading>
+            <Text color="fg.muted" fontSize="sm">
+              A background worker checks only Gmail history newer than the last successful synchronization. Temporary failures retry automatically.
+            </Text>
+            <Flex align={{ base: 'stretch', sm: 'end' }} direction={{ base: 'column', sm: 'row' }} gap="3">
+              <Stack flex="1" gap="1">
+                <Text fontSize="sm" fontWeight="medium">Check Gmail every</Text>
+                <NativeSelect.Root disabled={automaticSync.enabled || updateSchedule.isPending}>
+                  <NativeSelect.Field
+                    id="gmail-sync-interval"
+                    aria-label="Automatic synchronization interval"
+                    value={intervalMinutes}
+                    onChange={(event) => setIntervalMinutes(Number(event.target.value) as GmailSyncInterval)}
+                  >
+                    <option value="15">15 minutes</option>
+                    <option value="30">30 minutes</option>
+                    <option value="60">1 hour</option>
+                    <option value="180">3 hours</option>
+                    <option value="360">6 hours</option>
+                    <option value="720">12 hours</option>
+                    <option value="1440">24 hours</option>
+                  </NativeSelect.Field>
+                  <NativeSelect.Indicator />
+                </NativeSelect.Root>
+              </Stack>
+              <Button
+                loading={updateSchedule.isPending}
+                variant={automaticSync.enabled ? 'outline' : 'solid'}
+                onClick={() => updateSchedule.mutate({
+                  enabled: !automaticSync.enabled,
+                  intervalMinutes: automaticSync.enabled
+                    ? automaticSync.intervalMinutes
+                    : intervalMinutes,
+                })}
+              >
+                {automaticSync.enabled ? 'Disable automatic sync' : 'Enable automatic sync'}
+              </Button>
+            </Flex>
+            <Text color="fg.subtle" fontSize="sm">
+              {automaticSync.enabled
+                ? `Enabled every ${formatInterval(automaticSync.intervalMinutes)}.`
+                : 'Automatic synchronization is disabled.'}
+            </Text>
+            {automaticSync.lastAttemptAt && (
+              <Text color="fg.subtle" fontSize="sm">
+                Last automatic attempt {formatDateTime(automaticSync.lastAttemptAt)}.
+              </Text>
+            )}
+            {automaticSync.lastError && (
+              <Alert.Root status="warning" borderRadius="md">
+                <Alert.Indicator />
+                <Alert.Content>
+                  <Alert.Title>Automatic synchronization will retry</Alert.Title>
+                  <Alert.Description>{automaticSync.lastError}</Alert.Description>
+                </Alert.Content>
+              </Alert.Root>
+            )}
+            {updateSchedule.isError && (
+              <Alert.Root status="error" borderRadius="md">
+                <Alert.Indicator />
+                <Alert.Content><Alert.Description>{getApiErrorMessage(updateSchedule.error, 'Could not update the schedule.')}</Alert.Description></Alert.Content>
+              </Alert.Root>
+            )}
+          </Stack>
         </Stack>
       )}
 
@@ -231,4 +312,10 @@ function formatDateTime(value: string) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value))
+}
+
+function formatInterval(minutes: number) {
+  if (minutes < 60) return `${minutes} minutes`
+  const hours = minutes / 60
+  return `${hours} hour${hours === 1 ? '' : 's'}`
 }

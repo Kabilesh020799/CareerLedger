@@ -4,6 +4,19 @@ export type GmailStatus = {
   gmailEmail: string | null
   lastSyncedAt: string | null
   synchronizedMessages: number
+  automaticSync: {
+    enabled: boolean
+    intervalMinutes: GmailSyncInterval
+    lastAttemptAt: string | null
+    lastError: string | null
+  }
+}
+
+export type GmailSyncInterval = 15 | 30 | 60 | 180 | 360 | 720 | 1440
+
+export type UpdateGmailScheduleInput = {
+  enabled: boolean
+  intervalMinutes: GmailSyncInterval
 }
 
 export type GmailSyncResult = {

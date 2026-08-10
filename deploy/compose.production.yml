@@ -1,6 +1,19 @@
 name: job-application-tracker
 
 services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - internal
+
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -30,10 +43,13 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
       ENABLE_PASSWORD_LOGIN: "true"
       BOOTSTRAP_USER: "true"
+      REDIS_URL: redis://redis:6379
     env_file:
       - .auth.env
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
@@ -41,6 +57,25 @@ services:
       timeout: 5s
       retries: 12
       start_period: 15s
+    networks:
+      - internal
+
+  gmail-worker:
+    image: ghcr.io/kabilesh020799/jobapplicationtracker-backend:${IMAGE_TAG:?IMAGE_TAG is required}
+    restart: unless-stopped
+    command: npm run start:worker
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
+    env_file:
+      - .auth.env
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - internal
 
@@ -66,3 +101,4 @@ networks:
 
 volumes:
   postgres-data:
+  redis-data:

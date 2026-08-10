@@ -7,9 +7,12 @@ import {
   type GmailCredentials,
 } from "./gmail-api.service";
 import { buildGmailUpdateSuggestion } from "./gmail-update-review.service";
+import { gmailSyncQueueService } from "./gmail-sync-queue.service";
+import type { UpdateGmailScheduleInput } from "../validators/gmail-schedule.validator";
 
 export class GmailNotConfiguredError extends Error {}
 export class GmailNotConnectedError extends Error {}
+export class GmailQueueUnavailableError extends Error {}
 
 export const gmailService = {
   async status(userId: string) {
@@ -20,6 +23,7 @@ export const gmailService = {
         gmailEmail: null,
         lastSyncedAt: null,
         synchronizedMessages: 0,
+        automaticSync: { enabled: false, intervalMinutes: 60, lastAttemptAt: null, lastError: null },
       };
     }
 
@@ -28,6 +32,10 @@ export const gmailService = {
       select: {
         gmailEmail: true,
         lastSyncedAt: true,
+        autoSyncEnabled: true,
+        autoSyncIntervalMins: true,
+        lastAutoSyncAttemptAt: true,
+        lastAutoSyncError: true,
         _count: { select: { messages: true } },
       },
     });
@@ -38,6 +46,12 @@ export const gmailService = {
       gmailEmail: connection?.gmailEmail ?? null,
       lastSyncedAt: connection?.lastSyncedAt?.toISOString() ?? null,
       synchronizedMessages: connection?._count.messages ?? 0,
+      automaticSync: {
+        enabled: connection?.autoSyncEnabled ?? false,
+        intervalMinutes: connection?.autoSyncIntervalMins ?? 60,
+        lastAttemptAt: connection?.lastAutoSyncAttemptAt?.toISOString() ?? null,
+        lastError: connection?.lastAutoSyncError ?? null,
+      },
     };
   },
 
@@ -239,6 +253,35 @@ export const gmailService = {
     };
   },
 
+  async updateSchedule(userId: string, input: UpdateGmailScheduleInput) {
+    ensureConfigured();
+    const connection = await prisma.gmailConnection.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    if (!connection) throw new GmailNotConnectedError("Gmail is not connected");
+
+    try {
+      if (input.enabled) {
+        await gmailSyncQueueService.schedule(userId, input.intervalMinutes);
+      } else {
+        await gmailSyncQueueService.unschedule(userId);
+      }
+    } catch {
+      throw new GmailQueueUnavailableError("Automatic synchronization is temporarily unavailable");
+    }
+
+    await prisma.gmailConnection.update({
+      where: { id: connection.id },
+      data: {
+        autoSyncEnabled: input.enabled,
+        autoSyncIntervalMins: input.intervalMinutes,
+        lastAutoSyncError: null,
+      },
+    });
+    return this.status(userId);
+  },
+
   async disconnect(userId: string) {
     const connection = await prisma.gmailConnection.findUnique({
       where: { userId },
@@ -256,6 +299,9 @@ export const gmailService = {
       }
     }
 
+    await gmailSyncQueueService.unschedule(userId).catch(() => {
+      // Deleting the database connection makes any queued job a no-op.
+    });
     await prisma.gmailConnection.deleteMany({ where: { userId } });
   },
 };

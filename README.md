@@ -46,7 +46,7 @@ docker compose down --volumes
 - Keep legacy database-backed resumes downloadable and migrate them to S3 at startup.
 - Create reusable resume versions and compare their application outcomes.
 - Review dashboard pipeline, source, resume, and milestone analytics.
-- Connect Gmail for manual metadata synchronization, deduplication, and user-confirmed application updates.
+- Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates.
 - Switch between light and dark themes.
 - Keep applications, Gmail data, resumes, reminders, and analytics scoped to the signed-in user.
 
@@ -80,6 +80,8 @@ GMAIL_CALLBACK_URL
 
 Local callbacks may use `http://localhost:3000/api/gmail/callback`. Public OAuth deployments require an HTTPS domain and Google consent-screen configuration. Gmail remains optional.
 
+Automatic Gmail synchronization uses Redis and a separate BullMQ worker. Docker Compose configures both automatically. When running services separately, set `REDIS_URL=redis://localhost:6379`, build the backend, and run `npm run start:worker`.
+
 ## API overview
 
 All application, resume, reminder, dashboard, and Gmail data endpoints require an authenticated session and enforce ownership.
@@ -94,7 +96,7 @@ All application, resume, reminder, dashboard, and Gmail data endpoints require a
 | Timeline | `GET/POST /api/applications/:id/events` |
 | Reminders | `GET /api/reminders`, `GET /api/reminders/suggestions`, `POST /api/reminders/suggestions/:id`, `PATCH/DELETE /api/reminders/:id` |
 | Dashboard | `GET /api/dashboard/summary` |
-| Gmail | `GET /api/gmail/status`, `GET /api/gmail/connect`, `POST /api/gmail/sync`, `GET /api/gmail/reviews`, `PATCH /api/gmail/reviews/:id`, `DELETE /api/gmail/connection` |
+| Gmail | `GET /api/gmail/status`, `GET /api/gmail/connect`, `POST /api/gmail/sync`, `PATCH /api/gmail/schedule`, `GET /api/gmail/reviews`, `PATCH /api/gmail/reviews/:id`, `DELETE /api/gmail/connection` |
 
 ## Development
 

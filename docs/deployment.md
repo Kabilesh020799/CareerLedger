@@ -14,7 +14,7 @@ sudo chown "$USER":"$USER" /opt/job-application-tracker
 chmod 700 /opt/job-application-tracker
 ```
 
-The first deployment automatically creates `/opt/job-application-tracker/.env` with random URL-safe PostgreSQL and session credentials and permissions of `600`. GitHub Actions separately installs `/opt/job-application-tracker/.auth.env` with the public application URL and secure cookie mode. It starts PostgreSQL through Compose, creates the persistent volume, and applies migrations. Later deployments update only `IMAGE_TAG`; they preserve the generated credentials and named volumes. Existing deployments that do not yet have `SESSION_SECRET` receive one automatically on their next deployment.
+The first deployment automatically creates `/opt/job-application-tracker/.env` with random URL-safe PostgreSQL and session credentials and permissions of `600`. GitHub Actions separately installs `/opt/job-application-tracker/.auth.env` with the public application URL and secure cookie mode. It starts PostgreSQL and Redis through Compose, creates persistent volumes, applies migrations, and runs the separate Gmail worker. Later deployments update only `IMAGE_TAG`; they preserve the generated credentials and named volumes. Existing deployments that do not yet have `SESSION_SECRET` receive one automatically on their next deployment.
 
 Attach an EC2 instance role that can perform `s3:PutObject`, `s3:GetObject`, and `s3:DeleteObject` on the private resume bucket's `resumes/*` prefix. Keep all S3 Block Public Access controls enabled. Because the backend runs in Docker and uses IMDSv2 credentials, enable the metadata endpoint, require IMDSv2, and set the metadata response hop limit to `2`. No static AWS access keys are needed.
 
@@ -149,4 +149,4 @@ sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=<previous-version>/' .env
 ./deploy-production.sh <previous-version>
 ```
 
-The PostgreSQL named volume is not removed during deployments. Back it up separately before schema changes and on a regular schedule.
+The PostgreSQL and Redis named volumes are not removed during deployments. PostgreSQL is authoritative and must be backed up separately before schema changes and on a regular schedule. Enabled Gmail schedules are reconstructed from PostgreSQL if Redis queue data is lost.

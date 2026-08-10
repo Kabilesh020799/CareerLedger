@@ -12,6 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Added complete interactive Swagger documentation for the authenticated application, resume, timeline, reminder, dashboard, and Gmail APIs, including endpoint purposes, inputs, authentication, and response meanings.
 - Added maintained architecture, database, security, troubleshooting, and API references for contributors and operators.
+- Added user-configurable automatic Gmail synchronization with a persistent Redis queue, separate BullMQ worker, incremental history processing, deduplication, exponential retries, restart reconciliation, and visible failure status.
 
 ### Changed
 

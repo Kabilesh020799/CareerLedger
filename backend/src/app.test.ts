@@ -74,8 +74,10 @@ describe("authentication API boundary", () => {
 
   it("protects Gmail synchronization from unauthenticated requests", async () => {
     const synchronization = await request(app).post("/api/gmail/sync");
+    const schedule = await request(app).patch("/api/gmail/schedule");
     const reviews = await request(app).get("/api/gmail/reviews");
     expect(synchronization.status).toBe(401);
+    expect(schedule.status).toBe(401);
     expect(reviews.status).toBe(401);
   });
 

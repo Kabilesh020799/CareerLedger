@@ -4,6 +4,7 @@ import type {
   GmailUpdateReview,
   ResolveGmailUpdateReviewInput,
   ResolveGmailUpdateReviewResult,
+  UpdateGmailScheduleInput,
 } from '../types/gmail'
 import { api, apiBaseUrl } from './api'
 
@@ -17,6 +18,11 @@ export const gmailService = {
 
   async synchronize() {
     const response = await api.post<GmailSyncResult>('/gmail/sync')
+    return response.data
+  },
+
+  async updateSchedule(input: UpdateGmailScheduleInput) {
+    const response = await api.patch<GmailStatus>('/gmail/schedule', input)
     return response.data
   },
 

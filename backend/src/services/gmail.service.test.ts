@@ -30,10 +30,12 @@ const gmailApiMock = vi.hoisted(() => ({
   metadata: vi.fn(),
   revoke: vi.fn(),
 }));
+const queueMock = vi.hoisted(() => ({ schedule: vi.fn(), unschedule: vi.fn() }));
 
 vi.mock("../config/gmail", () => ({ isGmailConfigured: true }));
 vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
 vi.mock("./gmail-api.service", () => ({ gmailApiService: gmailApiMock }));
+vi.mock("./gmail-sync-queue.service", () => ({ gmailSyncQueueService: queueMock }));
 
 import { GmailNotConnectedError, gmailService } from "./gmail.service";
 import { encryptJson } from "../utils/encrypted-json";
@@ -47,6 +49,8 @@ const credentials = {
 describe("gmailService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    queueMock.schedule.mockResolvedValue(undefined);
+    queueMock.unschedule.mockResolvedValue(undefined);
     prismaMock.gmailMessage.findMany.mockResolvedValue([]);
     prismaMock.application.findMany.mockResolvedValue([]);
     prismaMock.gmailUpdateReview.createMany.mockResolvedValue({ count: 0 });
@@ -59,6 +63,10 @@ describe("gmailService", () => {
     prismaMock.gmailConnection.findUnique.mockResolvedValue({
       gmailEmail: "user@example.com",
       lastSyncedAt: new Date("2026-08-09T20:00:00.000Z"),
+      autoSyncEnabled: true,
+      autoSyncIntervalMins: 60,
+      lastAutoSyncAttemptAt: new Date("2026-08-09T20:00:00.000Z"),
+      lastAutoSyncError: null,
       _count: { messages: 12 },
     });
 
@@ -68,15 +76,52 @@ describe("gmailService", () => {
       gmailEmail: "user@example.com",
       lastSyncedAt: "2026-08-09T20:00:00.000Z",
       synchronizedMessages: 12,
+      automaticSync: {
+        enabled: true,
+        intervalMinutes: 60,
+        lastAttemptAt: "2026-08-09T20:00:00.000Z",
+        lastError: null,
+      },
     });
     expect(prismaMock.gmailConnection.findUnique).toHaveBeenCalledWith({
       where: { userId: "user-1" },
       select: {
         gmailEmail: true,
         lastSyncedAt: true,
+        autoSyncEnabled: true,
+        autoSyncIntervalMins: true,
+        lastAutoSyncAttemptAt: true,
+        lastAutoSyncError: true,
         _count: { select: { messages: true } },
       },
     });
+  });
+
+  it("saves an owned automatic synchronization schedule", async () => {
+    prismaMock.gmailConnection.findUnique
+      .mockResolvedValueOnce({ id: "connection-1" })
+      .mockResolvedValueOnce({
+        gmailEmail: "user@example.com",
+        lastSyncedAt: null,
+        autoSyncEnabled: true,
+        autoSyncIntervalMins: 30,
+        lastAutoSyncAttemptAt: null,
+        lastAutoSyncError: null,
+        _count: { messages: 0 },
+      });
+    prismaMock.gmailConnection.update.mockResolvedValue({});
+
+    const result = await gmailService.updateSchedule("user-1", {
+      enabled: true,
+      intervalMinutes: 30,
+    });
+
+    expect(queueMock.schedule).toHaveBeenCalledWith("user-1", 30);
+    expect(prismaMock.gmailConnection.update).toHaveBeenCalledWith({
+      where: { id: "connection-1" },
+      data: { autoSyncEnabled: true, autoSyncIntervalMins: 30, lastAutoSyncError: null },
+    });
+    expect(result.automaticSync.enabled).toBe(true);
   });
 
   it("creates non-guessable authorization state for the signed-in email", () => {

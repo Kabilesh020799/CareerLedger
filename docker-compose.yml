@@ -1,4 +1,16 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: job-tracker-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   postgres:
     image: postgres:16-alpine
     container_name: job-tracker-postgres
@@ -40,10 +52,13 @@ services:
       AWS_REGION: ${AWS_REGION:-us-east-1}
       RESUME_BUCKET: ${RESUME_BUCKET:-}
       RESUME_UPLOAD_EXPIRES_SECONDS: ${RESUME_UPLOAD_EXPIRES_SECONDS:-300}
+      REDIS_URL: redis://redis:6379
     ports:
       - "3000:3000"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
@@ -51,6 +66,26 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+
+  gmail-worker:
+    build:
+      context: ./backend
+    container_name: job-tracker-gmail-worker
+    restart: unless-stopped
+    command: npm run start:worker
+    environment:
+      DATABASE_URL: postgresql://jobtracker:jobtracker_dev@postgres:5432/jobtracker
+      NODE_ENV: development
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GMAIL_CALLBACK_URL: http://localhost:5173/api/gmail/callback
+      SESSION_SECRET: ${SESSION_SECRET:-local-docker-session-secret-change-me}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   frontend:
     build:
@@ -75,3 +110,4 @@ services:
 
 volumes:
   postgres-data:
+  redis-data:

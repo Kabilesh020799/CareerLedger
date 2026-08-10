@@ -8,6 +8,7 @@ const serviceMock = vi.hoisted(() => ({
   beginAuthorization: vi.fn(),
   completeAuthorization: vi.fn(),
   synchronize: vi.fn(),
+  updateSchedule: vi.fn(),
   disconnect: vi.fn(),
 }));
 
@@ -22,10 +23,12 @@ vi.mock("../config/gmail", () => ({
 vi.mock("../services/gmail.service", () => {
   class GmailNotConfiguredError extends Error {}
   class GmailNotConnectedError extends Error {}
+  class GmailQueueUnavailableError extends Error {}
   return {
     gmailService: serviceMock,
     GmailNotConfiguredError,
     GmailNotConnectedError,
+    GmailQueueUnavailableError,
   };
 });
 vi.mock("../services/gmail-update-review.service", () => {
@@ -84,6 +87,17 @@ describe("Gmail API routes", () => {
     expect(response.status).toBe(200);
     expect(response.body).not.toHaveProperty("credentials");
     expect(serviceMock.status).toHaveBeenCalledWith("user-1");
+  });
+
+  it("validates and updates automatic synchronization", async () => {
+    serviceMock.updateSchedule.mockResolvedValue({ automaticSync: { enabled: true, intervalMinutes: 60 } });
+
+    const invalid = await request(app).patch("/api/gmail/schedule").send({ enabled: true, intervalMinutes: 10 });
+    const valid = await request(app).patch("/api/gmail/schedule").send({ enabled: true, intervalMinutes: 60 });
+
+    expect(invalid.status).toBe(400);
+    expect(valid.status).toBe(200);
+    expect(serviceMock.updateSchedule).toHaveBeenCalledWith("user-1", { enabled: true, intervalMinutes: 60 });
   });
 
   it("persists OAuth state and completes a matching callback", async () => {

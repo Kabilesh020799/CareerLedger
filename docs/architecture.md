@@ -14,6 +14,9 @@ Browser
   -> Services
   -> Prisma
   -> PostgreSQL
+
+Redis <- BullMQ scheduler <- Express schedule API
+  -> Gmail worker -> Gmail API -> PostgreSQL
 ```
 
 The frontend and backend are independent TypeScript applications. PostgreSQL is the source of truth. Docker Compose runs PostgreSQL, the Express API, and the Nginx-served frontend.
@@ -44,6 +47,8 @@ Downloads use short-lived signed URLs. Local development can store file bytes in
 ## Gmail synchronization
 
 Google OAuth credentials are encrypted before storage. Manual synchronization fetches message metadata incrementally using Gmail history identifiers and deduplicates by Gmail message ID. Suggested changes remain pending until the user confirms, ignores, or creates an application.
+
+When a user enables automatic synchronization, the API persists the chosen interval and upserts a user-scoped BullMQ scheduler in Redis. A separate worker processes jobs with exponential retry backoff. Each job checks that the database schedule is still enabled before calling the same incremental synchronization service used by manual sync. Redis stores queue state; PostgreSQL remains authoritative for schedule settings, Gmail cursors, messages, and public failure status. API startup reconciles enabled database schedules into Redis after restarts.
 
 ## Production topology
 

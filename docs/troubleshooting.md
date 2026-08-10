@@ -40,6 +40,10 @@ Set CORS on the S3 bucket, not the IAM role. Allow the exact application origin 
 
 The Google OAuth client's authorized redirect URI must exactly match the application callback, including scheme, hostname, port, and path. Public callbacks require HTTPS and normally a domain controlled by the developer. Add test users while the consent screen remains in testing.
 
+## Automatic Gmail synchronization does not run
+
+Check `docker compose ps redis gmail-worker backend`. Verify `REDIS_URL` uses the Compose service hostname (`redis://redis:6379`), inspect worker logs with `docker compose logs gmail-worker`, and confirm Gmail is still connected. The API recreates enabled schedules after restart; a warning on the Gmail page means the worker will retry temporary failures with exponential backoff.
+
 ## Data after restart
 
 Normal `docker compose down` and container recreation preserve the named PostgreSQL volume. Do not use `docker compose down --volumes` unless deleting the database is intentional.

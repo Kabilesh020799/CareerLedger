@@ -39,6 +39,12 @@ describe('Gmail hooks', () => {
       gmailEmail: null,
       lastSyncedAt: null,
       synchronizedMessages: 0,
+      automaticSync: {
+        enabled: false,
+        intervalMinutes: 60,
+        lastAttemptAt: null,
+        lastError: null,
+      },
     })
 
     const { result } = renderHook(useGmailStatus, { wrapper })
