@@ -12,6 +12,8 @@ import { gmailRouter } from "./routes/gmail.routes";
 import { reminderRouter } from "./routes/reminder.routes";
 import { resumeVersionRouter } from "./routes/resume-version.routes";
 import { PrismaSessionStore } from "./services/session-store";
+import swaggerUi from "swagger-ui-express";
+import { openApiDocument } from "./config/openapi";
 
 export function createApp() {
   const app = express();
@@ -42,6 +44,9 @@ export function createApp() {
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok" });
   });
+
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
+  app.get("/api-docs.json", (_req, res) => res.json(openApiDocument));
 
   app.use("/api/auth", authRouter);
   app.use("/api/applications", requireAuth, applicationRouter);
