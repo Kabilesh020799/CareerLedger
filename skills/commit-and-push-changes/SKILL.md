@@ -1,11 +1,11 @@
 ---
 name: commit-and-push-changes
-description: Verify, stage, commit, and push completed Job Application Tracker features and bug fixes with informative Conventional Commit messages and matching release metadata. Use after implementation and definition-of-done checks succeed for any new feature, behavior change, or bug fix, including when finishing, committing, pushing, releasing, or shipping completed work.
+description: Verify and prepare completed Job Application Tracker features and bug fixes with informative Conventional Commit messages and matching release metadata. Use after implementation and definition-of-done checks succeed; always report the changes and request explicit user approval before committing or pushing.
 ---
 
-# Commit and Push Changes
+# Prepare Changes for Approval
 
-Publish completed work without mixing unrelated changes or weakening repository safeguards.
+Prepare completed work without mixing unrelated changes or weakening repository safeguards. Do not commit or push until the user explicitly approves.
 
 ## Workflow
 
@@ -16,9 +16,10 @@ Publish completed work without mixing unrelated changes or weakening repository 
 5. Run the relevant tests, type checks, lint checks, builds, migrations, runtime checks, and release checks required by the affected surface. Run `git diff --check` before staging.
 6. Read [the commit-message policy](references/commit-message-policy.md). Draft a Conventional Commit subject and a body that explains the delivered behavior, important safety or persistence semantics, and planned release version.
 7. Stage explicit task paths. Review `git diff --cached --name-status`, `git diff --cached --stat`, and `git diff --cached --check` before committing. Do not use broad staging when unrelated changes exist.
-8. Create one coherent commit. Do not bypass hooks, amend commits owned by someone else, or commit generated noise that the repository does not track.
-9. Push the current branch to its configured `origin` branch with a normal, non-force push. Never create or push tags; the release workflow owns tags and GitHub Releases.
-10. Confirm the worktree state and, when GitHub CLI is available, confirm the new workflow run. Report the commit SHA, subject, branch, push result, checks, release version, and workflow URL.
+8. Stop and report the changed files, user-visible behavior, checks run, release classification/version, proposed Conventional Commit subject, and whether a push would trigger a release workflow. Ask the user for explicit approval.
+9. Only after explicit approval, create one coherent commit. Do not bypass hooks, amend commits owned by someone else, or commit generated noise that the repository does not track.
+10. After approval, push the current branch to its configured `origin` branch with a normal, non-force push. Never create or push tags; the release workflow owns tags and GitHub Releases.
+11. Confirm the worktree state and, when GitHub CLI is available, confirm the new workflow run. Report the commit SHA, subject, branch, push result, checks, release version, and workflow URL.
 
 ## Stop conditions
 
@@ -27,3 +28,4 @@ Publish completed work without mixing unrelated changes or weakening repository 
 - If the upstream rejects the push, do not force, reset, pull, or rebase automatically. Report the non-fast-forward or permission failure.
 - If a commit succeeds but pushing fails, preserve the local commit and report how it can be retried.
 - An explicit user instruction not to commit or push overrides this skill.
+- “Build”, “implement”, or “finish” does not imply approval to commit or push. Treat only a clear confirmation such as “ok, push it” as approval.
