@@ -206,6 +206,16 @@ After a feature or bug fix satisfies the definition of done, use the documentati
 
 **Specification:** `features/v0.1/gmail_automatic_sync.feature`.
 
+### Browser job capture
+
+**Purpose:** Preserve reviewed job-posting details before the source disappears.
+
+**Expected knowledge:** Manifest V3 permissions, active-tab content extraction, Schema.org `JobPosting`, extension-local storage, hashed bearer tokens, CORS, user-scoped APIs, and snapshot persistence.
+
+**Critical rule:** extracted fields are proposals that must be reviewed before saving; never expose the bearer token to the viewed page, store only its hash, scope capture to its owner, and give capture tokens no read/update/delete access.
+
+**Specification:** `features/v0.1/browser_job_capture.feature`.
+
 ## Roadmap skills
 
 ### Authentication and authorization
@@ -238,9 +248,9 @@ After a feature or bug fix satisfies the definition of done, use the documentati
 
 **Specification:** the LLM fallback scenario in `features/roadmap/gmail_sync.feature`.
 
-### Browser job capture
+### Structured job-posting extraction
 
-**Purpose:** Save job posting details before listings disappear.
+**Purpose:** Retain structured skills, experience, salary, location, and work-mode details when available.
 
 **Expected knowledge:** browser extensions, content scripts, user-confirmed extraction, stable public APIs, job-description storage.
 

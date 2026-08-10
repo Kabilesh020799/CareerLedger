@@ -35,6 +35,14 @@ describe("authentication API boundary", () => {
     expect(response.body).toEqual({ status: "ok" });
   });
 
+  it("allows browser-extension origins without exposing application sessions", async () => {
+    const response = await request(app)
+      .get("/api/health")
+      .set("origin", "chrome-extension://extension-id");
+    expect(response.status).toBe(200);
+    expect(response.headers["access-control-allow-origin"]).toBe("chrome-extension://extension-id");
+  });
+
   it("reports an anonymous session without exposing protected data", async () => {
     const response = await request(app).get("/api/auth/session");
 

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Capture job</title><link rel="stylesheet" href="popup.css"></head>
+  <body>
+    <main>
+      <h1>Capture job posting</h1>
+      <p class="muted">Review every field before saving.</p>
+      <section id="settings">
+        <label>API URL<input id="apiUrl" type="url" placeholder="http://localhost:3000/api"></label>
+        <label>Extension token<input id="token" type="password" autocomplete="off" placeholder="jat_ext_…"></label>
+        <button id="saveSettings" type="button">Save settings</button>
+      </section>
+      <form id="captureForm" hidden>
+        <label>Company<input id="company" required maxlength="200"></label>
+        <label>Job title<input id="jobTitle" required maxlength="200"></label>
+        <label>Location<input id="location" maxlength="200"></label>
+        <label>Original URL<input id="jobUrl" type="url" required></label>
+        <label>Description<textarea id="jobDescription" required maxlength="50000"></textarea></label>
+        <button id="capture" type="submit">Save application</button>
+      </form>
+      <p id="status" role="status" aria-live="polite"></p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

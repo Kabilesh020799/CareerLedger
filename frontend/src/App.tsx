@@ -11,6 +11,7 @@ import { LoginPage } from './pages/LoginPage'
 import { GmailSyncPage } from './pages/GmailSyncPage'
 import { ResumeVersionsPage } from './pages/ResumeVersionsPage'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
+import { BrowserExtensionPage } from './pages/BrowserExtensionPage'
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="board" element={<ApplicationBoardPage />} />
           <Route path="resumes" element={<ResumeVersionsPage />} />
           <Route path="gmail" element={<GmailSyncPage />} />
+          <Route path="browser-extension" element={<BrowserExtensionPage />} />
           <Route path="applications" element={<ApplicationsPage />} />
           <Route path="applications/new" element={<NewApplicationPage />} />
           <Route path="applications/:id" element={<ApplicationDetailsPage />} />

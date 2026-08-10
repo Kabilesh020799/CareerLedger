@@ -7,6 +7,9 @@ declare global {
       name: string | null;
       avatarUrl: string | null;
     }
+    interface Request {
+      extensionUserId?: string;
+    }
   }
 }
 

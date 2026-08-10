@@ -11,6 +11,7 @@ User
 │   ├── ApplicationReminder
 │   ├── ApplicationResume
 │   └── GmailUpdateReview
+├── BrowserExtensionToken
 ├── ResumeVersion ── Application
 └── GmailConnection
     └── GmailMessage
@@ -24,7 +25,7 @@ ResumeObjectDeletion
 
 - `User`: login identity and owner of applications, reusable resume versions, and Gmail data.
 - `Session`: server-side authenticated session with an expiry timestamp.
-- `Application`: company, role, location, URL, source, status, notes, applied date, and optional resume version.
+- `Application`: company, role, location, URL, source, status, notes, applied date, optional resume version, and optional captured job-description snapshot and timestamp.
 - `ApplicationEvent`: chronological note or status transition. Status events record both previous and new status.
 - `ApplicationReminder`: follow-up or deadline with due and completion timestamps.
 - `ApplicationResume`: one uploaded file per application. Stores either legacy database bytes or a private S3 key.
@@ -33,6 +34,7 @@ ResumeObjectDeletion
 - `GmailConnection`: one encrypted Gmail authorization per user, including incremental history state, automatic-sync interval, enablement, last worker attempt, and sanitized retry status.
 - `GmailMessage`: deduplicated reference to a synchronized Gmail message.
 - `GmailUpdateReview`: user-reviewed status suggestion or proposed new application derived from Gmail metadata.
+- `BrowserExtensionToken`: named, expiring, revocable capture access. Stores a SHA-256 token hash and display prefix, never the bearer secret.
 
 Deleting a user cascades through owned records. Deleting an application cascades through its events, reminders, and attachment; linked Gmail reviews retain their review record with the application link cleared where configured.
 

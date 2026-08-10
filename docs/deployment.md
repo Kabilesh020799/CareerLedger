@@ -133,6 +133,8 @@ If deployment fails, correct the instance problem and use **Re-run failed jobs**
 
 ## Operations
 
+The browser extension is distributed separately from Docker. The checked-in Manifest V3 package permits the local API and current CloudFront origin. If the production origin changes, update `extension/manifest.json` `host_permissions`, reload or redistribute the extension, and configure its popup with the new `/api` URL.
+
 Inspect the running stack:
 
 ```bash

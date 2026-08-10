@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Job Application Tracker Capture",
+  "version": "1.0.0",
+  "description": "Review and save the current job posting to Job Application Tracker.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://d2g95c1jos960v.cloudfront.net/*"
+  ],
+  "action": {
+    "default_title": "Capture job posting",
+    "default_popup": "popup.html"
+  }
+}

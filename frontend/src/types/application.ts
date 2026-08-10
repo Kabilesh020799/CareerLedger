@@ -20,6 +20,8 @@ export type Application = {
   source: string | null
   status: ApplicationStatus
   notes: string | null
+  jobDescription?: string | null
+  capturedAt?: string | null
   appliedAt: string | null
   resumeVersionId?: string | null
   resumeVersion?: {

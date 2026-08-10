@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.9.0] - 2026-08-10
+
+### Added
+
+- Added a Manifest V3 browser extension that proposes company, role, location, source URL, and description from the active job posting, requires editable review, and saves a durable application snapshot only after confirmation.
+- Added expiring, revocable, capture-only extension access tokens whose complete secrets are displayed once and stored only as hashes, plus an authenticated web page for token management.
+
 ## [3.8.0] - 2026-08-10
 
 ### Added
@@ -124,7 +131,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.8.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.0...HEAD
+[3.9.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.8.0...v3.9.0
 [3.8.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.7.0...v3.8.0
 [3.7.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.6.0...v3.7.0
 [3.6.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.5.0...v3.6.0

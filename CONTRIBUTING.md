@@ -15,6 +15,7 @@ Keep the applications separate:
 ```text
 React :5173 -> Express :3000 -> Prisma -> PostgreSQL :5432
                          -> BullMQ -> Redis :6379 -> Gmail worker
+Browser extension -> reviewed bearer capture endpoint -> Prisma
 ```
 
 Backend request flow:

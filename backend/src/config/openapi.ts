@@ -18,10 +18,12 @@ export const openApiDocument: OpenAPIV3.Document = {
     { name: "Reminders" },
     { name: "Dashboard" },
     { name: "Gmail" },
+    { name: "Browser Extension" },
   ],
   components: {
     securitySchemes: {
       sessionCookie: { type: "apiKey", in: "cookie", name: "job-tracker-session" },
+      extensionToken: { type: "http", scheme: "bearer", bearerFormat: "Job Tracker extension token" },
     },
     schemas: {
       Application: {
@@ -31,6 +33,7 @@ export const openApiDocument: OpenAPIV3.Document = {
           id: { type: "string" }, company: { type: "string" }, jobTitle: { type: "string" },
           location: { type: "string", nullable: true }, jobUrl: { type: "string", nullable: true },
           source: { type: "string", nullable: true }, notes: { type: "string", nullable: true },
+          jobDescription: { type: "string", nullable: true }, capturedAt: { type: "string", format: "date-time", nullable: true },
           status: { type: "string", enum: ["SAVED", "APPLIED", "SCREENING", "ASSESSMENT", "INTERVIEW", "OFFER", "REJECTED", "WITHDRAWN"] },
           appliedAt: { type: "string", format: "date-time", nullable: true },
           createdAt: { type: "string", format: "date-time" }, updatedAt: { type: "string", format: "date-time" },
@@ -100,6 +103,12 @@ export const openApiDocument: OpenAPIV3.Document = {
     "/api/gmail/reviews": { get: { tags: ["Gmail"], summary: "List pending Gmail update reviews", security: [{ sessionCookie: [] }], responses: { "200": { description: "Pending reviews." } } } },
     "/api/gmail/reviews/{id}": { patch: { tags: ["Gmail"], summary: "Resolve a Gmail update review", description: "Confirms a status update, creates an application, or ignores the suggestion.", security: [{ sessionCookie: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { "200": { description: "Resolved review." }, "409": { description: "Review already resolved." } } } },
     "/api/gmail/connection": { delete: { tags: ["Gmail"], summary: "Disconnect Gmail", description: "Deletes stored Gmail authorization and synchronized references without changing applications.", security: [{ sessionCookie: [] }], responses: { "204": { description: "Gmail disconnected." } } } },
+    "/api/browser-extension/tokens": {
+      get: { tags: ["Browser Extension"], summary: "List active browser-extension tokens", description: "Lists token names, prefixes, use timestamps, and expiry without exposing secret values.", security: [{ sessionCookie: [] }], responses: { "200": { description: "Active tokens." } } },
+      post: { tags: ["Browser Extension"], summary: "Create browser-extension access", description: "Creates a 90-day capture-only bearer token. The complete secret is returned once and only its SHA-256 hash is stored.", security: [{ sessionCookie: [] }], requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["name"], properties: { name: { type: "string", maxLength: 80 } } } } } }, responses: { "201": { description: "Token created and shown once." }, "400": { description: "Invalid token name." } } },
+    },
+    "/api/browser-extension/tokens/{id}": { delete: { tags: ["Browser Extension"], summary: "Revoke browser-extension access", security: [{ sessionCookie: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { "204": { description: "Token revoked." }, "404": { description: "Owned active token not found." } } } },
+    "/api/browser-extension/captures": { post: { tags: ["Browser Extension"], summary: "Save a reviewed job posting", description: "Creates a SAVED application and preserves the reviewed description, source URL, and capture time for the bearer-token owner.", security: [{ extensionToken: [] }], requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["company", "jobTitle", "jobUrl", "jobDescription"], properties: { company: { type: "string", maxLength: 200 }, jobTitle: { type: "string", maxLength: 200 }, location: { type: "string", nullable: true, maxLength: 200 }, jobUrl: { type: "string", format: "uri" }, jobDescription: { type: "string", maxLength: 50000 } } } } } }, responses: { "201": { description: "Captured application." }, "400": { description: "Invalid reviewed posting." }, "401": { description: "Token invalid, expired, or revoked." } } } },
   },
 };
 

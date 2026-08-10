@@ -1,0 +1,14 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+body { margin: 0; width: 380px; background: Canvas; color: CanvasText; }
+main { padding: 18px; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+.muted { color: GrayText; margin: 0 0 16px; }
+section, form { display: grid; gap: 12px; }
+form { margin-top: 18px; }
+label { display: grid; gap: 5px; font-size: 13px; font-weight: 600; }
+input, textarea, button { box-sizing: border-box; font: inherit; width: 100%; }
+input, textarea { border: 1px solid GrayText; border-radius: 7px; padding: 9px; background: Canvas; color: CanvasText; }
+textarea { min-height: 150px; resize: vertical; }
+button { border: 0; border-radius: 7px; cursor: pointer; padding: 10px; background: #6b46c1; color: white; font-weight: 700; }
+button:disabled { cursor: wait; opacity: .65; }
+#status { font-size: 13px; margin-bottom: 0; white-space: pre-wrap; }

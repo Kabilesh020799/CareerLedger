@@ -29,6 +29,10 @@ Background jobs contain only the owning user ID. Redis is private to the Compose
 
 Keep `.env`, PEM files, session secrets, database passwords, OAuth secrets, and deployment keys out of Git. Production uses GitHub environment secrets, an EC2 instance role for S3, and GitHub OIDC for temporary AWS deployment access.
 
+## Browser extension access
+
+Extension tokens are random, expire after 90 days, are displayed once, and are stored only as SHA-256 hashes. They authorize only creation through the reviewed capture endpoint. Tokens remain in extension-local storage and are never passed to page scripts. Revoke a token immediately if the device or token is lost.
+
 ## Operational expectations
 
 - Prefer HTTPS for any public login deployment.

@@ -47,3 +47,15 @@ Check `docker compose ps redis gmail-worker backend`. Verify `REDIS_URL` uses th
 ## Data after restart
 
 Normal `docker compose down` and container recreation preserve the named PostgreSQL volume. Do not use `docker compose down --volumes` unless deleting the database is intentional.
+
+## Extension cannot read a posting
+
+Use a normal HTTP or HTTPS tab rather than browser-internal pages. Reload the tab after installing or updating the unpacked extension. Some publishers omit structured `JobPosting` metadata, so review and complete the proposed fields manually.
+
+## Extension capture returns 401
+
+Create a new token from the application's Extension page and save it in the popup. The previous token may be expired, revoked, mistyped, or associated with a deleted account. Never place the token in page source or browser console output.
+
+## Extension cannot reach a different deployment
+
+Manifest V3 requires API origins in `host_permissions`. Add the deployment's exact origin to `extension/manifest.json`, reload the unpacked extension, and configure the matching `/api` URL in its popup.

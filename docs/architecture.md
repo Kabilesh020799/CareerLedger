@@ -17,6 +17,9 @@ Browser
 
 Redis <- BullMQ scheduler <- Express schedule API
   -> Gmail worker -> Gmail API -> PostgreSQL
+
+Active browser tab -> extension content extraction -> editable popup
+  -> bearer-authenticated capture API -> PostgreSQL
 ```
 
 The frontend and backend are independent TypeScript applications. PostgreSQL is the source of truth. Docker Compose runs PostgreSQL, the Express API, and the Nginx-served frontend.
@@ -53,3 +56,7 @@ When a user enables automatic synchronization, the API persists the chosen inter
 ## Production topology
 
 CloudFront terminates browser HTTPS and forwards traffic to the EC2-hosted frontend proxy. The production Compose network keeps the API and database internal. GitHub Actions publishes versioned images, temporarily permits runner SSH access, deploys the selected version, verifies health, and rolls back on failure.
+
+## Browser capture
+
+The extension content script reads only the active tab after a user action and returns proposed fields to the popup. The popup owns the token and sends a confirmed snapshot directly to the capture API. Session-authenticated web routes create/list/revoke tokens; the capture route accepts only a valid capture token and scopes the new application to its owner.

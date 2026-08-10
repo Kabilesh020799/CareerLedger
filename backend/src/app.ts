@@ -14,13 +14,20 @@ import { resumeVersionRouter } from "./routes/resume-version.routes";
 import { PrismaSessionStore } from "./services/session-store";
 import swaggerUi from "swagger-ui-express";
 import { generatedOpenApiDocument } from "./config/openapi";
+import { browserExtensionRouter } from "./routes/browser-extension.routes";
 
 export function createApp() {
   const app = express();
 
   if (authConfig.isProduction) app.set("trust proxy", 1);
 
-  app.use(cors({ origin: authConfig.frontendUrl, credentials: true }));
+  app.use(cors({
+    origin(origin, callback) {
+      const allowed = !origin || origin === authConfig.frontendUrl || /^(chrome|moz)-extension:\/\//.test(origin);
+      callback(allowed ? null : new Error("Origin is not allowed"), allowed);
+    },
+    credentials: true,
+  }));
   app.use(helmet());
   app.use(express.json());
   app.use(
@@ -49,6 +56,7 @@ export function createApp() {
   app.get("/api-docs.json", (_req, res) => res.json(generatedOpenApiDocument));
 
   app.use("/api/auth", authRouter);
+  app.use("/api/browser-extension", browserExtensionRouter);
   app.use("/api/applications", requireAuth, applicationRouter);
   app.use("/api/dashboard", requireAuth, dashboardRouter);
   app.use("/api/gmail", requireAuth, gmailRouter);

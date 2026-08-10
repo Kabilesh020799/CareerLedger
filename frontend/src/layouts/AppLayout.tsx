@@ -11,6 +11,7 @@ const navigation = [
   { label: 'Board', to: '/board' },
   { label: 'Resumes', to: '/resumes' },
   { label: 'Gmail', to: '/gmail' },
+  { label: 'Extension', to: '/browser-extension' },
   { label: 'Dashboard', to: '/dashboard' },
 ]
 

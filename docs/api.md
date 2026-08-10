@@ -11,3 +11,5 @@ The OpenAPI document describes endpoint purpose, session authentication, path/qu
 Shared schemas and security definitions live in `backend/src/config/openapi.ts`. Endpoint-specific Swagger JSDoc belongs next to the matching Express route. `swagger-jsdoc` merges both sources at runtime.
 
 When an API changes, update the route JSDoc, shared schema, validator, controller/service behavior, Supertest coverage, README API overview, and affected Gherkin scenario in the same change.
+
+Browser capture uses the `extensionToken` bearer scheme instead of the session cookie. Token management remains session-authenticated, and the complete bearer value is returned only by token creation.

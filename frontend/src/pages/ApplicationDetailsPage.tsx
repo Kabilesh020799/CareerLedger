@@ -101,10 +101,12 @@ export function ApplicationDetailsPage() {
             {application.jobUrl ? <a href={application.jobUrl} target="_blank" rel="noreferrer">Open job posting</a> : 'Not provided'}
           </Detail>
           <Detail label="Created">{formatDate(application.createdAt)}</Detail>
+          {application.capturedAt && <Detail label="Captured">{formatDate(application.capturedAt)}</Detail>}
         </SimpleGrid>
         <Box borderTopWidth="1px" mt="8" pt="6">
           <Detail label="Notes">{application.notes ?? 'No notes added.'}</Detail>
         </Box>
+        {application.jobDescription && <Box borderTopWidth="1px" mt="8" pt="6"><Detail label="Captured job description"><Text whiteSpace="pre-wrap">{application.jobDescription}</Text></Detail></Box>}
       </Box>
 
       <ApplicationReminders applicationId={application.id} />

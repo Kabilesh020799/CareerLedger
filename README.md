@@ -47,6 +47,7 @@ docker compose down --volumes
 - Create reusable resume versions and compare their application outcomes.
 - Review dashboard pipeline, source, resume, and milestone analytics.
 - Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates.
+- Capture job postings from a Manifest V3 browser extension, review extracted details, and preserve the original URL, description snapshot, and capture date with revocable user-scoped access.
 - Switch between light and dark themes.
 - Keep applications, Gmail data, resumes, reminders, and analytics scoped to the signed-in user.
 
@@ -97,6 +98,7 @@ All application, resume, reminder, dashboard, and Gmail data endpoints require a
 | Reminders | `GET /api/reminders`, `GET /api/reminders/suggestions`, `POST /api/reminders/suggestions/:id`, `PATCH/DELETE /api/reminders/:id` |
 | Dashboard | `GET /api/dashboard/summary` |
 | Gmail | `GET /api/gmail/status`, `GET /api/gmail/connect`, `POST /api/gmail/sync`, `PATCH /api/gmail/schedule`, `GET /api/gmail/reviews`, `PATCH /api/gmail/reviews/:id`, `DELETE /api/gmail/connection` |
+| Browser extension | `GET/POST /api/browser-extension/tokens`, `DELETE /api/browser-extension/tokens/:id`, `POST /api/browser-extension/captures` |
 
 ## Development
 
@@ -158,3 +160,4 @@ Read [docs/deployment.md](docs/deployment.md) before configuring a new instance.
 - [Database model](docs/database.md)
 - [Security and privacy](docs/security.md)
 - [Troubleshooting](docs/troubleshooting.md)
+- [Browser extension setup and security](docs/browser-extension.md)

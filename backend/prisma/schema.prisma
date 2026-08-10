@@ -49,6 +49,8 @@ model Application {
   source             String?
   status             ApplicationStatus     @default(SAVED)
   notes              String?
+  jobDescription     String?
+  capturedAt         DateTime?
   appliedAt          DateTime?
   userId             String?
   user               User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -68,6 +70,21 @@ model Application {
   @@index([userId, status])
   @@index([userId, updatedAt])
   @@index([resumeVersionId])
+}
+
+model BrowserExtensionToken {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  tokenHash   String    @unique
+  tokenPrefix String
+  lastUsedAt  DateTime?
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, createdAt])
 }
 
 model ApplicationResume {
@@ -149,8 +166,9 @@ model User {
   gmailConnection    GmailConnection?
   gmailUpdateReviews GmailUpdateReview[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  browserExtensionTokens BrowserExtensionToken[]
 }
 
 model GmailConnection {

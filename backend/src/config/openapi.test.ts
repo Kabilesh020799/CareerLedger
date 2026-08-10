@@ -17,6 +17,8 @@ const documentedOperations = [
   ["/api/gmail/sync", "post"], ["/api/gmail/reviews", "get"], ["/api/gmail/reviews/{id}", "patch"],
   ["/api/gmail/schedule", "patch"],
   ["/api/gmail/connection", "delete"],
+  ["/api/browser-extension/tokens", "get"], ["/api/browser-extension/tokens", "post"],
+  ["/api/browser-extension/tokens/{id}", "delete"], ["/api/browser-extension/captures", "post"],
 ] as const;
 
 describe("OpenAPI documentation", () => {
