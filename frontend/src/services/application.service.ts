@@ -12,6 +12,7 @@ import type {
   ResumeDownloadPreparation,
 } from '../types/application'
 
+/** Converts application fields and a resume into a legacy multipart request. */
 function applicationFormData(
   input: CreateApplicationInput | UpdateApplicationInput,
   resume: File,
@@ -24,6 +25,7 @@ function applicationFormData(
   return formData
 }
 
+/** Requests direct-upload permission or selects database fallback storage. */
 async function prepareResumeUpload(resume: File) {
   const response = await api.post<ResumeUploadPreparation>(
     '/applications/resume-uploads',
@@ -121,6 +123,7 @@ async function updateWithResume(
   }
 }
 
+/** Application API operations used by the frontend query and mutation hooks. */
 export const applicationService = {
   async list() {
     const response = await api.get<Application[]>('/applications')

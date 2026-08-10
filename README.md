@@ -98,7 +98,7 @@ All application, resume, reminder, dashboard, and Gmail data endpoints require a
 
 ## Development
 
-Interactive backend API documentation: [Swagger UI](http://localhost:3000/api-docs) (available while the backend is running). The machine-readable OpenAPI document is available at [openapi.json](http://localhost:3000/api-docs.json).
+Interactive backend API documentation: [Swagger UI](http://localhost:3000/api-docs/) (available while the backend is running). The machine-readable OpenAPI document is available at [openapi.json](http://localhost:3000/api-docs.json). See the [API documentation guide](docs/api.md) for maintenance and authentication details.
 
 Run PostgreSQL through Docker and start the applications separately:
 
@@ -151,3 +151,8 @@ Read [docs/deployment.md](docs/deployment.md) before configuring a new instance.
 - [Roadmap specifications](features/roadmap)
 - [Development standards](docs/standards)
 - [Production deployment guide](docs/deployment.md)
+- [Backend API and Swagger guide](docs/api.md)
+- [Architecture](docs/architecture.md)
+- [Database model](docs/database.md)
+- [Security and privacy](docs/security.md)
+- [Troubleshooting](docs/troubleshooting.md)

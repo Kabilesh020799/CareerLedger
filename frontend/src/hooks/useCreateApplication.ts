@@ -4,6 +4,7 @@ import { applicationQueryKeys } from './applicationQueryKeys'
 import { dashboardQueryKeys } from './dashboardQueryKeys'
 import type { CreateApplicationRequest } from '../types/application'
 
+/** Creates an application and refreshes application and dashboard queries on success. */
 export function useCreateApplication() {
   const queryClient = useQueryClient()
 

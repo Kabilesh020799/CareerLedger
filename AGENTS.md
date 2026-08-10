@@ -85,6 +85,8 @@ Update Gherkin whenever a task changes observable behavior:
 
 Update the root `README.md` whenever a feature adds or changes user-visible behavior. Create it if it does not exist, list only behavior that is implemented and usable, and describe the feature in user-facing language rather than internal architecture terms. Do not present roadmap scenarios as available features.
 
+Before finalizing any feature or bug fix, follow [`skills/update-project-documentation/SKILL.md`](skills/update-project-documentation/SKILL.md). Review the API, architecture, database, security, deployment, troubleshooting, contributor, Gherkin, README, environment, and JSDoc surfaces identified by its checklist, and update every affected document.
+
 ## Verification
 
 Run checks proportionate to the changed surface:

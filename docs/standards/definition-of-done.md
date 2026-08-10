@@ -12,6 +12,8 @@ A feature is complete only when all applicable conditions are satisfied:
 - Runtime behavior is exercised when infrastructure or database integration changes.
 - Database changes include a reviewed and applied Prisma migration.
 - Setup or environment documentation is updated when required.
+- API, architecture, database, security, deployment, and troubleshooting documentation has been reviewed and updated where the change affects it.
+- Exported interfaces and non-obvious logic have concise JSDoc where it materially helps contributors.
 - No secrets or sensitive data are committed or exposed in logs.
 - No unrelated roadmap capability is introduced.
 - Deferred scenarios remain clearly identified as roadmap work.

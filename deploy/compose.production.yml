@@ -25,6 +25,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PORT: 3000
       NODE_ENV: production
+      APP_VERSION: ${IMAGE_TAG}
       SEED_DEMO_DATA: "false"
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
       ENABLE_PASSWORD_LOGIN: "true"

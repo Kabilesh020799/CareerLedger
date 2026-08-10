@@ -11,13 +11,14 @@ Every feature change must follow these focused guides:
 - [Definition of done](docs/standards/definition-of-done.md)
 - [Frontend UI standard](docs/standards/frontend-ui.md)
 - [Release versioning skill](skills/update-release-version/SKILL.md)
+- [Documentation update skill](skills/update-project-documentation/SKILL.md)
 - [Commit and push skill](skills/commit-and-push-changes/SKILL.md)
 
 Write or update the feature specification before implementation, add unit tests with changed logic, and document delivered user-visible features in the root `README.md` before reporting a feature complete. Create the root README when the first feature needs to be documented. Describe only implemented behavior; keep roadmap features out of the user-facing feature list.
 
 Use the release-version skill to classify SemVer and maintain the matching categorized section in `CHANGELOG.md`; GitHub Releases publish that section verbatim.
 
-After a feature or bug fix satisfies the definition of done, use the commit-and-push skill to stage only task-owned files, write a behavior-focused Conventional Commit with release information, and push the current branch without force.
+After a feature or bug fix satisfies the definition of done, use the documentation skill, classify the release, and use the commit-and-push skill to prepare a change report. Commit and push only after explicit user approval.
 
 ## Core skills for V0.1
 

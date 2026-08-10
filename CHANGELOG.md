@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.8.0] - 2026-08-10
+
+### Added
+
+- Added complete interactive Swagger documentation for the authenticated application, resume, timeline, reminder, dashboard, and Gmail APIs, including endpoint purposes, inputs, authentication, and response meanings.
+- Added maintained architecture, database, security, troubleshooting, and API references for contributors and operators.
+
+### Changed
+
+- Changed the feature completion workflow to review and update every affected project document before requesting approval to release.
+
 ## [3.7.0] - 2026-08-10
 
 ### Added
@@ -112,7 +123,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.7.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.8.0...HEAD
+[3.8.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.7.0...v3.8.0
 [3.7.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.6.0...v3.7.0
 [3.6.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.5.0...v3.6.0
 [3.5.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.4.0...v3.5.0

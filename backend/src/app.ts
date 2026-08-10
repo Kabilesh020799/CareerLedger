@@ -13,7 +13,7 @@ import { reminderRouter } from "./routes/reminder.routes";
 import { resumeVersionRouter } from "./routes/resume-version.routes";
 import { PrismaSessionStore } from "./services/session-store";
 import swaggerUi from "swagger-ui-express";
-import { openApiDocument } from "./config/openapi";
+import { generatedOpenApiDocument } from "./config/openapi";
 
 export function createApp() {
   const app = express();
@@ -45,8 +45,8 @@ export function createApp() {
     res.json({ status: "ok" });
   });
 
-  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
-  app.get("/api-docs.json", (_req, res) => res.json(openApiDocument));
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(generatedOpenApiDocument));
+  app.get("/api-docs.json", (_req, res) => res.json(generatedOpenApiDocument));
 
   app.use("/api/auth", authRouter);
   app.use("/api/applications", requireAuth, applicationRouter);
