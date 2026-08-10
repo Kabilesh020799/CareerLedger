@@ -36,6 +36,18 @@ Feature: Attach a resume to an application
     Then the browser should download the stored document
     And the download should use the role and company filename
 
+  Scenario: Replace an attached resume while editing an application
+    Given I created an application with a resume
+    When I edit the application and attach a different valid PDF resume
+    Then the application should be updated
+    And the new resume should replace the previous document
+    And its filename should use the edited role and company
+
+  Scenario: Edit an application without replacing its resume
+    Given I created an application with a resume
+    When I edit the application without selecting another resume
+    Then the existing resume should remain attached
+
   Scenario: An application has no attached resume
     Given I created an application without a resume
     When I request the application's resume

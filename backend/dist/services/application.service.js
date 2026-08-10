@@ -89,7 +89,7 @@ exports.applicationService = {
             include: applicationInclude,
         });
     },
-    async update(userId, id, data) {
+    async update(userId, id, data, resume) {
         return prisma_1.prisma.$transaction(async (transaction) => {
             const existing = await transaction.application.findFirst({
                 where: { id, userId },
@@ -106,7 +106,19 @@ exports.applicationService = {
             }
             const application = await transaction.application.update({
                 where: { id },
-                data,
+                data: {
+                    ...data,
+                    ...(resume
+                        ? {
+                            resumeAttachment: {
+                                upsert: {
+                                    create: (0, application_resume_service_1.applicationResumeCreateData)(data.jobTitle ?? existing.jobTitle, data.company ?? existing.company, resume),
+                                    update: (0, application_resume_service_1.applicationResumeCreateData)(data.jobTitle ?? existing.jobTitle, data.company ?? existing.company, resume),
+                                },
+                            },
+                        }
+                        : {}),
+                },
                 include: applicationInclude,
             });
             if (data.status && data.status !== existing.status) {

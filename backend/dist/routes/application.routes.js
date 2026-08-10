@@ -16,5 +16,5 @@ exports.applicationRouter.get("/:id/reminders", reminder_controller_1.reminderCo
 exports.applicationRouter.post("/:id/reminders", reminder_controller_1.reminderController.create);
 exports.applicationRouter.get("/:id/resume", application_controller_1.applicationController.downloadResume);
 exports.applicationRouter.get("/:id", application_controller_1.applicationController.getById);
-exports.applicationRouter.patch("/:id", application_controller_1.applicationController.update);
+exports.applicationRouter.patch("/:id", application_resume_upload_1.uploadApplicationResume, application_controller_1.applicationController.update);
 exports.applicationRouter.delete("/:id", application_controller_1.applicationController.remove);

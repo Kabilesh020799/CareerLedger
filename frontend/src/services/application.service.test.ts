@@ -98,6 +98,22 @@ describe('applicationService', () => {
     expect(api.delete).toHaveBeenCalledWith('/applications/application-1')
   })
 
+  it('updates an application with a multipart replacement resume', async () => {
+    vi.mocked(api.patch).mockResolvedValue({ data: application })
+    const input = { company: 'Acme Labs', jobTitle: 'Senior Engineer' }
+    const resume = new File(['replacement'], 'replacement.pdf', {
+      type: 'application/pdf',
+    })
+
+    await applicationService.update(application.id, input, resume)
+
+    const requestBody = vi.mocked(api.patch).mock.calls[0][1]
+    expect(requestBody).toBeInstanceOf(FormData)
+    expect((requestBody as FormData).get('company')).toBe('Acme Labs')
+    expect((requestBody as FormData).get('jobTitle')).toBe('Senior Engineer')
+    expect((requestBody as FormData).get('resume')).toBe(resume)
+  })
+
   it('lists and creates application timeline events', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: [event] })
     vi.mocked(api.post).mockResolvedValue({ data: event })

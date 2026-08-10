@@ -66,12 +66,22 @@ describe('application mutation hooks', () => {
 
   it('refreshes the list and detail cache after an update', async () => {
     vi.mocked(applicationService.update).mockResolvedValue({ ...application, status: 'INTERVIEW' })
+    const resume = new File(['%PDF-1.7'], 'replacement.pdf', { type: 'application/pdf' })
     const { queryClient, wrapper, invalidate } = setup()
     const setData = vi.spyOn(queryClient, 'setQueryData')
     const { result } = renderHook(useUpdateApplication, { wrapper })
 
-    await act(() => result.current.mutateAsync({ id: application.id, input: { status: 'INTERVIEW' } }))
+    await act(() => result.current.mutateAsync({
+      id: application.id,
+      input: { status: 'INTERVIEW' },
+      resume,
+    }))
 
+    expect(applicationService.update).toHaveBeenCalledWith(
+      application.id,
+      { status: 'INTERVIEW' },
+      resume,
+    )
     expect(setData).toHaveBeenCalledWith(['applications', application.id], expect.objectContaining({ status: 'INTERVIEW' }))
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications'] })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications', application.id, 'events'] })

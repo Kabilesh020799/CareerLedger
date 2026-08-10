@@ -77,7 +77,12 @@ exports.applicationController = {
         const parsed = application_validator_1.updateApplicationSchema.safeParse(req.body);
         if (!parsed.success)
             return validationError(res, parsed.error.flatten());
-        const application = await application_service_1.applicationService.update(getUserId(req), getId(req), parsed.data);
+        const resume = (0, application_resume_validator_1.validateApplicationResume)(req.file);
+        if (!resume.success) {
+            res.status(400).json({ error: resume.error });
+            return;
+        }
+        const application = await application_service_1.applicationService.update(getUserId(req), getId(req), parsed.data, resume.data);
         if (application === false) {
             res.status(400).json({ error: "Resume version not found" });
             return;

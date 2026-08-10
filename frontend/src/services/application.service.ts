@@ -9,7 +9,10 @@ import type {
   UpdateApplicationInput,
 } from '../types/application'
 
-function applicationFormData(input: CreateApplicationInput, resume: File) {
+function applicationFormData(
+  input: CreateApplicationInput | UpdateApplicationInput,
+  resume: File,
+) {
   const formData = new FormData()
   for (const [key, value] of Object.entries(input)) {
     if (value !== null && value !== undefined) formData.append(key, String(value))
@@ -44,8 +47,11 @@ export const applicationService = {
     return response.data
   },
 
-  async update(id: string, input: UpdateApplicationInput) {
-    const response = await api.patch<Application>(`/applications/${id}`, input)
+  async update(id: string, input: UpdateApplicationInput, resume?: File) {
+    const response = await api.patch<Application>(
+      `/applications/${id}`,
+      resume ? applicationFormData(input, resume) : input,
+    )
     return response.data
   },
 

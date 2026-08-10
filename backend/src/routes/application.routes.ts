@@ -15,5 +15,9 @@ applicationRouter.get("/:id/reminders", reminderController.listForApplication);
 applicationRouter.post("/:id/reminders", reminderController.create);
 applicationRouter.get("/:id/resume", applicationController.downloadResume);
 applicationRouter.get("/:id", applicationController.getById);
-applicationRouter.patch("/:id", applicationController.update);
+applicationRouter.patch(
+  "/:id",
+  uploadApplicationResume,
+  applicationController.update,
+);
 applicationRouter.delete("/:id", applicationController.remove);

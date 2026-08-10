@@ -8,14 +8,15 @@ import type { UpdateApplicationInput } from '../types/application'
 type UpdateApplicationVariables = {
   id: string
   input: UpdateApplicationInput
+  resume?: File
 }
 
 export function useUpdateApplication() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, input }: UpdateApplicationVariables) =>
-      applicationService.update(id, input),
+    mutationFn: ({ id, input, resume }: UpdateApplicationVariables) =>
+      applicationService.update(id, input, resume),
     onSuccess: (application) => {
       queryClient.setQueryData(applicationQueryKeys.detail(application.id), application)
       return Promise.all([

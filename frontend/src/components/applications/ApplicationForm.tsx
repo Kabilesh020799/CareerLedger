@@ -14,6 +14,7 @@ type ApplicationFormProps = {
   isSubmitting: boolean
   serverError?: string
   allowResumeAttachment?: boolean
+  currentResumeFileName?: string
   onSubmit: (values: ApplicationFormValues) => Promise<void>
 }
 
@@ -34,6 +35,7 @@ export function ApplicationForm({
   isSubmitting,
   serverError,
   allowResumeAttachment = false,
+  currentResumeFileName,
   onSubmit,
 }: ApplicationFormProps) {
   const resumeVersions = useResumeVersions()
@@ -118,7 +120,15 @@ export function ApplicationForm({
       </FormField>
 
       {allowResumeAttachment && (
-        <FormField label="Attach resume" error={errors.resume?.message}>
+        <FormField
+          label={currentResumeFileName ? 'Replace resume' : 'Attach resume'}
+          error={errors.resume?.message}
+        >
+          {currentResumeFileName && (
+            <Text color="fg.muted" fontSize="sm">
+              Current file: {currentResumeFileName}
+            </Text>
+          )}
           <Input
             {...register('resume')}
             accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -126,7 +136,7 @@ export function ApplicationForm({
             type="file"
           />
           <Text color="fg.muted" fontSize="sm">
-            PDF, DOC, or DOCX up to 5 MB. The saved file is renamed to Role_Company.
+            PDF, DOC, or DOCX up to 5 MB. Selecting a file {currentResumeFileName ? 'replaces the current resume and ' : ''}saves it as Role_Company.
           </Text>
         </FormField>
       )}

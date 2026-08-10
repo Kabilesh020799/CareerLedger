@@ -106,6 +106,45 @@ describe("application resume routes", () => {
     );
   });
 
+  it("updates an application with a replacement PDF resume", async () => {
+    const content = Buffer.from("%PDF-1.7\nreplacement resume");
+    applicationServiceMock.update.mockResolvedValue({
+      id: "application-1",
+      company: "Acme Labs",
+      jobTitle: "Senior Engineer",
+      resumeAttachment: {
+        fileName: "Senior_Engineer_Acme_Labs.pdf",
+        mimeType: "application/pdf",
+        size: content.length,
+      },
+    });
+
+    const response = await request(app)
+      .patch("/api/applications/application-1")
+      .field("company", "Acme Labs")
+      .field("jobTitle", "Senior Engineer")
+      .attach("resume", content, {
+        filename: "new resume.pdf",
+        contentType: "application/pdf",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.resumeAttachment.fileName).toBe(
+      "Senior_Engineer_Acme_Labs.pdf",
+    );
+    expect(applicationServiceMock.update).toHaveBeenCalledWith(
+      "user-1",
+      "application-1",
+      { company: "Acme Labs", jobTitle: "Senior Engineer" },
+      {
+        content,
+        extension: ".pdf",
+        mimeType: "application/pdf",
+        size: content.length,
+      },
+    );
+  });
+
   it("rejects unsupported, inconsistent, and oversized attachments", async () => {
     const unsupported = await request(app)
       .post("/api/applications")

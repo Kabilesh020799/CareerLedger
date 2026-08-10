@@ -280,6 +280,54 @@ describe("application ownership", () => {
     });
   });
 
+  it("replaces an attached resume using the edited role and company", async () => {
+    const content = Buffer.from("%PDF-1.7\nreplacement");
+    transactionMock.application.findFirst.mockResolvedValue({
+      id: "application-1",
+      company: "Acme Corp",
+      jobTitle: "Engineer",
+      status: "APPLIED",
+    });
+    transactionMock.application.update.mockResolvedValue({
+      id: "application-1",
+      company: "Acme Labs",
+      jobTitle: "Senior Engineer",
+    });
+
+    await applicationService.update(
+      "user-1",
+      "application-1",
+      { company: "Acme Labs", jobTitle: "Senior Engineer" },
+      {
+        content,
+        extension: ".pdf",
+        mimeType: "application/pdf",
+        size: content.length,
+      },
+    );
+
+    const storedResume = {
+      fileName: "Senior_Engineer_Acme_Labs.pdf",
+      mimeType: "application/pdf",
+      size: content.length,
+      content: Uint8Array.from(content),
+    };
+    expect(transactionMock.application.update).toHaveBeenCalledWith({
+      where: { id: "application-1" },
+      data: {
+        company: "Acme Labs",
+        jobTitle: "Senior Engineer",
+        resumeAttachment: {
+          upsert: {
+            create: storedResume,
+            update: storedResume,
+          },
+        },
+      },
+      include: applicationInclude,
+    });
+  });
+
   it("rejects an inaccessible resume version when updating", async () => {
     transactionMock.application.findFirst.mockResolvedValue({
       id: "application-1",

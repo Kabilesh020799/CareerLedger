@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApplicationForm } from '../components/applications/ApplicationForm'
 import { useApplication } from '../hooks/useApplication'
 import { useUpdateApplication } from '../hooks/useUpdateApplication'
-import { applicationFormToInput, applicationToFormValues } from '../schemas/application.schema'
+import { applicationFormResume, applicationFormToInput, applicationToFormValues } from '../schemas/application.schema'
 import { getApiErrorMessage } from '../utils/apiError'
 
 export function EditApplicationPage() {
@@ -40,8 +40,14 @@ export function EditApplicationPage() {
           submitLabel="Save changes"
           isSubmitting={updateApplication.isPending}
           serverError={updateApplication.isError ? getApiErrorMessage(updateApplication.error, 'Please try again.') : undefined}
+          allowResumeAttachment
+          currentResumeFileName={application.resumeAttachment?.fileName}
           onSubmit={async (values) => {
-            await updateApplication.mutateAsync({ id, input: applicationFormToInput(values) })
+            await updateApplication.mutateAsync({
+              id,
+              input: applicationFormToInput(values),
+              resume: applicationFormResume(values),
+            })
             navigate(`/applications/${id}`)
           }}
         />
