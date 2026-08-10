@@ -8,4 +8,11 @@ export const browserExtensionRouter = Router();
 browserExtensionRouter.get("/tokens", requireAuth, browserExtensionController.listTokens);
 browserExtensionRouter.post("/tokens", requireAuth, browserExtensionController.createToken);
 browserExtensionRouter.delete("/tokens/:id", requireAuth, browserExtensionController.revokeToken);
+/**
+ * @swagger
+ * /api/browser-extension/captures:
+ *   post:
+ *     summary: Save a reviewed job posting and its structured requirements
+ *     tags: [Browser Extension]
+ */
 browserExtensionRouter.post("/captures", requireExtensionAuth, browserExtensionController.capture);

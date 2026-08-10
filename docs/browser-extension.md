@@ -1,6 +1,6 @@
 # Browser extension
 
-The Manifest V3 extension in `extension/` proposes company, job title, location, source URL, and description from the active job-posting tab. Nothing is saved until the user reviews and confirms the editable form.
+The Manifest V3 extension in `extension/` proposes company, job title, location, source URL, description, skills, experience requirements, salary range, currency, salary period, and remote/hybrid/on-site work mode from the active job-posting tab. Nothing is saved until the user reviews and confirms the editable form.
 
 ## Install locally
 
@@ -16,9 +16,9 @@ For local Docker, use `http://localhost:3000/api`. The included manifest also pe
 
 ## Extraction behavior
 
-The content script first looks for Schema.org `JobPosting` JSON-LD, then common semantic page fields and headings. Publisher markup varies, so extracted values are proposals rather than trusted data. The user must supply any missing required field and can correct all values.
+The content script first looks for Schema.org `JobPosting` JSON-LD, then common semantic page fields and headings. It reads structured skills, qualifications, experience requirements, base salary, one or more locations, and explicit telecommute metadata when publishers provide them. Work mode can also be inferred from clear remote, hybrid, or on-site wording. Publisher markup varies, so extracted values are proposals rather than trusted data. The user must supply any missing required field and can correct all values.
 
-Confirmed captures create a `SAVED` application with source `Browser extension`, the original URL, a description snapshot, and the server capture timestamp. Structured skills, salary, experience, and work-mode extraction remain roadmap work.
+Confirmed captures create a `SAVED` application with source `Browser extension`, the reviewed structured fields, original URL, description snapshot, and server capture timestamp. Salary is retained as optional minimum/maximum numeric values, a three-letter currency, and an hour/day/week/month/year period.
 
 ## Security
 

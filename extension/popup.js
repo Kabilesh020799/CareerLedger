@@ -1,4 +1,4 @@
-const fields = ['company', 'jobTitle', 'location', 'jobUrl', 'jobDescription']
+const fields = ['company', 'jobTitle', 'location', 'jobUrl', 'experienceRequirements', 'salaryMin', 'salaryMax', 'salaryCurrency', 'salaryPeriod', 'workMode', 'jobDescription']
 const status = document.querySelector('#status')
 const form = document.querySelector('#captureForm')
 const emptyState = document.querySelector('#emptyState')
@@ -31,9 +31,10 @@ async function extractPosting() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (!tab?.id) throw new Error('No active tab')
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] })
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['extraction.js', 'content.js'] })
     const result = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_JOB' })
     for (const field of fields) document.querySelector(`#${field}`).value = result?.[field] || ''
+    document.querySelector('#skills').value = (result?.skills || []).join(', ')
     form.hidden = false
     emptyState.hidden = true
     showStatus('Page details loaded. Check the required fields before saving.', 'success')
@@ -67,7 +68,11 @@ form.addEventListener('submit', async (event) => {
   showStatus('Saving application…')
   try {
     const { apiUrl, token } = await chrome.storage.local.get(['apiUrl', 'token'])
-    const payload = Object.fromEntries(fields.map((field) => [field, document.querySelector(`#${field}`).value.trim() || null]))
+    const payload = Object.fromEntries(fields.map((field) => {
+      const value = document.querySelector(`#${field}`).value.trim()
+      return [field, ['salaryMin', 'salaryMax'].includes(field) && value ? Number(value) : value || null]
+    }))
+    payload.skills = document.querySelector('#skills').value.split(/[,;\n]+/).map((skill) => skill.trim()).filter(Boolean)
     const response = await fetch(`${String(apiUrl).replace(/\/$/, '')}/browser-extension/captures`, {
       method: 'POST',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },

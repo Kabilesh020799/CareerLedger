@@ -41,10 +41,14 @@ describe("browserExtensionService", () => {
     prismaMock.application.create.mockResolvedValue({ id: "application-1" });
     await browserExtensionService.capture("user-1", {
       company: "Acme", jobTitle: "Engineer", location: "Halifax", jobUrl: "https://jobs.example/1", jobDescription: "Build useful software",
+      skills: ["TypeScript", "TypeScript", "PostgreSQL"], experienceRequirements: "3+ years", salaryMin: 90000,
+      salaryMax: 120000, salaryCurrency: "CAD", salaryPeriod: "YEAR", workMode: "HYBRID",
     }, new Date("2026-08-10T12:00:00Z"));
 
     expect(prismaMock.application.create).toHaveBeenCalledWith({ data: expect.objectContaining({
       userId: "user-1", company: "Acme", status: "SAVED", source: "Browser extension", capturedAt: new Date("2026-08-10T12:00:00Z"),
+      skills: ["TypeScript", "PostgreSQL"], experienceRequirements: "3+ years", salaryMin: 90000,
+      salaryMax: 120000, salaryCurrency: "CAD", salaryPeriod: "YEAR", workMode: "HYBRID",
     }) });
   });
 });

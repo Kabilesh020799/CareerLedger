@@ -60,6 +60,25 @@
           <label for="jobUrl">Original URL <span aria-hidden="true">*</span></label>
           <input id="jobUrl" type="url" required spellcheck="false">
 
+          <label for="skills">Skills</label>
+          <textarea id="skills" maxlength="5000" placeholder="TypeScript, React, PostgreSQL"></textarea>
+
+          <label for="experienceRequirements">Experience requirements</label>
+          <textarea id="experienceRequirements" maxlength="5000"></textarea>
+
+          <div class="inline-fields">
+            <div><label for="salaryMin">Salary minimum</label><input id="salaryMin" type="number" min="0" step="any"></div>
+            <div><label for="salaryMax">Salary maximum</label><input id="salaryMax" type="number" min="0" step="any"></div>
+          </div>
+
+          <div class="inline-fields">
+            <div><label for="salaryCurrency">Currency</label><input id="salaryCurrency" maxlength="3" placeholder="USD"></div>
+            <div><label for="salaryPeriod">Salary period</label><select id="salaryPeriod"><option value="">Not provided</option><option>HOUR</option><option>DAY</option><option>WEEK</option><option>MONTH</option><option>YEAR</option></select></div>
+          </div>
+
+          <label for="workMode">Work mode</label>
+          <select id="workMode"><option value="">Not provided</option><option value="REMOTE">Remote</option><option value="HYBRID">Hybrid</option><option value="ONSITE">On-site</option></select>
+
           <label for="jobDescription">Description <span aria-hidden="true">*</span></label>
           <textarea id="jobDescription" required maxlength="50000"></textarea>
         </div>

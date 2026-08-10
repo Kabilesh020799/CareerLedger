@@ -205,6 +205,14 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           RESUME_BUCKET: ${{ vars.RESUME_BUCKET }}
           APPLICATION_AWS_REGION: ${{ vars.AWS_REGION }}
+          VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ vars.VAPID_SUBJECT }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM: ${{ vars.SMTP_FROM }}
         run: |
           case "$PRODUCTION_URL" in
             http://*)
@@ -241,6 +249,14 @@ jobs:
             printf 'AWS_REGION=%s\n' "$APPLICATION_AWS_REGION"
             printf 'RESUME_BUCKET=%s\n' "$RESUME_BUCKET"
             printf 'RESUME_UPLOAD_EXPIRES_SECONDS=300\n'
+            printf 'VAPID_PUBLIC_KEY=%s\n' "$VAPID_PUBLIC_KEY"
+            printf 'VAPID_PRIVATE_KEY=%s\n' "$VAPID_PRIVATE_KEY"
+            printf 'VAPID_SUBJECT=%s\n' "$VAPID_SUBJECT"
+            printf 'SMTP_HOST=%s\n' "$SMTP_HOST"
+            printf 'SMTP_PORT=%s\n' "${SMTP_PORT:-587}"
+            printf 'SMTP_USER=%s\n' "$SMTP_USER"
+            printf 'SMTP_PASSWORD=%s\n' "$SMTP_PASSWORD"
+            printf 'SMTP_FROM=%s\n' "$SMTP_FROM"
           } | ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "umask 077; cat > /opt/job-application-tracker/.auth.env"
 
       - name: Authenticate instance to GHCR
@@ -274,11 +290,19 @@ jobs:
           PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
           RESUME_BUCKET: ${{ vars.RESUME_BUCKET }}
           PARAMETER_PREFIX: ${{ vars.DEPLOY_PARAMETER_PREFIX }}
+          VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ vars.VAPID_SUBJECT }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM: ${{ vars.SMTP_FROM }}
         run: |
           token_parameter="${PARAMETER_PREFIX}/${GITHUB_RUN_ID}/ghcr"
           auth_parameter="${PARAMETER_PREFIX}/${GITHUB_RUN_ID}/auth"
-          auth_content="$(printf 'FRONTEND_URL=%s\nCOOKIE_SECURE=true\nGOOGLE_CLIENT_ID=%s\nGOOGLE_CLIENT_SECRET=%s\nGMAIL_CALLBACK_URL=%s/api/gmail/callback\nAWS_REGION=%s\nRESUME_BUCKET=%s\nRESUME_UPLOAD_EXPIRES_SECONDS=300\n' \
-            "${PRODUCTION_URL%/}" "$GOOGLE_CLIENT_ID" "$GOOGLE_CLIENT_SECRET" "${PRODUCTION_URL%/}" "${{ vars.AWS_REGION }}" "$RESUME_BUCKET")"
+          auth_content="$(printf 'FRONTEND_URL=%s\nCOOKIE_SECURE=true\nGOOGLE_CLIENT_ID=%s\nGOOGLE_CLIENT_SECRET=%s\nGMAIL_CALLBACK_URL=%s/api/gmail/callback\nAWS_REGION=%s\nRESUME_BUCKET=%s\nRESUME_UPLOAD_EXPIRES_SECONDS=300\nVAPID_PUBLIC_KEY=%s\nVAPID_PRIVATE_KEY=%s\nVAPID_SUBJECT=%s\nSMTP_HOST=%s\nSMTP_PORT=%s\nSMTP_USER=%s\nSMTP_PASSWORD=%s\nSMTP_FROM=%s\n' \
+            "${PRODUCTION_URL%/}" "$GOOGLE_CLIENT_ID" "$GOOGLE_CLIENT_SECRET" "${PRODUCTION_URL%/}" "${{ vars.AWS_REGION }}" "$RESUME_BUCKET" "$VAPID_PUBLIC_KEY" "$VAPID_PRIVATE_KEY" "$VAPID_SUBJECT" "$SMTP_HOST" "${SMTP_PORT:-587}" "$SMTP_USER" "$SMTP_PASSWORD" "$SMTP_FROM")"
           aws ssm put-parameter --name "$token_parameter" --type SecureString --value "$GHCR_TOKEN" --overwrite >/dev/null
           aws ssm put-parameter --name "$auth_parameter" --type SecureString --value "$auth_content" --overwrite >/dev/null
           echo "token_parameter=$token_parameter" >> "$GITHUB_OUTPUT"

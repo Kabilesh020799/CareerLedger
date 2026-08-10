@@ -50,6 +50,14 @@ GMAIL_CALLBACK_URL=$application_url/api/gmail/callback
 AWS_REGION=$aws_region
 RESUME_BUCKET=$resume_bucket
 RESUME_UPLOAD_EXPIRES_SECONDS=300
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:admin@example.com
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM=
 EOF
 
 APP_DIR="$app_dir" SKIP_IMAGE_PULL=true "$app_dir/deploy-production.sh" "$image_tag"

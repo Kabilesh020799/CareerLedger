@@ -1,0 +1,71 @@
+import { expect, test, type Page } from '@playwright/test'
+
+async function signIn(page: Page) {
+  await page.goto('/applications')
+  await expect(page).toHaveURL(/\/login$/)
+  await page.getByLabel('Username').fill('demo')
+  await page.getByLabel('Password').fill('JobTrackerDemo123!')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(/\/applications$/)
+}
+
+test('sign in, create, open, edit, and delete an application, then sign out', async ({ page }) => {
+  const suffix = Date.now()
+  const company = `Critical workflow ${suffix}`
+  await signIn(page)
+
+  await page.getByRole('link', { name: 'Add application' }).click()
+  await page.getByLabel('Company').fill(company)
+  await page.getByLabel('Job title').fill('Reliability Engineer')
+  await page.getByLabel('Location').fill('Halifax, NS')
+  await page.getByLabel('Status').selectOption('APPLIED')
+  await page.getByRole('button', { name: 'Create application' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Reliability Engineer' })).toBeVisible()
+  await expect(page.getByText(company, { exact: true })).toBeVisible()
+  const applicationUrl = page.url()
+
+  await page.getByRole('link', { name: 'Applications', exact: true }).click()
+  await page.getByLabel('Search').fill(company)
+  await page.getByRole('button', { name: 'Apply filters' }).click()
+  await page.getByRole('row').filter({ hasText: company }).getByRole('link', { name: 'View' }).click()
+  await expect(page).toHaveURL(applicationUrl)
+
+  await page.getByRole('link', { name: 'Edit' }).click()
+  await page.getByLabel('Job title').fill('Senior Reliability Engineer')
+  await page.getByLabel('Status').selectOption('INTERVIEW')
+  await page.getByRole('button', { name: 'Save changes' }).click()
+  await expect(page.getByRole('heading', { name: 'Senior Reliability Engineer' })).toBeVisible()
+  await expect(page.getByText('Status changed from APPLIED to INTERVIEW')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Delete', exact: true }).click()
+  await page.getByRole('button', { name: 'Delete application' }).click()
+  await expect(page).toHaveURL(/\/applications$/)
+  await expect(page.getByText(company, { exact: true })).not.toBeVisible()
+
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await expect(page).toHaveURL(/\/login$/)
+  await page.goto('/dashboard')
+  await expect(page).toHaveURL(/\/login$/)
+})
+
+test('shows validation without creating an incomplete application', async ({ page }) => {
+  await signIn(page)
+  await page.getByRole('link', { name: 'Add application' }).click()
+  await page.getByRole('button', { name: 'Create application' }).click()
+  await expect(page.getByText('Company is required')).toBeVisible()
+  await expect(page.getByText('Job title is required')).toBeVisible()
+  await expect(page).toHaveURL(/\/applications\/new$/)
+})
+
+test('shows notification delivery capabilities from the authenticated API', async ({ page }) => {
+  await signIn(page)
+  await page.getByRole('link', { name: 'Notifications' }).click()
+  await expect(page.getByRole('heading', { name: 'Notifications' })).toBeVisible()
+  await expect(page.getByText(/configure SMTP/)).toBeVisible()
+  await expect(page.getByText(/configured VAPID keys/)).toBeVisible()
+  const enableButtons = page.getByRole('button', { name: 'Enable' })
+  await expect(enableButtons).toHaveCount(2)
+  await expect(enableButtons.first()).toBeDisabled()
+  await expect(enableButtons.last()).toBeDisabled()
+})

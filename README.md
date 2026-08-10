@@ -40,6 +40,7 @@ docker compose down --volumes
 - Create, search, filter, sort, edit, and delete applications.
 - Use a responsive table and status board across phone, tablet, and desktop layouts.
 - Track application timelines, notes, status changes, follow-ups, and deadlines.
+- Receive due follow-ups and deadlines through opt-in email or browser push notifications with automatic retry.
 - Upload, replace, download, and review private PDF, DOC, and DOCX resumes up to 5 MB.
 - Review all uploaded resumes on the Resumes page with application details and private view links.
 - Store new production resume bytes in private S3 using short-lived browser permissions and the EC2 instance role.
@@ -47,7 +48,7 @@ docker compose down --volumes
 - Create reusable resume versions and compare their application outcomes.
 - Review dashboard pipeline, source, resume, and milestone analytics.
 - Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates, including common application acknowledgements such as “Thank you for your application.”
-- Capture job postings from a clean light/dark Manifest V3 extension workflow, review or refresh extracted details, and preserve the original URL, description snapshot, and capture date with revocable user-scoped access.
+- Capture job postings from a clean light/dark Manifest V3 extension workflow, review or refresh extracted details, and preserve skills, experience requirements, salary, location, work mode, original URL, description, and capture date with revocable user-scoped access.
 - Switch between light and dark themes.
 - Keep applications, Gmail data, resumes, reminders, and analytics scoped to the signed-in user.
 
@@ -83,6 +84,8 @@ Local callbacks may use `http://localhost:3000/api/gmail/callback`. Public OAuth
 
 Automatic Gmail synchronization uses Redis and a separate BullMQ worker. Docker Compose configures both automatically. When running services separately, set `REDIS_URL=redis://localhost:6379`, build the backend, and run `npm run start:worker`.
 
+Reminder delivery is optional. Generate Web Push credentials with `npx web-push generate-vapid-keys`, then configure `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and a `VAPID_SUBJECT` such as `mailto:admin@example.com`. Email delivery requires `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`, and provider credentials in `SMTP_USER` and `SMTP_PASSWORD` when required. The Notifications page shows unavailable channels until their server configuration is complete.
+
 ## API overview
 
 All application, resume, reminder, dashboard, and Gmail data endpoints require an authenticated session and enforce ownership.
@@ -96,6 +99,7 @@ All application, resume, reminder, dashboard, and Gmail data endpoints require a
 | Resume versions | `GET/POST /api/resumes`, `PATCH/DELETE /api/resumes/:id` |
 | Timeline | `GET/POST /api/applications/:id/events` |
 | Reminders | `GET /api/reminders`, `GET /api/reminders/suggestions`, `POST /api/reminders/suggestions/:id`, `PATCH/DELETE /api/reminders/:id` |
+| Notifications | `GET/PATCH /api/notifications/settings`, `POST/DELETE /api/notifications/subscriptions` |
 | Dashboard | `GET /api/dashboard/summary` |
 | Gmail | `GET /api/gmail/status`, `GET /api/gmail/connect`, `POST /api/gmail/sync`, `PATCH /api/gmail/schedule`, `GET /api/gmail/reviews`, `PATCH /api/gmail/reviews/:id`, `DELETE /api/gmail/connection` |
 | Browser extension | `GET/POST /api/browser-extension/tokens`, `DELETE /api/browser-extension/tokens/:id`, `POST /api/browser-extension/captures` |
@@ -132,6 +136,16 @@ Run the standard checks:
 cd backend && npm test && npm run typecheck && npm run build
 cd ../frontend && npm test && npm run lint && npm run build
 ```
+
+Run the critical browser workflows with PostgreSQL available at the backend `DATABASE_URL`:
+
+```bash
+cd frontend
+npx playwright install chromium
+npm run test:e2e
+```
+
+Playwright migrates and seeds the test database, starts the backend and frontend on ports `3001` and `4173`, and covers login/logout, application CRUD and validation, board/timeline/reminder workflows, resume versions, dashboards, notification capabilities, themes, and responsive layouts. Pull-request verification runs this suite against isolated PostgreSQL and uploads traces, screenshots, videos, and the HTML report after failures.
 
 ## Production deployment
 

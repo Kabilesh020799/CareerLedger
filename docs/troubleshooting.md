@@ -67,3 +67,9 @@ Create a new token from the application's Extension page and save it in the popu
 ## Extension cannot reach a different deployment
 
 Manifest V3 requires API origins in `host_permissions`. Add the deployment's exact origin to `extension/manifest.json`, reload the unpacked extension, and configure the matching `/api` URL in its popup.
+
+## Notification channel is unavailable
+
+Email requires both `SMTP_HOST` and `SMTP_FROM`; authenticated providers also require `SMTP_USER` and `SMTP_PASSWORD`. Browser push requires a matching `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`. Restart the API and worker after changing environment values.
+
+Browser push requires HTTPS except on localhost. If permission was denied, restore notification permission in the browser's site settings and enable the channel again. Changing VAPID keys invalidates existing subscriptions, so disable and re-enable browser push after a key rotation.

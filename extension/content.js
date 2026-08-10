@@ -27,15 +27,13 @@
   const posting = jobPostingJsonLd()
   const company = posting?.hiringOrganization?.name || text('[data-company-name]') || text('.company-name') || document.querySelector('meta[property="og:site_name"]')?.content || ''
   const jobTitle = posting?.title || text('h1') || document.title.split(/[|–—-]/)[0].trim()
-  const address = posting?.jobLocation?.address
-  const jobLocation = typeof posting?.jobLocation === 'string'
-    ? posting.jobLocation
-    : [address?.addressLocality, address?.addressRegion, address?.addressCountry].filter(Boolean).join(', ') || text('[data-job-location]') || text('.job-location')
   const description = cleanHtml(posting?.description) || text('[data-job-description]') || text('.job-description') || text('main')
+  const structured = globalThis.JobTrackerExtraction.extractStructuredFields(posting, description)
+  const jobLocation = structured.location || text('[data-job-location]') || text('.job-location')
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.type === 'EXTRACT_JOB') {
-      sendResponse({ company, jobTitle, location: jobLocation, jobUrl: window.location.href, jobDescription: description.slice(0, 50000) })
+      sendResponse({ company, jobTitle, ...structured, location: jobLocation, jobUrl: window.location.href, jobDescription: description.slice(0, 50000) })
     }
   })
 })()

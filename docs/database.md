@@ -12,6 +12,8 @@ User
 │   ├── ApplicationResume
 │   └── GmailUpdateReview
 ├── BrowserExtensionToken
+├── NotificationPreference
+├── PushSubscription
 ├── ResumeVersion ── Application
 └── GmailConnection
     └── GmailMessage
@@ -25,7 +27,7 @@ ResumeObjectDeletion
 
 - `User`: login identity and owner of applications, reusable resume versions, and Gmail data.
 - `Session`: server-side authenticated session with an expiry timestamp.
-- `Application`: company, role, location, URL, source, status, notes, applied date, optional resume version, and optional captured job-description snapshot and timestamp.
+- `Application`: company, role, location, URL, source, status, notes, applied date, optional resume version, and an optional captured posting snapshot. Structured capture fields include a skills list, experience requirements, salary minimum/maximum/currency/period, and `REMOTE`, `HYBRID`, or `ONSITE` work mode.
 - `ApplicationEvent`: chronological note or status transition. Status events record both previous and new status.
 - `ApplicationReminder`: follow-up or deadline with due and completion timestamps.
 - `ApplicationResume`: one uploaded file per application. Stores either legacy database bytes or a private S3 key.
@@ -35,6 +37,9 @@ ResumeObjectDeletion
 - `GmailMessage`: deduplicated reference to a synchronized Gmail message.
 - `GmailUpdateReview`: user-reviewed status suggestion or proposed new application derived from Gmail metadata.
 - `BrowserExtensionToken`: named, expiring, revocable capture access. Stores a SHA-256 token hash and display prefix, never the bearer secret.
+- `NotificationPreference`: one user-owned choice of email and browser-push reminder channels.
+- `PushSubscription`: user-owned browser push endpoint and encryption keys. A user can register multiple browsers.
+- `ReminderDelivery`: successful per-reminder, per-channel delivery marker used to prevent repeat notifications.
 
 Deleting a user cascades through owned records. Deleting an application cascades through its events, reminders, and attachment; linked Gmail reviews retain their review record with the application link cleared where configured.
 

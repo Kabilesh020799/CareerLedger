@@ -13,3 +13,7 @@ Shared schemas and security definitions live in `backend/src/config/openapi.ts`.
 When an API changes, update the route JSDoc, shared schema, validator, controller/service behavior, Supertest coverage, README API overview, and affected Gherkin scenario in the same change.
 
 Browser capture uses the `extensionToken` bearer scheme instead of the session cookie. Token management remains session-authenticated, and the complete bearer value is returned only by token creation.
+
+The capture request accepts reviewed posting fields plus optional structured `skills`, `experienceRequirements`, salary range/currency/period, and `REMOTE`, `HYBRID`, or `ONSITE` work mode. The interactive schema and validation limits are available in Swagger at `/api-docs`.
+
+Notification endpoints use the authenticated session. Settings report whether SMTP and Web Push are available without returning secrets. Subscription endpoints register or remove only the current user's browser endpoint. Complete request shapes are documented in Swagger at `/api-docs`.

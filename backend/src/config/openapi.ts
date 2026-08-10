@@ -19,6 +19,7 @@ export const openApiDocument: OpenAPIV3.Document = {
     { name: "Dashboard" },
     { name: "Gmail" },
     { name: "Browser Extension" },
+    { name: "Notifications" },
   ],
   components: {
     securitySchemes: {
@@ -34,6 +35,10 @@ export const openApiDocument: OpenAPIV3.Document = {
           location: { type: "string", nullable: true }, jobUrl: { type: "string", nullable: true },
           source: { type: "string", nullable: true }, notes: { type: "string", nullable: true },
           jobDescription: { type: "string", nullable: true }, capturedAt: { type: "string", format: "date-time", nullable: true },
+          skills: { type: "array", items: { type: "string" } }, experienceRequirements: { type: "string", nullable: true },
+          salaryMin: { type: "number", nullable: true }, salaryMax: { type: "number", nullable: true },
+          salaryCurrency: { type: "string", nullable: true }, salaryPeriod: { type: "string", enum: ["HOUR", "DAY", "WEEK", "MONTH", "YEAR"], nullable: true },
+          workMode: { type: "string", enum: ["REMOTE", "HYBRID", "ONSITE"], nullable: true },
           status: { type: "string", enum: ["SAVED", "APPLIED", "SCREENING", "ASSESSMENT", "INTERVIEW", "OFFER", "REJECTED", "WITHDRAWN"] },
           appliedAt: { type: "string", format: "date-time", nullable: true },
           createdAt: { type: "string", format: "date-time" }, updatedAt: { type: "string", format: "date-time" },
@@ -55,6 +60,7 @@ export const openApiDocument: OpenAPIV3.Document = {
       Reminder: { type: "object", properties: { id: { type: "string" }, applicationId: { type: "string" }, type: { type: "string", enum: ["FOLLOW_UP", "DEADLINE"] }, description: { type: "string" }, dueAt: { type: "string", format: "date-time" }, completedAt: { type: "string", format: "date-time", nullable: true } } },
       ResumeVersion: { type: "object", properties: { id: { type: "string" }, name: { type: "string" }, notes: { type: "string", nullable: true }, createdAt: { type: "string", format: "date-time" }, updatedAt: { type: "string", format: "date-time" } } },
       GmailStatus: { type: "object", required: ["configured", "connected", "synchronizedMessages", "automaticSync"], properties: { configured: { type: "boolean" }, connected: { type: "boolean" }, gmailEmail: { type: "string", nullable: true }, lastSyncedAt: { type: "string", format: "date-time", nullable: true }, synchronizedMessages: { type: "integer" }, automaticSync: { type: "object", required: ["enabled", "intervalMinutes"], properties: { enabled: { type: "boolean" }, intervalMinutes: { type: "integer", enum: [15, 30, 60, 180, 360, 720, 1440] }, lastAttemptAt: { type: "string", format: "date-time", nullable: true }, lastError: { type: "string", nullable: true } } } } },
+      NotificationSettings: { type: "object", required: ["emailEnabled", "browserPushEnabled", "emailAvailable", "browserPushAvailable", "browserSubscribed"], properties: { emailEnabled: { type: "boolean" }, browserPushEnabled: { type: "boolean" }, emailAvailable: { type: "boolean" }, browserPushAvailable: { type: "boolean" }, browserSubscribed: { type: "boolean" }, vapidPublicKey: { type: "string", nullable: true } } },
       Error: { type: "object", properties: { error: { type: "string" } } },
     },
   },
@@ -108,7 +114,15 @@ export const openApiDocument: OpenAPIV3.Document = {
       post: { tags: ["Browser Extension"], summary: "Create browser-extension access", description: "Creates a 90-day capture-only bearer token. The complete secret is returned once and only its SHA-256 hash is stored.", security: [{ sessionCookie: [] }], requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["name"], properties: { name: { type: "string", maxLength: 80 } } } } } }, responses: { "201": { description: "Token created and shown once." }, "400": { description: "Invalid token name." } } },
     },
     "/api/browser-extension/tokens/{id}": { delete: { tags: ["Browser Extension"], summary: "Revoke browser-extension access", security: [{ sessionCookie: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { "204": { description: "Token revoked." }, "404": { description: "Owned active token not found." } } } },
-    "/api/browser-extension/captures": { post: { tags: ["Browser Extension"], summary: "Save a reviewed job posting", description: "Creates a SAVED application and preserves the reviewed description, source URL, and capture time for the bearer-token owner.", security: [{ extensionToken: [] }], requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["company", "jobTitle", "jobUrl", "jobDescription"], properties: { company: { type: "string", maxLength: 200 }, jobTitle: { type: "string", maxLength: 200 }, location: { type: "string", nullable: true, maxLength: 200 }, jobUrl: { type: "string", format: "uri" }, jobDescription: { type: "string", maxLength: 50000 } } } } } }, responses: { "201": { description: "Captured application." }, "400": { description: "Invalid reviewed posting." }, "401": { description: "Token invalid, expired, or revoked." } } } },
+    "/api/browser-extension/captures": { post: { tags: ["Browser Extension"], summary: "Save a reviewed job posting", description: "Creates a SAVED application and preserves reviewed posting details, including skills, experience, salary, location, work mode, description, source URL, and capture time.", security: [{ extensionToken: [] }], requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["company", "jobTitle", "jobUrl", "jobDescription"], properties: { company: { type: "string", maxLength: 200 }, jobTitle: { type: "string", maxLength: 200 }, location: { type: "string", nullable: true, maxLength: 200 }, jobUrl: { type: "string", format: "uri" }, jobDescription: { type: "string", maxLength: 50000 }, skills: { type: "array", maxItems: 50, items: { type: "string", maxLength: 100 } }, experienceRequirements: { type: "string", nullable: true, maxLength: 5000 }, salaryMin: { type: "number", minimum: 0, nullable: true }, salaryMax: { type: "number", minimum: 0, nullable: true }, salaryCurrency: { type: "string", pattern: "^[A-Z]{3}$", nullable: true }, salaryPeriod: { type: "string", enum: ["HOUR", "DAY", "WEEK", "MONTH", "YEAR"], nullable: true }, workMode: { type: "string", enum: ["REMOTE", "HYBRID", "ONSITE"], nullable: true } } } } } }, responses: { "201": { description: "Captured application with structured posting fields." }, "400": { description: "Invalid reviewed posting or salary range." }, "401": { description: "Token invalid, expired, or revoked." } } } },
+    "/api/notifications/settings": {
+      get: { tags: ["Notifications"], summary: "Get reminder notification settings", description: "Returns the signed-in user's enabled channels and server delivery capabilities.", security: [{ sessionCookie: [] }], responses: { "200": { description: "Notification settings.", content: { "application/json": { schema: { $ref: "#/components/schemas/NotificationSettings" } } } } } },
+      patch: { tags: ["Notifications"], summary: "Choose reminder notification channels", security: [{ sessionCookie: [] }], requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["emailEnabled", "browserPushEnabled"], properties: { emailEnabled: { type: "boolean" }, browserPushEnabled: { type: "boolean" } } } } } }, responses: { "200": { description: "Updated settings." }, "400": { description: "Invalid preferences." } } },
+    },
+    "/api/notifications/subscriptions": {
+      post: { tags: ["Notifications"], summary: "Register this browser for Web Push", security: [{ sessionCookie: [] }], responses: { "204": { description: "Subscription registered." }, "400": { description: "Invalid subscription." } } },
+      delete: { tags: ["Notifications"], summary: "Remove this browser's Web Push subscription", security: [{ sessionCookie: [] }], responses: { "204": { description: "Subscription removed." } } },
+    },
   },
 };
 

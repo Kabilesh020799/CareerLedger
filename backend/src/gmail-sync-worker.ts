@@ -7,6 +7,8 @@ import {
   gmailSyncQueueName,
   type GmailSyncJobData,
 } from "./services/gmail-sync-queue.service";
+import { notificationJobName, notificationQueueName } from "./services/notification-queue.service";
+import { notificationService } from "./services/notification.service";
 
 const worker = new Worker<GmailSyncJobData>(
   gmailSyncQueueName,
@@ -18,12 +20,24 @@ const worker = new Worker<GmailSyncJobData>(
   { connection: createRedisConnection(), concurrency: 2 },
 );
 
+const notificationWorker = new Worker(
+  notificationQueueName,
+  async (job) => {
+    if (job.name === notificationJobName) await notificationService.deliverDueReminders();
+  },
+  { connection: createRedisConnection(), concurrency: 1 },
+);
+
 worker.on("failed", (job) => {
   console.error(`Gmail synchronization job ${job?.id ?? "unknown"} failed`);
+});
+notificationWorker.on("failed", (job) => {
+  console.error(`Reminder notification job ${job?.id ?? "unknown"} failed`);
 });
 
 async function shutdown() {
   await worker.close();
+  await notificationWorker.close();
   await prisma.$disconnect();
   process.exit(0);
 }
@@ -31,4 +45,4 @@ async function shutdown() {
 process.on("SIGINT", () => void shutdown());
 process.on("SIGTERM", () => void shutdown());
 
-console.log("Gmail synchronization worker running");
+console.log("Background workers running");

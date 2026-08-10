@@ -39,6 +39,10 @@ Greenfield production does not open SSH. GitHub Actions uses OIDC to send an SSM
 
 Extension tokens are random, expire after 90 days, are displayed once, and are stored only as SHA-256 hashes. They authorize only creation through the reviewed capture endpoint. Tokens remain in extension-local storage and are never passed to page scripts. Revoke a token immediately if the device or token is lost.
 
+## Notification delivery
+
+Notification preferences and Web Push subscriptions are scoped to the authenticated user. Push endpoints and encryption keys are operational credentials and are never returned through another user's API. VAPID private keys and SMTP passwords belong in local environment files or protected GitHub environment secrets, never source control. Browser push requires HTTPS outside localhost. Notification payloads contain the reminder description, company, role, and application path, so users should avoid sensitive reminder text on shared devices.
+
 ## Operational expectations
 
 - Prefer HTTPS for any public login deployment.

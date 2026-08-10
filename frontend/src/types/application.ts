@@ -11,6 +11,9 @@ export const applicationStatuses = [
 
 export type ApplicationStatus = (typeof applicationStatuses)[number]
 
+/** Work arrangement extracted from a captured job posting. */
+export type WorkMode = 'REMOTE' | 'HYBRID' | 'ONSITE'
+
 export type Application = {
   id: string
   company: string
@@ -21,6 +24,13 @@ export type Application = {
   status: ApplicationStatus
   notes: string | null
   jobDescription?: string | null
+  skills?: string[]
+  experienceRequirements?: string | null
+  salaryMin?: number | null
+  salaryMax?: number | null
+  salaryCurrency?: string | null
+  salaryPeriod?: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH' | 'YEAR' | null
+  workMode?: WorkMode | null
   capturedAt?: string | null
   appliedAt: string | null
   resumeVersionId?: string | null

@@ -167,6 +167,8 @@ Feature specifications live at the repository root because they describe behavio
 
 The intended tools are Vitest and React Testing Library for frontend tests, Vitest or Jest with Supertest for backend tests, and Playwright for end-to-end tests.
 
+Critical browser journeys live in `frontend/e2e`. With the test PostgreSQL database available, run `cd frontend && npm run test:e2e`; Playwright applies migrations, seeds deterministic demo records, and starts its own API and Vite servers. Keep workers at one unless test-data isolation is redesigned, create unique mutable records, and clean them up in the scenario. CI retains Playwright traces, screenshots, videos, and its HTML report when a browser test fails.
+
 At minimum, run the checks currently available:
 
 ```bash

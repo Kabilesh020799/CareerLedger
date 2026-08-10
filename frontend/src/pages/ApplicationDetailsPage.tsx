@@ -14,6 +14,15 @@ function formatDate(value: string | null) {
   return new Intl.DateTimeFormat('en-CA', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(value))
 }
 
+function formatSalary(min?: number | null, max?: number | null, currency?: string | null, period?: string | null) {
+  if (min == null && max == null) return 'Not provided'
+  const formatter = new Intl.NumberFormat('en-CA', currency ? { style: 'currency', currency, maximumFractionDigits: 2 } : { maximumFractionDigits: 2 })
+  const amount = min != null && max != null && min !== max
+    ? `${formatter.format(min)} – ${formatter.format(max)}`
+    : formatter.format(min ?? max ?? 0)
+  return period ? `${amount} per ${period.toLowerCase()}` : amount
+}
+
 export function ApplicationDetailsPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -72,6 +81,8 @@ export function ApplicationDetailsPage() {
           <Detail label="Status"><StatusBadge status={application.status} /></Detail>
           <Detail label="Applied date">{formatDate(application.appliedAt)}</Detail>
           <Detail label="Location">{application.location ?? 'Not provided'}</Detail>
+          <Detail label="Work mode">{application.workMode ? application.workMode === 'ONSITE' ? 'On-site' : application.workMode[0] + application.workMode.slice(1).toLowerCase() : 'Not provided'}</Detail>
+          <Detail label="Salary">{formatSalary(application.salaryMin, application.salaryMax, application.salaryCurrency, application.salaryPeriod)}</Detail>
           <Detail label="Source">{application.source ?? 'Not provided'}</Detail>
           <Detail label="Resume version">{application.resumeVersion?.name ?? 'Not provided'}</Detail>
           <Detail label="Attached resume">
@@ -103,6 +114,12 @@ export function ApplicationDetailsPage() {
           <Detail label="Created">{formatDate(application.createdAt)}</Detail>
           {application.capturedAt && <Detail label="Captured">{formatDate(application.capturedAt)}</Detail>}
         </SimpleGrid>
+        <Box borderTopWidth="1px" mt="8" pt="6">
+          <SimpleGrid columns={{ base: 1, md: 2 }} gap="7">
+            <Detail label="Skills">{application.skills?.length ? application.skills.join(', ') : 'Not provided'}</Detail>
+            <Detail label="Experience requirements">{application.experienceRequirements ?? 'Not provided'}</Detail>
+          </SimpleGrid>
+        </Box>
         <Box borderTopWidth="1px" mt="8" pt="6">
           <Detail label="Notes">{application.notes ?? 'No notes added.'}</Detail>
         </Box>

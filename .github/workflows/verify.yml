@@ -12,6 +12,20 @@ jobs:
   verify:
     name: Verify application
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: jobtracker
+          POSTGRES_PASSWORD: jobtracker_dev
+          POSTGRES_DB: jobtracker_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jobtracker -d jobtracker_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
@@ -49,6 +63,29 @@ jobs:
           npm test
           npm run lint
           npm run build
+
+      - name: Install browser test runtime
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify critical browser workflows
+        working-directory: frontend
+        env:
+          DATABASE_URL: postgresql://jobtracker:jobtracker_dev@127.0.0.1:5432/jobtracker_test
+          SESSION_SECRET: browser-test-session-secret-with-32-characters
+          SEED_DEMO_DATA: "true"
+        run: npm run test:e2e
+
+      - name: Upload browser failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Verify deployment automation
         run: |

@@ -40,26 +40,44 @@ enum GmailUpdateReviewStatus {
   IGNORED
 }
 
+enum WorkMode {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum NotificationChannel {
+  EMAIL
+  WEB_PUSH
+}
+
 model Application {
-  id                 String                @id @default(cuid())
-  company            String
-  jobTitle           String
-  location           String?
-  jobUrl             String?
-  source             String?
-  status             ApplicationStatus     @default(SAVED)
-  notes              String?
-  jobDescription     String?
-  capturedAt         DateTime?
-  appliedAt          DateTime?
-  userId             String?
-  user               User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resumeVersionId    String?
-  resumeVersion      ResumeVersion?        @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
-  resumeAttachment   ApplicationResume?
-  events             ApplicationEvent[]
-  reminders          ApplicationReminder[]
-  gmailUpdateReviews GmailUpdateReview[]
+  id                     String                @id @default(cuid())
+  company                String
+  jobTitle               String
+  location               String?
+  jobUrl                 String?
+  source                 String?
+  status                 ApplicationStatus     @default(SAVED)
+  notes                  String?
+  jobDescription         String?
+  skills                 String[]              @default([])
+  experienceRequirements String?
+  salaryMin              Float?
+  salaryMax              Float?
+  salaryCurrency         String?
+  salaryPeriod           String?
+  workMode               WorkMode?
+  capturedAt             DateTime?
+  appliedAt              DateTime?
+  userId                 String?
+  user                   User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeVersionId        String?
+  resumeVersion          ResumeVersion?        @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
+  resumeAttachment       ApplicationResume?
+  events                 ApplicationEvent[]
+  reminders              ApplicationReminder[]
+  gmailUpdateReviews     GmailUpdateReview[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -124,15 +142,16 @@ model ResumeVersion {
 }
 
 model ApplicationReminder {
-  id            String       @id @default(cuid())
+  id            String             @id @default(cuid())
   applicationId String
-  application   Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  application   Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   type          ReminderType
   description   String
   dueAt         DateTime
   completedAt   DateTime?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  deliveries    ReminderDelivery[]
 
   @@index([applicationId, dueAt])
   @@index([completedAt, dueAt])
@@ -169,6 +188,41 @@ model User {
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
   browserExtensionTokens BrowserExtensionToken[]
+  notificationPreference NotificationPreference?
+  pushSubscriptions      PushSubscription[]
+}
+
+model NotificationPreference {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailEnabled       Boolean  @default(false)
+  browserPushEnabled Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model ReminderDelivery {
+  id         String              @id @default(cuid())
+  reminderId String
+  reminder   ApplicationReminder @relation(fields: [reminderId], references: [id], onDelete: Cascade)
+  channel    NotificationChannel
+  sentAt     DateTime            @default(now())
+
+  @@unique([reminderId, channel])
 }
 
 model GmailConnection {

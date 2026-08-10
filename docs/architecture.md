@@ -59,7 +59,11 @@ CloudFront terminates browser HTTPS and forwards traffic to the EC2-hosted front
 
 ## Browser capture
 
-The extension content script reads only the active tab after a user action and returns proposed fields to the popup. The popup owns the token and sends a confirmed snapshot directly to the capture API. Session-authenticated web routes create/list/revoke tokens; the capture route accepts only a valid capture token and scopes the new application to its owner.
+The extension content script reads only the active tab after a user action and extracts Schema.org posting metadata plus conservative page fallbacks. It returns proposed core fields and structured skills, experience, salary, location, and work mode to the popup. The popup owns the token and sends only the user-confirmed snapshot directly to the capture API. Session-authenticated web routes create/list/revoke tokens; the capture route validates the structured values, accepts only a valid capture token, and scopes the new application to its owner.
+
+## Reminder delivery
+
+The Notifications page stores user-scoped channel preferences and registers browser subscriptions through the authenticated API. The existing BullMQ worker runs a minute-based due-reminder job with exponential retry. It sends enabled channels through SMTP or Web Push and records successful `(reminder, channel)` deliveries in PostgreSQL so later scans do not resend them. Expired browser subscriptions are removed when their push provider returns 404 or 410.
 
 ## Production provisioning and deployment
 

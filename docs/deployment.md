@@ -56,6 +56,9 @@ Add environment secrets:
 | `DEPLOY_KNOWN_HOSTS` | Verified SSH known-hosts line |
 | `GOOGLE_CLIENT_ID` | Optional Google web OAuth client ID used for Gmail connection |
 | `GOOGLE_CLIENT_SECRET` | Optional Google web OAuth client secret used for Gmail connection |
+| `VAPID_PRIVATE_KEY` | Web Push private key generated with its matching public key |
+| `SMTP_USER` | Optional SMTP login username |
+| `SMTP_PASSWORD` | Optional SMTP login password |
 
 Add environment variables:
 
@@ -67,8 +70,15 @@ Add environment variables:
 | `DEPLOY_PORT` | SSH port, normally `22` |
 | `PRODUCTION_URL` | Public HTTPS origin, currently `https://d2g95c1jos960v.cloudfront.net` |
 | `RESUME_BUCKET` | Optional private S3 bucket for resume objects, currently `jatbucket2799`; database storage remains available when omitted |
+| `VAPID_PUBLIC_KEY` | Public Web Push application-server key |
+| `VAPID_SUBJECT` | Web Push contact URI, such as `mailto:administrator@example.com` |
+| `SMTP_HOST` | Optional SMTP server hostname |
+| `SMTP_PORT` | SMTP port, normally `587` or `465` |
+| `SMTP_FROM` | Verified sender address for reminder email |
 
 Restrict the environment to the `master` branch. Add required approval if deployments should pause for confirmation after images are published.
+
+Generate a VAPID pair once with `npx web-push generate-vapid-keys` and retain it across deployments so existing browser subscriptions remain valid. Store its private key as a protected secret. SMTP and Web Push are independent and either can be omitted; the production worker reads the same protected notification configuration as the API.
 
 The deployment job uses GitHub OIDC to assume a least-privilege IAM role. That role can only authorize and revoke ingress on the application's security group. At the start of a deployment, the workflow permits SSH from the active GitHub runner's public IPv4 `/32`; its final step removes that rule even when deployment fails. No long-lived AWS access key is stored in GitHub, and port 22 does not need permanent public ingress.
 

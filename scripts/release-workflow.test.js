@@ -115,6 +115,16 @@ test("provides backend verification with an isolated test database URL", () => {
   );
 });
 
+test("runs critical Playwright workflows with failure artifacts", () => {
+  const verifyWorkflow = fs.readFileSync(verifyWorkflowPath, "utf8");
+
+  assert.match(verifyWorkflow, /image: postgres:16-alpine/);
+  assert.match(verifyWorkflow, /npx playwright install --with-deps chromium/);
+  assert.match(verifyWorkflow, /run: npm run test:e2e/);
+  assert.match(verifyWorkflow, /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02/);
+  assert.match(verifyWorkflow, /frontend\/test-results/);
+});
+
 test("keeps the production frontend in the EC2 Compose release", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
   const deployScript = fs.readFileSync(deployScriptPath, "utf8");
