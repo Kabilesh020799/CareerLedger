@@ -47,7 +47,7 @@ docker compose down --volumes
 - Create reusable resume versions and compare their application outcomes.
 - Review dashboard pipeline, source, resume, and milestone analytics.
 - Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates, including common application acknowledgements such as “Thank you for your application.”
-- Capture job postings from a Manifest V3 browser extension, review extracted details, and preserve the original URL, description snapshot, and capture date with revocable user-scoped access.
+- Capture job postings from a clean light/dark Manifest V3 extension workflow, review or refresh extracted details, and preserve the original URL, description snapshot, and capture date with revocable user-scoped access.
 - Switch between light and dark themes.
 - Keep applications, Gmail data, resumes, reminders, and analytics scoped to the signed-in user.
 

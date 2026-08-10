@@ -10,6 +10,13 @@ Feature: Capture a job posting from the browser
     Then company, job title, location, URL, and description should be proposed
     And I should be able to edit every proposed field before confirming
 
+  Scenario: Keep connection setup separate from posting review
+    Given I configured a valid browser-extension connection
+    When I open the Job Tracker extension
+    Then the connection settings should be collapsed
+    And the posting review should identify required fields and provide clear loading, success, and error feedback
+    And I should be able to read the current page again without reopening the extension
+
   Scenario: Store a confirmed posting snapshot
     Given I have reviewed the proposed posting details
     When I confirm the capture
