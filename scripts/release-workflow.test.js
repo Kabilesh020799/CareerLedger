@@ -141,9 +141,9 @@ test("opens SSH only for the active GitHub runner and always removes it", () => 
     workflow,
     /aws-actions\/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c/,
   );
-  assert.match(workflow, /--cidr \"\$runner_cidr\"/);
+  assert.match(workflow, /IpRanges=\[\{CidrIp=\$runner_cidr\}\]/);
   assert.match(workflow, /if: always\(\) && steps\.allow_ssh\.outputs\.runner_cidr != ''/);
-  assert.match(workflow, /--cidr \"\$RUNNER_CIDR\"/);
+  assert.match(workflow, /IpRanges=\[\{CidrIp=\$RUNNER_CIDR\}\]/);
   assert.match(workflow, /ConnectTimeout=15/);
   assert.ok(allowStep < deployStep, "runner SSH access must precede deployment");
   assert.ok(deployStep < cleanupStep, "runner SSH access must be removed after deployment");

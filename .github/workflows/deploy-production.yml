@@ -166,10 +166,7 @@ jobs:
           runner_cidr="$runner_ip/32"
           aws ec2 authorize-security-group-ingress \
             --group-id "$DEPLOY_SECURITY_GROUP_ID" \
-            --ip-protocol tcp \
-            --from-port "$port" \
-            --to-port "$port" \
-            --cidr "$runner_cidr"
+            --ip-permissions "IpProtocol=tcp,FromPort=$port,ToPort=$port,IpRanges=[{CidrIp=$runner_cidr}]"
           echo "runner_cidr=$runner_cidr" >> "$GITHUB_OUTPUT"
 
       - name: Configure SSH
@@ -270,7 +267,4 @@ jobs:
           port="${DEPLOY_PORT:-22}"
           aws ec2 revoke-security-group-ingress \
             --group-id "$DEPLOY_SECURITY_GROUP_ID" \
-            --ip-protocol tcp \
-            --from-port "$port" \
-            --to-port "$port" \
-            --cidr "$RUNNER_CIDR"
+            --ip-permissions "IpProtocol=tcp,FromPort=$port,ToPort=$port,IpRanges=[{CidrIp=$RUNNER_CIDR}]"
