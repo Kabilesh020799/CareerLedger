@@ -27,11 +27,16 @@ Feature: Use the application across screen sizes
     And the content should remain readable within a bounded width
 
   Scenario: Use wide data views on a narrow screen
-    Given I am viewing a status board or analytics comparison on a phone
+    Given I am viewing an analytics comparison on a phone
     When the data is wider than the viewport
     Then the data view should scroll within its own region
     And the overall page should not scroll horizontally
     And surrounding controls should remain usable
+
+  Scenario: Use the status board on a narrow screen
+    Given I am viewing the status board on a phone
+    Then I should select one status at a time from readable tabs
+    And application cards should fit the viewport without horizontal page scrolling
 
   Scenario: Review applications on a narrow screen
     Given I am viewing applications on a phone

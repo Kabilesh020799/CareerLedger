@@ -5,25 +5,26 @@ import { useLogout } from '../hooks/useLogout'
 import { useSession } from '../hooks/useSession'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
 import { useGmailUpdateReviews } from '../hooks/useGmailUpdateReviews'
+import { Bell, BriefcaseBusiness, Columns3, FileText, Gauge, Mail, Menu, Puzzle, X } from 'lucide-react'
 
 const navigation = [
-  { label: 'Overview', items: [{ label: 'Dashboard', to: '/dashboard', icon: '⌂' }] },
+  { label: 'Workspace', items: [{ label: 'Dashboard', to: '/dashboard', icon: Gauge }] },
   { label: 'Applications', items: [
-    { label: 'Applications', to: '/applications', icon: '▤' },
-    { label: 'Board', to: '/board', icon: '▦' },
+    { label: 'Applications', to: '/applications', icon: BriefcaseBusiness },
+    { label: 'Board', to: '/board', icon: Columns3 },
   ] },
-  { label: 'Documents', items: [{ label: 'Resumes', to: '/resumes', icon: '▱' }] },
+  { label: 'Documents', items: [{ label: 'Resumes', to: '/resumes', icon: FileText }] },
   { label: 'Automation', items: [
-    { label: 'Email sync', to: '/gmail', icon: '✉' },
-    { label: 'Browser extension', to: '/browser-extension', icon: '◇' },
+    { label: 'Email sync', to: '/gmail', icon: Mail },
+    { label: 'Browser extension', to: '/browser-extension', icon: Puzzle },
   ] },
-  { label: 'Account', items: [{ label: 'Notifications', to: '/notifications', icon: '◉' }] },
+  { label: 'Settings', items: [{ label: 'Notifications', to: '/notifications', icon: Bell }] },
 ]
 
 const mobileNavigation = [
-  { label: 'Dashboard', to: '/dashboard', icon: '⌂' },
-  { label: 'Applications', to: '/applications', icon: '▤' },
-  { label: 'Board', to: '/board', icon: '▦' },
+  { label: 'Dashboard', to: '/dashboard', icon: Gauge },
+  { label: 'Applications', to: '/applications', icon: BriefcaseBusiness },
+  { label: 'Board', to: '/board', icon: Columns3 },
 ]
 
 export function AppLayout() {
@@ -64,7 +65,7 @@ export function AppLayout() {
             <Flex align="center" gap="3" minW="0">
             <Flex align="center" bg="purple.solid" borderRadius="lg" color="purple.contrast" fontWeight="bold" h="9" justify="center" shadow="sm" w="9">JT</Flex>
             <Box minW="0">
-              <Heading as="h1" fontSize="md" letterSpacing="-0.02em" whiteSpace="nowrap">Job Tracker</Heading>
+              <Heading as="div" fontSize="md" letterSpacing="-0.02em" whiteSpace="nowrap">Job Tracker</Heading>
               <Text color="fg.muted" display={{ base: 'none', lg: 'block' }} fontSize="sm" mt="1">Keep your search moving.</Text>
             </Box>
             </Flex>
@@ -77,7 +78,7 @@ export function AppLayout() {
               variant="outline"
               onClick={() => setNavigationOpen((open) => !open)}
             >
-              <Text aria-hidden="true" fontSize="lg">{navigationOpen ? '×' : '☰'}</Text>
+              {navigationOpen ? <X aria-hidden size={18} /> : <Menu aria-hidden size={18} />}
               <Text display={{ base: 'none', sm: 'block' }}>Menu</Text>
             </Button>
           </Flex>
@@ -102,10 +103,10 @@ export function AppLayout() {
                 {navigation.map((group) => (
                   <Stack gap="1" key={group.label}>
                     <Text color="fg.subtle" fontSize="2xs" fontWeight="bold" letterSpacing="0.1em" px="3" textTransform="uppercase">{group.label}</Text>
-                    {group.items.map((item) => <Link asChild key={item.to} borderRadius="lg" minH="10" px="3" py="2" fontSize="sm" fontWeight="medium" color="fg.muted" _currentPage={{ bg: 'purple.subtle', color: 'purple.fg' }} _hover={{ bg: 'bg.muted', color: 'fg', textDecoration: 'none' }}>
+                    {group.items.map((item) => <Link asChild key={item.to} borderRadius="lg" minH="11" px="3" py="2" fontSize="sm" fontWeight="medium" color="fg.muted" _currentPage={{ bg: 'purple.subtle', color: 'purple.fg' }} _hover={{ bg: 'bg.muted', color: 'fg', textDecoration: 'none' }}>
                       <NavLink to={item.to}>
                         <Flex align="center" gap="3" justify="space-between" w="full">
-                          <Flex align="center" gap="3"><Text aria-hidden="true" color="fg.subtle" fontSize="md" w="4">{item.icon}</Text><Text>{item.label}</Text></Flex>
+                          <Flex align="center" gap="3"><item.icon aria-hidden size={18} /><Text>{item.label}</Text></Flex>
                           {item.to === '/gmail' && pendingGmailUpdates > 0 && (
                           <Badge
                             aria-label={`${pendingGmailUpdates} pending email ${pendingGmailUpdates === 1 ? 'update' : 'updates'}`}
@@ -149,8 +150,8 @@ export function AppLayout() {
         </Container>
       </Box>
       <Flex as="nav" aria-label="Mobile navigation" align="center" bg="bg.panel" borderColor="border" borderTopWidth="1px" bottom="0" display={{ base: 'flex', lg: 'none' }} h="18" justify="space-around" left="0" position="fixed" right="0" zIndex="docked">
-        {mobileNavigation.map((item) => <Link asChild key={item.to} color="fg.muted" _currentPage={{ color: 'purple.fg' }} _hover={{ textDecoration: 'none' }}><NavLink aria-label={`${item.label} tab`} to={item.to}><Stack align="center" gap="0.5" minW="20"><Text aria-hidden="true" fontSize="lg">{item.icon}</Text><Text fontSize="2xs" fontWeight="semibold">{item.label}</Text></Stack></NavLink></Link>)}
-        <Button aria-controls="responsive-primary-navigation" aria-expanded={navigationOpen} color="fg.muted" h="auto" minW="20" p="0" variant="plain" onClick={() => setNavigationOpen((open) => !open)}><Stack align="center" gap="0.5"><Text aria-hidden="true" fontSize="lg">•••</Text><Text fontSize="2xs" fontWeight="semibold">More</Text></Stack></Button>
+        {mobileNavigation.map((item) => <Link asChild key={item.to} color="fg.muted" _currentPage={{ color: 'purple.fg' }} _hover={{ textDecoration: 'none' }}><NavLink aria-label={`${item.label} tab`} to={item.to}><Stack align="center" gap="0.5" minW="20"><item.icon aria-hidden size={20} /><Text fontSize="xs" fontWeight="semibold">{item.label}</Text></Stack></NavLink></Link>)}
+        <Button aria-controls="responsive-primary-navigation" aria-expanded={navigationOpen} color="fg.muted" h="auto" minW="20" p="0" variant="plain" onClick={() => setNavigationOpen((open) => !open)}><Stack align="center" gap="0.5"><Menu aria-hidden size={20} /><Text fontSize="xs" fontWeight="semibold">More</Text></Stack></Button>
       </Flex>
     </Flex>
   )

@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Box, Button, Field, Input, SimpleGrid, Stack } from '@chakra-ui/react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { SlidersHorizontal } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import {
   applicationDiscoveryFormSchema,
@@ -43,6 +44,7 @@ export function ApplicationDiscoveryControls({
   onChange,
   onClear,
 }: ApplicationDiscoveryControlsProps) {
+  const [advancedOpen, setAdvancedOpen] = useState(Boolean(query.source || query.appliedFrom || query.appliedTo || query.limit !== 20 || query.sortOrder !== 'desc'))
   const {
     register,
     reset,
@@ -65,7 +67,7 @@ export function ApplicationDiscoveryControls({
     <Box bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" p={{ base: '4', md: '5' }}>
       <form onSubmit={handleSubmit(submit)} noValidate>
         <Stack gap="4">
-          <SimpleGrid columns={{ base: 1, md: 2, xl: 4 }} gap="4">
+          <SimpleGrid columns={{ base: 1, md: 3 }} gap="4">
             <FilterField label="Search" error={errors.search?.message}>
               <Input
                 {...register('search')}
@@ -83,28 +85,6 @@ export function ApplicationDiscoveryControls({
               </Select>
             </FilterField>
 
-            <FilterField label="Source" error={errors.source?.message}>
-              <Input {...register('source')} placeholder="LinkedIn, referral…" />
-            </FilterField>
-
-            <FilterField label="Results per page" error={errors.limit?.message}>
-              <Select {...register('limit', { valueAsNumber: true })} aria-label="Results per page">
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-              </Select>
-            </FilterField>
-          </SimpleGrid>
-
-          <SimpleGrid columns={{ base: 1, sm: 2, xl: 4 }} gap="4">
-            <FilterField label="Applied from" error={errors.appliedFrom?.message}>
-              <Input {...register('appliedFrom')} type="date" />
-            </FilterField>
-
-            <FilterField label="Applied to" error={errors.appliedTo?.message}>
-              <Input {...register('appliedTo')} type="date" />
-            </FilterField>
-
             <FilterField label="Sort by" error={errors.sortBy?.message}>
               <Select {...register('sortBy')} aria-label="Sort by">
                 {applicationSortFields.map((field) => (
@@ -113,16 +93,19 @@ export function ApplicationDiscoveryControls({
               </Select>
             </FilterField>
 
-            <FilterField label="Order" error={errors.sortOrder?.message}>
-              <Select {...register('sortOrder')} aria-label="Order">
-                <option value="desc">Descending</option>
-                <option value="asc">Ascending</option>
-              </Select>
-            </FilterField>
           </SimpleGrid>
+
+          {advancedOpen && <SimpleGrid columns={{ base: 1, sm: 2, xl: 5 }} gap="4">
+            <FilterField label="Source" error={errors.source?.message}><Input {...register('source')} placeholder="LinkedIn, referral…" /></FilterField>
+            <FilterField label="Applied from" error={errors.appliedFrom?.message}><Input {...register('appliedFrom')} type="date" /></FilterField>
+            <FilterField label="Applied to" error={errors.appliedTo?.message}><Input {...register('appliedTo')} type="date" /></FilterField>
+            <FilterField label="Order" error={errors.sortOrder?.message}><Select {...register('sortOrder')} aria-label="Order"><option value="desc">Descending</option><option value="asc">Ascending</option></Select></FilterField>
+            <FilterField label="Results per page" error={errors.limit?.message}><Select {...register('limit', { valueAsNumber: true })} aria-label="Results per page"><option value="10">10</option><option value="20">20</option><option value="50">50</option></Select></FilterField>
+          </SimpleGrid>}
 
           <Stack direction={{ base: 'column', sm: 'row' }} gap="3">
             <Button colorPalette="purple" type="submit">Apply filters</Button>
+            <Button aria-expanded={advancedOpen} type="button" variant="ghost" onClick={() => setAdvancedOpen((open) => !open)}><SlidersHorizontal aria-hidden size={17} />{advancedOpen ? 'Fewer filters' : 'More filters'}</Button>
             <Button type="button" variant="outline" onClick={onClear}>Clear filters</Button>
           </Stack>
         </Stack>

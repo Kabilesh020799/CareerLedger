@@ -197,6 +197,7 @@ test('search, filter, sort, and retain application discovery controls', async ({
 
   await page.getByLabel('Search').fill('shopify')
   await page.getByLabel('Status').selectOption('INTERVIEW')
+  await page.getByRole('button', { name: 'More filters' }).click()
   await page.getByLabel('Source').fill('Company Website')
   await page.getByRole('button', { name: 'Apply filters' }).click()
 
@@ -287,7 +288,7 @@ test('add a note and record a status change in the application timeline', async 
   await page.getByRole('button', { name: 'Add note' }).click()
   await expect(page.getByText('Followed up with the recruiter.')).toBeVisible()
 
-  await page.getByRole('link', { name: 'Edit' }).click()
+  await page.getByRole('link', { name: 'Edit', exact: true }).click()
   await page.getByLabel('Status').selectOption('INTERVIEW')
   await page.getByRole('button', { name: 'Save changes' }).click()
   await expect(page.getByText('Status changed from APPLIED to INTERVIEW')).toBeVisible()

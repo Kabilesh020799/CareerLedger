@@ -30,7 +30,7 @@ export function EditApplicationPage() {
         <Button asChild variant="plain" px="0" mb="3">
           <Link to={`/applications/${application.id}`}>← Back to application</Link>
         </Button>
-        <Heading as="h2" size="2xl">Edit application</Heading>
+        <Heading as="h1" size="2xl">Edit application</Heading>
         <Text color="fg.muted" mt="1">Update your application to {application.company}.</Text>
       </Box>
 
@@ -41,6 +41,7 @@ export function EditApplicationPage() {
           isSubmitting={updateApplication.isPending}
           serverError={updateApplication.isError ? getApiErrorMessage(updateApplication.error, 'Please try again.') : undefined}
           allowResumeAttachment
+          cancelTo={`/applications/${application.id}`}
           currentResumeFileName={application.resumeAttachment?.fileName}
           onSubmit={async (values) => {
             await updateApplication.mutateAsync({

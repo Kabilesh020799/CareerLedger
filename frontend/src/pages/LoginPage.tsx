@@ -50,8 +50,8 @@ export function LoginPage() {
         </Stack>
         <Stack gap="6" justify="center" p={{ base: '6', sm: '9', md: '12' }}>
           <Stack gap="2">
-            <Heading as="h1" color="purple.fg" fontSize="sm" letterSpacing="0.08em" textTransform="uppercase">Job Tracker</Heading>
-            <Heading as="h2" fontSize={{ base: '2xl', md: '3xl' }}>Welcome back</Heading>
+            <Text color="purple.fg" fontSize="sm" fontWeight="bold" letterSpacing="0.08em" textTransform="uppercase">Job Tracker</Text>
+            <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }}>Welcome back</Heading>
             <Text color="fg.muted">Sign in to continue your job search.</Text>
           </Stack>
 

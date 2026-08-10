@@ -18,7 +18,7 @@ describe('NotificationSettingsPage', () => {
     vi.mocked(useBrowserPushSubscription).mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false } as never)
 
     render(<AppProvider><NotificationSettingsPage /></AppProvider>)
-    await user.click(screen.getAllByRole('button', { name: 'Enable' })[0])
+    await user.click(screen.getAllByRole('checkbox')[0])
 
     expect(mutate).toHaveBeenCalledWith({ emailEnabled: true, browserPushEnabled: false })
     expect(screen.getByText(/Push notifications require HTTPS/)).toBeInTheDocument()

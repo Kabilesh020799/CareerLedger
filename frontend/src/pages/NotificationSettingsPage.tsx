@@ -1,4 +1,4 @@
-import { Alert, Badge, Box, Button, Flex, Heading, Stack, Text } from '@chakra-ui/react'
+import { Alert, Badge, Box, Button, Flex, Heading, Stack, Switch, Text } from '@chakra-ui/react'
 import { useBrowserPushSubscription, useNotificationSettings, useUpdateNotificationSettings } from '../hooks/useNotificationSettings'
 import { getApiErrorMessage } from '../utils/apiError'
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton'
@@ -36,6 +36,10 @@ export function NotificationSettingsPage() {
 function ChannelCard({ title, description, available, enabled, loading, onToggle, unavailable }: { title: string; description: string; available: boolean; enabled: boolean; loading: boolean; onToggle: () => void; unavailable: string }) {
   return <Flex align={{ base: 'start', sm: 'center' }} bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" direction={{ base: 'column', sm: 'row' }} gap="4" justify="space-between" p={{ base: '5', md: '6' }}>
     <Box><Flex align="center" gap="2"><Heading as="h3" size="md">{title}</Heading><Badge colorPalette={available ? enabled ? 'green' : 'gray' : 'orange'} variant="subtle">{available ? enabled ? 'Enabled' : 'Available' : 'Unavailable'}</Badge></Flex><Text color="fg.muted" mt="1">{description}</Text>{!available && <Text color="fg.warning" fontSize="sm" mt="2">{unavailable}</Text>}</Box>
-    <Button colorPalette={enabled ? 'gray' : 'purple'} disabled={!available} loading={loading} minW="24" onClick={onToggle} variant={enabled ? 'outline' : 'solid'}>{enabled ? 'Disable' : 'Enable'}</Button>
+    <Switch.Root checked={enabled} disabled={!available || loading} size="lg" onCheckedChange={onToggle}>
+      <Switch.HiddenInput />
+      <Switch.Control><Switch.Thumb /></Switch.Control>
+      <Switch.Label>{title}: {enabled ? 'enabled' : 'disabled'}</Switch.Label>
+    </Switch.Root>
   </Flex>
 }

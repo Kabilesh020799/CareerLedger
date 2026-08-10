@@ -38,11 +38,14 @@ export function DashboardPage() {
 
       {summaryQuery.isSuccess && (
         <>
+          <Stack gap="5">
+            <Stack gap="1"><Heading as="h3" size="lg">Needs attention</Heading><Text color="fg.muted" fontSize="sm">Your overdue, upcoming, and inactive application actions.</Text></Stack>
+            <DashboardReminders />
+            <FollowUpSuggestions />
+          </Stack>
           <DashboardContent summary={summaryQuery.data} />
           <SourceOutcomeAnalytics outcomes={summaryQuery.data.sourceOutcomes} />
           <ResumeOutcomeAnalytics outcomes={summaryQuery.data.resumeOutcomes} />
-          <FollowUpSuggestions />
-          <DashboardReminders />
         </>
       )}
     </Stack>
@@ -53,11 +56,8 @@ function DashboardContent({ summary }: { summary: DashboardSummary }) {
   const metrics = [
     { label: 'Total applications', value: summary.totalApplications },
     { label: 'Created since Monday', value: summary.createdThisWeek },
-    { label: 'Screenings', value: summary.statusCounts.SCREENING },
-    { label: 'Assessments', value: summary.statusCounts.ASSESSMENT },
     { label: 'Interviews', value: summary.statusCounts.INTERVIEW },
     { label: 'Offers', value: summary.statusCounts.OFFER },
-    { label: 'Rejections', value: summary.statusCounts.REJECTED },
   ]
 
   return (

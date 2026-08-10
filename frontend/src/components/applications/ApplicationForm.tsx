@@ -7,6 +7,7 @@ import {
 } from '../../schemas/application.schema'
 import { applicationStatuses } from '../../types/application'
 import { useResumeVersions } from '../../hooks/useResumeVersions'
+import { Link } from 'react-router-dom'
 
 type ApplicationFormProps = {
   initialValues: ApplicationFormValues
@@ -15,6 +16,7 @@ type ApplicationFormProps = {
   serverError?: string
   allowResumeAttachment?: boolean
   currentResumeFileName?: string
+  cancelTo?: string
   onSubmit: (values: ApplicationFormValues) => Promise<void>
 }
 
@@ -36,6 +38,7 @@ export function ApplicationForm({
   serverError,
   allowResumeAttachment = false,
   currentResumeFileName,
+  cancelTo,
   onSubmit,
 }: ApplicationFormProps) {
   const resumeVersions = useResumeVersions()
@@ -150,7 +153,8 @@ export function ApplicationForm({
         </FormSection>
       )}
 
-        <Flex bg="bg.panel" borderColor="border" borderTopWidth="1px" bottom={{ base: '18', lg: '0' }} justify="flex-end" mx={{ base: '-5', md: '-8' }} px={{ base: '5', md: '8' }} py="4" position="sticky" zIndex="base">
+        <Flex bg="bg.panel" borderColor="border" borderTopWidth="1px" bottom={{ base: '18', lg: '0' }} direction={{ base: 'column-reverse', sm: 'row' }} gap="3" justify="flex-end" mx={{ base: '-5', md: '-8' }} px={{ base: '5', md: '8' }} py="4" position="sticky" zIndex="base">
+        {cancelTo && <Button asChild flex={{ base: '1', sm: 'initial' }} variant="outline"><Link to={cancelTo}>Cancel</Link></Button>}
         <Button minH="11" w={{ base: 'full', sm: 'auto' }} colorPalette="purple" loading={isSubmitting} type="submit">
           {submitLabel}
         </Button>

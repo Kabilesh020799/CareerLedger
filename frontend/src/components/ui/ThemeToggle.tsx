@@ -1,5 +1,6 @@
 import { Button } from '@chakra-ui/react'
 import { useColorMode } from './colorMode'
+import { Moon, Sun } from 'lucide-react'
 
 export function ThemeToggle() {
   const { colorMode, toggleColorMode } = useColorMode()
@@ -15,7 +16,7 @@ export function ThemeToggle() {
       whiteSpace="nowrap"
       onClick={toggleColorMode}
     >
-      <span aria-hidden="true">{colorMode === 'light' ? '☾' : '☀'}</span>
+      {colorMode === 'light' ? <Moon aria-hidden size={17} /> : <Sun aria-hidden size={17} />}
       {nextMode === 'dark' ? 'Dark theme' : 'Light theme'}
     </Button>
   )

@@ -4,6 +4,7 @@ import { applicationQueryKeys } from './applicationQueryKeys'
 import { dashboardQueryKeys } from './dashboardQueryKeys'
 import { reminderQueryKeys } from './reminderQueryKeys'
 import type { UpdateApplicationInput } from '../types/application'
+import { useFeedback } from '../components/ui/feedback-context'
 
 type UpdateApplicationVariables = {
   id: string
@@ -13,11 +14,13 @@ type UpdateApplicationVariables = {
 
 export function useUpdateApplication() {
   const queryClient = useQueryClient()
+  const feedback = useFeedback()
 
   return useMutation({
     mutationFn: ({ id, input, resume }: UpdateApplicationVariables) =>
       applicationService.update(id, input, resume),
     onSuccess: (application) => {
+      feedback.show('Application updated', { description: `${application.jobTitle} at ${application.company}` })
       queryClient.setQueryData(applicationQueryKeys.detail(application.id), application)
       return Promise.all([
         queryClient.invalidateQueries({ queryKey: applicationQueryKeys.all }),

@@ -25,7 +25,7 @@ async function expectInternalHorizontalScroll(locator: ReturnType<Page['locator'
   expect(dimensions.scrollWidth).toBeGreaterThan(dimensions.clientWidth)
 }
 
-test('phone workflows fit the viewport and wide data scrolls locally', async ({ page }) => {
+test('phone workflows fit the viewport and use status tabs for the board', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 })
   await page.goto('/login')
   await expectNoPageOverflow(page)
@@ -39,7 +39,12 @@ test('phone workflows fit the viewport and wide data scrolls locally', async ({ 
   await expect(page.getByRole('heading', { name: 'Application board' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Open navigation' })).toHaveAttribute('aria-expanded', 'false')
   await expectNoPageOverflow(page)
-  await expectInternalHorizontalScroll(page.getByRole('group', { name: 'Application status board' }))
+  const statusTabs = page.getByRole('tablist', { name: 'Choose board status' })
+  await expect(statusTabs).toBeVisible()
+  await expectInternalHorizontalScroll(statusTabs)
+  await page.getByRole('tab', { name: /Interview/ }).click()
+  await expect(page.getByRole('region', { name: 'Interview applications' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Applied applications' })).toBeHidden()
 
   const routes = [
     ['/applications', 'Applications'],

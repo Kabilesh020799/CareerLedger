@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Flex, Heading, SimpleGrid, Stack, Text } from '@chakra-ui/react'
+import { Alert, Box, Button, Flex, Heading, NativeSelect, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DeleteApplicationDialog } from '../components/applications/DeleteApplicationDialog'
 import { ApplicationTimeline } from '../components/applications/ApplicationTimeline'
@@ -9,6 +9,14 @@ import { useDeleteApplication } from '../hooks/useDeleteApplication'
 import { useDownloadApplicationResume } from '../hooks/useDownloadApplicationResume'
 import { getApiErrorMessage } from '../utils/apiError'
 import { LoadingSkeleton, Surface } from '../components/ui/LoadingSkeleton'
+import { useMoveApplication } from '../hooks/useMoveApplication'
+import { applicationStatuses, type ApplicationStatus } from '../types/application'
+import { BellPlus, Edit3, MessageSquarePlus } from 'lucide-react'
+
+const statusLabels: Record<ApplicationStatus, string> = {
+  SAVED: 'Saved', APPLIED: 'Applied', SCREENING: 'Screening', ASSESSMENT: 'Assessment',
+  INTERVIEW: 'Interview', OFFER: 'Offer', REJECTED: 'Rejected', WITHDRAWN: 'Withdrawn',
+}
 
 function formatDate(value: string | null) {
   if (!value) return 'Not provided'
@@ -30,6 +38,7 @@ export function ApplicationDetailsPage() {
   const applicationQuery = useApplication(id)
   const deleteApplication = useDeleteApplication()
   const downloadResume = useDownloadApplicationResume()
+  const moveApplication = useMoveApplication()
 
   if (applicationQuery.isPending) {
     return <LoadingSkeleton variant="details" />
@@ -59,7 +68,7 @@ export function ApplicationDetailsPage() {
       <Flex align={{ base: 'start', md: 'center' }} direction={{ base: 'column', md: 'row' }} gap="4" justify="space-between">
         <Stack gap="2">
           <StatusBadge status={application.status} />
-          <Heading as="h2" size="2xl">{application.jobTitle}</Heading>
+          <Heading as="h1" size="2xl">{application.jobTitle}</Heading>
           <Text color="fg.muted" fontSize="lg" mt="1">{application.company}</Text>
         </Stack>
         <Flex gap="3" w={{ base: 'full', sm: 'auto' }} wrap="wrap">
@@ -73,6 +82,25 @@ export function ApplicationDetailsPage() {
           />
         </Flex>
       </Flex>
+
+      <Surface aria-label="Application quick actions" p="4">
+        <Flex align={{ base: 'stretch', md: 'center' }} direction={{ base: 'column', md: 'row' }} gap="3" justify="space-between">
+          <Box minW={{ md: '15rem' }}>
+            <Text color="fg.muted" fontSize="xs" fontWeight="bold" mb="1" textTransform="uppercase">Quick status</Text>
+            <NativeSelect.Root disabled={moveApplication.isPending} size="sm">
+              <NativeSelect.Field aria-label="Change application status" value={application.status} onChange={(event) => moveApplication.mutate({ id: application.id, status: event.currentTarget.value as ApplicationStatus })}>
+                {applicationStatuses.map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+          </Box>
+          <Flex gap="2" wrap="wrap">
+            <Button asChild size="sm" variant="outline"><a href="#timeline"><MessageSquarePlus aria-hidden size={17} />Add note</a></Button>
+            <Button asChild size="sm" variant="outline"><a href="#reminders"><BellPlus aria-hidden size={17} />Add reminder</a></Button>
+            <Button asChild colorPalette="purple" size="sm"><Link to={`/applications/${application.id}/edit`}><Edit3 aria-hidden size={17} />Edit details</Link></Button>
+          </Flex>
+        </Flex>
+      </Surface>
 
       {deleteApplication.isError && (
         <Alert.Root status="error"><Alert.Indicator /><Alert.Title>{getApiErrorMessage(deleteApplication.error, 'Unable to delete application.')}</Alert.Title></Alert.Root>
@@ -112,8 +140,8 @@ export function ApplicationDetailsPage() {
         </SimpleGrid>
       </Surface>}
 
-      <ApplicationReminders applicationId={application.id} />
-      <ApplicationTimeline applicationId={application.id} />
+      <Box id="reminders" scrollMarginTop="6rem"><ApplicationReminders applicationId={application.id} /></Box>
+      <Box id="timeline" scrollMarginTop="6rem"><ApplicationTimeline applicationId={application.id} /></Box>
     </Stack>
   )
 }

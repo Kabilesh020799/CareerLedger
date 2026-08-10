@@ -6,11 +6,13 @@ import { AppProvider } from '../components/ui/AppProvider'
 import { useApplication } from '../hooks/useApplication'
 import { useDeleteApplication } from '../hooks/useDeleteApplication'
 import { useDownloadApplicationResume } from '../hooks/useDownloadApplicationResume'
+import { useMoveApplication } from '../hooks/useMoveApplication'
 import { ApplicationDetailsPage } from './ApplicationDetailsPage'
 
 vi.mock('../hooks/useApplication', () => ({ useApplication: vi.fn() }))
 vi.mock('../hooks/useDeleteApplication', () => ({ useDeleteApplication: vi.fn() }))
 vi.mock('../hooks/useDownloadApplicationResume', () => ({ useDownloadApplicationResume: vi.fn() }))
+vi.mock('../hooks/useMoveApplication', () => ({ useMoveApplication: vi.fn() }))
 vi.mock('../components/applications/DeleteApplicationDialog', () => ({
   DeleteApplicationDialog: () => <button>Delete</button>,
 }))
@@ -22,6 +24,7 @@ vi.mock('../components/reminders/ApplicationReminders', () => ({
 }))
 
 const download = vi.fn()
+const move = vi.fn()
 
 describe('ApplicationDetailsPage resume attachment', () => {
   beforeEach(() => {
@@ -36,6 +39,7 @@ describe('ApplicationDetailsPage resume attachment', () => {
       isPending: false,
       isError: false,
     } as never)
+    vi.mocked(useMoveApplication).mockReturnValue({ mutate: move, isPending: false } as never)
     vi.mocked(useApplication).mockReturnValue({
       isPending: false,
       isError: false,
@@ -76,6 +80,9 @@ describe('ApplicationDetailsPage resume attachment', () => {
     )
 
     expect(screen.getByText('Software_Engineer_Acme_Corp.pdf')).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Change application status'), 'INTERVIEW')
+    expect(move).toHaveBeenCalledWith({ id: 'application-1', status: 'INTERVIEW' })
+    expect(screen.getByRole('link', { name: 'Add note' })).toHaveAttribute('href', '#timeline')
     await user.click(screen.getByRole('button', { name: 'Download resume' }))
 
     expect(download).toHaveBeenCalledWith({

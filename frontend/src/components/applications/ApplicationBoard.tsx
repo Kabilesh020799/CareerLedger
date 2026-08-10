@@ -1,4 +1,4 @@
-import { Badge, Flex, Heading, Link as ChakraLink, NativeSelect, Stack, Text } from '@chakra-ui/react'
+import { Badge, Button, Flex, Heading, Link as ChakraLink, NativeSelect, Stack, Text } from '@chakra-ui/react'
 import { useMemo, useState, type DragEvent } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -28,6 +28,7 @@ export function ApplicationBoard({
   )
   const [draggedApplicationId, setDraggedApplicationId] = useState<string>()
   const [dropTarget, setDropTarget] = useState<ApplicationStatus>()
+  const [mobileStatus, setMobileStatus] = useState<ApplicationStatus>('APPLIED')
 
   const finishDrag = () => {
     setDraggedApplicationId(undefined)
@@ -44,11 +45,15 @@ export function ApplicationBoard({
   }
 
   return (
-    <Flex
+    <Stack gap="4">
+      <Flex aria-label="Choose board status" display={{ base: 'flex', md: 'none' }} gap="2" overflowX="auto" pb="1" role="tablist">
+        {applicationStatuses.map((status) => <Button aria-selected={mobileStatus === status} flexShrink="0" key={status} role="tab" size="sm" variant={mobileStatus === status ? 'solid' : 'outline'} colorPalette={mobileStatus === status ? 'purple' : 'gray'} onClick={() => setMobileStatus(status)}>{applicationStatusLabels[status]} <Badge ml="1" variant="subtle">{grouped[status].length}</Badge></Button>)}
+      </Flex>
+      <Flex
       align="stretch"
       gap="4"
       maxW="full"
-      overflowX="auto"
+      overflowX={{ base: 'hidden', md: 'auto' }}
       overscrollBehaviorX="contain"
       pb="4"
       role="group"
@@ -71,12 +76,14 @@ export function ApplicationBoard({
             borderRadius="xl"
             borderWidth="2px"
             flex="0 0 17rem"
+            display={{ base: mobileStatus === status ? 'flex' : 'none', md: 'flex' }}
             gap="3"
             key={status}
-            minH="24rem"
+            minH={{ base: 'auto', md: '24rem' }}
             p="3"
             transition="background 0.15s ease, border-color 0.15s ease"
             scrollSnapAlign="start"
+            w={{ base: 'full', md: 'auto' }}
             onDragEnter={() => setDropTarget(status)}
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => drop(event, status)}
@@ -130,7 +137,8 @@ export function ApplicationBoard({
           </Stack>
         )
       })}
-    </Flex>
+      </Flex>
+    </Stack>
   )
 }
 

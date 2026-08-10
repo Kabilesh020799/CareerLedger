@@ -4,11 +4,16 @@ Feature: Understand the current application pipeline
   I want a dashboard of useful application metrics
   So that I can see my current progress and where opportunities are converting
 
+  Scenario: See actionable work before analytics
+    Given I have reminders or inactive applications requiring attention
+    When I open the dashboard
+    Then overdue and upcoming work should appear before pipeline analytics
+
   Scenario: View current application totals
     Given I own applications with different statuses
     When I open the dashboard
     Then I should see my total applications
-    And I should see current totals for screenings, assessments, interviews, offers, and rejections
+    And I should see current totals for interviews and offers
     And I should see the number of applications created since Monday
 
   Scenario: View current pipeline conversion rates

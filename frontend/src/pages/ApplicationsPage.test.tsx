@@ -115,6 +115,7 @@ describe('ApplicationsPage', () => {
     await user.type(screen.getByLabelText('Search'), 'Acme')
     await user.selectOptions(screen.getByLabelText('Status'), 'APPLIED')
     await user.selectOptions(screen.getByLabelText('Sort by'), 'company')
+    await user.click(screen.getByRole('button', { name: 'More filters' }))
     await user.selectOptions(screen.getByLabelText('Order'), 'asc')
     await user.click(screen.getByRole('button', { name: 'Apply filters' }))
 

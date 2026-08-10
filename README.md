@@ -37,8 +37,8 @@ docker compose down --volumes
 
 ## Features
 
-- Create, search, filter, sort, edit, and delete applications.
-- Use a responsive workspace with grouped desktop navigation, mobile shortcuts, application cards on phones, and a status board across phone, tablet, and desktop layouts.
+- Create, search, progressively filter, sort, edit, and delete applications, with quick status, note, and reminder actions from application details.
+- Use a responsive workspace with consistent icons, grouped desktop navigation, mobile shortcuts, application cards on phones, and a tabbed mobile status board.
 - Work in a consistent accessible light or dark design system with semantic application-status colors, focused page hierarchy, responsive forms, and page-shaped loading states.
 - Track application timelines, notes, status changes, follow-ups, and deadlines.
 - Receive due follow-ups and deadlines through opt-in email or browser push notifications with automatic retry.
@@ -47,7 +47,8 @@ docker compose down --volumes
 - Store new production resume bytes in private S3 using short-lived browser permissions and the EC2 instance role.
 - Keep legacy database-backed resumes downloadable and migrate them to S3 at startup.
 - Keep uploaded résumé documents in a private preview library, label résumé strategies with suggested or custom tags, and compare outcomes by tag.
-- Review dashboard pipeline, source, resume, and milestone analytics.
+- Act on due and inactive applications before reviewing dashboard pipeline, source, résumé-tag, and milestone analytics.
+- Receive accessible in-app confirmation after important create, update, status, reminder, tag, and synchronization actions.
 - Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates, including common application acknowledgements such as “Thank you for your application.”
 - Capture job postings from a clean light/dark Manifest V3 extension workflow, review or refresh extracted details, and preserve skills, experience requirements, salary, location, work mode, original URL, description, and capture date with revocable user-scoped access.
 - Switch between light and dark themes.

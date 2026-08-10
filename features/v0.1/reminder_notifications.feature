@@ -30,3 +30,8 @@ Feature: Deliver due reminder notifications
     Given email or Web Push has not been configured by the administrator
     When I open notification settings
     Then that channel should be disabled with setup guidance
+
+  Scenario: Change an available notification channel
+    Given a notification channel is available
+    When I open notification settings
+    Then its current enabled state should be represented by an accessible switch

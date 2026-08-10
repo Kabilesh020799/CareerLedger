@@ -15,7 +15,7 @@ export function NewApplicationPage() {
         <Button asChild variant="plain" px="0" mb="3">
           <Link to="/applications">← Back to applications</Link>
         </Button>
-        <Heading as="h2" size="2xl">Add application</Heading>
+        <Heading as="h1" size="2xl">Add application</Heading>
         <Text color="fg.muted" mt="1">Record an opportunity and keep its progress organized.</Text>
       </Box>
 
@@ -26,6 +26,7 @@ export function NewApplicationPage() {
           isSubmitting={createApplication.isPending}
           serverError={createApplication.isError ? getApiErrorMessage(createApplication.error, 'Please try again.') : undefined}
           allowResumeAttachment
+          cancelTo="/applications"
           onSubmit={async (values) => {
             const application = await createApplication.mutateAsync({
               input: applicationFormToInput(values),

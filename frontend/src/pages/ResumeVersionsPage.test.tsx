@@ -66,6 +66,7 @@ describe('ResumeVersionsPage', () => {
     } as never)
     renderPage()
 
+    await user.click(screen.getByRole('tab', { name: 'Strategy tags' }))
     await user.click(screen.getByRole('button', { name: '+ Backend' }))
     expect(createMutation.mutate).toHaveBeenCalledWith({ name: 'Backend', notes: null })
     await user.type(screen.getByLabelText(/^Tag name/), 'Leadership')
@@ -83,6 +84,7 @@ describe('ResumeVersionsPage', () => {
     } as never)
     renderPage()
 
+    await user.click(screen.getByRole('tab', { name: 'Strategy tags' }))
     const card = screen.getByRole('article', { name: 'Full-stack resume' })
     await user.click(within(card).getByRole('button', { name: 'Edit' }))
     const name = within(card).getByLabelText(/^Tag name/)

@@ -6,6 +6,8 @@ import { z } from 'zod'
 import { useBrowserExtensionTokens, useCreateBrowserExtensionToken, useRevokeBrowserExtensionToken } from '../hooks/useBrowserExtensionTokens'
 import { getApiErrorMessage } from '../utils/apiError'
 import { PageHeader } from '../components/ui/PageHeader'
+import { CheckCircle2, Clipboard, Download, KeyRound, ScanSearch } from 'lucide-react'
+import { useFeedback } from '../components/ui/feedback-context'
 
 const tokenSchema = z.object({ name: z.string().trim().min(1, 'Name is required').max(80) })
 type TokenForm = z.infer<typeof tokenSchema>
@@ -15,6 +17,7 @@ export function BrowserExtensionPage() {
   const createToken = useCreateBrowserExtensionToken()
   const revokeToken = useRevokeBrowserExtensionToken()
   const [createdToken, setCreatedToken] = useState<string | null>(null)
+  const feedback = useFeedback()
   const { register, handleSubmit, reset, formState: { errors } } = useForm<TokenForm>({
     resolver: zodResolver(tokenSchema), defaultValues: { name: 'Chrome extension' },
   })
@@ -30,7 +33,7 @@ export function BrowserExtensionPage() {
       <PageHeader title="Browser extension" description="Capture job postings securely without sharing your password or browser session." eyebrow="Automation" />
 
       <SimpleGrid columns={{ base: 1, md: 3 }} gap="3">
-        {['Install the extension', 'Create and copy a token', 'Capture your first job'].map((step, index) => <Flex align="center" bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" gap="3" key={step} p="4"><Flex align="center" bg="purple.subtle" borderRadius="full" color="purple.fg" fontWeight="bold" h="8" justify="center" w="8">{index + 1}</Flex><Text fontSize="sm" fontWeight="semibold">{step}</Text></Flex>)}
+        {[{ label: 'Load the extension', icon: Download }, { label: 'Create and paste a token', icon: KeyRound }, { label: 'Review and capture a job', icon: ScanSearch }].map((step, index) => <Flex align="center" bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" gap="3" key={step.label} p="4"><Flex align="center" bg="purple.subtle" borderRadius="full" color="purple.fg" fontWeight="bold" h="9" justify="center" w="9"><step.icon aria-hidden size={18} /></Flex><Stack gap="0"><Text color="fg.subtle" fontSize="xs">Step {index + 1}</Text><Text fontSize="sm" fontWeight="semibold">{step.label}</Text></Stack></Flex>)}
       </SimpleGrid>
 
       <Stack as="form" bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" gap="4" p={{ base: '5', md: '8' }} onSubmit={submit}>
@@ -39,7 +42,7 @@ export function BrowserExtensionPage() {
         <Button alignSelf="start" colorPalette="purple" loading={createToken.isPending} type="submit">Create token</Button>
         {createToken.isError && <Alert.Root status="error"><Alert.Indicator /><Alert.Description>{getApiErrorMessage(createToken.error, 'Could not create token.')}</Alert.Description></Alert.Root>}
         {createdToken && (
-          <Alert.Root status="warning"><Alert.Indicator /><Alert.Content><Alert.Title>Copy this token now</Alert.Title><Alert.Description>The complete token is shown once. Paste it into the extension settings.</Alert.Description><Input aria-label="New browser extension token" fontFamily="mono" readOnly value={createdToken} /></Alert.Content></Alert.Root>
+          <Alert.Root status="warning"><Alert.Indicator /><Alert.Content><Alert.Title>Copy this token now</Alert.Title><Alert.Description>The complete token is shown once. Paste it into the extension settings.</Alert.Description><Input aria-label="New browser extension token" fontFamily="mono" readOnly value={createdToken} /><Button alignSelf="start" mt="2" size="sm" variant="outline" onClick={async () => { await navigator.clipboard.writeText(createdToken); feedback.show('Token copied', { description: 'Paste it into the browser extension settings.' }) }}><Clipboard aria-hidden size={16} />Copy token</Button></Alert.Content></Alert.Root>
         )}
       </Stack>
 
@@ -49,7 +52,7 @@ export function BrowserExtensionPage() {
         {tokens.isSuccess && tokens.data.length === 0 && <Text color="fg.muted">No extension tokens created.</Text>}
         {tokens.data?.map((token) => (
           <Flex key={token.id} align={{ base: 'start', sm: 'center' }} bg="bg.panel" borderColor="border" borderRadius="lg" borderWidth="1px" direction={{ base: 'column', sm: 'row' }} gap="3" justify="space-between" p="4">
-            <Stack gap="1"><Text fontWeight="semibold">{token.name}</Text><Text color="fg.subtle" fontFamily="mono" fontSize="sm">{token.tokenPrefix}…</Text><Text color="fg.muted" fontSize="sm">Expires {new Date(token.expiresAt).toLocaleDateString()}</Text></Stack>
+            <Stack gap="1"><Flex align="center" gap="2"><CheckCircle2 aria-hidden color="var(--chakra-colors-green-fg)" size={17} /><Text fontWeight="semibold">{token.name}</Text></Flex><Text color="fg.subtle" fontFamily="mono" fontSize="sm">{token.tokenPrefix}…</Text><Text color="fg.muted" fontSize="sm">Expires {new Date(token.expiresAt).toLocaleDateString()}</Text></Stack>
             <Button colorPalette="red" loading={revokeToken.isPending} size="sm" variant="outline" onClick={() => revokeToken.mutate(token.id)}>Revoke</Button>
           </Flex>
         ))}

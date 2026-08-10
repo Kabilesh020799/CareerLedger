@@ -17,6 +17,7 @@ test('manage a resume tag and associate it with an application', async ({ page }
 
   await signIn(page)
   await page.getByRole('link', { name: 'Resumes' }).click()
+  await page.getByRole('tab', { name: 'Strategy tags' }).click()
   await page.getByLabel('Tag name').fill(initialName)
   await page.getByRole('button', { name: 'Add custom tag' }).click()
 
@@ -37,7 +38,7 @@ test('manage a resume tag and associate it with an application', async ({ page }
   const applicationUrl = page.url()
 
   await expect(page.getByText('Resume tag', { exact: true })).toHaveCount(0)
-  await page.getByRole('link', { name: 'Edit' }).click()
+  await page.getByRole('link', { name: 'Edit', exact: true }).click()
   await page.getByLabel('Resume tag').selectOption({ label: revisedName })
   await page.getByRole('button', { name: 'Save changes' }).click()
   await expect(page).toHaveURL(applicationUrl)
@@ -50,6 +51,7 @@ test('manage a resume tag and associate it with an application', async ({ page }
   await expect(outcomeRow.getByText('0%', { exact: true })).toBeVisible()
 
   await page.getByRole('link', { name: 'Resumes' }).click()
+  await page.getByRole('tab', { name: 'Strategy tags' }).click()
   const revisedCard = page.getByRole('article', { name: revisedName })
   await revisedCard.getByRole('button', { name: 'Delete' }).click()
   await page.getByRole('button', { name: 'Delete resume tag' }).click()

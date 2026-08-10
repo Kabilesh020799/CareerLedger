@@ -25,13 +25,19 @@ export function ResumeVersionsPage() {
   const updateResumeVersion = useUpdateResumeVersion()
   const deleteResumeVersion = useDeleteResumeVersion()
   const [editingId, setEditingId] = useState<string>()
+  const [section, setSection] = useState<'uploads' | 'tags'>('uploads')
   const mutationError = createResumeVersion.error ?? updateResumeVersion.error ?? deleteResumeVersion.error
 
   return (
     <Stack gap="7">
       <PageHeader title="Resumes" description="Preview uploaded documents and tag résumé strategies for outcome analytics." eyebrow="Documents" />
 
-      <Stack gap="4">
+      <Flex aria-label="Resume sections" bg="bg.muted" borderRadius="lg" gap="1" p="1" role="tablist" w={{ base: 'full', sm: 'fit-content' }}>
+        <Button aria-selected={section === 'uploads'} flex="1" role="tab" size="sm" variant={section === 'uploads' ? 'solid' : 'ghost'} colorPalette={section === 'uploads' ? 'purple' : 'gray'} onClick={() => setSection('uploads')}>Uploaded resumes</Button>
+        <Button aria-selected={section === 'tags'} flex="1" role="tab" size="sm" variant={section === 'tags' ? 'solid' : 'ghost'} colorPalette={section === 'tags' ? 'purple' : 'gray'} onClick={() => setSection('tags')}>Strategy tags</Button>
+      </Flex>
+
+      {section === 'uploads' && <Stack gap="4" role="tabpanel">
         <Stack gap="1">
           <Heading as="h3" size="lg">Uploaded resumes</Heading>
           <Text color="fg.muted" fontSize="sm">Your uploaded documents remain private and can be viewed from their application.</Text>
@@ -78,9 +84,10 @@ export function ResumeVersionsPage() {
             ))}
           </SimpleGrid>
         )}
-      </Stack>
+      </Stack>}
 
-      <Stack gap="4">
+      {section === 'tags' && <>
+      <Stack gap="4" role="tabpanel">
         <Stack gap="1">
           <Heading as="h3" size="lg">Resume tags</Heading>
           <Text color="fg.muted" fontSize="sm">Label the résumé strategy used for an application. Tags do not replace or modify uploaded files.</Text>
@@ -181,6 +188,7 @@ export function ResumeVersionsPage() {
           ))}
         </SimpleGrid>
       )}
+      </>}
     </Stack>
   )
 }

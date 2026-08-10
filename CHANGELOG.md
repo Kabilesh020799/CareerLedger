@@ -6,6 +6,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.15.0] - 2026-08-10
+
+### Added
+
+- Added application-detail quick actions for status changes, notes, reminders, and editing, with accessible confirmation messages for important completed actions.
+- Added guided browser-extension token copying, accessible notification switches, and consistent interface icons.
+
+### Changed
+
+- Reorganized the dashboard so overdue, upcoming, and inactive application work appears before analytics, with a more focused metric summary.
+- Replaced the phone board's eight-column canvas with status tabs and a single readable application list while preserving the desktop drag-and-drop board.
+- Simplified application discovery around search, status, and sorting with progressively disclosed advanced filters.
+- Separated uploaded résumé documents and strategy tags into focused tabs, and added explicit form cancellation actions.
+- Split frontend routes into page-level bundles for faster initial loading and consistent page-shaped loading feedback.
+
 ## [3.14.0] - 2026-08-10
 
 ### Added

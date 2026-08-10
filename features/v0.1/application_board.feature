@@ -10,6 +10,13 @@ Feature: Manage applications on a status board
     Then each application should appear in its current status column
     And each status column should show its application count
 
+  Scenario: View the board on a phone
+    Given I am using a narrow phone screen
+    When I open the application board
+    Then I should choose statuses from a horizontally scrollable tab list
+    And I should see one readable status list at a time
+    And I should still be able to change status without dragging
+
   Scenario: Open an application from the board
     Given I am viewing an application card on the board
     When I open the application

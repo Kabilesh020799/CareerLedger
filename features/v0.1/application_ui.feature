@@ -13,7 +13,7 @@ Feature: Manage applications in the React interface
   Scenario: Understand the workspace navigation
     Given I am signed in
     When I open the primary navigation
-    Then destinations should be grouped by overview, applications, documents, automation, and account
+    Then destinations should be grouped by workspace, applications, documents, automation, and settings
     And pending email updates should be visible beside email sync
 
   Scenario: Open an unknown page
@@ -40,6 +40,11 @@ Feature: Manage applications in the React interface
     Then advanced discovery controls should remain collapsed
     And I should be able to reveal and apply them with the filters control
 
+  Scenario: Reveal less common discovery filters
+    Given I am viewing the application discovery controls
+    Then search, status, and sorting should remain immediately available
+    And source, dates, order, and result count should remain collapsed until I request more filters
+
   Scenario: View an empty applications page
     Given no applications exist
     When I open the applications page
@@ -63,6 +68,16 @@ Feature: Manage applications in the React interface
     When I select that application from the applications page
     Then I should see recorded application details grouped by overview, requirements, notes, and documents
     And missing optional sections should not distract from recorded information
+
+  Scenario: Take action from application details
+    Given I am viewing an application
+    When I change its status from the quick actions
+    Then the status should be saved without opening the full edit form
+    And I should be able to jump directly to adding a note or reminder
+
+  Scenario: Confirm a completed action
+    When I successfully create or update tracked work
+    Then I should see a concise accessible confirmation
 
   Scenario: Edit an application
     Given I am viewing an application

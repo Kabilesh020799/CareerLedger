@@ -56,7 +56,8 @@ describe('ApplicationBoardPage', () => {
   })
   afterEach(cleanup)
 
-  it('shows applications in their current columns with counts and detail links', () => {
+  it('shows applications in their current mobile status with counts and detail links', async () => {
+    const user = userEvent.setup()
     vi.mocked(useApplicationBoard).mockReturnValue({
       isPending: false,
       isError: false,
@@ -67,11 +68,12 @@ describe('ApplicationBoardPage', () => {
     renderPage()
 
     const appliedColumn = screen.getByRole('region', { name: 'Applied applications' })
-    const interviewColumn = screen.getByRole('region', { name: 'Interview applications' })
     expect(within(appliedColumn).getByRole('article', { name: 'Acme Corp, Software Engineer' })).toBeInTheDocument()
     expect(within(appliedColumn).getByText('1')).toBeInTheDocument()
-    expect(within(interviewColumn).getByText('0')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Acme Corp' })).toHaveAttribute('href', '/applications/application-1')
+    await user.click(screen.getByRole('tab', { name: 'Interview 0' }))
+    const interviewColumn = screen.getByRole('region', { name: 'Interview applications' })
+    expect(within(interviewColumn).getByText('0')).toBeInTheDocument()
   })
 
   it('moves an application with its accessible status control', async () => {
@@ -97,7 +99,8 @@ describe('ApplicationBoardPage', () => {
     })
   })
 
-  it('moves a dragged application when it is dropped on another column', () => {
+  it('moves a dragged application when it is dropped on another column', async () => {
+    const user = userEvent.setup()
     const moveApplication = moveResult()
     vi.mocked(useMoveApplication).mockReturnValue(moveApplication as never)
     vi.mocked(useApplicationBoard).mockReturnValue({
@@ -117,8 +120,9 @@ describe('ApplicationBoardPage', () => {
 
     renderPage()
     const card = screen.getByRole('article', { name: 'Acme Corp, Software Engineer' })
-    const interviewColumn = screen.getByRole('region', { name: 'Interview applications' })
     fireEvent.dragStart(card, { dataTransfer })
+    await user.click(screen.getByRole('tab', { name: 'Interview 0' }))
+    const interviewColumn = screen.getByRole('region', { name: 'Interview applications' })
     fireEvent.dragEnter(interviewColumn, { dataTransfer })
     fireEvent.dragOver(interviewColumn, { dataTransfer })
     fireEvent.drop(interviewColumn, { dataTransfer })

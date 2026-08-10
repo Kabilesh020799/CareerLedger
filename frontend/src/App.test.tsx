@@ -132,13 +132,13 @@ describe('application routing', () => {
     const user = userEvent.setup()
     renderApp('/dashboard')
 
-    const menuButton = screen.getByRole('button', { name: 'Open navigation' })
+    const menuButton = await screen.findByRole('button', { name: 'Open navigation' })
     expect(menuButton).toHaveAttribute('aria-expanded', 'false')
     await user.click(menuButton)
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Email sync' })).toHaveAttribute('href', '/gmail')
     await user.click(screen.getByRole('link', { name: 'Applications' }))
-    expect(screen.getByRole('heading', { name: 'Applications' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Applications' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Open navigation' })).toHaveAttribute('aria-expanded', 'false')
   })
 
@@ -146,10 +146,10 @@ describe('application routing', () => {
     const user = userEvent.setup()
     renderApp('/applications')
 
-    await user.click(screen.getByRole('button', { name: 'Open navigation' }))
+    await user.click(await screen.findByRole('button', { name: 'Open navigation' }))
     await user.click(screen.getByRole('link', { name: 'Board' }))
 
-    expect(screen.getByRole('heading', { name: 'Application board' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Application board' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'No applications on your board' })).toBeInTheDocument()
   })
 
@@ -165,16 +165,16 @@ describe('application routing', () => {
     } as never)
     renderApp('/dashboard')
 
-    await user.click(screen.getByRole('button', { name: 'Open navigation' }))
+    await user.click(await screen.findByRole('button', { name: 'Open navigation' }))
 
     expect(screen.getByLabelText('2 pending email updates')).toHaveTextContent('2')
     expect(screen.getByRole('link', { name: /Email sync/ })).toHaveAttribute('href', '/gmail')
   })
 
-  it('shows a recovery link for an unknown route', () => {
+  it('shows a recovery link for an unknown route', async () => {
     renderApp('/unknown')
 
-    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Return to applications' })).toHaveAttribute('href', '/applications')
   })
 })

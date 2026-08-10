@@ -84,6 +84,7 @@ Feature: Attach a resume to an application
     Then I should see each uploaded resume with its application and upload date
     And I should be able to open a PDF resume in a private in-application preview
     And I should be able to open the document in a new tab when an embedded preview is unavailable
+    And uploaded documents should remain in a separate tab from strategy tags
 
   Scenario: Keep uploaded documents when managing resume tags
     Given I have uploaded a resume to an application I own

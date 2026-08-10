@@ -3,6 +3,7 @@ import { applicationService } from '../services/application.service'
 import type { Application, ApplicationStatus } from '../types/application'
 import { applicationQueryKeys } from './applicationQueryKeys'
 import { dashboardQueryKeys } from './dashboardQueryKeys'
+import { useFeedback } from '../components/ui/feedback-context'
 
 type MoveApplicationVariables = {
   id: string
@@ -15,6 +16,7 @@ type MoveApplicationContext = {
 
 export function useMoveApplication() {
   const queryClient = useQueryClient()
+  const feedback = useFeedback()
 
   return useMutation<Application, Error, MoveApplicationVariables, MoveApplicationContext>({
     mutationFn: ({ id, status }) => applicationService.update(id, { status }),
@@ -34,6 +36,7 @@ export function useMoveApplication() {
       return { previousBoard }
     },
     onError: (_error, _variables, context) => {
+      feedback.show('Status update failed', { description: 'The application was returned to its previous status.', status: 'error' })
       if (context?.previousBoard) {
         queryClient.setQueryData(
           applicationQueryKeys.board,
@@ -42,6 +45,7 @@ export function useMoveApplication() {
       }
     },
     onSuccess: (application) => {
+      feedback.show('Status updated', { description: `${application.company} moved to ${application.status.toLowerCase()}.` })
       queryClient.setQueryData(
         applicationQueryKeys.detail(application.id),
         application,
