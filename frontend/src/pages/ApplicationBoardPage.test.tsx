@@ -88,10 +88,8 @@ describe('ApplicationBoardPage', () => {
     } as never)
 
     renderPage()
-    await user.selectOptions(
-      screen.getByLabelText('Move Acme Corp to status'),
-      'INTERVIEW',
-    )
+    await user.click(screen.getByRole('combobox', { name: 'Move Acme Corp to status' }))
+    await user.click(screen.getByRole('option', { name: 'Interview' }))
 
     expect(moveApplication.mutate).toHaveBeenCalledWith({
       id: application.id,

@@ -80,7 +80,8 @@ describe('ApplicationDetailsPage resume attachment', () => {
     )
 
     expect(screen.getByText('Software_Engineer_Acme_Corp.pdf')).toBeInTheDocument()
-    await user.selectOptions(screen.getByLabelText('Change application status'), 'INTERVIEW')
+    await user.click(screen.getByRole('combobox', { name: 'Change application status' }))
+    await user.click(screen.getByRole('option', { name: 'Interview' }))
     expect(move).toHaveBeenCalledWith({ id: 'application-1', status: 'INTERVIEW' })
     expect(screen.getByRole('link', { name: 'Add note' })).toHaveAttribute('href', '#timeline')
     await user.click(screen.getByRole('button', { name: 'Download resume' }))
