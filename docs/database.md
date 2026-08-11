@@ -34,7 +34,7 @@ ResumeObjectDeletion
 - `ResumeVersion`: reusable user-defined resume label used to compare application outcomes.
 - `ResumeObjectDeletion`: durable retry queue for S3 objects that could not be deleted immediately.
 - `GmailConnection`: one encrypted Gmail authorization per user, including incremental history state, automatic-sync interval, enablement, last worker attempt, and sanitized retry status.
-- `GmailMessage`: deduplicated reference to a synchronized Gmail message.
+- `GmailMessage`: deduplicated reference to a synchronized Gmail message, including the classifier version last applied so improved rules can re-evaluate older unmatched references once.
 - `GmailUpdateReview`: user-reviewed status suggestion or proposed new application derived from Gmail metadata.
 - `BrowserExtensionToken`: named, expiring, revocable capture access. Stores a SHA-256 token hash and display prefix, never the bearer secret.
 - `NotificationPreference`: one user-owned choice of email and browser-push reminder channels.

@@ -14,6 +14,8 @@ export class GmailNotConfiguredError extends Error {}
 export class GmailNotConnectedError extends Error {}
 export class GmailQueueUnavailableError extends Error {}
 
+const CURRENT_GMAIL_CLASSIFICATION_VERSION = 1;
+
 export const gmailService = {
   async status(userId: string) {
     if (!isGmailConfigured) {
@@ -145,7 +147,13 @@ export const gmailService = {
           })
         : [],
       prisma.gmailMessage.findMany({
-        where: { connectionId: connection.id, processedAt: null },
+        where: {
+          connectionId: connection.id,
+          OR: [
+            { processedAt: null },
+            { classificationVersion: { lt: CURRENT_GMAIL_CLASSIFICATION_VERSION } },
+          ],
+        },
         select: { gmailMessageId: true, threadId: true },
         orderBy: { createdAt: "asc" },
         take: 100,
@@ -228,7 +236,10 @@ export const gmailService = {
       if (storedMessages.length) {
         await transaction.gmailMessage.updateMany({
           where: { id: { in: storedMessages.map((message) => message.id) } },
-          data: { processedAt: now },
+          data: {
+            processedAt: now,
+            classificationVersion: CURRENT_GMAIL_CLASSIFICATION_VERSION,
+          },
         });
       }
       await transaction.gmailConnection.update({

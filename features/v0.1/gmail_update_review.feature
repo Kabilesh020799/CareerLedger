@@ -16,6 +16,7 @@ Feature: Review recruitment updates discovered from Gmail
       | coding assessment              | ASSESSMENT |
       | schedule an interview          | INTERVIEW  |
       | we will not be moving forward  | REJECTED   |
+      | thanks for your interest in Pigment, Kabilesh | REJECTED |
       | pleased to offer               | OFFER      |
 
   Scenario: Leave a missing role editable in an application acknowledgement
@@ -28,6 +29,12 @@ Feature: Review recruitment updates discovered from Gmail
     Given a synchronized Gmail message is not recruitment-related
     When the message is processed
     Then no application update should be proposed
+
+  Scenario: Re-evaluate unmatched messages after classification improves
+    Given a synchronized Gmail message was not detected by an older classifier
+    When a newer classifier version is deployed and I synchronize Gmail
+    Then the message should be analyzed once with the newer rules
+    And any newly detected update should be shown for review
 
   Scenario: Propose the strongest owned application match
     Given a recruitment message identifies an existing application by company, role, sender, or timing

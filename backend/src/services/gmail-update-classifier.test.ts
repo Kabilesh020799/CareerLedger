@@ -15,6 +15,7 @@ describe("Gmail recruitment update classification", () => {
     ["Complete your coding assessment", "ASSESSMENT"],
     ["Let us schedule an interview", "INTERVIEW"],
     ["We will not be moving forward", "REJECTED"],
+    ["Thanks for your interest in Pigment, Kabilesh", "REJECTED"],
     ["We are pleased to offer you the role", "OFFER"],
   ])("classifies %s as %s", (subject, status) => {
     expect(classifyGmailMessage({ subject, snippet: "" })?.status).toBe(status);
@@ -23,6 +24,12 @@ describe("Gmail recruitment update classification", () => {
   it("does not classify unrelated messages", () => {
     expect(
       classifyGmailMessage({ subject: "Your monthly statement", snippet: "News" }),
+    ).toBeNull();
+    expect(
+      classifyGmailMessage({
+        subject: "Thanks for your interest in our careers newsletter",
+        snippet: "Read this month's hiring news",
+      }),
     ).toBeNull();
   });
 

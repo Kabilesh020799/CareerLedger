@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.16.1] - 2026-08-11
+
+### Fixed
+
+- Detected personalized “Thanks for your interest in Company, Name” Gmail subjects as rejection updates and re-evaluated older unmatched messages once, while leaving generic interest messages unclassified.
+
 ## [3.16.0] - 2026-08-10
 
 ### Added
@@ -250,7 +256,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.16.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.16.1...HEAD
+[3.16.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.16.0...v3.16.1
 [3.16.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.2...v3.16.0
 [3.15.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.1...v3.15.2
 [3.15.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.0...v3.15.1

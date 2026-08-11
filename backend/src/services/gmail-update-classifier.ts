@@ -79,6 +79,10 @@ const classificationRules: Array<{
 export function classifyGmailMessage(
   message: Pick<GmailMessageMetadata, "subject" | "snippet">,
 ): Classification | null {
+  if (isPersonalizedInterestRejection(message.subject)) {
+    return { status: "REJECTED", confidence: 95 };
+  }
+
   const content = normalize(`${message.subject} ${message.snippet}`);
   for (const rule of classificationRules) {
     if (rule.phrases.some((phrase) => content.includes(phrase))) {
@@ -86,6 +90,16 @@ export function classifyGmailMessage(
     }
   }
   return null;
+}
+
+function isPersonalizedInterestRejection(subject: string) {
+  const normalizedSubject = subject
+    .replace(/^(?:re|fw|fwd):\s*/i, "")
+    .trim();
+
+  return /^(?:thanks|thank you)\s+for\s+your\s+interest\s+in\s+[^,\n]{2,120},\s*[a-z][a-z .'-]{0,79}$/i.test(
+    normalizedSubject,
+  );
 }
 
 export function matchGmailMessage(

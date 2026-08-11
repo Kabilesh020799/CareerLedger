@@ -285,7 +285,10 @@ describe("gmailService", () => {
     });
     expect(prismaMock.gmailMessage.updateMany).toHaveBeenCalledWith({
       where: { id: { in: ["stored-message-1", "stored-message-2"] } },
-      data: { processedAt: new Date("2026-08-09T21:00:00.000Z") },
+      data: {
+        processedAt: new Date("2026-08-09T21:00:00.000Z"),
+        classificationVersion: 1,
+      },
     });
     expect(prismaMock.gmailConnection.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -345,6 +348,18 @@ describe("gmailService", () => {
     expect(gmailApiMock.metadata).toHaveBeenCalledWith(credentials, [
       { id: "legacy-message", threadId: "legacy-thread" },
     ]);
+    expect(prismaMock.gmailMessage.findMany).toHaveBeenCalledWith({
+      where: {
+        connectionId: "connection-1",
+        OR: [
+          { processedAt: null },
+          { classificationVersion: { lt: 1 } },
+        ],
+      },
+      select: { gmailMessageId: true, threadId: true },
+      orderBy: { createdAt: "asc" },
+      take: 100,
+    });
     expect(prismaMock.gmailMessage.createMany).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       fetchedMessages: 0,
@@ -354,7 +369,7 @@ describe("gmailService", () => {
     });
     expect(prismaMock.gmailMessage.updateMany).toHaveBeenCalledWith({
       where: { id: { in: ["stored-legacy"] } },
-      data: { processedAt: expect.any(Date) },
+      data: { processedAt: expect.any(Date), classificationVersion: 1 },
     });
   });
 

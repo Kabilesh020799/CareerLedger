@@ -249,8 +249,9 @@ model GmailMessage {
   gmailMessageId String
   threadId       String?
   processedAt    DateTime?
-  updateReview   GmailUpdateReview?
-  createdAt      DateTime           @default(now())
+  classificationVersion Int                @default(0)
+  updateReview          GmailUpdateReview?
+  createdAt             DateTime           @default(now())
 
   @@unique([connectionId, gmailMessageId])
   @@index([connectionId, createdAt])
