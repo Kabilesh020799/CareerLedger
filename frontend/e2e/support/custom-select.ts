@@ -7,6 +7,7 @@ export async function chooseCustomSelectOption(
   optionName: string,
   scope: Page | Locator = page,
 ) {
-  await scope.getByRole('combobox', { name: accessibleName }).click()
+  const trigger = scope.getByRole('combobox', { name: accessibleName })
+  await trigger.click()
   await page.getByRole('option', { name: optionName, exact: true }).click()
 }

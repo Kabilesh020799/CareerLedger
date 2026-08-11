@@ -205,7 +205,7 @@ test('search, filter, sort, and retain application discovery controls', async ({
   await expect(page).toHaveURL(/search=shopify/)
   await expect(page).toHaveURL(/status=INTERVIEW/)
   await expect(page.getByRole('link', { name: 'Shopify' })).toBeVisible()
-  await expect(page.getByText('RBC')).not.toBeVisible()
+  await expect(page.getByRole('link', { name: 'RBC', exact: true })).toHaveCount(0)
 
   await page.reload()
   await expect(page.getByLabel('Search')).toHaveValue('shopify')

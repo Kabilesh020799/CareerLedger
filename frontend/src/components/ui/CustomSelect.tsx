@@ -1,5 +1,6 @@
 import { Select, createListCollection } from '@chakra-ui/react'
 import { Check } from 'lucide-react'
+import { useMemo } from 'react'
 
 export type CustomSelectOption = {
   label: string
@@ -26,7 +27,11 @@ export function CustomSelect({
   placeholder,
   value,
 }: CustomSelectProps) {
-  const collection = createListCollection({ items: options })
+  const optionsKey = options.map(({ label, value: optionValue }) => `${optionValue}\u0000${label}`).join('\u0001')
+  // Parent forms often derive option arrays during render. Preserve the collection
+  // while their contents are unchanged so an open popup is not detached.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const collection = useMemo(() => createListCollection({ items: options }), [optionsKey])
 
   return (
     <Select.Root
