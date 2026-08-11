@@ -19,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - Prevented successful password sign-ins from exhausting the shared network login limit while retaining protection against failed attempts.
+- Kept custom application dropdown triggers accessibly labelled and aligned browser tests with their visible popup controls.
 
 ## [3.15.2] - 2026-08-10
 

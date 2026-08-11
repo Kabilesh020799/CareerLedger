@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { chooseCustomSelectOption } from './support/custom-select'
 
 async function signIn(page: Page) {
   await page.goto('/applications')
@@ -32,14 +33,14 @@ test('manage a resume tag and associate it with an application', async ({ page }
   await page.getByRole('link', { name: 'Add application' }).click()
   await page.getByLabel('Company').fill(company)
   await page.getByLabel('Job title').fill('Platform Engineer')
-  await page.getByLabel('Status').selectOption('INTERVIEW')
+  await chooseCustomSelectOption(page, 'Status', 'Interview')
   await page.getByRole('button', { name: 'Create application' }).click()
   await expect(page.getByRole('heading', { name: 'Platform Engineer' })).toBeVisible()
   const applicationUrl = page.url()
 
   await expect(page.getByText('Resume tag', { exact: true })).toHaveCount(0)
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
-  await page.getByLabel('Resume tag').selectOption({ label: revisedName })
+  await chooseCustomSelectOption(page, 'Resume tag', revisedName)
   await page.getByRole('button', { name: 'Save changes' }).click()
   await expect(page).toHaveURL(applicationUrl)
   await expect(page.getByText('Resume tag', { exact: true }).locator('..')).toContainText(revisedName)

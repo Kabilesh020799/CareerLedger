@@ -36,9 +36,9 @@ export function CustomSelect({
       value={value ? [value] : []}
       onValueChange={(details) => onChange(details.value[0] ?? '')}
     >
-      <Select.HiddenSelect aria-label={ariaLabel} />
+      <Select.HiddenSelect />
       <Select.Control>
-        <Select.Trigger bg="bg" borderColor="border" borderRadius="md" borderWidth="1px" h="10" px="3" w="full">
+        <Select.Trigger aria-label={ariaLabel} bg="bg" borderColor="border" borderRadius="md" borderWidth="1px" h="10" px="3" w="full">
           <Select.ValueText placeholder={placeholder} />
           <Select.IndicatorGroup>
             <Select.Indicator />

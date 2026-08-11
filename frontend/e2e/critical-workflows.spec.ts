@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { chooseCustomSelectOption } from './support/custom-select'
 
 async function signIn(page: Page) {
   await page.goto('/applications')
@@ -18,7 +19,7 @@ test('sign in, create, open, edit, and delete an application, then sign out', as
   await page.getByLabel('Company').fill(company)
   await page.getByLabel('Job title').fill('Reliability Engineer')
   await page.getByLabel('Location').fill('Halifax, NS')
-  await page.getByLabel('Status').selectOption('APPLIED')
+  await chooseCustomSelectOption(page, 'Status', 'Applied')
   await page.getByRole('button', { name: 'Create application' }).click()
 
   await expect(page.getByRole('heading', { name: 'Reliability Engineer' })).toBeVisible()
@@ -33,7 +34,7 @@ test('sign in, create, open, edit, and delete an application, then sign out', as
 
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
   await page.getByLabel('Job title').fill('Senior Reliability Engineer')
-  await page.getByLabel('Status').selectOption('INTERVIEW')
+  await chooseCustomSelectOption(page, 'Status', 'Interview')
   await page.getByRole('button', { name: 'Save changes' }).click()
   await expect(page.getByRole('heading', { name: 'Senior Reliability Engineer' })).toBeVisible()
   await expect(page.getByText('Status changed from APPLIED to INTERVIEW')).toBeVisible()

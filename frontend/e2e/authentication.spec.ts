@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { chooseCustomSelectOption } from './support/custom-select'
 
 async function signIn(page: Page) {
   await page.goto('/applications')
@@ -134,7 +135,7 @@ test('create, complete, reopen, and delete an application reminder', async ({ pa
   await page.getByRole('link', { name: 'Add application' }).click()
   await page.getByLabel('Company').fill(company)
   await page.getByLabel('Job title').fill('Reminder Engineer')
-  await page.getByLabel('Status').selectOption('ASSESSMENT')
+  await chooseCustomSelectOption(page, 'Status', 'Assessment')
   await page.getByRole('button', { name: 'Create application' }).click()
   await expect(page.getByRole('heading', { name: 'Reminder Engineer' })).toBeVisible()
   await expect(page).toHaveURL(/\/applications\/(?!new$)[^/]+$/)
@@ -196,7 +197,7 @@ test('search, filter, sort, and retain application discovery controls', async ({
   await signIn(page)
 
   await page.getByLabel('Search').fill('shopify')
-  await page.getByLabel('Status').selectOption('INTERVIEW')
+  await chooseCustomSelectOption(page, 'Status', 'Interview')
   await page.getByRole('button', { name: 'More filters' }).click()
   await page.getByLabel('Source').fill('Company Website')
   await page.getByRole('button', { name: 'Apply filters' }).click()
@@ -213,10 +214,10 @@ test('search, filter, sort, and retain application discovery controls', async ({
   await page.getByRole('button', { name: 'Clear filters' }).first().click()
   await expect(page).not.toHaveURL(/search=/)
   await expect(page.getByLabel('Search')).toHaveValue('')
-  await expect(page.getByLabel('Status')).toHaveValue('')
+  await expect(page.getByRole('combobox', { name: 'Status' })).toContainText('All statuses')
   await expect(page.getByLabel('Source')).toHaveValue('')
-  await page.getByLabel('Sort by').selectOption('company')
-  await page.getByLabel('Order').selectOption('asc')
+  await chooseCustomSelectOption(page, 'Sort by', 'Company')
+  await chooseCustomSelectOption(page, 'Order', 'Ascending')
   await page.getByRole('button', { name: 'Apply filters' }).click()
 
   await expect(page.getByRole('row').nth(1)).toContainText('Atlas')
@@ -229,7 +230,7 @@ test('move an application across the board and record its timeline', async ({ pa
   await page.getByRole('link', { name: 'Add application' }).click()
   await page.getByLabel('Company').fill(company)
   await page.getByLabel('Job title').fill('Pipeline Engineer')
-  await page.getByLabel('Status').selectOption('APPLIED')
+  await chooseCustomSelectOption(page, 'Status', 'Applied')
   await page.getByRole('button', { name: 'Create application' }).click()
 
   await page.getByRole('link', { name: 'Board', exact: true }).click()
@@ -256,7 +257,7 @@ test('move an application across the board and record its timeline', async ({ pa
   const movedCard = screeningColumn.getByRole('article', {
     name: `${company}, Pipeline Engineer`,
   })
-  await movedCard.getByLabel(`Move ${company} to status`).selectOption('INTERVIEW')
+  await chooseCustomSelectOption(page, `Move ${company} to status`, 'Interview', movedCard)
   const interviewColumn = page.getByRole('region', {
     name: 'Interview applications',
   })
@@ -279,7 +280,7 @@ test('add a note and record a status change in the application timeline', async 
   await page.getByRole('link', { name: 'Add application' }).click()
   await page.getByLabel('Company').fill('Timeline verification')
   await page.getByLabel('Job title').fill('Test Engineer')
-  await page.getByLabel('Status').selectOption('APPLIED')
+  await chooseCustomSelectOption(page, 'Status', 'Applied')
   await page.getByRole('button', { name: 'Create application' }).click()
 
   await expect(page.getByText('No timeline activity yet')).toBeVisible()
@@ -289,7 +290,7 @@ test('add a note and record a status change in the application timeline', async 
   await expect(page.getByText('Followed up with the recruiter.')).toBeVisible()
 
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
-  await page.getByLabel('Status').selectOption('INTERVIEW')
+  await chooseCustomSelectOption(page, 'Status', 'Interview')
   await page.getByRole('button', { name: 'Save changes' }).click()
   await expect(page.getByText('Status changed from APPLIED to INTERVIEW')).toBeVisible()
 
