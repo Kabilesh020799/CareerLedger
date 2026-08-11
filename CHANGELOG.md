@@ -6,7 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
-## [3.15.3] - 2026-08-10
+## [3.16.0] - 2026-08-10
+
+### Added
+
+- Added a second automatically provisioned demo account with isolated user-owned data.
 
 ### Changed
 
@@ -245,8 +249,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.3...HEAD
-[3.15.3]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.2...v3.15.3
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.16.0...HEAD
+[3.16.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.2...v3.16.0
 [3.15.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.1...v3.15.2
 [3.15.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.0...v3.15.1
 [3.15.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.14.0...v3.15.0

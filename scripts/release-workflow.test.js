@@ -119,6 +119,8 @@ test("runs critical Playwright workflows with failure artifacts", () => {
   const verifyWorkflow = fs.readFileSync(verifyWorkflowPath, "utf8");
 
   assert.match(verifyWorkflow, /image: postgres:16-alpine/);
+  assert.match(verifyWorkflow, /image: redis:7-alpine/);
+  assert.match(verifyWorkflow, /REDIS_URL: redis:\/\/127\.0\.0\.1:6379/);
   assert.match(verifyWorkflow, /npx playwright install --with-deps chromium/);
   assert.match(verifyWorkflow, /run: npm run test:e2e/);
   assert.match(verifyWorkflow, /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02/);

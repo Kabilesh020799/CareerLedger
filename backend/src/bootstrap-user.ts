@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "./generated/prisma/client";
-import { bootstrapBuiltInDemoUser } from "./services/demo-user-bootstrap.service";
+import { bootstrapBuiltInDemoUsers } from "./services/demo-user-bootstrap.service";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -12,7 +12,7 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  await bootstrapBuiltInDemoUser(prisma);
+  await bootstrapBuiltInDemoUsers(prisma);
 
   console.log("Production user bootstrap completed.");
 }

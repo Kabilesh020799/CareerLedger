@@ -19,6 +19,13 @@ Username: demo
 Password: JobTrackerDemo123!
 ```
 
+The second demo account, also created automatically in production, is:
+
+```text
+Username: demo2
+Password: JobTrackerDemo456!
+```
+
 These credentials are intentionally public and suitable only for a demo deployment. Do not use them for sensitive data.
 
 Useful local URLs:

@@ -26,6 +26,15 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 12
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
@@ -72,6 +81,7 @@ jobs:
         working-directory: frontend
         env:
           DATABASE_URL: postgresql://jobtracker:jobtracker_dev@127.0.0.1:5432/jobtracker_test
+          REDIS_URL: redis://127.0.0.1:6379
           SESSION_SECRET: browser-test-session-secret-with-32-characters
           SEED_DEMO_DATA: "true"
         run: npm run test:e2e

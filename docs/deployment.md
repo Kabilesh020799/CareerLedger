@@ -94,14 +94,17 @@ CloudFront distribution `EI1Q2B9SNAQJH` serves browser-facing HTTPS at `d2g95c1j
 
 CloudFront encrypts browser traffic and the application issues a `Secure`, HTTP-only session cookie. The CloudFront-to-EC2 origin connection currently uses HTTP, so transport encryption is not end-to-end. The frontend passes CloudFront's viewer protocol to Express through `X-Forwarded-Proto` so secure cookies are issued correctly.
 
-The application bootstraps this built-in production account on every container start:
+The application bootstraps these built-in production accounts on every container start:
 
 ```text
 Username: demo
 Password: JobTrackerDemo123!
+
+Username: demo2
+Password: JobTrackerDemo456!
 ```
 
-The password is intentionally present in the application source and is therefore public. The bootstrap process stores only its bcrypt hash in PostgreSQL and updates the existing demo user's hash when necessary. Production does not seed any demo application records. Do not store private information behind this shared account.
+The passwords are intentionally present in the application source and are therefore public. The bootstrap process stores only their bcrypt hashes in PostgreSQL and updates existing demo-user hashes when necessary. Each account owns separate data. Production does not seed any demo application records. Do not store private information behind these shared accounts.
 
 ## 5. Publish a release automatically
 
@@ -127,7 +130,7 @@ The workflow:
 6. Writes the public application origin and HTTP cookie mode to the instance.
 7. Authenticates the instance to GHCR with the workflow's short-lived token.
 8. Pulls and starts the exact release version.
-9. On the first deployment, generates protected database and session credentials, bootstraps the built-in demo user, and starts the PostgreSQL container and volume.
+9. On the first deployment, generates protected database and session credentials, bootstraps the built-in demo users, and starts the PostgreSQL container and volume.
 10. Waits for Compose health checks and verifies the proxied API.
 11. Restores the previous release version when deployment fails.
 12. Creates the version tag and GitHub Release with the matching changelog entries only after deployment succeeds.

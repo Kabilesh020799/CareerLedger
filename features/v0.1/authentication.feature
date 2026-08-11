@@ -18,6 +18,12 @@ Feature: Secure user-owned application data
     Then I should have an authenticated application session
     And I should see applications owned by the demo user
 
+  Scenario: Bootstrap separate production demo accounts
+    Given production user bootstrap is enabled
+    When the backend starts
+    Then both documented demo accounts should exist
+    And each account should have separate user-owned data
+
   Scenario: Reject incorrect demo credentials
     Given the development demo login is enabled
     When I sign in with an incorrect username or password
@@ -51,7 +57,7 @@ Feature: Secure user-owned application data
 
   Scenario: Sign in to the production HTTP deployment
     Given password login is enabled in production
-    And the built-in demo user was bootstrapped
+    And the built-in demo users were bootstrapped
     When I sign in with the documented demo username and password
     Then I should have an authenticated application session
     And the login page should warn that HTTP does not protect credentials in transit
@@ -59,7 +65,7 @@ Feature: Secure user-owned application data
   Scenario: Do not seed demo application records in production
     Given the application is running in production
     When the database bootstrap runs
-    Then the built-in demo user should be created
+    Then the built-in demo users should be created
     But demo applications should not be seeded
 
   Scenario: Report the current signed-in user

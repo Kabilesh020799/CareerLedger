@@ -12,7 +12,7 @@ Password login uses Redis-backed abuse protection before bcrypt authentication. 
 
 Set `ENABLE_PASSWORD_LOGIN=false` when password authentication is not required. Google configuration does not silently change this setting, preventing an operator from accidentally locking out an existing deployment.
 
-The repository includes public demo credentials for demonstration only. Do not store private job-search data behind that shared account.
+The repository includes public demo credentials for demonstration only. The accounts have separate ownership boundaries, but neither should store private job-search data because their passwords are public.
 
 ## Authorization
 
