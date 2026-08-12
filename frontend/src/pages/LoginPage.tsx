@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Alert, Box, Button, Container, Field, Flex, Heading, Input, Separator, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import { useForm } from 'react-hook-form'
-import { Navigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { usePasswordLogin } from '../hooks/usePasswordLogin'
 import { useSession } from '../hooks/useSession'
 import { loginSchema, type LoginInput } from '../schemas/login.schema'
@@ -103,6 +103,9 @@ export function LoginPage() {
                 <Button type="submit" colorPalette="purple" loading={passwordLogin.isPending} minH="11">
                   Sign in
                 </Button>
+                <Text color="fg.muted" fontSize="sm" textAlign="center">
+                  New to Job Tracker? <Link to="/signup">Create an account</Link>
+                </Text>
               </Stack>
             </form>
           )}

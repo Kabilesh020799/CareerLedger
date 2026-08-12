@@ -79,6 +79,10 @@ const classificationRules: Array<{
 export function classifyGmailMessage(
   message: Pick<GmailMessageMetadata, "subject" | "snippet">,
 ): Classification | null {
+  if (isApplicationAcknowledgement(message.subject)) {
+    return { status: "APPLIED", confidence: 95 };
+  }
+
   if (isPersonalizedInterestRejection(message.subject)) {
     return { status: "REJECTED", confidence: 95 };
   }
@@ -90,6 +94,16 @@ export function classifyGmailMessage(
     }
   }
   return null;
+}
+
+function isApplicationAcknowledgement(subject: string) {
+  const normalizedSubject = subject
+    .replace(/^(?:re|fw|fwd):\s*/i, "")
+    .trim();
+
+  return /^(?:thanks|thank you)\s+for\s+applying\s+to\s+[^\n]{2,120}$/i.test(
+    normalizedSubject,
+  );
 }
 
 function isPersonalizedInterestRejection(subject: string) {

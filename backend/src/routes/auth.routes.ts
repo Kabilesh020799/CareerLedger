@@ -7,6 +7,40 @@ export const authRouter = Router();
 
 authRouter.get("/session", authController.session);
 
+/**
+ * @swagger
+ * /api/auth/signup:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Create a password account
+ *     description: Validates unique account details, stores a bcrypt password hash, and starts a server-side session. Separate Redis limits protect username and network signup attempts.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, username, email, password]
+ *             properties:
+ *               name: { type: string, minLength: 2, maxLength: 80 }
+ *               username: { type: string, minLength: 3, maxLength: 32, pattern: '^[a-zA-Z0-9_-]+$' }
+ *               email: { type: string, format: email, maxLength: 254 }
+ *               password: { type: string, format: password, minLength: 12, maxLength: 72 }
+ *     responses:
+ *       201: { description: Account created and session started }
+ *       400: { description: Invalid account details }
+ *       409: { description: Username or email already registered }
+ *       429: { description: Signup attempt limit reached }
+ */
+authRouter.post("/signup", (req, res, next) => {
+  if (!authConfig.passwordLoginEnabled) {
+    res.status(404).json({ error: "Account signup is unavailable" });
+    return;
+  }
+
+  authController.passwordSignup(req, res, next);
+});
+
 authRouter.post("/login", (req, res, next) => {
   if (!authConfig.passwordLoginEnabled) {
     res.status(404).json({ error: "Password login is unavailable" });

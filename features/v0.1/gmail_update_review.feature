@@ -12,6 +12,7 @@ Feature: Review recruitment updates discovered from Gmail
     Examples:
       | phrase                         | status     |
       | thank you for applying         | APPLIED    |
+      | thanks for applying to Palona AI | APPLIED  |
       | thank you for your application | APPLIED    |
       | coding assessment              | ASSESSMENT |
       | schedule an interview          | INTERVIEW  |

@@ -2,7 +2,7 @@ import { hash } from "bcryptjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const prismaMock = vi.hoisted(() => ({
-  user: { findUnique: vi.fn() },
+  user: { create: vi.fn(), findUnique: vi.fn() },
 }));
 
 vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
@@ -11,6 +11,45 @@ import { credentialAuthService } from "./credential-auth.service";
 
 describe("credentialAuthService", () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it("creates a normalized account without returning its password hash", async () => {
+    prismaMock.user.create.mockResolvedValue({
+      id: "user-1",
+      username: "new_user",
+      email: "person@example.com",
+      name: "New User",
+      avatarUrl: null,
+    });
+
+    const user = await credentialAuthService.register({
+      name: " New User ",
+      username: "New_User",
+      email: "PERSON@EXAMPLE.COM",
+      password: "SecurePassword1",
+    });
+
+    expect(prismaMock.user.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        name: "New User",
+        username: "new_user",
+        email: "person@example.com",
+        passwordHash: expect.not.stringContaining("SecurePassword1"),
+      }),
+      select: expect.not.objectContaining({ passwordHash: true }),
+    });
+    expect(user).not.toHaveProperty("passwordHash");
+  });
+
+  it("reports duplicate usernames or emails as a controlled conflict", async () => {
+    prismaMock.user.create.mockRejectedValue({ code: "P2002" });
+
+    await expect(credentialAuthService.register({
+      name: "New User",
+      username: "new_user",
+      email: "person@example.com",
+      password: "SecurePassword1",
+    })).rejects.toThrow("An account already exists with that username or email");
+  });
 
   it("returns the public user for a valid password without returning its hash", async () => {
     prismaMock.user.findUnique.mockResolvedValue({

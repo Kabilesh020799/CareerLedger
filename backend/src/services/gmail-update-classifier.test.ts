@@ -9,6 +9,7 @@ import {
 describe("Gmail recruitment update classification", () => {
   it.each([
     ["Thank you for applying", "APPLIED"],
+    ["Thanks for applying to Palona AI", "APPLIED"],
     ["Thank you for your application to Pigmen", "APPLIED"],
     ["Thanks for your application", "APPLIED"],
     ["We have received your application", "APPLIED"],
@@ -29,6 +30,12 @@ describe("Gmail recruitment update classification", () => {
       classifyGmailMessage({
         subject: "Thanks for your interest in our careers newsletter",
         snippet: "Read this month's hiring news",
+      }),
+    ).toBeNull();
+    expect(
+      classifyGmailMessage({
+        subject: "Thanks for applying sunscreen",
+        snippet: "Summer skincare tips",
       }),
     ).toBeNull();
   });

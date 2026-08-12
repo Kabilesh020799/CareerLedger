@@ -1,8 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
 import { authConfig } from "../config/auth";
-import { credentialAuthService } from "../services/credential-auth.service";
+import { CredentialAlreadyExistsError, credentialAuthService } from "../services/credential-auth.service";
 import { loginAbuseProtectionService } from "../services/login-abuse-protection.service";
-import { passwordLoginSchema } from "../validators/auth.validator";
+import { signupAbuseProtectionService } from "../services/signup-abuse-protection.service";
+import { passwordLoginSchema, passwordSignupSchema } from "../validators/auth.validator";
 
 const invalidCredentialsResponse = { error: "Invalid username or password" };
 
@@ -17,6 +18,42 @@ export const authController = {
 
   callback(_req: Request, res: Response) {
     res.redirect(authConfig.frontendUrl);
+  },
+
+  async passwordSignup(req: Request, res: Response, next: NextFunction) {
+    const decision = await signupAbuseProtectionService.begin(
+      req.ip ?? req.socket.remoteAddress ?? "unknown-ip",
+      req.body?.username,
+    );
+    if (decision.delayMs > 0) await delay(decision.delayMs);
+    if (!decision.allowed) {
+      res.setHeader("Retry-After", String(decision.retryAfterSeconds));
+      res.status(429).json({ error: "Too many signup attempts. Try again later." });
+      return;
+    }
+
+    const parsed = passwordSignupSchema.safeParse(req.body);
+    if (!parsed.success) {
+      await signupAbuseProtectionService.recordFailure(decision.attempt);
+      res.status(400).json({ error: "Invalid account details", issues: parsed.error.issues });
+      return;
+    }
+
+    try {
+      const user = await credentialAuthService.register(parsed.data);
+      req.login(user, (error) => {
+        if (error) return next(error);
+        void signupAbuseProtectionService.recordSuccess(decision.attempt);
+        res.status(201).json({ user });
+      });
+    } catch (error) {
+      if (error instanceof CredentialAlreadyExistsError) {
+        await signupAbuseProtectionService.recordFailure(decision.attempt);
+        res.status(409).json({ error: error.message });
+        return;
+      }
+      next(error);
+    }
   },
 
   async passwordLogin(req: Request, res: Response, next: NextFunction) {

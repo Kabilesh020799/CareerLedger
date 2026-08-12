@@ -12,6 +12,23 @@ async function signIn(page: Page) {
   await expect(page).toHaveURL(/\/applications$/)
 }
 
+test('create an account and enter its private workspace', async ({ page }) => {
+  const suffix = `${Date.now()}-${test.info().parallelIndex}`
+  await page.goto('/login')
+  await page.getByRole('link', { name: 'Create an account' }).click()
+
+  await page.getByLabel('Name', { exact: true }).fill('Signup User')
+  await page.getByLabel('Username', { exact: true }).fill(`signup_${suffix}`)
+  await page.getByLabel('Email', { exact: true }).fill(`signup-${suffix}@example.com`)
+  await page.getByLabel('Password', { exact: true }).fill('SecurePassword1')
+  await page.getByLabel('Confirm password').fill('SecurePassword1')
+  await page.getByRole('button', { name: 'Create account' }).click()
+
+  await expect(page).toHaveURL(/\/applications$/)
+  await expect(page.getByRole('heading', { name: 'Applications', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'No applications yet', exact: true })).toBeVisible()
+})
+
 test('switch and retain the application color theme', async ({ page }) => {
   await page.goto('/login')
   await page.evaluate(() => window.localStorage.removeItem('job-tracker-color-mode'))

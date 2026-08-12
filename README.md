@@ -56,10 +56,11 @@ docker compose down --volumes
 - Keep uploaded résumé documents in a private preview library, label résumé strategies with suggested or custom tags, and compare outcomes by tag.
 - Act on due and inactive applications before reviewing dashboard pipeline, source, résumé-tag, and milestone analytics.
 - Receive accessible in-app confirmation after important create, update, status, reminder, tag, and synchronization actions.
-- Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates, including common acknowledgements and personalized rejection subjects such as “Thanks for your interest in Company, Name.”
+- Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates, including acknowledgements such as “Thanks for applying to Company” and personalized rejection subjects such as “Thanks for your interest in Company, Name.”
 - Capture job postings from a clean light/dark Manifest V3 extension workflow, review or refresh extracted details, and preserve skills, experience requirements, salary, location, work mode, original URL, description, and capture date with revocable user-scoped access.
 - Switch between light and dark themes.
 - Keep applications, Gmail data, resumes, reminders, and analytics scoped to the signed-in user.
+- Create a private account with a unique username and email, then enter the workspace immediately through an authenticated session.
 - Protect password login with progressive delays, temporary account and network limits, uniform credential failures, and sanitized security events.
 - Use custom accessible dropdown menus for application filtering and form selections.
 
@@ -103,7 +104,7 @@ All application, resume, reminder, dashboard, and Gmail data endpoints require a
 
 | Area | Endpoints |
 | --- | --- |
-| Health and auth | `GET /api/health`, `GET /api/auth/session`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/google` |
+| Health and auth | `GET /api/health`, `POST /api/auth/signup`, `GET /api/auth/session`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/google` |
 | Applications | `GET/POST /api/applications`, `GET/PATCH/DELETE /api/applications/:id`, `GET /api/applications/search` |
 | Resume uploads | `POST/DELETE /api/applications/resume-uploads`, `GET /api/applications/:id/resume`, `GET /api/applications/:id/resume-download` |
 | Uploaded resume library | `GET /api/resumes/uploads` |

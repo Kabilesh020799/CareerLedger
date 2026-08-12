@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { generatedOpenApiDocument } from "./openapi";
 
 const documentedOperations = [
-  ["/api/health", "get"], ["/api/auth/login", "post"], ["/api/auth/session", "get"], ["/api/auth/logout", "post"],
+  ["/api/health", "get"], ["/api/auth/signup", "post"], ["/api/auth/login", "post"], ["/api/auth/session", "get"], ["/api/auth/logout", "post"],
   ["/api/applications", "get"], ["/api/applications", "post"], ["/api/applications/search", "get"],
   ["/api/applications/{id}", "get"], ["/api/applications/{id}", "patch"], ["/api/applications/{id}", "delete"],
   ["/api/applications/resume-uploads", "post"], ["/api/applications/resume-uploads", "delete"],

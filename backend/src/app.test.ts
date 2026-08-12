@@ -9,17 +9,17 @@ vi.hoisted(() => {
   delete process.env.GOOGLE_CLIENT_SECRET;
 });
 
-vi.mock("./config/prisma", () => ({
-  prisma: {
-    user: { findUnique: vi.fn() },
+const prismaMock = vi.hoisted(() => ({
+    user: { create: vi.fn(), findUnique: vi.fn() },
     session: {
-      findUnique: vi.fn(),
-      deleteMany: vi.fn(),
-      upsert: vi.fn(),
-      updateMany: vi.fn(),
+      findUnique: vi.fn().mockResolvedValue(null),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      upsert: vi.fn().mockResolvedValue({}),
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
-  },
 }));
+
+vi.mock("./config/prisma", () => ({ prisma: prismaMock }));
 
 vi.mock("./services/login-abuse-protection.service", () => ({
   loginAbuseProtectionService: {
@@ -30,6 +30,22 @@ vi.mock("./services/login-abuse-protection.service", () => ({
         accountKey: "account-key",
         accountReference: "account-reference",
         ipReference: "ip-reference",
+      },
+    }),
+    recordFailure: vi.fn().mockResolvedValue(undefined),
+    recordSuccess: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock("./services/signup-abuse-protection.service", () => ({
+  signupAbuseProtectionService: {
+    begin: vi.fn().mockResolvedValue({
+      allowed: true,
+      delayMs: 0,
+      attempt: {
+        accountKey: "signup-account-key",
+        accountReference: "signup-account-reference",
+        ipReference: "signup-ip-reference",
       },
     }),
     recordFailure: vi.fn().mockResolvedValue(undefined),
@@ -120,6 +136,55 @@ describe("authentication API boundary", () => {
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ error: "Invalid username or password" });
+  });
+
+  it("creates an account and starts an authenticated session", async () => {
+    prismaMock.user.create.mockResolvedValueOnce({
+      id: "user-1",
+      username: "new_user",
+      email: "person@example.com",
+      name: "New User",
+      avatarUrl: null,
+    });
+
+    const response = await request(app).post("/api/auth/signup").send({
+      name: "New User",
+      username: "New_User",
+      email: "person@example.com",
+      password: "SecurePassword1",
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.user).toMatchObject({ username: "new_user", email: "person@example.com" });
+    expect(response.headers["set-cookie"]?.[0]).toContain("job-tracker-session");
+  });
+
+  it("rejects invalid signup details before creating an account", async () => {
+    const response = await request(app).post("/api/auth/signup").send({
+      name: "N",
+      username: "bad username",
+      email: "invalid",
+      password: "short",
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Invalid account details");
+  });
+
+  it("returns a controlled conflict for duplicate signup details", async () => {
+    prismaMock.user.create.mockRejectedValueOnce({ code: "P2002" });
+
+    const response = await request(app).post("/api/auth/signup").send({
+      name: "Existing User",
+      username: "existing_user",
+      email: "existing@example.com",
+      password: "SecurePassword1",
+    });
+
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({
+      error: "An account already exists with that username or email",
+    });
   });
 
   it("returns the same failure for malformed password credentials", async () => {

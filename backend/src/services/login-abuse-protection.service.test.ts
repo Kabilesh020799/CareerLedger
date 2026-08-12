@@ -73,6 +73,28 @@ describe("loginAbuseProtectionService", () => {
     );
   });
 
+  it("supports separate signup limits and retains successful attempt pressure", async () => {
+    const { client, audit } = setup();
+    const service = createLoginAbuseProtectionService(
+      () => client as never,
+      audit,
+      {
+        scope: "signup",
+        accountAttemptLimit: 5,
+        ipAttemptLimit: 10,
+        clearSuccessfulAttempt: false,
+      },
+    );
+
+    const decision = await service.begin("203.0.113.10", "new-user");
+    await service.recordSuccess(decision.attempt);
+
+    expect(decision.attempt.accountKey).toMatch(/^auth:signup:account:/);
+    expect(decision.attempt.ipKey).toMatch(/^auth:signup:ip:/);
+    expect(client.eval).toHaveBeenCalledTimes(1);
+    expect(audit).toHaveBeenCalledWith("auth.signup.succeeded", expect.any(Object));
+  });
+
   it("fails open with a sanitized event when Redis is unavailable", async () => {
     const failingClient = {
       status: "ready",

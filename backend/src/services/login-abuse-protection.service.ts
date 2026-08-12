@@ -73,7 +73,17 @@ function defaultClient() {
 export function createLoginAbuseProtectionService(
   createClient: () => RedisLoginClient = defaultClient,
   writeAudit: typeof audit = audit,
+  options: {
+    scope?: string;
+    accountAttemptLimit?: number;
+    ipAttemptLimit?: number;
+    clearSuccessfulAttempt?: boolean;
+  } = {},
 ) {
+  const scope = options.scope ?? "login";
+  const accountAttemptLimit = options.accountAttemptLimit ?? ACCOUNT_ATTEMPT_LIMIT;
+  const ipAttemptLimit = options.ipAttemptLimit ?? IP_ATTEMPT_LIMIT;
+  const clearSuccessfulAttempt = options.clearSuccessfulAttempt ?? true;
   let redis: RedisLoginClient | undefined;
 
   async function client() {
@@ -86,8 +96,8 @@ export function createLoginAbuseProtectionService(
     async begin(ip: string, username: unknown): Promise<LoginAttemptDecision> {
       const accountReference = opaqueReference(normalizedAccount(username));
       const ipReference = opaqueReference(ip || "unknown-ip");
-      const accountKey = `auth:login:account:${accountReference}`;
-      const ipKey = `auth:login:ip:${ipReference}`;
+      const accountKey = `auth:${scope}:account:${accountReference}`;
+      const ipKey = `auth:${scope}:ip:${ipReference}`;
       const attempt = { accountKey, ipKey, accountReference, ipReference };
 
       try {
@@ -103,7 +113,7 @@ export function createLoginAbuseProtectionService(
         }
         const [accountCount, ipCount, accountTtl, ipTtl] = result.map(Number);
         const blocked =
-          accountCount > ACCOUNT_ATTEMPT_LIMIT || ipCount > IP_ATTEMPT_LIMIT;
+          accountCount > accountAttemptLimit || ipCount > ipAttemptLimit;
         const pressure = Math.max(accountCount, Math.ceil(ipCount / 4));
         const delayMs = Math.min(
           Math.max(0, pressure - 1) * 150,
@@ -113,9 +123,9 @@ export function createLoginAbuseProtectionService(
         if (blocked) {
           const retryAfterSeconds = Math.max(
             1,
-            accountCount > ACCOUNT_ATTEMPT_LIMIT ? accountTtl : ipTtl,
+            accountCount > accountAttemptLimit ? accountTtl : ipTtl,
           );
-          writeAudit("auth.login.blocked", {
+          writeAudit(`auth.${scope}.blocked`, {
             accountReference,
             ipReference,
             retryAfterSeconds,
@@ -125,7 +135,7 @@ export function createLoginAbuseProtectionService(
 
         return { allowed: true, delayMs, attempt };
       } catch {
-        writeAudit("auth.login.protection_unavailable", {
+        writeAudit(`auth.${scope}.protection_unavailable`, {
           accountReference,
           ipReference,
         });
@@ -134,7 +144,7 @@ export function createLoginAbuseProtectionService(
     },
 
     async recordFailure(attempt: LoginAttempt) {
-      writeAudit("auth.login.failed", {
+      writeAudit(`auth.${scope}.failed`, {
         accountReference: attempt.accountReference,
         ipReference: attempt.ipReference,
       });
@@ -142,19 +152,21 @@ export function createLoginAbuseProtectionService(
 
     async recordSuccess(attempt: LoginAttempt) {
       try {
-        await (await client()).eval(
-          recordSuccessScript,
-          2,
-          attempt.accountKey,
-          attempt.ipKey,
-        );
+        if (clearSuccessfulAttempt) {
+          await (await client()).eval(
+            recordSuccessScript,
+            2,
+            attempt.accountKey,
+            attempt.ipKey,
+          );
+        }
       } catch {
-        writeAudit("auth.login.protection_unavailable", {
+        writeAudit(`auth.${scope}.protection_unavailable`, {
           accountReference: attempt.accountReference,
           ipReference: attempt.ipReference,
         });
       }
-      writeAudit("auth.login.succeeded", {
+      writeAudit(`auth.${scope}.succeeded`, {
         accountReference: attempt.accountReference,
         ipReference: attempt.ipReference,
       });

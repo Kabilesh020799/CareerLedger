@@ -28,7 +28,7 @@ The frontend and backend are independent TypeScript applications. PostgreSQL is 
 
 Requests follow `Route -> Validation -> Controller -> Service -> Prisma`. Routes compose middleware and handlers, validators define accepted input, controllers translate HTTP concerns, and services contain ownership rules, transactions, and persistence logic.
 
-Protected routes use an HTTP-only session cookie. Every user-owned query is scoped to the authenticated user. Application status changes and timeline events are saved in one Prisma transaction.
+Password signup and login create the same PostgreSQL-backed HTTP-only session cookie. Signup validates and normalizes identifiers before the credential service creates the user with a bcrypt password hash. Every user-owned query is scoped to the authenticated user. Application status changes and timeline events are saved in one Prisma transaction.
 
 ## Frontend boundaries
 

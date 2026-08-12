@@ -14,7 +14,7 @@ export class GmailNotConfiguredError extends Error {}
 export class GmailNotConnectedError extends Error {}
 export class GmailQueueUnavailableError extends Error {}
 
-const CURRENT_GMAIL_CLASSIFICATION_VERSION = 1;
+const CURRENT_GMAIL_CLASSIFICATION_VERSION = 2;
 
 export const gmailService = {
   async status(userId: string) {

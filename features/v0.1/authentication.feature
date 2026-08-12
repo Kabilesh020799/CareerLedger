@@ -4,6 +4,33 @@ Feature: Secure user-owned application data
   I want to sign in before using the tracker
   So that my job-search records remain private
 
+  Scenario: Create a password account
+    Given password authentication is enabled
+    When I sign up with a unique username, email, and a valid password
+    Then my password should be stored only as a bcrypt hash
+    And I should have an authenticated application session
+    And I should enter my private application workspace
+    And the workspace should initially contain no applications
+
+  Scenario: Validate password account details
+    Given password authentication is enabled
+    When I submit an invalid username, email, or password during signup
+    Then the response status should be 400
+    And no user account should be created
+
+  Scenario: Reject a duplicate password account
+    Given a user already owns the submitted username or email
+    When I submit the signup form
+    Then the response status should be 409
+    And database implementation details should not be exposed
+
+  Scenario: Temporarily limit abusive signup attempts
+    Given password authentication is enabled
+    And an account or network address has exceeded its signup attempt limit
+    When another account signup is attempted
+    Then the response status should be 429
+    And signup limits should not consume password-login allowances
+
   Scenario: Sign in with Google
     Given Google authentication is configured
     When I complete Google authentication successfully

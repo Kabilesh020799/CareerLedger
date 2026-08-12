@@ -12,6 +12,7 @@ const EditApplicationPage = lazy(() => import('./pages/EditApplicationPage').the
 const NewApplicationPage = lazy(() => import('./pages/NewApplicationPage').then((module) => ({ default: module.NewApplicationPage })))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage })))
 const LoginPage = lazy(() => import('./pages/LoginPage').then((module) => ({ default: module.LoginPage })))
+const SignupPage = lazy(() => import('./pages/SignupPage').then((module) => ({ default: module.SignupPage })))
 const GmailSyncPage = lazy(() => import('./pages/GmailSyncPage').then((module) => ({ default: module.GmailSyncPage })))
 const ResumeVersionsPage = lazy(() => import('./pages/ResumeVersionsPage').then((module) => ({ default: module.ResumeVersionsPage })))
 const BrowserExtensionPage = lazy(() => import('./pages/BrowserExtensionPage').then((module) => ({ default: module.BrowserExtensionPage })))
@@ -22,6 +23,7 @@ function App() {
   return (
     <Routes>
       <Route path="login" element={load(<LoginPage />)} />
+      <Route path="signup" element={load(<SignupPage />)} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route index element={<Navigate to="/applications" replace />} />

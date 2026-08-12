@@ -287,7 +287,7 @@ describe("gmailService", () => {
       where: { id: { in: ["stored-message-1", "stored-message-2"] } },
       data: {
         processedAt: new Date("2026-08-09T21:00:00.000Z"),
-        classificationVersion: 1,
+        classificationVersion: 2,
       },
     });
     expect(prismaMock.gmailConnection.update).toHaveBeenCalledWith(
@@ -353,7 +353,7 @@ describe("gmailService", () => {
         connectionId: "connection-1",
         OR: [
           { processedAt: null },
-          { classificationVersion: { lt: 1 } },
+          { classificationVersion: { lt: 2 } },
         ],
       },
       select: { gmailMessageId: true, threadId: true },
@@ -369,7 +369,7 @@ describe("gmailService", () => {
     });
     expect(prismaMock.gmailMessage.updateMany).toHaveBeenCalledWith({
       where: { id: { in: ["stored-legacy"] } },
-      data: { processedAt: expect.any(Date), classificationVersion: 1 },
+      data: { processedAt: expect.any(Date), classificationVersion: 2 },
     });
   });
 
