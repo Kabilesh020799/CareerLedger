@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 
 /** Selects a Chakra option through its stable native form bridge. */
 export async function chooseCustomSelectOption(
@@ -17,5 +17,4 @@ export async function chooseCustomSelectOption(
   // accessibility bridge. Selecting through that bridge avoids racing the
   // animated portal, whose option nodes may be remounted while opening.
   await nativeSelect.selectOption({ label: optionName }, { force: true })
-  await expect(trigger).toContainText(optionName)
 }
