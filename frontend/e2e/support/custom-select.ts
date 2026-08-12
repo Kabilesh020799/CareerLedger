@@ -1,6 +1,6 @@
-import type { Locator, Page } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 
-/** Selects an option through the visible Chakra combobox and portalled listbox. */
+/** Selects a Chakra option through its stable native form bridge. */
 export async function chooseCustomSelectOption(
   page: Page,
   accessibleName: string,
@@ -8,6 +8,14 @@ export async function chooseCustomSelectOption(
   scope: Page | Locator = page,
 ) {
   const trigger = scope.getByRole('combobox', { name: accessibleName })
-  await trigger.click()
-  await page.getByRole('option', { name: optionName, exact: true }).click()
+  const root = trigger.locator(
+    'xpath=ancestor::*[@data-scope="select" and @data-part="root"][1]',
+  )
+  const nativeSelect = root.locator('select')
+
+  // Chakra renders a stable native select as the custom control's form and
+  // accessibility bridge. Selecting through that bridge avoids racing the
+  // animated portal, whose option nodes may be remounted while opening.
+  await nativeSelect.selectOption({ label: optionName }, { force: true })
+  await expect(trigger).toContainText(optionName)
 }

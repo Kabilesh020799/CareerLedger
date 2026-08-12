@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.18.2] - 2026-08-11
+
+### Fixed
+
+- Stabilized critical browser verification when Chakra dropdown options remount during their opening transition.
+
 ## [3.18.1] - 2026-08-11
 
 ### Fixed
@@ -278,7 +284,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.18.1...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.18.2...HEAD
+[3.18.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.18.1...v3.18.2
 [3.18.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.18.0...v3.18.1
 [3.18.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.17.0...v3.18.0
 [3.17.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.16.1...v3.17.0
