@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Alert,
   Badge,
+  Box,
   Button,
   Field,
   Flex,
@@ -12,7 +13,7 @@ import {
   Stack,
   Text,
 } from '@chakra-ui/react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { useResolveGmailUpdateReview } from '../../hooks/useResolveGmailUpdateReview'
 import {
   gmailUpdateReviewFormSchema,
@@ -24,12 +25,17 @@ import {
   type ApplicationStatus,
 } from '../../types/application'
 import type { GmailUpdateReview } from '../../types/gmail'
+import type { ResumeVersion } from '../../types/resume'
 import { getApiErrorMessage } from '../../utils/apiError'
+import { CustomSelect } from '../ui/CustomSelect'
 
 type Props = {
   review: GmailUpdateReview
   applications: Application[]
   applicationsLoading: boolean
+  resumeVersions: ResumeVersion[]
+  resumeVersionsLoading: boolean
+  resumeVersionsError: boolean
 }
 
 const statusLabels: Record<ApplicationStatus, string> = {
@@ -47,9 +53,13 @@ export function GmailUpdateReviewCard({
   review,
   applications,
   applicationsLoading,
+  resumeVersions,
+  resumeVersionsLoading,
+  resumeVersionsError,
 }: Props) {
   const resolveReview = useResolveGmailUpdateReview()
   const {
+    control,
     register,
     handleSubmit,
     watch,
@@ -62,11 +72,14 @@ export function GmailUpdateReviewCard({
       status: review.suggestedStatus,
       company: review.suggestedCompany ?? '',
       jobTitle: review.suggestedJobTitle ?? '',
+      resumeVersionId: '',
+      resume: undefined,
     },
   })
   const target = watch('target')
 
   const confirm = handleSubmit(async (values) => {
+    const resume = values.target === 'NEW' ? values.resume?.item(0) ?? undefined : undefined
     await resolveReview.mutateAsync({
       id: review.id,
       input:
@@ -81,7 +94,9 @@ export function GmailUpdateReviewCard({
               company: values.company,
               jobTitle: values.jobTitle,
               status: values.status,
+              resumeVersionId: values.resumeVersionId || null,
             },
+      ...(resume ? { resume } : {}),
     })
   })
 
@@ -173,6 +188,7 @@ export function GmailUpdateReviewCard({
               <Field.ErrorText>{errors.applicationId?.message}</Field.ErrorText>
             </Field.Root>
           ) : (
+            <Stack gap="4">
             <SimpleGrid columns={{ base: 1, md: 2 }} gap="4">
               <Field.Root invalid={Boolean(errors.company)} required>
                 <Field.Label>Company<Field.RequiredIndicator /></Field.Label>
@@ -185,6 +201,44 @@ export function GmailUpdateReviewCard({
                 <Field.ErrorText>{errors.jobTitle?.message}</Field.ErrorText>
               </Field.Root>
             </SimpleGrid>
+            <SimpleGrid columns={{ base: 1, md: 2 }} gap="4">
+              <Field.Root invalid={Boolean(errors.resumeVersionId)}>
+                <Field.Label>Resume tag</Field.Label>
+                <Controller
+                  control={control}
+                  name="resumeVersionId"
+                  render={({ field }) => (
+                    <CustomSelect
+                      aria-label="Resume tag"
+                      disabled={resumeVersionsLoading || resumeVersionsError}
+                      name={field.name}
+                      options={resumeVersions.map((version) => ({ label: version.name, value: version.id }))}
+                      placeholder="No resume tag"
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+                {resumeVersionsError && <Text color="fg.error" fontSize="sm">Resume tags could not be loaded.</Text>}
+                <Field.ErrorText>{errors.resumeVersionId?.message}</Field.ErrorText>
+              </Field.Root>
+              <Field.Root invalid={Boolean(errors.resume)}>
+                <Field.Label>Attach resume</Field.Label>
+                <Box bg="bg.subtle" borderColor="border" borderRadius="lg" borderStyle="dashed" borderWidth="2px" p="3">
+                  <Input
+                    {...register('resume')}
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    aria-label="Attach resume"
+                    cursor="pointer"
+                    p="1.5"
+                    type="file"
+                  />
+                  <Text color="fg.subtle" fontSize="xs" mt="1">PDF, DOC, or DOCX up to 5 MB. Saved as Role_Company.</Text>
+                </Box>
+                <Field.ErrorText>{errors.resume?.message}</Field.ErrorText>
+              </Field.Root>
+            </SimpleGrid>
+            </Stack>
           )}
 
           {resolveReview.isError && (

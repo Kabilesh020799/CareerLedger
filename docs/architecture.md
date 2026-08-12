@@ -51,6 +51,8 @@ Downloads use short-lived signed URLs. The résumé library fetches owned PDF by
 
 Google OAuth credentials are encrypted before storage. Manual synchronization fetches message metadata incrementally using Gmail history identifiers and deduplicates by Gmail message ID. Each stored reference records the classifier version last applied, allowing a newer rule set to re-evaluate older messages once without repeatedly scanning them. Suggested changes remain pending until the user confirms, ignores, or creates an application.
 
+Creating an application from a Gmail review reuses the application résumé upload pipeline. Production uploads are prepared directly against private S3; local database fallback uses multipart bytes. The service verifies résumé-tag ownership and creates the application, generated résumé attachment, timeline note, and resolved review in one PostgreSQL transaction.
+
 When a user enables automatic synchronization, the API persists the chosen interval and upserts a user-scoped BullMQ scheduler in Redis. A separate worker processes jobs with exponential retry backoff. Each job checks that the database schedule is still enabled before calling the same incremental synchronization service used by manual sync. Redis stores queue state; PostgreSQL remains authoritative for schedule settings, Gmail cursors, messages, and public failure status. API startup reconciles enabled database schedules into Redis after restarts.
 
 ## Password-login protection

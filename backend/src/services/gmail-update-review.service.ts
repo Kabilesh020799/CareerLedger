@@ -1,6 +1,8 @@
 import { prisma } from "../config/prisma";
 import type { Prisma } from "../generated/prisma/client";
 import type { ResolveGmailUpdateReviewInput } from "../validators/gmail-update-review.validator";
+import type { ApplicationResumeAttachmentInput } from "../validators/application-resume.validator";
+import { applicationResumeCreateData } from "./application-resume.service";
 import {
   classifyGmailMessage,
   inferCompany,
@@ -54,6 +56,7 @@ export const gmailUpdateReviewService = {
     id: string,
     input: ResolveGmailUpdateReviewInput,
     now = new Date(),
+    resume?: ApplicationResumeAttachmentInput,
   ) {
     return prisma.$transaction(async (transaction) => {
       const review = await transaction.gmailUpdateReview.findFirst({
@@ -74,6 +77,15 @@ export const gmailUpdateReviewService = {
       }
 
       if (input.action === "CREATE_APPLICATION") {
+        if (input.resumeVersionId) {
+          const resumeVersion = await transaction.resumeVersion.findFirst({
+            where: { id: input.resumeVersionId, userId },
+            select: { id: true },
+          });
+          if (!resumeVersion) {
+            throw new GmailUpdateReviewNotFoundError("Resume tag not found");
+          }
+        }
         const application = await transaction.application.create({
           data: {
             userId,
@@ -82,6 +94,18 @@ export const gmailUpdateReviewService = {
             source: "Gmail",
             status: input.status,
             appliedAt: input.status === "SAVED" ? null : review.receivedAt,
+            resumeVersionId: input.resumeVersionId ?? null,
+            ...(resume
+              ? {
+                  resumeAttachment: {
+                    create: applicationResumeCreateData(
+                      input.jobTitle,
+                      input.company,
+                      resume,
+                    ),
+                  },
+                }
+              : {}),
           },
         });
         await transaction.applicationEvent.create({

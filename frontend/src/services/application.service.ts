@@ -13,8 +13,8 @@ import type {
 } from '../types/application'
 
 /** Converts application fields and a resume into a legacy multipart request. */
-function applicationFormData(
-  input: CreateApplicationInput | UpdateApplicationInput,
+export function applicationFormData(
+  input: Record<string, unknown>,
   resume: File,
 ) {
   const formData = new FormData()
@@ -26,7 +26,7 @@ function applicationFormData(
 }
 
 /** Requests direct-upload permission or selects database fallback storage. */
-async function prepareResumeUpload(resume: File) {
+export async function prepareResumeUpload(resume: File) {
   const response = await api.post<ResumeUploadPreparation>(
     '/applications/resume-uploads',
     {
@@ -38,7 +38,7 @@ async function prepareResumeUpload(resume: File) {
   return response.data
 }
 
-async function abandonResumeUpload(storageKey: string) {
+export async function abandonResumeUpload(storageKey: string) {
   try {
     await api.delete('/applications/resume-uploads', { data: { storageKey } })
   } catch {
@@ -46,7 +46,7 @@ async function abandonResumeUpload(storageKey: string) {
   }
 }
 
-async function uploadResumeToS3(
+export async function uploadResumeToS3(
   resume: File,
   preparation: Extract<ResumeUploadPreparation, { mode: 's3' }>,
 ) {

@@ -12,6 +12,7 @@ const { prismaMock, transactionMock } = vi.hoisted(() => {
       create: vi.fn(),
     },
     applicationEvent: { create: vi.fn() },
+    resumeVersion: { findFirst: vi.fn() },
   };
   return {
     transactionMock: transaction,
@@ -138,6 +139,7 @@ describe("gmailUpdateReviewService", () => {
         source: "Gmail",
         status: "APPLIED",
         appliedAt: pendingReview.receivedAt,
+        resumeVersionId: null,
       },
     });
     expect(transactionMock.applicationEvent.create).toHaveBeenCalledWith({
@@ -145,6 +147,54 @@ describe("gmailUpdateReviewService", () => {
         applicationId: "application-new",
         type: "NOTE",
         description: "Application created from a confirmed Gmail update",
+      }),
+    });
+  });
+
+  it("creates a Gmail application with an owned resume tag and attachment atomically", async () => {
+    transactionMock.gmailUpdateReview.findFirst.mockResolvedValue(pendingReview);
+    transactionMock.resumeVersion.findFirst.mockResolvedValue({ id: "resume-version-1" });
+    transactionMock.application.create.mockResolvedValue({ id: "application-new" });
+    transactionMock.gmailUpdateReview.update.mockResolvedValue({
+      ...pendingReview,
+      status: "CONFIRMED",
+    });
+    const resume = {
+      originalName: "resume.pdf",
+      extension: ".pdf" as const,
+      mimeType: "application/pdf" as const,
+      size: 128,
+      content: Buffer.from("%PDF-1.7"),
+    };
+
+    await gmailUpdateReviewService.resolve(
+      "user-1",
+      "review-1",
+      {
+        action: "CREATE_APPLICATION",
+        company: "Acme",
+        jobTitle: "Engineer",
+        status: "APPLIED",
+        resumeVersionId: "resume-version-1",
+      },
+      undefined,
+      resume,
+    );
+
+    expect(transactionMock.resumeVersion.findFirst).toHaveBeenCalledWith({
+      where: { id: "resume-version-1", userId: "user-1" },
+      select: { id: true },
+    });
+    expect(transactionMock.application.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        resumeVersionId: "resume-version-1",
+        resumeAttachment: {
+          create: expect.objectContaining({
+            fileName: "Engineer_Acme.pdf",
+            mimeType: "application/pdf",
+            size: 128,
+          }),
+        },
       }),
     });
   });

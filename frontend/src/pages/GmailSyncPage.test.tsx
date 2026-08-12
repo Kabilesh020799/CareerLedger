@@ -10,6 +10,7 @@ import { useGmailUpdateReviews } from '../hooks/useGmailUpdateReviews'
 import { useResolveGmailUpdateReview } from '../hooks/useResolveGmailUpdateReview'
 import { useSyncGmail } from '../hooks/useSyncGmail'
 import { useUpdateGmailSchedule } from '../hooks/useUpdateGmailSchedule'
+import { useResumeVersions } from '../hooks/useResumeVersions'
 import { GmailSyncPage } from './GmailSyncPage'
 
 vi.mock('../hooks/useGmailStatus', () => ({ useGmailStatus: vi.fn() }))
@@ -19,6 +20,7 @@ vi.mock('../hooks/useDisconnectGmail', () => ({ useDisconnectGmail: vi.fn() }))
 vi.mock('../hooks/useApplicationOptions', () => ({ useApplicationOptions: vi.fn() }))
 vi.mock('../hooks/useGmailUpdateReviews', () => ({ useGmailUpdateReviews: vi.fn() }))
 vi.mock('../hooks/useResolveGmailUpdateReview', () => ({ useResolveGmailUpdateReview: vi.fn() }))
+vi.mock('../hooks/useResumeVersions', () => ({ useResumeVersions: vi.fn() }))
 vi.mock('../services/gmail.service', () => ({
   gmailConnectUrl: 'http://localhost:3000/api/gmail/connect',
 }))
@@ -61,11 +63,21 @@ describe('GmailSyncPage', () => {
       isError: false,
       data: [],
     } as never)
+    vi.mocked(useResumeVersions).mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: [],
+    } as never)
     vi.mocked(useResolveGmailUpdateReview).mockReturnValue({
       mutate: vi.fn(),
       mutateAsync: vi.fn().mockResolvedValue(undefined),
       isPending: false,
       isError: false,
+    } as never)
+    vi.mocked(useResumeVersions).mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: [{ id: 'resume-1', name: 'Backend', notes: null }],
     } as never)
   })
   afterEach(cleanup)
@@ -299,6 +311,10 @@ describe('GmailSyncPage', () => {
     renderPage()
 
     expect(screen.getByText('No confident application match')).toBeInTheDocument()
+    await user.click(screen.getByRole('combobox', { name: 'Resume tag' }))
+    await user.click(screen.getByRole('option', { name: 'Backend' }))
+    const resume = new File(['%PDF-1.7'], 'resume.pdf', { type: 'application/pdf' })
+    await user.upload(screen.getByLabelText('Attach resume'), resume)
     await user.click(screen.getByRole('button', { name: 'Create application' }))
     expect(mutateAsync).toHaveBeenCalledWith({
       id: 'review-new',
@@ -307,7 +323,9 @@ describe('GmailSyncPage', () => {
         company: 'Northstar',
         jobTitle: 'Platform Engineer',
         status: 'APPLIED',
+        resumeVersionId: 'resume-1',
       },
+      resume,
     })
 
     await user.click(screen.getByRole('button', { name: 'Ignore' }))

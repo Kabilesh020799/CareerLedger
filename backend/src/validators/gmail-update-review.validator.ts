@@ -16,6 +16,8 @@ const createApplicationReviewSchema = z.object({
   company: z.string().trim().min(1, "Company is required").max(200),
   jobTitle: z.string().trim().min(1, "Job title is required").max(200),
   status: z.enum(applicationStatuses),
+  resumeVersionId: z.string().trim().min(1).nullable().optional(),
+  resumeUploadKey: z.string().trim().min(1).max(500).optional(),
 });
 
 export const resolveGmailUpdateReviewSchema = z.discriminatedUnion("action", [

@@ -56,7 +56,7 @@ docker compose down --volumes
 - Keep uploaded résumé documents in a private preview library, label résumé strategies with suggested or custom tags, and compare outcomes by tag.
 - Act on due and inactive applications before reviewing dashboard pipeline, source, résumé-tag, and milestone analytics.
 - Receive accessible in-app confirmation after important create, update, status, reminder, tag, and synchronization actions.
-- Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates, including acknowledgements such as “Thanks for applying to Company” and personalized rejection subjects such as “Thanks for your interest in Company, Name.”
+- Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates. New applications created from Gmail reviews can include a résumé tag and private résumé upload.
 - Capture job postings from a clean light/dark Manifest V3 extension workflow, review or refresh extracted details, and preserve skills, experience requirements, salary, location, work mode, original URL, description, and capture date with revocable user-scoped access.
 - Switch between light and dark themes.
 - Keep applications, Gmail data, resumes, reminders, and analytics scoped to the signed-in user.

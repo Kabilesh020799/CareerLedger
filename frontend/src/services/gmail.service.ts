@@ -7,6 +7,12 @@ import type {
   UpdateGmailScheduleInput,
 } from '../types/gmail'
 import { api, apiBaseUrl } from './api'
+import {
+  abandonResumeUpload,
+  applicationFormData,
+  prepareResumeUpload,
+  uploadResumeToS3,
+} from './application.service'
 
 export const gmailConnectUrl = `${apiBaseUrl.replace(/\/$/, '')}/gmail/connect`
 
@@ -31,7 +37,35 @@ export const gmailService = {
     return response.data
   },
 
-  async resolveReview(id: string, input: ResolveGmailUpdateReviewInput) {
+  async resolveReview(id: string, input: ResolveGmailUpdateReviewInput, resume?: File) {
+    if (resume && input.action === 'CREATE_APPLICATION') {
+      const preparation = await prepareResumeUpload(resume)
+      if (preparation.mode === 'database') {
+        const response = await api.patch<ResolveGmailUpdateReviewResult>(
+          `/gmail/reviews/${id}`,
+          applicationFormData(input, resume),
+        )
+        return response.data
+      }
+
+      try {
+        await uploadResumeToS3(resume, preparation)
+      } catch {
+        await abandonResumeUpload(preparation.storageKey)
+        throw new Error('Unable to upload resume. Please try again.')
+      }
+
+      try {
+        const response = await api.patch<ResolveGmailUpdateReviewResult>(
+          `/gmail/reviews/${id}`,
+          { ...input, resumeUploadKey: preparation.storageKey },
+        )
+        return response.data
+      } catch (error) {
+        await abandonResumeUpload(preparation.storageKey)
+        throw error
+      }
+    }
     const response = await api.patch<ResolveGmailUpdateReviewResult>(
       `/gmail/reviews/${id}`,
       input,

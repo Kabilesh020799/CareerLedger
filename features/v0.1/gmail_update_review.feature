@@ -49,6 +49,14 @@ Feature: Review recruitment updates discovered from Gmail
     Then a pending new-application suggestion should be shown
     And no application should be created automatically
 
+  Scenario: Create a suggested application with its resume
+    Given an unmatched Gmail update proposes a new application
+    And I have an existing resume tag
+    When I choose the resume tag, attach a supported resume, and confirm creation
+    Then the application, owned resume tag, attachment, and Gmail review should be saved together
+    And the resume should use the Role_Company filename
+    And an invalid tag or attachment should leave the review pending
+
   Scenario: Notify me about pending Gmail reviews in navigation
     Given I have pending Gmail updates for matched applications and proposed new applications
     When I view the application navigation

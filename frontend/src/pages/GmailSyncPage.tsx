@@ -9,6 +9,7 @@ import { useGmailStatus } from '../hooks/useGmailStatus'
 import { useGmailUpdateReviews } from '../hooks/useGmailUpdateReviews'
 import { useSyncGmail } from '../hooks/useSyncGmail'
 import { useUpdateGmailSchedule } from '../hooks/useUpdateGmailSchedule'
+import { useResumeVersions } from '../hooks/useResumeVersions'
 import type { GmailSyncInterval } from '../types/gmail'
 import { gmailConnectUrl } from '../services/gmail.service'
 import { getApiErrorMessage } from '../utils/apiError'
@@ -30,6 +31,7 @@ export function GmailSyncPage() {
   const connected = Boolean(statusQuery.data?.connected)
   const reviewsQuery = useGmailUpdateReviews(connected)
   const applicationsQuery = useApplicationOptions(connected)
+  const resumeVersionsQuery = useResumeVersions()
   const [searchParams] = useSearchParams()
   const authorizationError = searchParams.get('error')
   const automaticSync = statusQuery.data?.automaticSync ?? {
@@ -290,6 +292,9 @@ export function GmailSyncPage() {
               review={review}
               applications={applicationsQuery.data ?? []}
               applicationsLoading={applicationsQuery.isPending}
+              resumeVersions={resumeVersionsQuery.data ?? []}
+              resumeVersionsLoading={resumeVersionsQuery.isPending}
+              resumeVersionsError={resumeVersionsQuery.isError}
             />
           ))}
         </Stack>

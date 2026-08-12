@@ -9,13 +9,16 @@ import { reminderQueryKeys } from './reminderQueryKeys'
 type ResolveVariables = {
   id: string
   input: ResolveGmailUpdateReviewInput
+  resume?: File
 }
 
 export function useResolveGmailUpdateReview() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, input }: ResolveVariables) =>
-      gmailService.resolveReview(id, input),
+    mutationFn: ({ id, input, resume }: ResolveVariables) =>
+      resume
+        ? gmailService.resolveReview(id, input, resume)
+        : gmailService.resolveReview(id, input),
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: gmailQueryKeys.all }),

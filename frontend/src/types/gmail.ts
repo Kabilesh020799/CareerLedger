@@ -60,6 +60,8 @@ export type ResolveGmailUpdateReviewInput =
       company: string
       jobTitle: string
       status: import('./application').ApplicationStatus
+      resumeVersionId?: string | null
+      resumeUploadKey?: string
     }
 
 export type ResolveGmailUpdateReviewResult = {

@@ -17,6 +17,8 @@ import {
 } from "../services/gmail-update-review.service";
 import { gmailCallbackQuerySchema } from "../validators/gmail.validator";
 import { resolveGmailUpdateReviewSchema } from "../validators/gmail-update-review.validator";
+import { validateApplicationResume } from "../validators/application-resume.validator";
+import { applicationResumeStorageService } from "../services/application-resume-storage.service";
 import { updateGmailScheduleSchema } from "../validators/gmail-schedule.validator";
 
 function getUser(req: Request) {
@@ -179,15 +181,54 @@ export const gmailController = {
       return;
     }
 
+    const userId = getUser(req).id;
+    const uploadKey = parsed.data.action === "CREATE_APPLICATION"
+      ? parsed.data.resumeUploadKey
+      : undefined;
+    if (req.file && uploadKey) {
+      res.status(400).json({ error: "Choose only one resume upload method" });
+      return;
+    }
+
+    let resume;
+    if (uploadKey) {
+      resume = await applicationResumeStorageService.finalizeUpload(userId, uploadKey);
+    } else {
+      resume = validateApplicationResume(req.file);
+    }
+    if (!resume.success) {
+      res.status(400).json({ error: resume.error });
+      return;
+    }
+
     try {
+      const result = resume.data
+        ? await gmailUpdateReviewService.resolve(
+            userId,
+            getId(req),
+            parsed.data,
+            undefined,
+            resume.data,
+          )
+        : await gmailUpdateReviewService.resolve(
+            userId,
+            getId(req),
+            parsed.data,
+          );
       res.json(
-        await gmailUpdateReviewService.resolve(
-          getUser(req).id,
-          getId(req),
-          parsed.data,
-        ),
+        result,
       );
     } catch (error) {
+      if (resume.data && "storageKey" in resume.data) {
+        try {
+          await applicationResumeStorageService.abandonUpload(
+            userId,
+            resume.data.storageKey,
+          );
+        } catch {
+          // The bucket lifecycle policy remains the final cleanup fallback.
+        }
+      }
       if (error instanceof GmailUpdateReviewNotFoundError) {
         res.status(404).json({ error: error.message });
         return;
