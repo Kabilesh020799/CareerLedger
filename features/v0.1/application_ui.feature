@@ -75,6 +75,12 @@ Feature: Manage applications in the React interface
     Then I should see recorded application details grouped by overview, requirements, notes, and documents
     And missing optional sections should not distract from recorded information
 
+  Scenario: Display a compact application status
+    Given I am viewing an application with an applied status
+    When the application details load
+    Then the Applied status should appear as a compact title-case badge
+    And the badge should not stretch across the details header
+
   Scenario: Take action from application details
     Given I am viewing an application
     When I change its status from the quick actions
