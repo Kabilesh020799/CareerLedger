@@ -15,6 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - Reduced release verification time by running backend, frontend, critical browser, release-metadata, and deployment-automation checks as independent parallel jobs while retaining the complete release gate.
+- Prevented the dependency-free release-metadata job from requesting an npm cache when the monorepo has no root lockfile.
 
 ## [3.21.0] - 2026-08-12
 

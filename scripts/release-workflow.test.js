@@ -68,6 +68,18 @@ test("validates the versioned changelog before publishing images", () => {
   assert.match(verifyWorkflow, /npm run release:notes >\/dev\/null/);
 });
 
+test("runs dependency-free release checks without a root npm cache", () => {
+  const verifyWorkflow = fs.readFileSync(verifyWorkflowPath, "utf8");
+  const releaseBlock = verifyWorkflow.slice(
+    verifyWorkflow.indexOf("  release:"),
+    verifyWorkflow.indexOf("  backend:"),
+  );
+
+  assert.match(releaseBlock, /node-version: 22/);
+  assert.doesNotMatch(releaseBlock, /cache: npm/);
+  assert.doesNotMatch(releaseBlock, /npm ci/);
+});
+
 test("configures HTTP or HTTPS application origins without account secrets", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
   const authStep = workflow.indexOf(
