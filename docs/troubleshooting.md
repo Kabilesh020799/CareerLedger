@@ -54,6 +54,12 @@ Check `docker compose ps redis gmail-worker backend`. Verify `REDIS_URL` uses th
 
 If an improved classifier should recover an older unmatched email, deploy the updated backend and choose **Sync now**. Stored message references are re-evaluated once with the new classifier version in batches of up to 100; repeat synchronization if the account has more than 100 older references.
 
+## Ambiguous Gmail messages are not suggested
+
+Deterministic classification always runs first. The optional LLM fallback runs only when those rules return no result. Confirm `OPENAI_API_KEY` is available to both `backend` and `gmail-worker`; optionally verify `OPENAI_GMAIL_MODEL`, `OPENAI_GMAIL_CONFIDENCE_THRESHOLD`, and `OPENAI_GMAIL_TIMEOUT_MS`. Restart both services after changing their environment.
+
+An absent key, timeout, provider error, non-success response, malformed structured response, or result below the confidence threshold intentionally leaves the message unmatched and does not fail synchronization. Never print the API key or email content while investigating. After correcting configuration, choose **Sync now** to re-evaluate eligible stored messages.
+
 ## Password login is temporarily limited
 
 A `429` response means the account or network address exceeded its temporary login allowance. Respect the response's `Retry-After` seconds instead of repeatedly retrying. If valid logins are never delayed or logs contain `auth.login.protection_unavailable`, confirm Redis is healthy and `REDIS_URL` is reachable from the backend. Do not print raw usernames, passwords, or Redis connection strings while investigating.

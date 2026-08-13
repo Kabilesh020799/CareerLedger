@@ -11,15 +11,19 @@ import {
   type GmailApplicationCandidate,
   type GmailMessageMetadata,
 } from "./gmail-update-classifier";
+import { gmailLlmClassifier } from "./gmail-llm-classifier.service";
 
 export class GmailUpdateReviewNotFoundError extends Error {}
 export class GmailUpdateReviewConflictError extends Error {}
 
-export function buildGmailUpdateSuggestion(
+export async function buildGmailUpdateSuggestion(
   message: GmailMessageMetadata,
   applications: GmailApplicationCandidate[],
+  llmClassifier: Pick<typeof gmailLlmClassifier, "classify"> = gmailLlmClassifier,
 ) {
-  const classification = classifyGmailMessage(message);
+  const deterministicClassification = classifyGmailMessage(message);
+  const classification =
+    deterministicClassification ?? (await llmClassifier.classify(message));
   if (!classification) return null;
   const match = matchGmailMessage(message, applications);
 

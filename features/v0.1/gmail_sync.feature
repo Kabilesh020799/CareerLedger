@@ -74,3 +74,24 @@ Feature: Manually synchronize Gmail
     When I open Gmail synchronization
     Then I should see that an administrator must configure it
     And I should not be offered a connection action
+
+  Scenario: Classify an ambiguous recruitment message with an LLM fallback
+    Given deterministic rules cannot classify a synchronized Gmail message
+    And the optional LLM classifier is configured
+    When the LLM returns a valid structured classification that meets the configured confidence threshold
+    Then a pending Gmail review should be suggested from the validated classification
+    And the raw LLM response should not update an application directly
+
+  Scenario: Continue synchronization when the LLM fallback is not configured
+    Given deterministic rules cannot classify a synchronized Gmail message
+    And the optional LLM classifier is not configured
+    When Gmail synchronization processes the message
+    Then synchronization should continue without creating a suggestion for that message
+    And deterministic classifications for other messages should be preserved
+
+  Scenario: Ignore an unusable LLM fallback result
+    Given deterministic rules cannot classify a synchronized Gmail message
+    And the optional LLM classifier is configured
+    When the provider fails or returns an invalid or insufficiently confident result
+    Then synchronization should continue without creating a suggestion for that message
+    And no application should be changed

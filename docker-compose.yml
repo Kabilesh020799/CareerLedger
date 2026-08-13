@@ -41,6 +41,10 @@ services:
       FRONTEND_URL: http://localhost:5173
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_GMAIL_MODEL: ${OPENAI_GMAIL_MODEL:-gpt-5-mini}
+      OPENAI_GMAIL_CONFIDENCE_THRESHOLD: ${OPENAI_GMAIL_CONFIDENCE_THRESHOLD:-80}
+      OPENAI_GMAIL_TIMEOUT_MS: ${OPENAI_GMAIL_TIMEOUT_MS:-10000}
       GOOGLE_CALLBACK_URL: http://localhost:5173/api/auth/google/callback
       GMAIL_CALLBACK_URL: http://localhost:5173/api/gmail/callback
       SESSION_SECRET: ${SESSION_SECRET:-local-docker-session-secret-change-me}
@@ -86,6 +90,10 @@ services:
       NODE_ENV: development
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_GMAIL_MODEL: ${OPENAI_GMAIL_MODEL:-gpt-5-mini}
+      OPENAI_GMAIL_CONFIDENCE_THRESHOLD: ${OPENAI_GMAIL_CONFIDENCE_THRESHOLD:-80}
+      OPENAI_GMAIL_TIMEOUT_MS: ${OPENAI_GMAIL_TIMEOUT_MS:-10000}
       GMAIL_CALLBACK_URL: http://localhost:5173/api/gmail/callback
       SESSION_SECRET: ${SESSION_SECRET:-local-docker-session-secret-change-me}
       REDIS_URL: redis://redis:6379

@@ -56,6 +56,7 @@ Add environment secrets:
 | `DEPLOY_KNOWN_HOSTS` | Verified SSH known-hosts line |
 | `GOOGLE_CLIENT_ID` | Optional Google web OAuth client ID used for Gmail connection |
 | `GOOGLE_CLIENT_SECRET` | Optional Google web OAuth client secret used for Gmail connection |
+| `OPENAI_API_KEY` | Optional OpenAI API key used only to classify Gmail messages that deterministic rules cannot classify |
 | `VAPID_PRIVATE_KEY` | Web Push private key generated with its matching public key |
 | `SMTP_USER` | Optional SMTP login username |
 | `SMTP_PASSWORD` | Optional SMTP login password |
@@ -73,6 +74,9 @@ Add environment variables:
 | `VAPID_PUBLIC_KEY` | Public Web Push application-server key |
 | `VAPID_SUBJECT` | Web Push contact URI, such as `mailto:administrator@example.com` |
 | `SMTP_HOST` | Optional SMTP server hostname |
+| `OPENAI_GMAIL_MODEL` | Optional Gmail fallback model; defaults to `gpt-5-mini` |
+| `OPENAI_GMAIL_CONFIDENCE_THRESHOLD` | Minimum accepted fallback confidence from 0 to 100; defaults to `80` |
+| `OPENAI_GMAIL_TIMEOUT_MS` | Maximum provider request duration in milliseconds; defaults to `10000` |
 | `SMTP_PORT` | SMTP port, normally `587` or `465` |
 | `SMTP_FROM` | Verified sender address for reminder email |
 

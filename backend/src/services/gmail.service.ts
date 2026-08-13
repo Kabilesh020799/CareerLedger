@@ -14,7 +14,7 @@ export class GmailNotConfiguredError extends Error {}
 export class GmailNotConnectedError extends Error {}
 export class GmailQueueUnavailableError extends Error {}
 
-const CURRENT_GMAIL_CLASSIFICATION_VERSION = 2;
+const CURRENT_GMAIL_CLASSIFICATION_VERSION = 3;
 
 export const gmailService = {
   async status(userId: string) {
@@ -192,9 +192,13 @@ export const gmailService = {
           }),
         ])
       : [{ credentials: synchronization.credentials, messages: [] }, []];
-    const suggestions = metadataResult.messages
-      .map((message) => buildGmailUpdateSuggestion(message, applications))
-      .filter((suggestion) => suggestion !== null);
+    const suggestions: NonNullable<
+      Awaited<ReturnType<typeof buildGmailUpdateSuggestion>>
+    >[] = [];
+    for (const message of metadataResult.messages) {
+      const suggestion = await buildGmailUpdateSuggestion(message, applications);
+      if (suggestion) suggestions.push(suggestion);
+    }
 
     const result = await prisma.$transaction(async (transaction) => {
       const created = newReferences.length

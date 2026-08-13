@@ -56,7 +56,7 @@ docker compose down --volumes
 - Keep uploaded résumé documents in a private preview library, label résumé strategies with suggested or custom tags, and compare outcomes by tag.
 - Act on due and inactive applications before reviewing dashboard pipeline, source, résumé-tag, and milestone analytics.
 - Receive accessible in-app confirmation after important create, update, status, reminder, tag, and synchronization actions.
-- Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates. New applications created from Gmail reviews can include a résumé tag and private résumé upload.
+- Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates. Deterministic rules classify known recruitment messages, with an optional validated LLM fallback for ambiguous messages. New applications created from Gmail reviews can include a résumé tag and private résumé upload.
 - Capture job postings from a clean light/dark Manifest V3 extension workflow, review or refresh extracted details, and preserve skills, experience requirements, salary, location, work mode, original URL, description, and capture date with revocable user-scoped access.
 - Switch between light and dark themes.
 - Keep applications, Gmail data, resumes, reminders, and analytics scoped to the signed-in user.
@@ -93,6 +93,17 @@ GMAIL_CALLBACK_URL
 ```
 
 Local callbacks may use `http://localhost:3000/api/gmail/callback`. Public OAuth deployments require an HTTPS domain and Google consent-screen configuration. Gmail remains optional.
+
+Ambiguous Gmail messages can optionally use OpenAI after deterministic classification returns no result:
+
+```text
+OPENAI_API_KEY
+OPENAI_GMAIL_MODEL=gpt-5-mini
+OPENAI_GMAIL_CONFIDENCE_THRESHOLD=80
+OPENAI_GMAIL_TIMEOUT_MS=10000
+```
+
+`OPENAI_API_KEY` is optional. When it is absent—or the provider times out, fails, or returns invalid or insufficiently confident output—Gmail synchronization continues with the deterministic classifier and leaves that ambiguous message unmatched. The fallback validates structured output and only creates a review suggestion; it never changes an application directly.
 
 Redis protects password login from repeated account and network attempts and also supports automatic Gmail synchronization through a separate BullMQ worker. Docker Compose configures it automatically. When running services separately, set `REDIS_URL=redis://localhost:6379`, build the backend, and run `npm run start:worker` for scheduled work.
 

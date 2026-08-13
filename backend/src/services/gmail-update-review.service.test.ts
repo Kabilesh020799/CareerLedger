@@ -26,6 +26,7 @@ const { prismaMock, transactionMock } = vi.hoisted(() => {
 vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
 
 import {
+  buildGmailUpdateSuggestion,
   GmailUpdateReviewConflictError,
   GmailUpdateReviewNotFoundError,
   gmailUpdateReviewService,
@@ -43,6 +44,55 @@ const reviewInclude = {
     select: { id: true, company: true, jobTitle: true, status: true },
   },
 };
+
+describe("buildGmailUpdateSuggestion", () => {
+  const message = {
+    id: "message-1",
+    threadId: "thread-1",
+    subject: "Application update",
+    sender: "Acme Recruiting <jobs@acme.example>",
+    receivedAt: new Date("2026-08-09T12:00:00.000Z"),
+    snippet: "We would like to discuss the next stage.",
+  };
+
+  it("uses deterministic classification without sending metadata to the LLM", async () => {
+    const classify = vi.fn();
+
+    const suggestion = await buildGmailUpdateSuggestion(
+      { ...message, subject: "Interview invitation" },
+      [],
+      { classify },
+    );
+
+    expect(suggestion?.suggestedStatus).toBe("INTERVIEW");
+    expect(classify).not.toHaveBeenCalled();
+  });
+
+  it("uses a validated LLM result only to create a pending suggestion", async () => {
+    const classify = vi.fn().mockResolvedValue({
+      isRecruitmentUpdate: true,
+      status: "SCREENING",
+      confidence: 90,
+    });
+
+    const suggestion = await buildGmailUpdateSuggestion(message, [], { classify });
+
+    expect(classify).toHaveBeenCalledWith(message);
+    expect(suggestion).toMatchObject({
+      providerMessageId: "message-1",
+      applicationId: null,
+      suggestedStatus: "SCREENING",
+    });
+  });
+
+  it("keeps the deterministic no-suggestion behavior when fallback is unavailable", async () => {
+    const classify = vi.fn().mockResolvedValue(null);
+
+    await expect(
+      buildGmailUpdateSuggestion(message, [], { classify }),
+    ).resolves.toBeNull();
+  });
+});
 
 describe("gmailUpdateReviewService", () => {
   beforeEach(() => {

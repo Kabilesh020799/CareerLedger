@@ -34,6 +34,8 @@ Application, resume, reminder, dashboard, and Gmail routes require authenticatio
 
 OAuth credentials are encrypted at rest. Do not log access tokens, refresh tokens, or full email content. Synchronization stores identifiers and review metadata needed by the feature. Suggested updates never mutate an application until the user confirms them.
 
+Deterministic rules classify known recruitment messages before any LLM request. The optional OpenAI fallback receives only the stored message metadata needed for classification, disables response storage with `store: false`, and validates the returned schema and confidence before creating a pending suggestion. Raw model output can never mutate an application. Keep `OPENAI_API_KEY` in local environment files or protected deployment secrets; never log or commit it. Provider errors fail closed for that suggestion while Gmail synchronization continues.
+
 When a Gmail review creates an application, any selected résumé tag must belong to the signed-in user. Optional résumé attachments pass through the same type, signature, size, ownership, and private-storage checks as standard application uploads; a failed validation does not resolve the review.
 
 Background jobs contain only the owning user ID. Redis is private to the Compose network and is not published on the host. Worker failures expose a fixed, sanitized status to users and never persist provider error bodies, tokens, or message content.

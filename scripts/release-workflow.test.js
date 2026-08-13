@@ -163,6 +163,18 @@ test("configures private S3 resume storage without static AWS keys", () => {
   assert.doesNotMatch(workflow, /AWS_SECRET_ACCESS_KEY/);
 });
 
+test("deploys optional Gmail LLM fallback configuration without requiring it", () => {
+  const workflow = fs.readFileSync(workflowPath, "utf8");
+  const compose = fs.readFileSync(productionComposePath, "utf8");
+
+  assert.match(workflow, /OPENAI_API_KEY: \$\{\{ secrets\.OPENAI_API_KEY \}\}/);
+  assert.match(workflow, /OPENAI_GMAIL_MODEL: \$\{\{ vars\.OPENAI_GMAIL_MODEL \}\}/);
+  assert.match(workflow, /OPENAI_GMAIL_CONFIDENCE_THRESHOLD: \$\{\{ vars\.OPENAI_GMAIL_CONFIDENCE_THRESHOLD \}\}/);
+  assert.match(workflow, /OPENAI_GMAIL_TIMEOUT_MS: \$\{\{ vars\.OPENAI_GMAIL_TIMEOUT_MS \}\}/);
+  assert.match(workflow, /OPENAI_GMAIL_MODEL:-gpt-5-mini/);
+  assert.match(compose, /env_file:\s*\n\s*- \.auth\.env/);
+});
+
 test("keeps the database upload fallback aligned with the five-megabyte limit", () => {
   const nginx = fs.readFileSync(frontendNginxPath, "utf8");
 
