@@ -181,20 +181,14 @@ test("runs automatic Gmail synchronization on a private persistent queue", () =>
   assert.doesNotMatch(compose, /6379:6379/);
 });
 
-test("deploys a private production metrics and dashboard stack", () => {
+test("keeps resource-intensive observability services out of production", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
   const compose = fs.readFileSync(productionComposePath, "utf8");
 
-  assert.match(compose, /prometheus:/);
-  assert.match(compose, /grafana:/);
-  assert.match(compose, /postgres-exporter:/);
-  assert.match(compose, /redis-exporter:/);
-  assert.match(compose, /nginx-exporter:/);
-  assert.match(compose, /cadvisor:/);
-  assert.match(compose, /node-exporter:/);
-  assert.match(compose, /127\.0\.0\.1:\$\{GRAFANA_PORT:-3001\}:3000/);
-  assert.doesNotMatch(compose, /9090:9090|9100:9100|9187:9187|9121:9121|9113:9113/);
-  assert.match(workflow, /deploy\/monitoring/);
+  assert.doesNotMatch(compose, /prometheus:|grafana:|postgres-exporter:|redis-exporter:|nginx-exporter:|cadvisor:|node-exporter:/);
+  assert.match(compose, /LOG_LEVEL: silent/);
+  assert.match(compose, /METRICS_ENABLED: "false"/);
+  assert.doesNotMatch(workflow, /deploy\/monitoring/);
 });
 
 test("configures private S3 resume storage without static AWS keys", () => {

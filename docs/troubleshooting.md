@@ -8,10 +8,6 @@ If a shared workspace appears empty, select it again and confirm requests includ
 
 Copy the `Reference` shown in the interface or the response's `X-Request-Id`, then search the backend container's structured logs: `docker compose --env-file .env -f compose.production.yml logs backend | grep '<request-id>'`. The matching request summary gives the status and response time; an adjacent `unhandled request error` record contains the server-side exception. Search worker failures by `jobId` instead. Never ask users to send passwords, session cookies, OAuth tokens, email bodies, or résumé files with the reference.
 
-## Monitoring dashboard is unavailable
-
-Confirm `OBSERVABILITY_ENABLED=true` in the protected production `.env`, then run `docker compose --env-file .env -f compose.production.yml --profile observability ps prometheus grafana postgres-exporter redis-exporter nginx-exporter node-exporter cadvisor`. The stack is intentionally disabled by default. Grafana is intentionally unreachable from the public internet; connect through an SSM or SSH port-forward to EC2 loopback port `3001`. If a dashboard panel says no data, inspect Prometheus targets through a private tunnel and check the matching exporter. Do not add public security-group rules for ports `3001`, `9090`, `9100`, `9113`, `9121`, `9187`, or `9464`.
-
 ## Terraform refuses to initialize or plan
 
 Use Terraform 1.10 or newer because production state uses native S3 lockfiles. Bootstrap the state bucket first, copy `infrastructure/production/backend.hcl.example` to the ignored `backend.hcl`, and run `terraform init -backend-config=backend.hcl`. An `InvalidClientTokenId` error means the active AWS credentials are expired or inconsistent; refresh the operator session before planning. Never bypass the remote backend or apply an adoption plan that proposes production replacement or deletion.

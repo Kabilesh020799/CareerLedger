@@ -39,8 +39,6 @@ docker build \
 
 install -d -m 700 "$app_dir"
 install -m 600 "$source_dir/deploy/compose.production.yml" "$app_dir/compose.production.yml"
-install -d -m 700 "$app_dir/monitoring"
-cp -R "$source_dir/deploy/monitoring/." "$app_dir/monitoring/"
 install -m 700 "$source_dir/scripts/deploy-production.sh" "$app_dir/deploy-production.sh"
 
 umask 077
