@@ -1,8 +1,10 @@
 import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "../config/prisma";
 
-type CalendarEntry = {
+export type CalendarEntry = {
   uid: string;
+  kind: "DEADLINE" | "INTERVIEW";
+  applicationId: string;
   summary: string;
   description: string;
   location?: string | null;
@@ -81,12 +83,12 @@ async function entriesForUser(userId: string): Promise<CalendarEntry[]> {
   const [deadlines, interviews] = await Promise.all([
     prisma.applicationReminder.findMany({
       where: { completedAt: null, type: "DEADLINE", application: { userId } },
-      include: { application: { select: { company: true, jobTitle: true, location: true } } },
+      include: { application: { select: { id: true, company: true, jobTitle: true, location: true } } },
       orderBy: { dueAt: "asc" },
     }),
     prisma.applicationEvent.findMany({
       where: { toStatus: "INTERVIEW", application: { userId } },
-      include: { application: { select: { company: true, jobTitle: true, location: true } } },
+      include: { application: { select: { id: true, company: true, jobTitle: true, location: true } } },
       orderBy: { occurredAt: "asc" },
     }),
   ]);
@@ -94,6 +96,8 @@ async function entriesForUser(userId: string): Promise<CalendarEntry[]> {
   return [
     ...deadlines.map((reminder) => ({
       uid: `deadline-${reminder.id}@job-application-tracker`,
+      kind: "DEADLINE" as const,
+      applicationId: reminder.application.id,
       summary: `Deadline: ${reminder.application.company} — ${reminder.application.jobTitle}`,
       description: reminder.description,
       location: reminder.application.location,
@@ -103,6 +107,8 @@ async function entriesForUser(userId: string): Promise<CalendarEntry[]> {
     })),
     ...interviews.map((event) => ({
       uid: `interview-${event.id}@job-application-tracker`,
+      kind: "INTERVIEW" as const,
+      applicationId: event.application.id,
       summary: `Interview: ${event.application.company} — ${event.application.jobTitle}`,
       description: event.description,
       location: event.application.location,
@@ -114,6 +120,9 @@ async function entriesForUser(userId: string): Promise<CalendarEntry[]> {
 }
 
 export const calendarService = {
+  async listForUser(userId: string) {
+    return entriesForUser(userId);
+  },
   async exportForUser(userId: string) {
     return serializeCalendar(await entriesForUser(userId));
   },
@@ -121,11 +130,13 @@ export const calendarService = {
   async exportReminder(userId: string, reminderId: string) {
     const reminder = await prisma.applicationReminder.findFirst({
       where: { id: reminderId, completedAt: null, type: "DEADLINE", application: { userId } },
-      include: { application: { select: { company: true, jobTitle: true, location: true } } },
+      include: { application: { select: { id: true, company: true, jobTitle: true, location: true } } },
     });
     if (!reminder) return null;
     return serializeCalendar([{
       uid: `deadline-${reminder.id}@job-application-tracker`,
+      kind: "DEADLINE",
+      applicationId: reminder.application.id,
       summary: `Deadline: ${reminder.application.company} — ${reminder.application.jobTitle}`,
       description: reminder.description,
       location: reminder.application.location,

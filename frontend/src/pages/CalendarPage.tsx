@@ -3,18 +3,21 @@ import { CalendarDays, Clipboard, Download, Link2, RotateCw, Unlink } from 'luci
 import { useState } from 'react'
 import { PageHeader } from '../components/ui/PageHeader'
 import { useFeedback } from '../components/ui/feedback-context'
-import { useCalendarSubscription, useCreateCalendarSubscription, useDownloadCalendar, useRevokeCalendarSubscription } from '../hooks/useCalendar'
+import { useCalendarEvents, useCalendarSubscription, useCreateCalendarSubscription, useDownloadCalendar, useRevokeCalendarSubscription } from '../hooks/useCalendar'
 import { getApiErrorMessage } from '../utils/apiError'
+import { MonthCalendar } from '../components/calendar/MonthCalendar'
 
 /** Lets users download a calendar snapshot or manage a renewable calendar feed. */
 export function CalendarPage() {
   const status = useCalendarSubscription()
+  const events = useCalendarEvents()
   const create = useCreateCalendarSubscription()
   const revoke = useRevokeCalendarSubscription()
   const download = useDownloadCalendar()
   const feedback = useFeedback()
   const [subscriptionUrl, setSubscriptionUrl] = useState<string | null>(null)
-  const error = status.error ?? create.error ?? revoke.error ?? download.error
+  const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+  const error = events.error ?? status.error ?? create.error ?? revoke.error ?? download.error
 
   async function createFeed() {
     const result = await create.mutateAsync()
@@ -38,6 +41,8 @@ export function CalendarPage() {
       <PageHeader title="Calendar" description="Keep interview milestones and application deadlines alongside the rest of your schedule." eyebrow="Automation" />
 
       {error && <Alert.Root status="error" borderRadius="lg"><Alert.Indicator /><Alert.Content><Alert.Title>Calendar action failed</Alert.Title><Alert.Description>{getApiErrorMessage(error, 'Please try again.')}</Alert.Description></Alert.Content></Alert.Root>}
+
+      {events.isPending ? <Flex align="center" gap="3" justify="center" minH="16rem"><Spinner /><Text color="fg.muted">Loading calendar…</Text></Flex> : <MonthCalendar month={month} events={events.data ?? []} onMonthChange={setMonth} />}
 
       <Box bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" p={{ base: '5', md: '8' }}>
         <Flex align={{ base: 'start', sm: 'center' }} direction={{ base: 'column', sm: 'row' }} gap="5" justify="space-between">

@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.21.0] - 2026-08-12
+
+### Added
+
+- Added a responsive month calendar for browsing application deadlines and interview milestones and opening their related applications.
+
 ## [3.20.0] - 2026-08-12
 
 ### Added

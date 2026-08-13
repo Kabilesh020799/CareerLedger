@@ -1,4 +1,10 @@
 Feature: Calendar integration
+  Scenario: Review milestones on a calendar
+    Given I have upcoming deadlines or interview milestones
+    When I open the Calendar page
+    Then I see them in a navigable month calendar
+    And I can open the related application
+
   Scenario: Download a calendar snapshot
     Given I am signed in
     When I export my calendar

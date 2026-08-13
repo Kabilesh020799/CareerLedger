@@ -22,6 +22,10 @@ function sendCalendar(res: Response, calendar: string, fileName?: string) {
 }
 
 export const calendarController = {
+  async list(req: Request, res: Response) {
+    res.json(await calendarService.listForUser(userId(req)));
+  },
+
   async exportAll(req: Request, res: Response) {
     sendCalendar(res, await calendarService.exportForUser(userId(req)), "job-tracker.ics");
   },

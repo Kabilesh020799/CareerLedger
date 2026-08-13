@@ -2,6 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { calendarService } from '../services/calendar.service'
 
 const calendarSubscriptionKey = ['calendar', 'subscription'] as const
+const calendarEventsKey = ['calendar', 'events'] as const
+
+export function useCalendarEvents() {
+  return useQuery({ queryKey: calendarEventsKey, queryFn: calendarService.listEvents })
+}
 
 export function useCalendarSubscription() {
   return useQuery({ queryKey: calendarSubscriptionKey, queryFn: calendarService.getSubscription })
