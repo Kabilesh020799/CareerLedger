@@ -5,6 +5,19 @@ Feature: Calendar integration
     Then I see them in a navigable month calendar
     And I can open the related application
 
+  Scenario Outline: Add an item from a calendar date
+    When I select a date in the calendar
+    And I add a valid <type> with a title and start time
+    Then the item is saved for my account
+    And it appears on the selected date and in calendar exports
+    And I may link an application I can edit
+
+    Examples:
+      | type     |
+      | task     |
+      | event    |
+      | reminder |
+
   Scenario: Download a calendar snapshot
     Given I am signed in
     When I export my calendar

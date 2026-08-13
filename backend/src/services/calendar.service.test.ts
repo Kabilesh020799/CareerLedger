@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const prismaMock = vi.hoisted(() => ({
   applicationReminder: { findMany: vi.fn(), findFirst: vi.fn() },
   applicationEvent: { findMany: vi.fn() },
+  calendarItem: { findMany: vi.fn() },
   calendarFeedToken: {
     findFirst: vi.fn(),
     updateMany: vi.fn(),
@@ -45,6 +46,7 @@ describe("calendarService", () => {
     vi.clearAllMocks();
     prismaMock.applicationReminder.findMany.mockResolvedValue([]);
     prismaMock.applicationEvent.findMany.mockResolvedValue([]);
+    prismaMock.calendarItem.findMany.mockResolvedValue([]);
     prismaMock.$transaction.mockResolvedValue([]);
   });
 

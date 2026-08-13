@@ -6,6 +6,7 @@ import { useFeedback } from '../components/ui/feedback-context'
 import { useCalendarEvents, useCalendarSubscription, useCreateCalendarSubscription, useDownloadCalendar, useRevokeCalendarSubscription } from '../hooks/useCalendar'
 import { getApiErrorMessage } from '../utils/apiError'
 import { MonthCalendar } from '../components/calendar/MonthCalendar'
+import { CreateCalendarItemDialog } from '../components/calendar/CreateCalendarItemDialog'
 
 /** Lets users download a calendar snapshot or manage a renewable calendar feed. */
 export function CalendarPage() {
@@ -17,6 +18,7 @@ export function CalendarPage() {
   const feedback = useFeedback()
   const [subscriptionUrl, setSubscriptionUrl] = useState<string | null>(null)
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const error = events.error ?? status.error ?? create.error ?? revoke.error ?? download.error
 
   async function createFeed() {
@@ -42,7 +44,8 @@ export function CalendarPage() {
 
       {error && <Alert.Root status="error" borderRadius="lg"><Alert.Indicator /><Alert.Content><Alert.Title>Calendar action failed</Alert.Title><Alert.Description>{getApiErrorMessage(error, 'Please try again.')}</Alert.Description></Alert.Content></Alert.Root>}
 
-      {events.isPending ? <Flex align="center" gap="3" justify="center" minH="16rem"><Spinner /><Text color="fg.muted">Loading calendar…</Text></Flex> : <MonthCalendar month={month} events={events.data ?? []} onMonthChange={setMonth} />}
+      {events.isPending ? <Flex align="center" gap="3" justify="center" minH="16rem"><Spinner /><Text color="fg.muted">Loading calendar…</Text></Flex> : <MonthCalendar month={month} events={events.data ?? []} onMonthChange={setMonth} onSelectDate={setSelectedDate} />}
+      <CreateCalendarItemDialog date={selectedDate} onClose={() => setSelectedDate(null)} />
 
       <Box bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" p={{ base: '5', md: '8' }}>
         <Flex align={{ base: 'start', sm: 'center' }} direction={{ base: 'column', sm: 'row' }} gap="5" justify="space-between">

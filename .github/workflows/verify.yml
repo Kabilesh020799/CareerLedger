@@ -9,8 +9,22 @@ permissions:
   contents: read
 
 jobs:
-  verify:
-    name: Verify application
+  release:
+    name: Verify release metadata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 22
+          cache: npm
+      - run: |
+          npm run test:release
+          npm run release:version
+          npm run release:notes >/dev/null
+
+  backend:
+    name: Verify backend
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -19,43 +33,24 @@ jobs:
           POSTGRES_USER: jobtracker
           POSTGRES_PASSWORD: jobtracker_dev
           POSTGRES_DB: jobtracker_test
-        ports:
-          - 5432:5432
+        ports: [5432:5432]
         options: >-
           --health-cmd "pg_isready -U jobtracker -d jobtracker_test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 12
+          --health-interval 5s --health-timeout 5s --health-retries 12
       redis:
         image: redis:7-alpine
-        ports:
-          - 6379:6379
+        ports: [6379:6379]
         options: >-
           --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 12
+          --health-interval 5s --health-timeout 5s --health-retries 12
     steps:
-      - name: Check out repository
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-
-      - name: Set up Node.js
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: |
-            backend/package-lock.json
-            frontend/package-lock.json
-
-      - name: Verify release version
-        run: |
-          npm run test:release
-          npm run release:version
-          npm run release:notes >/dev/null
-
-      - name: Verify backend
-        working-directory: backend
+          cache-dependency-path: backend/package-lock.json
+      - working-directory: backend
         env:
           DATABASE_URL: postgresql://jobtracker:jobtracker_dev@127.0.0.1:5432/jobtracker_test
         run: |
@@ -65,19 +60,61 @@ jobs:
           npm run typecheck:ci
           npm run build:ci
 
-      - name: Verify frontend
-        working-directory: frontend
+  frontend:
+    name: Verify frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - working-directory: frontend
         run: |
           npm ci
           npm test
           npm run lint
           npm run build
 
-      - name: Install browser test runtime
+  browser:
+    name: Verify critical browser workflows
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: jobtracker
+          POSTGRES_PASSWORD: jobtracker_dev
+          POSTGRES_DB: jobtracker_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U jobtracker -d jobtracker_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+      redis:
+        image: redis:7-alpine
+        ports: [6379:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Install application dependencies
+        run: |
+          npm ci --prefix backend
+          npm ci --prefix frontend
+          npm run db:generate --prefix backend
+      - name: Install Chromium
         working-directory: frontend
         run: npx playwright install --with-deps chromium
-
-      - name: Verify critical browser workflows
+      - name: Run critical workflows
         working-directory: frontend
         env:
           DATABASE_URL: postgresql://jobtracker:jobtracker_dev@127.0.0.1:5432/jobtracker_test
@@ -85,10 +122,9 @@ jobs:
           SESSION_SECRET: browser-test-session-secret-with-32-characters
           SEED_DEMO_DATA: "true"
         run: npm run test:e2e
-
       - name: Upload browser failure artifacts
         if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: playwright-report
           path: |
@@ -97,8 +133,12 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-      - name: Verify deployment automation
-        run: |
+  deployment:
+    name: Verify deployment automation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - run: |
           sh -n scripts/deploy-production.sh
           sh scripts/deploy-production.test.sh
           cp deploy/.auth.env.production.example deploy/.auth.env

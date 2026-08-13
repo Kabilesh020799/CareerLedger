@@ -1,4 +1,4 @@
-import type { CalendarEvent, CalendarSubscriptionStatus, CreatedCalendarSubscription } from '../types/calendar'
+import type { CalendarEvent, CalendarSubscriptionStatus, CreateCalendarItemInput, CreatedCalendarSubscription } from '../types/calendar'
 import { api } from './api'
 
 function saveCalendar(data: BlobPart, fileName: string) {
@@ -13,6 +13,9 @@ function saveCalendar(data: BlobPart, fileName: string) {
 export const calendarService = {
   async listEvents() {
     return (await api.get<CalendarEvent[]>('/calendar/events')).data
+  },
+  async createItem(input: CreateCalendarItemInput) {
+    return (await api.post('/calendar/items', input)).data
   },
   async getSubscription() {
     const response = await api.get<CalendarSubscriptionStatus>('/calendar/subscription')

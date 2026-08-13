@@ -1,30 +1,34 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProvider } from '../components/ui/AppProvider'
-import { useCalendarEvents, useCalendarSubscription, useCreateCalendarSubscription, useDownloadCalendar, useRevokeCalendarSubscription } from '../hooks/useCalendar'
+import { useCalendarEvents, useCalendarSubscription, useCreateCalendarItem, useCreateCalendarSubscription, useDownloadCalendar, useRevokeCalendarSubscription } from '../hooks/useCalendar'
 import { CalendarPage } from './CalendarPage'
 import { MemoryRouter } from 'react-router-dom'
 
 vi.mock('../hooks/useCalendar', () => ({
   useCalendarSubscription: vi.fn(),
   useCalendarEvents: vi.fn(),
+  useCreateCalendarItem: vi.fn(),
   useCreateCalendarSubscription: vi.fn(),
   useDownloadCalendar: vi.fn(),
   useRevokeCalendarSubscription: vi.fn(),
 }))
+vi.mock('../hooks/useApplications', () => ({ useApplications: () => ({ isPending: false, data: { data: [{ id: 'app-1', company: 'Acme', jobTitle: 'Engineer' }] } }) }))
 
 describe('CalendarPage', () => {
   const create = vi.fn()
   const revoke = vi.fn()
   const download = vi.fn()
   const renderPage = () => render(<AppProvider><MemoryRouter><CalendarPage /></MemoryRouter></AppProvider>)
+  afterEach(cleanup)
 
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(useCalendarSubscription).mockReturnValue({ isPending: false, data: { active: false, createdAt: null } } as never)
     vi.mocked(useCalendarEvents).mockReturnValue({ isPending: false, data: [{ uid: 'deadline-1', kind: 'DEADLINE', applicationId: 'app-1', summary: 'Deadline: Acme — Engineer', description: 'Apply', location: null, startsAt: new Date().toISOString(), endsAt: new Date().toISOString() }] } as never)
     vi.mocked(useCreateCalendarSubscription).mockReturnValue({ mutateAsync: create, isPending: false } as never)
+    vi.mocked(useCreateCalendarItem).mockReturnValue({ mutateAsync: vi.fn(), reset: vi.fn(), isPending: false } as never)
     vi.mocked(useRevokeCalendarSubscription).mockReturnValue({ mutateAsync: revoke, isPending: false } as never)
     vi.mocked(useDownloadCalendar).mockReturnValue({ mutate: download, isPending: false } as never)
   })
@@ -43,6 +47,16 @@ describe('CalendarPage', () => {
     expect(create).toHaveBeenCalledOnce()
     expect(screen.getByRole('textbox', { name: 'Calendar subscription URL' })).toHaveValue('https://example.test/api/calendar/feed/secret')
     expect(screen.getByText(/Anyone with this link/)).toBeInTheDocument()
+  })
+
+  it('opens a creation dialog when a calendar date is selected', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const buttons = screen.getAllByRole('button', { name: 'Add calendar item' })
+    await user.click(buttons.at(-1)!)
+    expect(screen.getByRole('dialog', { name: 'Add calendar item' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Calendar item type')).toBeInTheDocument()
+    expect(screen.getByLabelText('Linked application')).toBeInTheDocument()
   })
 
   it('replaces or revokes an active subscription', async () => {

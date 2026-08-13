@@ -58,6 +58,12 @@ enum WorkspaceRole {
   VIEWER
 }
 
+enum CalendarItemType {
+  TASK
+  EVENT
+  REMINDER
+}
+
 model Application {
   id                     String                @id @default(cuid())
   company                String
@@ -87,6 +93,7 @@ model Application {
   events                 ApplicationEvent[]
   reminders              ApplicationReminder[]
   gmailUpdateReviews     GmailUpdateReview[]
+  calendarItems          CalendarItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -206,6 +213,7 @@ model User {
   workspaceMemberships     WorkspaceMember[]
   workspaceInvitationsSent WorkspaceInvitation[]    @relation("WorkspaceInvitationSender")
   calendarFeedTokens       CalendarFeedToken[]
+  calendarItems            CalendarItem[]
 }
 
 model EmailVerificationToken {
@@ -281,6 +289,25 @@ model CalendarFeedToken {
   createdAt DateTime  @default(now())
 
   @@index([userId, createdAt])
+}
+
+model CalendarItem {
+  id            String           @id @default(cuid())
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationId String?
+  application   Application?     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type          CalendarItemType
+  title         String
+  description   String?
+  startsAt      DateTime
+  endsAt        DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([userId, startsAt])
+  @@index([applicationId])
 }
 
 model NotificationPreference {

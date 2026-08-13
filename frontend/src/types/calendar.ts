@@ -11,11 +11,20 @@ export type CreatedCalendarSubscription = {
 /** Deadline or interview milestone displayed on the in-app calendar. */
 export type CalendarEvent = {
   uid: string
-  kind: 'DEADLINE' | 'INTERVIEW'
-  applicationId: string
+  kind: 'DEADLINE' | 'INTERVIEW' | 'TASK' | 'EVENT' | 'REMINDER'
+  applicationId: string | null
   summary: string
   description: string
   location: string | null
   startsAt: string
   endsAt: string
+}
+
+export type CreateCalendarItemInput = {
+  type: 'TASK' | 'EVENT' | 'REMINDER'
+  title: string
+  description?: string | null
+  startsAt: string
+  endsAt?: string | null
+  applicationId?: string | null
 }

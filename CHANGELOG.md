@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.22.0] - 2026-08-12
+
+### Added
+
+- Added date-driven creation of persistent tasks, events, and reminders directly from the responsive calendar, with optional authorized application links and calendar-feed inclusion.
+
+### Fixed
+
+- Reduced release verification time by running backend, frontend, critical browser, release-metadata, and deployment-automation checks as independent parallel jobs while retaining the complete release gate.
+
 ## [3.21.0] - 2026-08-12
 
 ### Added

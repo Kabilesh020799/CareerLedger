@@ -66,7 +66,7 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 - Recover password accounts through expiring single-use email links, verify account email addresses, edit profile details, and permanently delete an account with reauthentication.
 - Create team workspaces, invite members with role-based access, switch between personal and shared application data, and preserve at least one workspace owner.
 - Export a workspace as privacy-filtered JSON and import supported exports atomically, with duplicate applications safely skipped.
-- Review deadlines and interview milestones in a responsive month calendar, download them as an iCalendar file, or create a revocable private subscription URL.
+- Review deadlines and interview milestones in a responsive month calendar, click a date to add a persistent task, event, or reminder with an optional application link, download everything as an iCalendar file, or create a revocable private subscription URL.
 - Protect password login with progressive delays, temporary account and network limits, uniform credential failures, and sanitized security events.
 - Use custom accessible dropdown menus for application filtering and form selections.
 

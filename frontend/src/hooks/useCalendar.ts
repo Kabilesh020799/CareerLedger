@@ -1,11 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { calendarService } from '../services/calendar.service'
+import type { CreateCalendarItemInput } from '../types/calendar'
 
 const calendarSubscriptionKey = ['calendar', 'subscription'] as const
 const calendarEventsKey = ['calendar', 'events'] as const
 
 export function useCalendarEvents() {
   return useQuery({ queryKey: calendarEventsKey, queryFn: calendarService.listEvents })
+}
+
+export function useCreateCalendarItem() {
+  const queryClient = useQueryClient()
+  return useMutation({ mutationFn: (input: CreateCalendarItemInput) => calendarService.createItem(input), onSuccess: () => queryClient.invalidateQueries({ queryKey: calendarEventsKey }) })
 }
 
 export function useCalendarSubscription() {

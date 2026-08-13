@@ -3,8 +3,8 @@ import { prisma } from "../config/prisma";
 
 export type CalendarEntry = {
   uid: string;
-  kind: "DEADLINE" | "INTERVIEW";
-  applicationId: string;
+  kind: "DEADLINE" | "INTERVIEW" | "TASK" | "EVENT" | "REMINDER";
+  applicationId: string | null;
   summary: string;
   description: string;
   location?: string | null;
@@ -80,7 +80,7 @@ export function serializeCalendar(entries: CalendarEntry[]) {
 }
 
 async function entriesForUser(userId: string): Promise<CalendarEntry[]> {
-  const [deadlines, interviews] = await Promise.all([
+  const [deadlines, interviews, items] = await Promise.all([
     prisma.applicationReminder.findMany({
       where: { completedAt: null, type: "DEADLINE", application: { userId } },
       include: { application: { select: { id: true, company: true, jobTitle: true, location: true } } },
@@ -90,6 +90,11 @@ async function entriesForUser(userId: string): Promise<CalendarEntry[]> {
       where: { toStatus: "INTERVIEW", application: { userId } },
       include: { application: { select: { id: true, company: true, jobTitle: true, location: true } } },
       orderBy: { occurredAt: "asc" },
+    }),
+    prisma.calendarItem.findMany({
+      where: { userId },
+      include: { application: { select: { location: true } } },
+      orderBy: { startsAt: "asc" },
     }),
   ]);
 
@@ -115,6 +120,17 @@ async function entriesForUser(userId: string): Promise<CalendarEntry[]> {
       startsAt: event.occurredAt,
       endsAt: new Date(event.occurredAt.getTime() + HOUR_MS),
       updatedAt: event.createdAt,
+    })),
+    ...items.map((item) => ({
+      uid: `calendar-item-${item.id}@job-application-tracker`,
+      kind: item.type,
+      applicationId: item.applicationId,
+      summary: item.title,
+      description: item.description ?? "",
+      location: item.application?.location,
+      startsAt: item.startsAt,
+      endsAt: item.endsAt ?? new Date(item.startsAt.getTime() + (item.type === "EVENT" ? HOUR_MS : DEADLINE_DURATION_MS)),
+      updatedAt: item.updatedAt,
     })),
   ].sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime());
 }

@@ -1,6 +1,9 @@
 import type { Request, Response } from "express";
 import { calendarService } from "../services/calendar.service";
 import { calendarFeedTokenSchema, calendarReminderIdSchema } from "../validators/calendar.validator";
+import { createCalendarItemSchema } from "../validators/calendar-item.validator";
+import { calendarItemService } from "../services/calendar-item.service";
+import { selectedWorkspaceId } from "../services/workspace-access.service";
 
 function userId(req: Request) {
   if (!req.user) throw new Error("Authenticated user is missing");
@@ -24,6 +27,14 @@ function sendCalendar(res: Response, calendar: string, fileName?: string) {
 export const calendarController = {
   async list(req: Request, res: Response) {
     res.json(await calendarService.listForUser(userId(req)));
+  },
+
+  async createItem(req: Request, res: Response) {
+    const parsed = createCalendarItemSchema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ error: "Invalid calendar item", details: parsed.error.flatten() }); return; }
+    const item = await calendarItemService.create(userId(req), parsed.data, selectedWorkspaceId(req.headers["x-workspace-id"]));
+    if (!item) { res.status(404).json({ error: "Application not found" }); return; }
+    res.status(201).json(item);
   },
 
   async exportAll(req: Request, res: Response) {

@@ -105,8 +105,8 @@ test("plans releases alongside verification but gates image publishing on both",
 test("provides backend verification with an isolated test database URL", () => {
   const verifyWorkflow = fs.readFileSync(verifyWorkflowPath, "utf8");
   const backendStep = verifyWorkflow.slice(
-    verifyWorkflow.indexOf("- name: Verify backend"),
-    verifyWorkflow.indexOf("- name: Verify frontend"),
+    verifyWorkflow.indexOf("  backend:"),
+    verifyWorkflow.indexOf("  frontend:"),
   );
 
   assert.match(
@@ -125,6 +125,23 @@ test("runs critical Playwright workflows with failure artifacts", () => {
   assert.match(verifyWorkflow, /run: npm run test:e2e/);
   assert.match(verifyWorkflow, /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02/);
   assert.match(verifyWorkflow, /frontend\/test-results/);
+});
+
+test("runs frontend and browser verification as independent parallel jobs", () => {
+  const verifyWorkflow = fs.readFileSync(verifyWorkflowPath, "utf8");
+  const frontendBlock = verifyWorkflow.slice(
+    verifyWorkflow.indexOf("  frontend:"),
+    verifyWorkflow.indexOf("  browser:"),
+  );
+  const browserBlock = verifyWorkflow.slice(
+    verifyWorkflow.indexOf("  browser:"),
+    verifyWorkflow.indexOf("  deployment:"),
+  );
+
+  assert.doesNotMatch(frontendBlock, /^    needs:/m);
+  assert.doesNotMatch(browserBlock, /^    needs:/m);
+  assert.match(frontendBlock, /npm test/);
+  assert.match(browserBlock, /npm run test:e2e/);
 });
 
 test("keeps the production frontend in the EC2 Compose release", () => {
