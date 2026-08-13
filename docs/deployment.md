@@ -70,6 +70,7 @@ Add environment variables:
 | `DEPLOY_SECURITY_GROUP_ID` | EC2 security group whose SSH ingress is managed during deployment |
 | `DEPLOY_PORT` | SSH port, normally `22` |
 | `PRODUCTION_URL` | Public HTTPS origin, currently `https://d2g95c1jos960v.cloudfront.net` |
+| `PUBLIC_API_URL` | Public backend origin used to construct calendar subscription links; normally the same public origin |
 | `RESUME_BUCKET` | Optional private S3 bucket for resume objects, currently `jatbucket2799`; database storage remains available when omitted |
 | `VAPID_PUBLIC_KEY` | Public Web Push application-server key |
 | `VAPID_SUBJECT` | Web Push contact URI, such as `mailto:administrator@example.com` |
@@ -78,7 +79,7 @@ Add environment variables:
 | `OPENAI_GMAIL_CONFIDENCE_THRESHOLD` | Minimum accepted fallback confidence from 0 to 100; defaults to `80` |
 | `OPENAI_GMAIL_TIMEOUT_MS` | Maximum provider request duration in milliseconds; defaults to `10000` |
 | `SMTP_PORT` | SMTP port, normally `587` or `465` |
-| `SMTP_FROM` | Verified sender address for reminder email |
+| `SMTP_FROM` | Verified sender address for reminders, password reset, and email verification |
 
 Restrict the environment to the `master` branch. Add required approval if deployments should pause for confirmation after images are published.
 

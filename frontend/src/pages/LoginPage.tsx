@@ -103,6 +103,7 @@ export function LoginPage() {
                 <Button type="submit" colorPalette="purple" loading={passwordLogin.isPending} minH="11">
                   Sign in
                 </Button>
+                <Text fontSize="sm" textAlign="center"><Link to="/forgot-password">Forgot your password?</Link></Text>
                 <Text color="fg.muted" fontSize="sm" textAlign="center">
                   New to Job Tracker? <Link to="/signup">Create an account</Link>
                 </Text>

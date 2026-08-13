@@ -1,10 +1,12 @@
 import { prisma } from "../config/prisma";
 import type { CreateApplicationEventInput } from "../validators/application-event.validator";
+import { applicationAccess } from "./workspace-access.service";
 
 export const applicationEventService = {
-  async list(userId: string, applicationId: string) {
+  async list(userId: string, applicationId: string, workspaceId?: string) {
+    const access = await applicationAccess(userId, workspaceId);
     const application = await prisma.application.findFirst({
-      where: { id: applicationId, userId },
+      where: { ...access.where, id: applicationId },
       select: {
         events: {
           orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
@@ -19,10 +21,12 @@ export const applicationEventService = {
     userId: string,
     applicationId: string,
     data: CreateApplicationEventInput,
+    workspaceId?: string,
   ) {
     return prisma.$transaction(async (transaction) => {
+      const access = await applicationAccess(userId, workspaceId, true);
       const application = await transaction.application.findFirst({
-        where: { id: applicationId, userId },
+        where: { ...access.where, id: applicationId },
         select: { id: true },
       });
 

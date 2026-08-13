@@ -9,6 +9,7 @@ const publicUserSelect = {
   email: true,
   name: true,
   avatarUrl: true,
+  emailVerifiedAt: true,
 } as const;
 
 passport.serializeUser((user, done) => done(null, user.id));
@@ -53,11 +54,13 @@ if (isGoogleAuthConfigured) {
               email,
               name: profile.displayName || null,
               avatarUrl: profile.photos?.[0]?.value ?? null,
+              emailVerifiedAt: new Date(),
             },
             update: {
               email,
               name: profile.displayName || null,
               avatarUrl: profile.photos?.[0]?.value ?? null,
+              emailVerifiedAt: new Date(),
             },
             select: publicUserSelect,
           });

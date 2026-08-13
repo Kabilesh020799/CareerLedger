@@ -61,3 +61,9 @@ Notification preferences and Web Push subscriptions are scoped to the authentica
 - Rotate credentials after exposure and revoke affected sessions.
 - Back up PostgreSQL and test restores regularly.
 - Review dependency and container-image updates before release.
+
+## Recovery, sharing, and portable data
+
+Password-reset and email-verification links use 256-bit random tokens; only SHA-256 hashes are stored. Links expire and are single-use, recovery requests do not disclose account existence, and password reset revokes all sessions. Account deletion requires the exact account email and the current password for password users; S3 objects are queued before database cascades.
+
+Workspace membership is validated server-side. Owners and administrators manage invitations, members edit shared applications, viewers are read-only, and the final owner cannot be removed or demoted. Calendar subscription URLs are revocable bearer secrets and responses are not cached. Portable JSON excludes passwords, sessions, OAuth data, private tokens, storage keys, and resume bytes.

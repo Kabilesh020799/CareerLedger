@@ -23,5 +23,17 @@ export const passwordSignupSchema = z.object({
     .regex(/[0-9]/, "Password must include a number"),
 });
 
+export const emailRequestSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Enter a valid email address").max(254),
+});
+
+export const tokenSchema = z.object({
+  token: z.string().min(32).max(256),
+});
+
+export const resetPasswordSchema = tokenSchema.extend({
+  password: passwordSignupSchema.shape.password,
+});
+
 export type PasswordLoginInput = z.infer<typeof passwordLoginSchema>;
 export type PasswordSignupInput = z.infer<typeof passwordSignupSchema>;

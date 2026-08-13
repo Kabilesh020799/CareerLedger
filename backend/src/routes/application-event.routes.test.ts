@@ -50,6 +50,7 @@ describe("application timeline API", () => {
     expect(applicationEventServiceMock.list).toHaveBeenCalledWith(
       "user-1",
       "application-1",
+      undefined,
     );
   });
 
@@ -92,6 +93,7 @@ describe("application timeline API", () => {
         description: "Followed up with the recruiter.",
         occurredAt: new Date("2026-08-07T15:30:00.000Z"),
       },
+      undefined,
     );
   });
 

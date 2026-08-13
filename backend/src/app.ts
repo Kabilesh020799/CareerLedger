@@ -16,6 +16,11 @@ import { PrismaSessionStore } from "./services/session-store";
 import swaggerUi from "swagger-ui-express";
 import { generatedOpenApiDocument } from "./config/openapi";
 import { browserExtensionRouter } from "./routes/browser-extension.routes";
+import { accountRouter } from "./routes/account.routes";
+import { calendarFeedRouter, calendarRouter } from "./routes/calendar.routes";
+import { workspaceRouter } from "./routes/workspace.routes";
+import { dataTransferRouter } from "./routes/data-transfer.routes";
+import { WorkspaceAccessError } from "./services/workspace-access.service";
 
 export function createApp() {
   const app = express();
@@ -30,7 +35,7 @@ export function createApp() {
     credentials: true,
   }));
   app.use(helmet());
-  app.use(express.json());
+  app.use(express.json({ limit: "10mb" }));
   app.use(
     session({
       name: "job-tracker-session",
@@ -57,7 +62,12 @@ export function createApp() {
   app.get("/api-docs.json", (_req, res) => res.json(generatedOpenApiDocument));
 
   app.use("/api/auth", authRouter);
+  app.use("/api/calendar/feed", calendarFeedRouter);
   app.use("/api/browser-extension", browserExtensionRouter);
+  app.use("/api/account", requireAuth, accountRouter);
+  app.use("/api/calendar", requireAuth, calendarRouter);
+  app.use("/api/workspaces", requireAuth, workspaceRouter);
+  app.use("/api/data", requireAuth, dataTransferRouter);
   app.use("/api/applications", requireAuth, applicationRouter);
   app.use("/api/dashboard", requireAuth, dashboardRouter);
   app.use("/api/gmail", requireAuth, gmailRouter);
@@ -72,6 +82,12 @@ export function createApp() {
       res: express.Response,
       _next: express.NextFunction,
     ) => {
+      if (error instanceof WorkspaceAccessError) {
+        res.status(error.kind === "NOT_FOUND" ? 404 : 403).json({
+          error: error.message,
+        });
+        return;
+      }
       console.error(error);
       res.status(500).json({ error: "Internal server error" });
     },

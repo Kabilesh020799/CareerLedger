@@ -37,6 +37,7 @@ describe('production HTTP login', () => {
     expect(screen.getByText('Insecure HTTP connection')).toBeInTheDocument()
     expect(screen.getByLabelText('Username')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Forgot your password?' })).toHaveAttribute('href', '/forgot-password')
     expect(screen.queryByRole('link', { name: 'Continue with Google' })).not.toBeInTheDocument()
   })
 })

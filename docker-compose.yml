@@ -39,6 +39,7 @@ services:
       PORT: 3000
       NODE_ENV: development
       FRONTEND_URL: http://localhost:5173
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3000}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}

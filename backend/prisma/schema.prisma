@@ -51,6 +51,13 @@ enum NotificationChannel {
   WEB_PUSH
 }
 
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
 model Application {
   id                     String                @id @default(cuid())
   company                String
@@ -72,6 +79,8 @@ model Application {
   appliedAt              DateTime?
   userId                 String?
   user                   User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId            String?
+  workspace              Workspace?            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   resumeVersionId        String?
   resumeVersion          ResumeVersion?        @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
   resumeAttachment       ApplicationResume?
@@ -87,6 +96,7 @@ model Application {
   @@index([userId, createdAt])
   @@index([userId, status])
   @@index([userId, updatedAt])
+  @@index([workspaceId, updatedAt])
   @@index([resumeVersionId])
 }
 
@@ -172,24 +182,105 @@ model ApplicationEvent {
 }
 
 model User {
-  id           String  @id @default(cuid())
-  googleId     String? @unique
-  username     String? @unique
-  passwordHash String?
-  email        String  @unique
-  name         String?
-  avatarUrl    String?
+  id              String    @id @default(cuid())
+  googleId        String?   @unique
+  username        String?   @unique
+  passwordHash    String?
+  email           String    @unique
+  name            String?
+  avatarUrl       String?
+  emailVerifiedAt DateTime?
 
   applications       Application[]
   resumeVersions     ResumeVersion[]
   gmailConnection    GmailConnection?
   gmailUpdateReviews GmailUpdateReview[]
 
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  browserExtensionTokens BrowserExtensionToken[]
-  notificationPreference NotificationPreference?
-  pushSubscriptions      PushSubscription[]
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  browserExtensionTokens   BrowserExtensionToken[]
+  notificationPreference   NotificationPreference?
+  pushSubscriptions        PushSubscription[]
+  emailVerificationTokens  EmailVerificationToken[]
+  passwordResetTokens      PasswordResetToken[]
+  workspaceMemberships     WorkspaceMember[]
+  workspaceInvitationsSent WorkspaceInvitation[]    @relation("WorkspaceInvitationSender")
+  calendarFeedTokens       CalendarFeedToken[]
+}
+
+model EmailVerificationToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model Workspace {
+  id           String                @id @default(cuid())
+  name         String
+  isPersonal   Boolean               @default(false)
+  members      WorkspaceMember[]
+  invitations  WorkspaceInvitation[]
+  applications Application[]
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+}
+
+model WorkspaceMember {
+  workspaceId String
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        WorkspaceRole
+  joinedAt    DateTime      @default(now())
+
+  @@id([workspaceId, userId])
+  @@index([userId])
+}
+
+model WorkspaceInvitation {
+  id              String        @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  emailNormalized String
+  role            WorkspaceRole
+  tokenHash       String        @unique
+  invitedById     String
+  invitedBy       User          @relation("WorkspaceInvitationSender", fields: [invitedById], references: [id], onDelete: Cascade)
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  revokedAt       DateTime?
+  createdAt       DateTime      @default(now())
+
+  @@index([workspaceId, emailNormalized])
+}
+
+model CalendarFeedToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
 }
 
 model NotificationPreference {
@@ -243,12 +334,12 @@ model GmailConnection {
 }
 
 model GmailMessage {
-  id             String             @id @default(cuid())
-  connectionId   String
-  connection     GmailConnection    @relation(fields: [connectionId], references: [id], onDelete: Cascade)
-  gmailMessageId String
-  threadId       String?
-  processedAt    DateTime?
+  id                    String             @id @default(cuid())
+  connectionId          String
+  connection            GmailConnection    @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  gmailMessageId        String
+  threadId              String?
+  processedAt           DateTime?
   classificationVersion Int                @default(0)
   updateReview          GmailUpdateReview?
   createdAt             DateTime           @default(now())
@@ -285,6 +376,8 @@ model Session {
   id        String   @id
   data      String
   expiresAt DateTime
+  userId    String?
 
   @@index([expiresAt])
+  @@index([userId])
 }

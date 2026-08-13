@@ -4,6 +4,7 @@ export interface AuthenticatedUser {
   email: string
   name: string | null
   avatarUrl: string | null
+  emailVerifiedAt: string | null
 }
 
 export interface AuthSession {

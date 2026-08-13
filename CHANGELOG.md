@@ -6,6 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.20.0] - 2026-08-12
+
+### Added
+
+- Added expiring email verification and password recovery, self-service profiles, session-revoking password reset, and confirmed account deletion.
+- Added personal and team workspaces with role-based membership, secure invitations, shared application access, and workspace switching.
+- Added privacy-filtered workspace JSON export and transactional import with duplicate reporting.
+- Added downloadable iCalendar snapshots and revocable private calendar subscription feeds for deadlines and interview milestones.
+
+### Security
+
+- Store only hashes of recovery, verification, invitation, and calendar bearer tokens, and queue private resume cleanup before account deletion.
+
 ## [3.19.0] - 2026-08-12
 
 ### Added

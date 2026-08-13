@@ -58,7 +58,7 @@ describe("application discovery API", () => {
       sortOrder: "desc",
       page: 2,
       limit: 20,
-    });
+    }, undefined);
   });
 
   it.each([

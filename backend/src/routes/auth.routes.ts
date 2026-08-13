@@ -50,6 +50,11 @@ authRouter.post("/login", (req, res, next) => {
   authController.passwordLogin(req, res, next);
 });
 
+authRouter.post("/forgot-password", authController.forgotPassword);
+authRouter.post("/reset-password", authController.resetPassword);
+authRouter.post("/verify-email", authController.verifyEmail);
+authRouter.post("/resend-verification", authController.resendVerification);
+
 authRouter.get("/google", (req, res, next) => {
   if (!isGoogleAuthConfigured) {
     res.status(503).json({ error: "Google authentication is not configured" });

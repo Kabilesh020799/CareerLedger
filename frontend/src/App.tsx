@@ -17,6 +17,13 @@ const GmailSyncPage = lazy(() => import('./pages/GmailSyncPage').then((module) =
 const ResumeVersionsPage = lazy(() => import('./pages/ResumeVersionsPage').then((module) => ({ default: module.ResumeVersionsPage })))
 const BrowserExtensionPage = lazy(() => import('./pages/BrowserExtensionPage').then((module) => ({ default: module.BrowserExtensionPage })))
 const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage').then((module) => ({ default: module.NotificationSettingsPage })))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then((module) => ({ default: module.ForgotPasswordPage })))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then((module) => ({ default: module.ResetPasswordPage })))
+const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage').then((module) => ({ default: module.VerifyEmailPage })))
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then((module) => ({ default: module.ProfilePage })))
+const CalendarPage = lazy(() => import('./pages/CalendarPage').then((module) => ({ default: module.CalendarPage })))
+const TeamSettingsPage = lazy(() => import('./pages/TeamSettingsPage').then((module) => ({ default: module.TeamSettingsPage })))
+const DataSettingsPage = lazy(() => import('./pages/DataSettingsPage').then((module) => ({ default: module.DataSettingsPage })))
 
 function App() {
   const load = (page: ReactNode) => <Suspense fallback={<LoadingSkeleton label="Loading page" />}>{page}</Suspense>
@@ -24,6 +31,9 @@ function App() {
     <Routes>
       <Route path="login" element={load(<LoginPage />)} />
       <Route path="signup" element={load(<SignupPage />)} />
+      <Route path="forgot-password" element={load(<ForgotPasswordPage />)} />
+      <Route path="reset-password" element={load(<ResetPasswordPage />)} />
+      <Route path="verify-email" element={load(<VerifyEmailPage />)} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route index element={<Navigate to="/applications" replace />} />
@@ -33,6 +43,10 @@ function App() {
           <Route path="gmail" element={load(<GmailSyncPage />)} />
           <Route path="browser-extension" element={load(<BrowserExtensionPage />)} />
           <Route path="notifications" element={load(<NotificationSettingsPage />)} />
+          <Route path="calendar" element={load(<CalendarPage />)} />
+          <Route path="profile" element={load(<ProfilePage />)} />
+          <Route path="team" element={load(<TeamSettingsPage />)} />
+          <Route path="data" element={load(<DataSettingsPage />)} />
           <Route path="applications" element={load(<ApplicationsPage />)} />
           <Route path="applications/new" element={load(<NewApplicationPage />)} />
           <Route path="applications/:id" element={load(<ApplicationDetailsPage />)} />

@@ -146,6 +146,7 @@ describe("application resume routes", () => {
         resumeUploadKey: "resumes/user-1/upload.pdf",
       },
       expect.objectContaining({ storageKey: "resumes/user-1/upload.pdf" }),
+      undefined,
     );
   });
 
@@ -160,6 +161,7 @@ describe("application resume routes", () => {
         mimeType: "application/pdf",
         size: content.length,
       },
+      undefined,
     });
 
     const response = await request(app)
@@ -184,6 +186,7 @@ describe("application resume routes", () => {
         mimeType: "application/pdf",
         size: content.length,
       },
+      undefined,
     );
   });
 
@@ -218,6 +221,7 @@ describe("application resume routes", () => {
       "user-1",
       { company: "Acme Corp", jobTitle: "Software Engineer" },
       undefined,
+      undefined,
     );
   });
 
@@ -232,6 +236,7 @@ describe("application resume routes", () => {
         mimeType: "application/pdf",
         size: content.length,
       },
+      undefined,
     });
 
     const response = await request(app)
@@ -257,6 +262,7 @@ describe("application resume routes", () => {
         mimeType: "application/pdf",
         size: content.length,
       },
+      undefined,
     );
   });
 
@@ -318,6 +324,7 @@ describe("application resume routes", () => {
       "user-1",
       "application-1",
       true,
+      undefined,
     );
   });
 

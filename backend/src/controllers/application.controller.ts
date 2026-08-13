@@ -8,6 +8,7 @@ import {
   updateApplicationSchema,
 } from "../validators/application.validator";
 import { validateApplicationResume } from "../validators/application-resume.validator";
+import { selectedWorkspaceId } from "../services/workspace-access.service";
 
 function validationError(res: Response, error: unknown) {
   return res.status(400).json({
@@ -24,6 +25,10 @@ function getId(req: Request) {
 function getUserId(req: Request) {
   if (!req.user) throw new Error("Authenticated user is missing");
   return req.user.id;
+}
+
+function getWorkspaceId(req: Request) {
+  return selectedWorkspaceId(req.headers["x-workspace-id"]);
 }
 
 async function resolveResume(
@@ -77,7 +82,7 @@ function resolvedStorageKey(
 
 export const applicationController = {
   async list(req: Request, res: Response) {
-    const applications = await applicationService.list(getUserId(req));
+    const applications = await applicationService.list(getUserId(req), getWorkspaceId(req));
     res.json(applications);
   },
 
@@ -91,7 +96,7 @@ export const applicationController = {
       return;
     }
 
-    const result = await applicationService.search(getUserId(req), parsed.data);
+    const result = await applicationService.search(getUserId(req), parsed.data, getWorkspaceId(req));
     res.json(result);
   },
 
@@ -113,7 +118,7 @@ export const applicationController = {
 
     let application;
     try {
-      application = await applicationService.create(userId, parsed.data, resume.data);
+      application = await applicationService.create(userId, parsed.data, resume.data, getWorkspaceId(req));
     } catch (error) {
       await abandonResolvedUpload(userId, cleanupStorageKey);
       throw error;
@@ -127,7 +132,7 @@ export const applicationController = {
   },
 
   async getById(req: Request, res: Response) {
-    const application = await applicationService.findById(getUserId(req), getId(req));
+    const application = await applicationService.findById(getUserId(req), getId(req), getWorkspaceId(req));
     if (!application) {
       res.status(404).json({ error: "Application not found" });
       return;
@@ -141,6 +146,7 @@ export const applicationController = {
       getUserId(req),
       getId(req),
       true,
+      getWorkspaceId(req),
     );
     if (!resume) {
       res.status(404).json({ error: "Resume not found" });
@@ -165,6 +171,8 @@ export const applicationController = {
     const resume = await applicationResumeService.findForApplication(
       getUserId(req),
       getId(req),
+      false,
+      getWorkspaceId(req),
     );
     if (!resume) {
       res.status(404).json({ error: "Resume not found" });
@@ -200,6 +208,7 @@ export const applicationController = {
         getId(req),
         parsed.data,
         resume.data,
+        getWorkspaceId(req),
       );
     } catch (error) {
       await abandonResolvedUpload(userId, cleanupStorageKey);
@@ -220,7 +229,7 @@ export const applicationController = {
   },
 
   async remove(req: Request, res: Response) {
-    const deleted = await applicationService.remove(getUserId(req), getId(req));
+    const deleted = await applicationService.remove(getUserId(req), getId(req), getWorkspaceId(req));
     if (!deleted) {
       res.status(404).json({ error: "Application not found" });
       return;

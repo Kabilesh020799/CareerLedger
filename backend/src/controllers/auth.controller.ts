@@ -3,7 +3,8 @@ import { authConfig } from "../config/auth";
 import { CredentialAlreadyExistsError, credentialAuthService } from "../services/credential-auth.service";
 import { loginAbuseProtectionService } from "../services/login-abuse-protection.service";
 import { signupAbuseProtectionService } from "../services/signup-abuse-protection.service";
-import { passwordLoginSchema, passwordSignupSchema } from "../validators/auth.validator";
+import { authTokenService } from "../services/auth-token.service";
+import { emailRequestSchema, passwordLoginSchema, passwordSignupSchema, resetPasswordSchema, tokenSchema } from "../validators/auth.validator";
 
 const invalidCredentialsResponse = { error: "Invalid username or password" };
 
@@ -41,6 +42,9 @@ export const authController = {
 
     try {
       const user = await credentialAuthService.register(parsed.data);
+      void authTokenService.requestEmailVerification(user.email).catch(() => {
+        console.warn("auth.email_verification.delivery_failed");
+      });
       req.login(user, (error) => {
         if (error) return next(error);
         void signupAbuseProtectionService.recordSuccess(decision.attempt);
@@ -54,6 +58,62 @@ export const authController = {
       }
       next(error);
     }
+  },
+
+  async forgotPassword(req: Request, res: Response) {
+    const parsed = emailRequestSchema.safeParse(req.body);
+    if (parsed.success) {
+      await authTokenService.requestPasswordReset(parsed.data.email).catch(() => {
+        console.warn("auth.password_reset.delivery_failed");
+      });
+    }
+    res.status(202).json({ message: "If that account can be recovered, a reset link will be sent." });
+  },
+
+  async resetPassword(req: Request, res: Response, next: NextFunction) {
+    const parsed = resetPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid or expired password reset link" });
+      return;
+    }
+    try {
+      const reset = await authTokenService.resetPassword(parsed.data.token, parsed.data.password);
+      if (!reset) {
+        res.status(400).json({ error: "Invalid or expired password reset link" });
+        return;
+      }
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async verifyEmail(req: Request, res: Response, next: NextFunction) {
+    const parsed = tokenSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid or expired email verification link" });
+      return;
+    }
+    try {
+      const verified = await authTokenService.verifyEmail(parsed.data.token);
+      if (!verified) {
+        res.status(400).json({ error: "Invalid or expired email verification link" });
+        return;
+      }
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async resendVerification(req: Request, res: Response) {
+    const parsed = emailRequestSchema.safeParse(req.body);
+    if (parsed.success) {
+      await authTokenService.requestEmailVerification(parsed.data.email).catch(() => {
+        console.warn("auth.email_verification.delivery_failed");
+      });
+    }
+    res.status(202).json({ message: "If verification is available, an email will be sent." });
   },
 
   async passwordLogin(req: Request, res: Response, next: NextFunction) {

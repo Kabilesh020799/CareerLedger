@@ -1,6 +1,7 @@
 import { prisma } from "../config/prisma";
 import type { Prisma } from "../generated/prisma/client";
 import type { CreateReminderInput } from "../validators/reminder.validator";
+import { applicationAccess } from "./workspace-access.service";
 
 const FOLLOW_UP_INACTIVITY_MS = 7 * 24 * 60 * 60 * 1000;
 const SUGGESTED_DUE_DELAY_MS = 24 * 60 * 60 * 1000;
@@ -21,9 +22,10 @@ function followUpSuggestionWhere(
 }
 
 export const reminderService = {
-  async listForApplication(userId: string, applicationId: string) {
+  async listForApplication(userId: string, applicationId: string, workspaceId?: string) {
+    const access = await applicationAccess(userId, workspaceId);
     const application = await prisma.application.findFirst({
-      where: { id: applicationId, userId },
+      where: { ...access.where, id: applicationId },
       select: {
         reminders: {
           orderBy: [
@@ -37,11 +39,12 @@ export const reminderService = {
     return application?.reminders ?? null;
   },
 
-  listOpen(userId: string) {
+  async listOpen(userId: string, workspaceId?: string) {
+    const access = await applicationAccess(userId, workspaceId);
     return prisma.applicationReminder.findMany({
       where: {
         completedAt: null,
-        application: { userId },
+        application: access.where,
       },
       include: {
         application: {
@@ -111,10 +114,11 @@ export const reminderService = {
     });
   },
 
-  create(userId: string, applicationId: string, data: CreateReminderInput) {
+  create(userId: string, applicationId: string, data: CreateReminderInput, workspaceId?: string) {
     return prisma.$transaction(async (transaction) => {
+      const access = await applicationAccess(userId, workspaceId, true);
       const application = await transaction.application.findFirst({
-        where: { id: applicationId, userId },
+        where: { ...access.where, id: applicationId },
         select: { id: true },
       });
 
@@ -126,10 +130,11 @@ export const reminderService = {
     });
   },
 
-  updateCompletion(userId: string, id: string, completed: boolean) {
+  updateCompletion(userId: string, id: string, completed: boolean, workspaceId?: string) {
     return prisma.$transaction(async (transaction) => {
+      const access = await applicationAccess(userId, workspaceId, true);
       const reminder = await transaction.applicationReminder.findFirst({
-        where: { id, application: { userId } },
+        where: { id, application: access.where },
         select: { id: true },
       });
 
@@ -142,9 +147,10 @@ export const reminderService = {
     });
   },
 
-  async remove(userId: string, id: string) {
+  async remove(userId: string, id: string, workspaceId?: string) {
+    const access = await applicationAccess(userId, workspaceId, true);
     const result = await prisma.applicationReminder.deleteMany({
-      where: { id, application: { userId } },
+      where: { id, application: access.where },
     });
     return result.count > 0;
   },

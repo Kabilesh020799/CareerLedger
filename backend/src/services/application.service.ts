@@ -8,19 +8,22 @@ import type {
 import type { ApplicationResumeAttachmentInput } from "../validators/application-resume.validator";
 import { applicationResumeCreateData } from "./application-resume.service";
 import { applicationResumeStorageService } from "./application-resume-storage.service";
+import { applicationAccess } from "./workspace-access.service";
 
 export const applicationService = {
-  list(userId: string) {
+  async list(userId: string, workspaceId?: string) {
+    const access = await applicationAccess(userId, workspaceId);
     return prisma.application.findMany({
-      where: { userId },
+      where: access.where,
       include: applicationInclude,
       orderBy: { createdAt: "desc" },
     });
   },
 
-  async search(userId: string, query: ApplicationDiscoveryInput) {
+  async search(userId: string, query: ApplicationDiscoveryInput, workspaceId?: string) {
+    const access = await applicationAccess(userId, workspaceId);
     const where: Prisma.ApplicationWhereInput = {
-      userId,
+      ...access.where,
       ...(query.search
         ? {
             OR: [
@@ -71,8 +74,10 @@ export const applicationService = {
     userId: string,
     data: CreateApplicationInput,
     resume?: ApplicationResumeAttachmentInput,
+    workspaceId?: string,
   ) {
     return prisma.$transaction(async (transaction) => {
+      const access = await applicationAccess(userId, workspaceId, true);
       const { resumeUploadKey: _resumeUploadKey, ...applicationData } = data;
       if (applicationData.resumeVersionId) {
         const resumeVersion = await transaction.resumeVersion.findFirst({
@@ -86,6 +91,7 @@ export const applicationService = {
         data: {
           ...applicationData,
           userId,
+          workspaceId: access.workspaceId,
           ...(resume
             ? {
                 resumeAttachment: {
@@ -103,9 +109,10 @@ export const applicationService = {
     });
   },
 
-  findById(userId: string, id: string) {
+  async findById(userId: string, id: string, workspaceId?: string) {
+    const access = await applicationAccess(userId, workspaceId);
     return prisma.application.findFirst({
-      where: { id, userId },
+      where: { ...access.where, id },
       include: applicationInclude,
     });
   },
@@ -115,11 +122,13 @@ export const applicationService = {
     id: string,
     data: UpdateApplicationInput,
     resume?: ApplicationResumeAttachmentInput,
+    workspaceId?: string,
   ) {
+    const access = await applicationAccess(userId, workspaceId, true);
     const result = await prisma.$transaction(async (transaction) => {
       const { resumeUploadKey: _resumeUploadKey, ...applicationData } = data;
       const existing = await transaction.application.findFirst({
-        where: { id, userId },
+        where: { ...access.where, id },
         include: { resumeAttachment: { select: { storageKey: true } } },
       });
 
@@ -201,10 +210,11 @@ export const applicationService = {
     return result.application;
   },
 
-  async remove(userId: string, id: string) {
+  async remove(userId: string, id: string, workspaceId?: string) {
+    const access = await applicationAccess(userId, workspaceId, true);
     const result = await prisma.$transaction(async (transaction) => {
       const existing = await transaction.application.findFirst({
-        where: { id, userId },
+        where: { ...access.where, id },
         select: {
           id: true,
           resumeAttachment: { select: { storageKey: true } },

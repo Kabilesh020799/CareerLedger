@@ -58,6 +58,7 @@ describe("reminder API", () => {
     expect(reminderServiceMock.listForApplication).toHaveBeenCalledWith(
       "user-1",
       "application-1",
+      undefined,
     );
   });
 
@@ -83,6 +84,7 @@ describe("reminder API", () => {
         description: "Complete the assessment",
         dueAt: new Date("2026-08-15T14:00:00.000Z"),
       },
+      undefined,
     );
   });
 
@@ -103,7 +105,7 @@ describe("reminder API", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual([{ id: "reminder-1" }]);
-    expect(reminderServiceMock.listOpen).toHaveBeenCalledWith("user-1");
+    expect(reminderServiceMock.listOpen).toHaveBeenCalledWith("user-1", undefined);
   });
 
   it("lists follow-up suggestions for the current user", async () => {
@@ -159,12 +161,14 @@ describe("reminder API", () => {
       "user-1",
       "reminder-1",
       true,
+      undefined,
     );
     expect(reminderServiceMock.updateCompletion).toHaveBeenNthCalledWith(
       2,
       "user-1",
       "reminder-1",
       false,
+      undefined,
     );
   });
 

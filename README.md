@@ -1,6 +1,6 @@
 # Job Application Tracker
 
-An account-private job application tracker for managing applications, resumes, timelines, reminders, Gmail updates, and outcome analytics.
+A secure job application workspace for individuals and teams, with applications, resumes, timelines, reminders, Gmail updates, calendar feeds, and portable data.
 
 The stack is React, Chakra UI, Express, Prisma, and PostgreSQL. Docker Compose runs the complete application.
 
@@ -42,6 +42,8 @@ PostgreSQL data is persisted in the `postgres-data` Docker volume. Stop containe
 docker compose down --volumes
 ```
 
+Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Restore it only after reviewing the target with `CONFIRM_RESTORE=jobtracker ./scripts/restore-database.sh ./backups/<file>.dump`. Workspace JSON export/import is intended for portability and excludes resume file bytes and secrets.
+
 ## Features
 
 - Create, search, progressively filter, sort, edit, and delete applications, with quick status, note, and reminder actions from application details.
@@ -61,6 +63,10 @@ docker compose down --volumes
 - Switch between light and dark themes.
 - Keep applications, Gmail data, resumes, reminders, and analytics scoped to the signed-in user.
 - Create a private account with a unique username and email, then enter the workspace immediately through an authenticated session.
+- Recover password accounts through expiring single-use email links, verify account email addresses, edit profile details, and permanently delete an account with reauthentication.
+- Create team workspaces, invite members with role-based access, switch between personal and shared application data, and preserve at least one workspace owner.
+- Export a workspace as privacy-filtered JSON and import supported exports atomically, with duplicate applications safely skipped.
+- Download deadlines and interview milestones as an iCalendar file or create a revocable private subscription URL for calendar clients.
 - Protect password login with progressive delays, temporary account and network limits, uniform credential failures, and sanitized security events.
 - Use custom accessible dropdown menus for application filtering and form selections.
 
@@ -105,17 +111,23 @@ OPENAI_GMAIL_TIMEOUT_MS=10000
 
 `OPENAI_API_KEY` is optional. When it is absent—or the provider times out, fails, or returns invalid or insufficiently confident output—Gmail synchronization continues with the deterministic classifier and leaves that ambiguous message unmatched. The fallback validates structured output and only creates a review suggestion; it never changes an application directly.
 
+The SMTP configuration also sends password-reset and email-verification links. Without SMTP, authentication and profile management continue to work, while recovery requests return a non-disclosing acknowledgement without sending mail. Set `PUBLIC_API_URL` to the externally reachable backend origin so calendar subscription URLs work outside the browser.
+
 Redis protects password login from repeated account and network attempts and also supports automatic Gmail synchronization through a separate BullMQ worker. Docker Compose configures it automatically. When running services separately, set `REDIS_URL=redis://localhost:6379`, build the backend, and run `npm run start:worker` for scheduled work.
 
 Reminder delivery is optional. Generate Web Push credentials with `npx web-push generate-vapid-keys`, then configure `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and a `VAPID_SUBJECT` such as `mailto:admin@example.com`. Email delivery requires `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`, and provider credentials in `SMTP_USER` and `SMTP_PASSWORD` when required. The Notifications page shows unavailable channels until their server configuration is complete.
 
 ## API overview
 
-All application, resume, reminder, dashboard, and Gmail data endpoints require an authenticated session and enforce ownership.
+All management and user-data endpoints require an authenticated session and enforce user or workspace membership. The calendar feed is the exception: its high-entropy URL is a revocable bearer secret for calendar clients that cannot send a session cookie.
 
 | Area | Endpoints |
 | --- | --- |
-| Health and auth | `GET /api/health`, `POST /api/auth/signup`, `GET /api/auth/session`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/google` |
+| Health and auth | `GET /api/health`, `POST /api/auth/signup`, `GET /api/auth/session`, `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, `POST /api/auth/verify-email`, `GET /api/auth/google` |
+| Account | `GET/PATCH/DELETE /api/account` |
+| Workspaces | `GET/POST /api/workspaces`, plus members and invitations under `/api/workspaces/:id` |
+| Data portability | `GET /api/data/export`, `POST /api/data/import` |
+| Calendar | `GET /api/calendar/export`, `GET/POST/DELETE /api/calendar/subscription`, `GET /api/calendar/feed/:token` |
 | Applications | `GET/POST /api/applications`, `GET/PATCH/DELETE /api/applications/:id`, `GET /api/applications/search` |
 | Resume uploads | `POST/DELETE /api/applications/resume-uploads`, `GET /api/applications/:id/resume`, `GET /api/applications/:id/resume-download` |
 | Uploaded resume library | `GET /api/resumes/uploads` |

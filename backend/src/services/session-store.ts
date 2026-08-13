@@ -36,10 +36,12 @@ export class PrismaSessionStore extends session.Store {
           id: sessionId,
           data: JSON.stringify(sessionData),
           expiresAt: expiresAt(sessionData),
+          userId: sessionData.passport?.user ?? null,
         },
         update: {
           data: JSON.stringify(sessionData),
           expiresAt: expiresAt(sessionData),
+          userId: sessionData.passport?.user ?? null,
         },
       })
       .then(() => callback?.())

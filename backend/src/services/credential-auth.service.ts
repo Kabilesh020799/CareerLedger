@@ -9,6 +9,7 @@ const publicUserSelect = {
   email: true,
   name: true,
   avatarUrl: true,
+  emailVerifiedAt: true,
 } as const;
 
 export class CredentialAlreadyExistsError extends Error {}

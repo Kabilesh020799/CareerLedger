@@ -48,3 +48,7 @@ Deleting a user cascades through owned records. Deleting an application cascades
 Docker Compose stores PostgreSQL data in the named `postgres-data` volume. Normal container recreation and instance restart preserve it. `docker compose down --volumes` intentionally deletes local database data. Production backups must copy PostgreSQL data independently of Docker image releases and should be tested with a restore procedure before schema changes.
 
 Redis queue state uses the separate named `redis-data` volume. Enabled schedules are also persisted in PostgreSQL and reconciled into Redis, so Redis can be rebuilt without losing the user's scheduling preference or Gmail history cursor.
+
+## Accounts, workspaces, and calendars
+
+`EmailVerificationToken` and `PasswordResetToken` store expiring single-use SHA-256 hashes. `Session.userId` supports global session revocation. `Workspace`, `WorkspaceMember`, and `WorkspaceInvitation` provide personal/shared ownership and role-based membership; existing applications are backfilled to personal workspaces. `CalendarFeedToken` stores only a revocable feed-token hash. Portable workspace JSON intentionally excludes credentials, sessions, tokens, S3 keys, and resume bytes and is not a substitute for an operational PostgreSQL backup.

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { AppProvider } from './components/ui/AppProvider'
 import { useGmailUpdateReviews } from './hooks/useGmailUpdateReviews'
+import { WorkspaceProvider } from './contexts/WorkspaceContext'
 
 vi.mock('./hooks/useApplications', () => ({
   useApplications: () => ({
@@ -76,6 +77,9 @@ vi.mock('./hooks/useGmailStatus', () => ({
   }),
 }))
 vi.mock('./hooks/useGmailUpdateReviews', () => ({ useGmailUpdateReviews: vi.fn() }))
+vi.mock('./services/workspace.service', () => ({
+  workspaceService: { list: async () => [{ role: 'OWNER', workspace: { id: 'workspace-1', name: 'Personal workspace', isPersonal: true, _count: { applications: 0, members: 1 } } }] },
+}))
 
 vi.mock('./components/reminders/DashboardReminders', () => ({
   DashboardReminders: () => <div>Reminder overview</div>,
@@ -110,7 +114,7 @@ function renderApp(path: string) {
     <AppProvider>
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={[path]}>
-          <App />
+          <WorkspaceProvider><App /></WorkspaceProvider>
         </MemoryRouter>
       </QueryClientProvider>
     </AppProvider>,

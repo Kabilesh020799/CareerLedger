@@ -18,7 +18,8 @@ describe('useSignup', () => {
         username: 'new_user',
         email: 'person@example.com',
         name: 'New User',
-        avatarUrl: null,
+      avatarUrl: null,
+      emailVerifiedAt: null,
       },
     }
     vi.mocked(authService.signup).mockResolvedValue(session)

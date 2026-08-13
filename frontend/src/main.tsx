@@ -6,13 +6,14 @@ import App from './App'
 import { AppProvider } from './components/ui/AppProvider'
 import { queryClient } from './config/queryClient'
 import './index.css'
+import { WorkspaceProvider } from './contexts/WorkspaceContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AppProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <App />
+          <WorkspaceProvider><App /></WorkspaceProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </AppProvider>

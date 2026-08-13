@@ -4,6 +4,7 @@ import type {
   ApplicationResumeExtension,
 } from "../validators/application-resume.validator";
 import { applicationResumeStorageService } from "./application-resume-storage.service";
+import { applicationAccess } from "./workspace-access.service";
 
 const maxNameSegmentLength = 80;
 
@@ -43,11 +44,12 @@ export function applicationResumeCreateData(
 }
 
 export const applicationResumeService = {
-  async findForApplication(userId: string, applicationId: string, inline = false) {
+  async findForApplication(userId: string, applicationId: string, inline = false, workspaceId?: string) {
+    const access = await applicationAccess(userId, workspaceId);
     const resume = await prisma.applicationResume.findFirst({
       where: {
         applicationId,
-        application: { userId },
+        application: access.where,
       },
       select: {
         fileName: true,

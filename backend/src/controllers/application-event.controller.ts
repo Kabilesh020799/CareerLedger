@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { applicationEventService } from "../services/application-event.service";
 import { createApplicationEventSchema } from "../validators/application-event.validator";
+import { selectedWorkspaceId } from "../services/workspace-access.service";
 
 function getId(req: Request) {
   const id = req.params.id;
@@ -17,6 +18,7 @@ export const applicationEventController = {
     const events = await applicationEventService.list(
       getUserId(req),
       getId(req),
+      selectedWorkspaceId(req.headers["x-workspace-id"]),
     );
     if (!events) {
       res.status(404).json({ error: "Application not found" });
@@ -40,6 +42,7 @@ export const applicationEventController = {
       getUserId(req),
       getId(req),
       parsed.data,
+      selectedWorkspaceId(req.headers["x-workspace-id"]),
     );
     if (!event) {
       res.status(404).json({ error: "Application not found" });

@@ -74,3 +74,7 @@ The Notifications page stores user-scoped channel preferences and registers brow
 ## Production provisioning and deployment
 
 The standalone Terraform stack creates the AWS network, EC2 host, encrypted EBS storage, private S3 resume bucket, CloudFront distribution, WAF, and least-privilege IAM roles. Cloud-init installs Docker but does not receive application secrets. The provisioning command starts the first Compose deployment through Systems Manager; later GitHub releases use OIDC, SSM commands, and short-lived encrypted Parameter Store values. PostgreSQL and Redis remain private Docker services whose named volumes live on the protected EC2 root volume.
+
+## Account, workspace, portability, and calendar flows
+
+Expiring hashed tokens support email verification and password recovery; password reset revokes every persisted session. The frontend workspace provider persists a selection, sends `X-Workspace-Id`, and invalidates cached server data on changes. The backend validates membership and roles before shared application reads or writes. Workspace export creates privacy-filtered versioned JSON and import writes each accepted document transactionally. Calendar downloads serialize open deadlines and interview milestones as iCalendar; external calendar clients use a revocable high-entropy bearer URL because they cannot send the browser session cookie.

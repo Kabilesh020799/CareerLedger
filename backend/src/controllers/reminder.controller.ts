@@ -4,6 +4,11 @@ import {
   createReminderSchema,
   updateReminderSchema,
 } from "../validators/reminder.validator";
+import { selectedWorkspaceId } from "../services/workspace-access.service";
+
+function getWorkspaceId(req: Request) {
+  return selectedWorkspaceId(req.headers["x-workspace-id"]);
+}
 
 function getParameter(req: Request, name: string) {
   const value = req.params[name];
@@ -20,6 +25,7 @@ export const reminderController = {
     const reminders = await reminderService.listForApplication(
       getUserId(req),
       getParameter(req, "id"),
+      getWorkspaceId(req),
     );
     if (!reminders) {
       res.status(404).json({ error: "Application not found" });
@@ -30,7 +36,7 @@ export const reminderController = {
   },
 
   async listOpen(req: Request, res: Response) {
-    const reminders = await reminderService.listOpen(getUserId(req));
+    const reminders = await reminderService.listOpen(getUserId(req), getWorkspaceId(req));
     res.json(reminders);
   },
 
@@ -68,6 +74,7 @@ export const reminderController = {
       getUserId(req),
       getParameter(req, "id"),
       parsed.data,
+      getWorkspaceId(req),
     );
     if (!reminder) {
       res.status(404).json({ error: "Application not found" });
@@ -91,6 +98,7 @@ export const reminderController = {
       getUserId(req),
       getParameter(req, "id"),
       parsed.data.completed,
+      getWorkspaceId(req),
     );
     if (!reminder) {
       res.status(404).json({ error: "Reminder not found" });
@@ -104,6 +112,7 @@ export const reminderController = {
     const removed = await reminderService.remove(
       getUserId(req),
       getParameter(req, "id"),
+      getWorkspaceId(req),
     );
     if (!removed) {
       res.status(404).json({ error: "Reminder not found" });

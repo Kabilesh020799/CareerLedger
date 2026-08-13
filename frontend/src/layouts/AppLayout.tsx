@@ -5,7 +5,9 @@ import { useLogout } from '../hooks/useLogout'
 import { useSession } from '../hooks/useSession'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
 import { useGmailUpdateReviews } from '../hooks/useGmailUpdateReviews'
-import { Bell, BriefcaseBusiness, Columns3, FileText, Gauge, Mail, Menu, Puzzle, X } from 'lucide-react'
+import { Bell, BriefcaseBusiness, CalendarDays, Columns3, Database, FileText, Gauge, Mail, Menu, Puzzle, UserRound, Users, X } from 'lucide-react'
+import { useWorkspace } from '../contexts/WorkspaceContext'
+import { CustomSelect } from '../components/ui/CustomSelect'
 
 const navigation = [
   { label: 'Workspace', items: [{ label: 'Dashboard', to: '/dashboard', icon: Gauge }] },
@@ -16,9 +18,15 @@ const navigation = [
   { label: 'Documents', items: [{ label: 'Resumes', to: '/resumes', icon: FileText }] },
   { label: 'Automation', items: [
     { label: 'Email sync', to: '/gmail', icon: Mail },
+    { label: 'Calendar', to: '/calendar', icon: CalendarDays },
     { label: 'Browser extension', to: '/browser-extension', icon: Puzzle },
   ] },
-  { label: 'Settings', items: [{ label: 'Notifications', to: '/notifications', icon: Bell }] },
+  { label: 'Settings', items: [
+    { label: 'Profile', to: '/profile', icon: UserRound },
+    { label: 'Notifications', to: '/notifications', icon: Bell },
+    { label: 'Team', to: '/team', icon: Users },
+    { label: 'Data', to: '/data', icon: Database },
+  ] },
 ]
 
 const mobileNavigation = [
@@ -34,6 +42,7 @@ export function AppLayout() {
   const location = useLocation()
   const gmailReviews = useGmailUpdateReviews()
   const [navigationOpen, setNavigationOpen] = useState(false)
+  const workspace = useWorkspace()
   const pendingGmailUpdates = gmailReviews.data?.length ?? 0
 
   useEffect(() => {
@@ -128,6 +137,7 @@ export function AppLayout() {
               </Stack>
 
               <Stack gap="3" pt="4" borderColor="border" borderTopWidth="1px">
+                {workspace.workspaceId && <CustomSelect aria-label="Active workspace" value={workspace.workspaceId} options={(workspace.memberships??[]).map(item=>({label:item.workspace.name,value:item.workspace.id}))} onChange={workspace.setWorkspaceId} />}
                 <Text fontSize="sm" fontWeight="medium" truncate>
                   {session.data?.user?.name ?? session.data?.user?.email}
                 </Text>
