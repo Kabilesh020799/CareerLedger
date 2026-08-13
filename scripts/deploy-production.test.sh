@@ -47,6 +47,9 @@ grep -Eq '^POSTGRES_PASSWORD=[0-9a-f]{64}$' "$TEST_DIRECTORY/app/.env"
 grep -q '^POSTGRES_DB=jobtracker$' "$TEST_DIRECTORY/app/.env"
 grep -Eq '^SESSION_SECRET=[0-9a-f]{64}$' "$TEST_DIRECTORY/app/.env"
 grep -q '^IMAGE_TAG=first-tag$' "$TEST_DIRECTORY/app/.env"
+grep -q '^APP_COMMIT_SHA=unknown$' "$TEST_DIRECTORY/app/.env"
+grep -q '^LOG_LEVEL=info$' "$TEST_DIRECTORY/app/.env"
+grep -Eq '^GRAFANA_ADMIN_PASSWORD=[0-9a-f]{64}$' "$TEST_DIRECTORY/app/.env"
 
 if stat -f '%Lp' "$TEST_DIRECTORY/app/.env" >/dev/null 2>&1; then
   environment_mode="$(stat -f '%Lp' "$TEST_DIRECTORY/app/.env")"
@@ -66,10 +69,12 @@ POSTGRES_DB=jobtracker
 IMAGE_TAG=old-tag
 ENV
 
-APP_DIR="$TEST_DIRECTORY/app" FAKE_HEALTH=ok sh "$REPOSITORY_ROOT/scripts/deploy-production.sh" new-tag
+APP_DIR="$TEST_DIRECTORY/app" FAKE_HEALTH=ok sh "$REPOSITORY_ROOT/scripts/deploy-production.sh" new-tag abc123
 grep -q '^POSTGRES_PASSWORD=test_password$' "$TEST_DIRECTORY/app/.env"
 grep -Eq '^SESSION_SECRET=[0-9a-f]{64}$' "$TEST_DIRECTORY/app/.env"
+grep -Eq '^GRAFANA_ADMIN_PASSWORD=[0-9a-f]{64}$' "$TEST_DIRECTORY/app/.env"
 grep -q '^IMAGE_TAG=new-tag$' "$TEST_DIRECTORY/app/.env"
+grep -q '^APP_COMMIT_SHA=abc123$' "$TEST_DIRECTORY/app/.env"
 
 if stat -f '%Lp' "$TEST_DIRECTORY/app/.env" >/dev/null 2>&1; then
   migrated_environment_mode="$(stat -f '%Lp' "$TEST_DIRECTORY/app/.env")"
@@ -83,7 +88,7 @@ if [ "$migrated_environment_mode" != "600" ]; then
 fi
 
 session_secret="$(sed -n 's/^SESSION_SECRET=//p' "$TEST_DIRECTORY/app/.env")"
-APP_DIR="$TEST_DIRECTORY/app" FAKE_HEALTH=ok sh "$REPOSITORY_ROOT/scripts/deploy-production.sh" new-tag
+APP_DIR="$TEST_DIRECTORY/app" FAKE_HEALTH=ok sh "$REPOSITORY_ROOT/scripts/deploy-production.sh" new-tag abc123
 grep -q "^SESSION_SECRET=$session_secret$" "$TEST_DIRECTORY/app/.env"
 grep -q 'pull backend frontend' "$FAKE_DOCKER_LOG"
 grep -q 'up -d --remove-orphans --wait --wait-timeout 180' "$FAKE_DOCKER_LOG"
@@ -96,5 +101,6 @@ if APP_DIR="$TEST_DIRECTORY/app" FAKE_HEALTH=bad sh "$REPOSITORY_ROOT/scripts/de
 fi
 
 grep -q '^IMAGE_TAG=new-tag$' "$TEST_DIRECTORY/app/.env"
+grep -q '^APP_COMMIT_SHA=abc123$' "$TEST_DIRECTORY/app/.env"
 
 echo "Deployment script tests passed."

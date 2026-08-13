@@ -6,6 +6,7 @@ APP_DIR="${APP_DIR:-/opt/job-application-tracker}"
 COMPOSE_FILE="${APP_DIR}/compose.production.yml"
 ENV_FILE="${APP_DIR}/.env"
 NEW_TAG="${1:-}"
+NEW_COMMIT_SHA="${2:-unknown}"
 SKIP_IMAGE_PULL="${SKIP_IMAGE_PULL:-false}"
 
 if [ -z "$NEW_TAG" ]; then
@@ -18,6 +19,11 @@ case "$NEW_TAG" in
     echo "Invalid image tag" >&2
     exit 2
     ;;
+esac
+
+case "$NEW_COMMIT_SHA" in
+  unknown) ;;
+  ""|*[!0-9a-fA-F]*) echo "Invalid commit SHA" >&2; exit 2 ;;
 esac
 
 if [ ! -f "$COMPOSE_FILE" ]; then
@@ -37,6 +43,7 @@ initialize_environment() {
 
   database_password="$(openssl rand -hex 32)"
   session_secret="$(openssl rand -hex 32)"
+  grafana_password="$(openssl rand -hex 32)"
   temporary_file="$(mktemp "${ENV_FILE}.XXXXXX")"
 
   {
@@ -45,6 +52,14 @@ initialize_environment() {
     printf '%s\n' "POSTGRES_DB=jobtracker"
     printf '%s\n' "SESSION_SECRET=$session_secret"
     printf '%s\n' "IMAGE_TAG=$NEW_TAG"
+    printf '%s\n' "APP_COMMIT_SHA=$NEW_COMMIT_SHA"
+    printf '%s\n' "LOG_LEVEL=info"
+    printf '%s\n' "PROMETHEUS_RETENTION=15d"
+    printf '%s\n' "PROMETHEUS_RETENTION_SIZE=2GB"
+    printf '%s\n' "GRAFANA_ADMIN_USER=admin"
+    printf '%s\n' "GRAFANA_ADMIN_PASSWORD=$grafana_password"
+    printf '%s\n' "GRAFANA_ROOT_URL=http://127.0.0.1:3001"
+    printf '%s\n' "GRAFANA_PORT=3001"
   } > "$temporary_file"
 
   chmod 600 "$temporary_file"
@@ -84,9 +99,24 @@ ensure_session_secret() {
 }
 
 ensure_session_secret
+
+ensure_grafana_password() {
+  existing_password="$(sed -n 's/^GRAFANA_ADMIN_PASSWORD=//p' "$ENV_FILE" | head -n 1)"
+  if [ -n "$existing_password" ]; then
+    return
+  fi
+
+  require_openssl
+  grafana_password="$(openssl rand -hex 32)"
+  printf '%s\n' "GRAFANA_ADMIN_PASSWORD=$grafana_password" >> "$ENV_FILE"
+  echo "Added a protected Grafana administrator password to $ENV_FILE."
+}
+
+ensure_grafana_password
 chmod 600 "$ENV_FILE"
 
 OLD_TAG="$(sed -n 's/^IMAGE_TAG=//p' "$ENV_FILE" | head -n 1)"
+OLD_COMMIT_SHA="$(sed -n 's/^APP_COMMIT_SHA=//p' "$ENV_FILE" | head -n 1)"
 
 set_image_tag() {
   tag="$1"
@@ -101,6 +131,19 @@ set_image_tag() {
   mv "$temporary_file" "$ENV_FILE"
 }
 
+set_commit_sha() {
+  sha="$1"
+  temporary_file="$(mktemp "${ENV_FILE}.XXXXXX")"
+  awk -v sha="$sha" '
+    BEGIN { replaced = 0 }
+    /^APP_COMMIT_SHA=/ { print "APP_COMMIT_SHA=" sha; replaced = 1; next }
+    { print }
+    END { if (!replaced) print "APP_COMMIT_SHA=" sha }
+  ' "$ENV_FILE" > "$temporary_file"
+  chmod --reference="$ENV_FILE" "$temporary_file" 2>/dev/null || chmod 600 "$temporary_file"
+  mv "$temporary_file" "$ENV_FILE"
+}
+
 rollback() {
   exit_code="$?"
   trap - INT TERM HUP EXIT
@@ -108,6 +151,7 @@ rollback() {
   if [ -n "$OLD_TAG" ] && [ "$OLD_TAG" != "$NEW_TAG" ]; then
     echo "Deployment failed; restoring image tag $OLD_TAG" >&2
     set_image_tag "$OLD_TAG"
+    set_commit_sha "${OLD_COMMIT_SHA:-unknown}"
     if [ "$SKIP_IMAGE_PULL" != "true" ]; then
       docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull backend frontend
     fi
@@ -120,6 +164,7 @@ rollback() {
 trap rollback INT TERM HUP EXIT
 
 set_image_tag "$NEW_TAG"
+set_commit_sha "$NEW_COMMIT_SHA"
 
 if [ "$SKIP_IMAGE_PULL" != "true" ]; then
   docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull backend frontend

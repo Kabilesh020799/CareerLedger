@@ -21,11 +21,16 @@ import { calendarFeedRouter, calendarRouter } from "./routes/calendar.routes";
 import { workspaceRouter } from "./routes/workspace.routes";
 import { dataTransferRouter } from "./routes/data-transfer.routes";
 import { WorkspaceAccessError } from "./services/workspace-access.service";
+import { bindAuthenticatedLogContext, requestLogging } from "./middleware/request-logging";
+import { recordHttpMetrics } from "./middleware/metrics";
+import { metricsRouter } from "./routes/metrics.routes";
 
 export function createApp() {
   const app = express();
 
   if (authConfig.isProduction) app.set("trust proxy", 1);
+
+  app.use(requestLogging);
 
   app.use(cors({
     origin(origin, callback) {
@@ -33,9 +38,11 @@ export function createApp() {
       callback(allowed ? null : new Error("Origin is not allowed"), allowed);
     },
     credentials: true,
+    exposedHeaders: ["X-Request-Id"],
   }));
   app.use(helmet());
   app.use(express.json({ limit: "10mb" }));
+  app.use(recordHttpMetrics);
   app.use(
     session({
       name: "job-tracker-session",
@@ -53,6 +60,10 @@ export function createApp() {
   );
   app.use(passport.initialize());
   app.use(passport.session());
+  app.use(bindAuthenticatedLogContext);
+
+  // This path is reachable only on the private Compose network; Nginx proxies /api only.
+  app.use("/internal/metrics", metricsRouter);
 
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok" });
@@ -88,8 +99,8 @@ export function createApp() {
         });
         return;
       }
-      console.error(error);
-      res.status(500).json({ error: "Internal server error" });
+      _req.log.error({ err: error }, "unhandled request error");
+      res.status(500).json({ error: "Internal server error", requestId: _req.id });
     },
   );
 

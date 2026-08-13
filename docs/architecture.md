@@ -30,6 +30,10 @@ Requests follow `Route -> Validation -> Controller -> Service -> Prisma`. Routes
 
 Password signup and login create the same PostgreSQL-backed HTTP-only session cookie. Signup validates and normalizes identifiers before the credential service creates the user with a bcrypt password hash. Every user-owned query is scoped to the authenticated user. Application status changes and timeline events are saved in one Prisma transaction.
 
+The first Express middleware creates a canonical request ID and the final HTTP log records the method, normalized route when available, status, response time, and authenticated user ID. Unhandled errors carry that request ID into a safe client response. API, startup, security, and BullMQ worker records share Pino JSON fields so container output can be searched by request, user, job, release, or commit without parsing free-form text.
+
+The API and worker expose private Prometheus endpoints. Exporters translate PostgreSQL, Redis, Nginx, host, and Docker container telemetry; Prometheus retains bounded local time-series data and evaluates sustained symptom rules. Grafana provisions application and infrastructure dashboards from version-controlled JSON. Metrics services never sit on the public application path, and an observability failure is not a startup dependency for the application.
+
 ## Frontend boundaries
 
 Frontend data follows `Component -> Hook -> TanStack Query -> API service`. React Hook Form and Zod handle forms, Chakra UI handles layout and accessibility, and Axios sends credentials to the backend. Mutations invalidate affected application, dashboard, reminder, resume, or Gmail query keys.

@@ -192,6 +192,7 @@ jobs:
           port="${DEPLOY_PORT:-22}"
           ssh -o ConnectTimeout=15 -o ConnectionAttempts=2 -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p /opt/job-application-tracker"
           scp -o ConnectTimeout=15 -o ConnectionAttempts=2 -i ~/.ssh/deploy_key -P "$port" deploy/compose.production.yml scripts/deploy-production.sh "$DEPLOY_USER@$DEPLOY_HOST:/opt/job-application-tracker/"
+          scp -o ConnectTimeout=15 -o ConnectionAttempts=2 -i ~/.ssh/deploy_key -P "$port" -r deploy/monitoring "$DEPLOY_USER@$DEPLOY_HOST:/opt/job-application-tracker/"
           ssh -o ConnectTimeout=15 -o ConnectionAttempts=2 -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "chmod 700 /opt/job-application-tracker/deploy-production.sh"
 
       - name: Configure application environment
@@ -286,7 +287,7 @@ jobs:
           DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
         run: |
           port="${DEPLOY_PORT:-22}"
-          ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "/opt/job-application-tracker/deploy-production.sh '${{ needs.plan_release.outputs.release_tag }}'"
+          ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "/opt/job-application-tracker/deploy-production.sh '${{ needs.plan_release.outputs.release_tag }}' '${{ github.sha }}'"
 
       - name: Store short-lived SSM deployment parameters
         if: vars.DEPLOY_METHOD == 'ssm'
@@ -328,7 +329,7 @@ jobs:
           AUTH_PARAMETER: ${{ steps.ssm_parameters.outputs.auth_parameter }}
           RELEASE_TAG: ${{ needs.plan_release.outputs.release_tag }}
         run: |
-          command="set -eu; app_dir=/opt/job-application-tracker; install -d -m 700 \$app_dir; curl -fsSL '$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/raw/$GITHUB_SHA/deploy/compose.production.yml' -o \$app_dir/compose.production.yml; curl -fsSL '$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/raw/$GITHUB_SHA/scripts/deploy-production.sh' -o \$app_dir/deploy-production.sh; chmod 700 \$app_dir/deploy-production.sh; aws ssm get-parameter --name '$AUTH_PARAMETER' --with-decryption --query Parameter.Value --output text > \$app_dir/.auth.env; chmod 600 \$app_dir/.auth.env; aws ssm get-parameter --name '$TOKEN_PARAMETER' --with-decryption --query Parameter.Value --output text | docker login ghcr.io -u '$GITHUB_ACTOR' --password-stdin; \$app_dir/deploy-production.sh '$RELEASE_TAG'"
+          command="set -eu; app_dir=/opt/job-application-tracker; source_dir=/opt/job-application-tracker-source; install -d -m 700 \$app_dir \$app_dir/monitoring; if [ ! -d \$source_dir/.git ]; then git clone '$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git' \$source_dir; fi; git -C \$source_dir fetch --depth=1 origin '$GITHUB_SHA'; git -C \$source_dir checkout --detach FETCH_HEAD; cp \$source_dir/deploy/compose.production.yml \$app_dir/compose.production.yml; cp -R \$source_dir/deploy/monitoring/. \$app_dir/monitoring/; cp \$source_dir/scripts/deploy-production.sh \$app_dir/deploy-production.sh; chmod 700 \$app_dir/deploy-production.sh; aws ssm get-parameter --name '$AUTH_PARAMETER' --with-decryption --query Parameter.Value --output text > \$app_dir/.auth.env; chmod 600 \$app_dir/.auth.env; aws ssm get-parameter --name '$TOKEN_PARAMETER' --with-decryption --query Parameter.Value --output text | docker login ghcr.io -u '$GITHUB_ACTOR' --password-stdin; \$app_dir/deploy-production.sh '$RELEASE_TAG' '$GITHUB_SHA'"
           jq -n --arg command "$command" '{commands: [$command]}' > ssm-parameters.json
           command_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript --parameters file://ssm-parameters.json --query Command.CommandId --output text)"
           for attempt in $(seq 1 120); do

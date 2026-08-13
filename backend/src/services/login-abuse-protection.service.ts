@@ -2,6 +2,7 @@ import { createHmac } from "node:crypto";
 import IORedis from "ioredis";
 import { authConfig } from "../config/auth";
 import { redisConfig } from "../config/redis";
+import { logger } from "../config/logger";
 
 const WINDOW_SECONDS = 15 * 60;
 const ACCOUNT_ATTEMPT_LIMIT = 8;
@@ -57,7 +58,7 @@ function normalizedAccount(username: unknown) {
 }
 
 function audit(event: string, details: Record<string, string | number | boolean>) {
-  console.warn(JSON.stringify({ event, ...details }));
+  logger.warn({ event, ...details }, "authentication security event");
 }
 
 function defaultClient() {

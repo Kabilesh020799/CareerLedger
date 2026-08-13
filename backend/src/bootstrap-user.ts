@@ -2,6 +2,7 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "./generated/prisma/client";
 import { bootstrapBuiltInDemoUsers } from "./services/demo-user-bootstrap.service";
+import { logger } from "./config/logger";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -14,13 +15,13 @@ const prisma = new PrismaClient({
 async function main() {
   await bootstrapBuiltInDemoUsers(prisma);
 
-  console.log("Production user bootstrap completed.");
+  logger.info("production user bootstrap completed");
 }
 
 if (require.main === module) {
   main()
     .catch((error: unknown) => {
-      console.error("Production user bootstrap failed", error);
+      logger.error({ err: error }, "production user bootstrap failed");
       process.exitCode = 1;
     })
     .finally(async () => {

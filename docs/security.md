@@ -62,6 +62,10 @@ Notification preferences and Web Push subscriptions are scoped to the authentica
 - Back up PostgreSQL and test restores regularly.
 - Review dependency and container-image updates before release.
 
+Production logs are structured JSON and intentionally omit request URLs, query strings, request bodies, headers, sessions, email bodies, résumé content, and presigned URLs. Logger-level redaction provides a second boundary for common password, token, authorization, cookie, and private-document fields. The server always generates its own request ID; a valid caller-supplied ID is retained only as an untrusted upstream correlation field. Do not treat either ID as authentication or expose logs publicly.
+
+Prometheus and every exporter remain on the private Compose network. Grafana requires a randomly generated administrator password and publishes only to `127.0.0.1`; use SSM port forwarding or an SSH tunnel instead of opening monitoring ports in the security group. cAdvisor and node-exporter have read-only host visibility and should be treated as privileged operational components. Metric labels deliberately exclude user IDs, raw URLs, job IDs, email details, and exception text.
+
 ## Recovery, sharing, and portable data
 
 Password-reset and email-verification links use 256-bit random tokens; only SHA-256 hashes are stored. Links expire and are single-use, recovery requests do not disclose account existence, and password reset revokes all sessions. Account deletion requires the exact account email and the current password for password users; S3 objects are queued before database cascades.

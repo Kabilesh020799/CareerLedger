@@ -8,6 +8,10 @@ The backend publishes an OpenAPI contract and renders it with Swagger UI:
 
 The OpenAPI document describes endpoint purpose, session authentication, path/query parameters, request bodies, response meanings, validation limits, and common conflicts. Swagger's **Try it out** feature can call the running API. Sign in through the application first so the browser has the `job-tracker-session` cookie.
 
+Every response exposes a server-generated UUID in `X-Request-Id`. Unexpected `500` responses also include that value as `requestId`; the frontend presents it as a support reference. Clients may send their own syntactically valid `X-Request-Id` for upstream correlation, but the server never echoes or trusts it as the canonical identifier.
+
+Prometheus scrapes the API at `/internal/metrics` from the private Compose network. Nginx does not proxy that path, it is intentionally omitted from the public OpenAPI contract, and its labels contain only bounded method, normalized route, status, and process information. The worker exposes a separate private endpoint on port `9464` for queue and background-job metrics.
+
 Shared schemas and security definitions live in `backend/src/config/openapi.ts`. Endpoint-specific Swagger JSDoc belongs next to the matching Express route. `swagger-jsdoc` merges both sources at runtime.
 
 When an API changes, update the route JSDoc, shared schema, validator, controller/service behavior, Supertest coverage, README API overview, and affected Gherkin scenario in the same change.

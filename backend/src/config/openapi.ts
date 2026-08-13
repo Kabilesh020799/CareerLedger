@@ -61,7 +61,17 @@ export const openApiDocument: OpenAPIV3.Document = {
       ResumeVersion: { type: "object", properties: { id: { type: "string" }, name: { type: "string" }, notes: { type: "string", nullable: true }, createdAt: { type: "string", format: "date-time" }, updatedAt: { type: "string", format: "date-time" } } },
       GmailStatus: { type: "object", required: ["configured", "connected", "synchronizedMessages", "automaticSync"], properties: { configured: { type: "boolean" }, connected: { type: "boolean" }, gmailEmail: { type: "string", nullable: true }, lastSyncedAt: { type: "string", format: "date-time", nullable: true }, synchronizedMessages: { type: "integer" }, automaticSync: { type: "object", required: ["enabled", "intervalMinutes"], properties: { enabled: { type: "boolean" }, intervalMinutes: { type: "integer", enum: [15, 30, 60, 180, 360, 720, 1440] }, lastAttemptAt: { type: "string", format: "date-time", nullable: true }, lastError: { type: "string", nullable: true } } } } },
       NotificationSettings: { type: "object", required: ["emailEnabled", "browserPushEnabled", "emailAvailable", "browserPushAvailable", "browserSubscribed"], properties: { emailEnabled: { type: "boolean" }, browserPushEnabled: { type: "boolean" }, emailAvailable: { type: "boolean" }, browserPushAvailable: { type: "boolean" }, browserSubscribed: { type: "boolean" }, vapidPublicKey: { type: "string", nullable: true } } },
-      Error: { type: "object", properties: { error: { type: "string" } } },
+      Error: {
+        type: "object",
+        properties: {
+          error: { type: "string" },
+          requestId: {
+            type: "string",
+            format: "uuid",
+            description: "Support reference included with unexpected server errors.",
+          },
+        },
+      },
     },
   },
   paths: {

@@ -4,7 +4,7 @@ Pull requests targeting `master` run verification only. Every push to `master` i
 
 AWS resources are described separately in [`infrastructure/`](../infrastructure/README.md). Terraform owns the EC2 instance, Elastic IP, security-group baseline, private resume bucket, CloudFront distribution and WAF attachment, instance role, and GitHub OIDC deployment role after they are explicitly imported. GitHub Actions continues to own application releases and temporary SSH rules; Docker Compose continues to own containers and volumes. Never apply the production Terraform configuration until the adoption plan contains no replacement or deletion.
 
-For a new isolated environment, run `./scripts/provision-production.sh` from a clean revision already pushed to `master`. It provisions the complete `infrastructure/standalone` stack, updates non-secret GitHub environment variables, builds and starts the first release through SSM, and verifies HTTPS health. It prompts before both saved Terraform plans and never uses `-auto-approve`. Override its defaults with `AWS_REGION`, `TF_STATE_BUCKET`, `RESUME_BUCKET`, `NAME_PREFIX`, `INSTANCE_TYPE`, or `ROOT_VOLUME_SIZE`.
+For a new isolated environment, run `./scripts/provision-production.sh` from a clean revision already pushed to `master`. It provisions the complete `infrastructure/standalone` stack, updates non-secret GitHub environment variables, builds and starts the first release through SSM, and verifies HTTPS health. It prompts before both saved Terraform plans and never uses `-auto-approve`. Override its defaults with `AWS_REGION`, `TF_STATE_BUCKET`, `RESUME_BUCKET`, `NAME_PREFIX`, `INSTANCE_TYPE`, or `ROOT_VOLUME_SIZE`. The standalone default is `t3.medium`; the complete monitoring stack is not recommended on a host with less than 4 GiB RAM.
 
 ## 1. Prepare the instance
 
@@ -18,7 +18,7 @@ sudo chown "$USER":"$USER" /opt/job-application-tracker
 chmod 700 /opt/job-application-tracker
 ```
 
-The first deployment automatically creates `/opt/job-application-tracker/.env` with random URL-safe PostgreSQL and session credentials and permissions of `600`. GitHub Actions separately installs `/opt/job-application-tracker/.auth.env` with the public application URL and secure cookie mode. It starts PostgreSQL and Redis through Compose, creates persistent volumes, applies migrations, and runs the separate Gmail worker. Later deployments update only `IMAGE_TAG`; they preserve the generated credentials and named volumes. Existing deployments that do not yet have `SESSION_SECRET` receive one automatically on their next deployment.
+The first deployment automatically creates `/opt/job-application-tracker/.env` with random URL-safe PostgreSQL, session, and Grafana administrator credentials and permissions of `600`. GitHub Actions separately installs `/opt/job-application-tracker/.auth.env` with the public application URL and secure cookie mode. It starts PostgreSQL, Redis, the monitoring stack, persistent volumes, migrations, and the separate Gmail worker. Later deployments update `IMAGE_TAG` and `APP_COMMIT_SHA`; they preserve generated credentials and named volumes. Existing deployments missing a session or Grafana secret receive one automatically on their next deployment.
 
 Attach an EC2 instance role that can perform `s3:PutObject`, `s3:GetObject`, and `s3:DeleteObject` on the private resume bucket's `resumes/*` prefix. Keep all S3 Block Public Access controls enabled. Because the backend runs in Docker and uses IMDSv2 credentials, enable the metadata endpoint, require IMDSv2, and set the metadata response hop limit to `2`. No static AWS access keys are needed.
 
@@ -164,6 +164,12 @@ cd /opt/job-application-tracker
 docker compose --env-file .env -f compose.production.yml ps
 docker compose --env-file .env -f compose.production.yml logs --tail=100
 ```
+
+Production API and worker output is newline-delimited JSON. `LOG_LEVEL` defaults to `info`; use `debug` only temporarily because it increases volume. Each record identifies its `service`, `environment`, `version`, and `commitSha`. To trace a reported failure, search the container logs for the exact request reference, for example `docker compose --env-file .env -f compose.production.yml logs backend | grep '<request-id>'`. Job failures can be correlated with `worker`, `jobId`, `userId`, and `attempt` fields.
+
+Prometheus retains at most 15 days or 2 GB by default; adjust `PROMETHEUS_RETENTION` and `PROMETHEUS_RETENTION_SIZE` only after checking disk headroom. Grafana is available only on EC2 loopback port `3001`. Start an SSM port-forwarding session to `3001` (or an SSH tunnel such as `ssh -L 3001:127.0.0.1:3001 ...`) and open `http://127.0.0.1:3001`. Read `GRAFANA_ADMIN_USER` and `GRAFANA_ADMIN_PASSWORD` directly from the protected instance `.env`; do not place them in GitHub logs or chat. The provisioned dashboards cover request RED metrics, queues and Gmail failures, PostgreSQL, Redis, Nginx, host, and Docker saturation.
+
+Prometheus evaluates only sustained, actionable symptoms such as API unavailability, elevated user-facing error rate or latency, queue backlog, repeated Gmail failures, database connection pressure, Redis evictions, and critical host memory or disk pressure. These alerts appear in Prometheus/Grafana. Connect a reviewed notification receiver before expecting external paging; routing credentials must remain outside source control.
 
 Manual rollback:
 

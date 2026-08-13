@@ -5,6 +5,7 @@ import { loginAbuseProtectionService } from "../services/login-abuse-protection.
 import { signupAbuseProtectionService } from "../services/signup-abuse-protection.service";
 import { authTokenService } from "../services/auth-token.service";
 import { emailRequestSchema, passwordLoginSchema, passwordSignupSchema, resetPasswordSchema, tokenSchema } from "../validators/auth.validator";
+import { logger } from "../config/logger";
 
 const invalidCredentialsResponse = { error: "Invalid username or password" };
 
@@ -43,7 +44,7 @@ export const authController = {
     try {
       const user = await credentialAuthService.register(parsed.data);
       void authTokenService.requestEmailVerification(user.email).catch(() => {
-        console.warn("auth.email_verification.delivery_failed");
+        logger.warn({ event: "auth.email_verification.delivery_failed", userId: user.id }, "authentication email delivery failed");
       });
       req.login(user, (error) => {
         if (error) return next(error);
@@ -64,7 +65,7 @@ export const authController = {
     const parsed = emailRequestSchema.safeParse(req.body);
     if (parsed.success) {
       await authTokenService.requestPasswordReset(parsed.data.email).catch(() => {
-        console.warn("auth.password_reset.delivery_failed");
+        logger.warn({ event: "auth.password_reset.delivery_failed" }, "authentication email delivery failed");
       });
     }
     res.status(202).json({ message: "If that account can be recovered, a reset link will be sent." });
@@ -110,7 +111,7 @@ export const authController = {
     const parsed = emailRequestSchema.safeParse(req.body);
     if (parsed.success) {
       await authTokenService.requestEmailVerification(parsed.data.email).catch(() => {
-        console.warn("auth.email_verification.delivery_failed");
+        logger.warn({ event: "auth.email_verification.delivery_failed" }, "authentication email delivery failed");
       });
     }
     res.status(202).json({ message: "If verification is available, an email will be sent." });

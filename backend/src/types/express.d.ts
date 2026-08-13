@@ -10,6 +10,7 @@ declare global {
     }
     interface Request {
       extensionUserId?: string;
+      id: string;
     }
   }
 }

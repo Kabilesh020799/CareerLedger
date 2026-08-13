@@ -27,6 +27,7 @@ git -C "$source_dir" fetch --depth=1 origin "$git_ref"
 git -C "$source_dir" checkout --detach FETCH_HEAD
 
 image_tag="bootstrap-$(git -C "$source_dir" rev-parse --short=12 HEAD)"
+commit_sha="$(git -C "$source_dir" rev-parse HEAD)"
 docker build --tag "ghcr.io/kabilesh020799/jobapplicationtracker-backend:$image_tag" "$source_dir/backend"
 docker build \
   --build-arg VITE_API_URL=/api \
@@ -38,6 +39,8 @@ docker build \
 
 install -d -m 700 "$app_dir"
 install -m 600 "$source_dir/deploy/compose.production.yml" "$app_dir/compose.production.yml"
+install -d -m 700 "$app_dir/monitoring"
+cp -R "$source_dir/deploy/monitoring/." "$app_dir/monitoring/"
 install -m 700 "$source_dir/scripts/deploy-production.sh" "$app_dir/deploy-production.sh"
 
 umask 077
@@ -64,4 +67,4 @@ SMTP_PASSWORD=
 SMTP_FROM=
 EOF
 
-APP_DIR="$app_dir" SKIP_IMAGE_PULL=true "$app_dir/deploy-production.sh" "$image_tag"
+APP_DIR="$app_dir" SKIP_IMAGE_PULL=true "$app_dir/deploy-production.sh" "$image_tag" "$commit_sha"
