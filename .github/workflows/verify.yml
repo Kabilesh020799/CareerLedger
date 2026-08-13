@@ -77,8 +77,14 @@ jobs:
           npm run build
 
   browser:
-    name: Verify critical browser workflows
+    name: Verify critical browser workflows (${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     services:
       postgres:
         image: postgres:16-alpine
@@ -86,13 +92,11 @@ jobs:
           POSTGRES_USER: jobtracker
           POSTGRES_PASSWORD: jobtracker_dev
           POSTGRES_DB: jobtracker_test
-        ports: [5432:5432]
         options: >-
           --health-cmd "pg_isready -U jobtracker -d jobtracker_test"
           --health-interval 5s --health-timeout 5s --health-retries 12
       redis:
         image: redis:7-alpine
-        ports: [6379:6379]
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 5s --health-timeout 5s --health-retries 12
@@ -110,22 +114,19 @@ jobs:
           npm ci --prefix backend
           npm ci --prefix frontend
           npm run db:generate --prefix backend
-      - name: Install Chromium
-        working-directory: frontend
-        run: npx playwright install --with-deps chromium
       - name: Run critical workflows
         working-directory: frontend
         env:
-          DATABASE_URL: postgresql://jobtracker:jobtracker_dev@127.0.0.1:5432/jobtracker_test
-          REDIS_URL: redis://127.0.0.1:6379
+          DATABASE_URL: postgresql://jobtracker:jobtracker_dev@postgres:5432/jobtracker_test
+          REDIS_URL: redis://redis:6379
           SESSION_SECRET: browser-test-session-secret-with-32-characters
           SEED_DEMO_DATA: "true"
-        run: npm run test:e2e
+        run: npm run test:e2e -- --shard=${{ matrix.shard }}/2
       - name: Upload browser failure artifacts
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: |
             frontend/playwright-report
             frontend/test-results

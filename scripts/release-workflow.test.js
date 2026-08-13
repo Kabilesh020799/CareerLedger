@@ -132,10 +132,14 @@ test("runs critical Playwright workflows with failure artifacts", () => {
 
   assert.match(verifyWorkflow, /image: postgres:16-alpine/);
   assert.match(verifyWorkflow, /image: redis:7-alpine/);
-  assert.match(verifyWorkflow, /REDIS_URL: redis:\/\/127\.0\.0\.1:6379/);
-  assert.match(verifyWorkflow, /npx playwright install --with-deps chromium/);
-  assert.match(verifyWorkflow, /run: npm run test:e2e/);
+  assert.match(verifyWorkflow, /image: mcr\.microsoft\.com\/playwright:v1\.62\.1-noble/);
+  assert.match(verifyWorkflow, /shard: \[1, 2\]/);
+  assert.match(verifyWorkflow, /DATABASE_URL: postgresql:\/\/jobtracker:jobtracker_dev@postgres:5432\/jobtracker_test/);
+  assert.match(verifyWorkflow, /REDIS_URL: redis:\/\/redis:6379/);
+  assert.doesNotMatch(verifyWorkflow, /npx playwright install/);
+  assert.match(verifyWorkflow, /npm run test:e2e -- --shard=\$\{\{ matrix\.shard \}\}\/2/);
   assert.match(verifyWorkflow, /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02/);
+  assert.match(verifyWorkflow, /playwright-report-\$\{\{ matrix\.shard \}\}/);
   assert.match(verifyWorkflow, /frontend\/test-results/);
 });
 
