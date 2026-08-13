@@ -54,6 +54,7 @@ initialize_environment() {
     printf '%s\n' "IMAGE_TAG=$NEW_TAG"
     printf '%s\n' "APP_COMMIT_SHA=$NEW_COMMIT_SHA"
     printf '%s\n' "LOG_LEVEL=info"
+    printf '%s\n' "OBSERVABILITY_ENABLED=false"
     printf '%s\n' "PROMETHEUS_RETENTION=15d"
     printf '%s\n' "PROMETHEUS_RETENTION_SIZE=2GB"
     printf '%s\n' "GRAFANA_ADMIN_USER=admin"
@@ -115,6 +116,17 @@ ensure_grafana_password() {
 ensure_grafana_password
 chmod 600 "$ENV_FILE"
 
+ensure_observability_setting() {
+  existing_setting="$(sed -n 's/^OBSERVABILITY_ENABLED=//p' "$ENV_FILE" | head -n 1)"
+  case "$existing_setting" in
+    true|false) return ;;
+    "") printf '%s\n' "OBSERVABILITY_ENABLED=false" >> "$ENV_FILE" ;;
+    *) echo "OBSERVABILITY_ENABLED must be true or false." >&2; exit 2 ;;
+  esac
+}
+
+ensure_observability_setting
+
 OLD_TAG="$(sed -n 's/^IMAGE_TAG=//p' "$ENV_FILE" | head -n 1)"
 OLD_COMMIT_SHA="$(sed -n 's/^APP_COMMIT_SHA=//p' "$ENV_FILE" | head -n 1)"
 
@@ -144,6 +156,19 @@ set_commit_sha() {
   mv "$temporary_file" "$ENV_FILE"
 }
 
+compose_up() {
+  observability_enabled="$(sed -n 's/^OBSERVABILITY_ENABLED=//p' "$ENV_FILE" | head -n 1)"
+  if [ "$observability_enabled" = "true" ]; then
+    docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" --profile observability up -d --remove-orphans --wait --wait-timeout 180
+    return
+  fi
+
+  # Stop containers left by a previously enabled deployment before starting the core stack.
+  docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" --profile observability stop \
+    postgres-exporter redis-exporter nginx-exporter node-exporter cadvisor prometheus grafana >/dev/null 2>&1 || true
+  docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans --wait --wait-timeout 180
+}
+
 rollback() {
   exit_code="$?"
   trap - INT TERM HUP EXIT
@@ -155,7 +180,7 @@ rollback() {
     if [ "$SKIP_IMAGE_PULL" != "true" ]; then
       docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull backend frontend
     fi
-    docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans --wait --wait-timeout 180
+    compose_up
   fi
 
   exit "$exit_code"
@@ -169,7 +194,7 @@ set_commit_sha "$NEW_COMMIT_SHA"
 if [ "$SKIP_IMAGE_PULL" != "true" ]; then
   docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull backend frontend
 fi
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans --wait --wait-timeout 180
+compose_up
 
 health_response="$(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T frontend wget -qO- http://127.0.0.1/api/health)"
 

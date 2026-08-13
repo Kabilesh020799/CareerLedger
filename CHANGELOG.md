@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.24.1] - 2026-08-13
+
+### Fixed
+
+- Disabled the resource-intensive production monitoring stack and API metrics by default, with an explicit environment flag for suitably sized hosts.
+
 ## [3.24.0] - 2026-08-13
 
 ### Added
@@ -343,7 +349,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.1...HEAD
+[3.24.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.0...v3.24.1
 [3.24.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.23.1...v3.24.0
 [3.23.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.23.0...v3.23.1
 [3.23.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.22.0...v3.23.0

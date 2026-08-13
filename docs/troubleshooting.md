@@ -10,7 +10,7 @@ Copy the `Reference` shown in the interface or the response's `X-Request-Id`, th
 
 ## Monitoring dashboard is unavailable
 
-Run `docker compose --env-file .env -f compose.production.yml ps prometheus grafana postgres-exporter redis-exporter nginx-exporter node-exporter cadvisor`. Grafana is intentionally unreachable from the public internet; connect through an SSM or SSH port-forward to EC2 loopback port `3001`. If a dashboard panel says no data, inspect Prometheus targets through a private tunnel and check the matching exporter. Do not add public security-group rules for ports `3001`, `9090`, `9100`, `9113`, `9121`, `9187`, or `9464`.
+Confirm `OBSERVABILITY_ENABLED=true` in the protected production `.env`, then run `docker compose --env-file .env -f compose.production.yml --profile observability ps prometheus grafana postgres-exporter redis-exporter nginx-exporter node-exporter cadvisor`. The stack is intentionally disabled by default. Grafana is intentionally unreachable from the public internet; connect through an SSM or SSH port-forward to EC2 loopback port `3001`. If a dashboard panel says no data, inspect Prometheus targets through a private tunnel and check the matching exporter. Do not add public security-group rules for ports `3001`, `9090`, `9100`, `9113`, `9121`, `9187`, or `9464`.
 
 ## Terraform refuses to initialize or plan
 

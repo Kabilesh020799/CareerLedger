@@ -24,7 +24,8 @@ Feature: Correlate production failures safely
     And the worker retains its configured retry behavior
 
   Scenario: Operators can inspect service health and saturation
-    Given the production monitoring stack is running
+    Given production observability is explicitly enabled
+    And the production monitoring stack is running
     Then dashboards show traffic, error rate, latency, queue depth, Gmail failures, PostgreSQL, Redis, Nginx, host, and container saturation
     And monitoring endpoints are not exposed on the public application origin
 
@@ -32,3 +33,9 @@ Feature: Correlate production failures safely
     Given a user-impacting failure or sustained resource pressure crosses its threshold
     Then Prometheus raises an alert with the observed symptom and a concrete operator action
     And transient informational events do not page an operator
+
+  Scenario: Monitoring does not consume resources unless selected
+    Given production observability has not been explicitly enabled
+    When the application is deployed
+    Then the application services run without the monitoring stack
+    And API metrics collection is disabled

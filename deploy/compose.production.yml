@@ -44,7 +44,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_FORMAT: json
       SERVICE_NAME: job-tracker-backend
-      METRICS_ENABLED: "true"
+      METRICS_ENABLED: ${OBSERVABILITY_ENABLED:-false}
       SEED_DEMO_DATA: "false"
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
       ENABLE_PASSWORD_LOGIN: "true"
@@ -79,7 +79,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_FORMAT: json
       SERVICE_NAME: job-tracker-worker
-      METRICS_ENABLED: "true"
+      METRICS_ENABLED: ${OBSERVABILITY_ENABLED:-false}
       WORKER_METRICS_PORT: 9464
       REDIS_URL: redis://redis:6379
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
@@ -111,6 +111,7 @@ services:
       - internal
 
   postgres-exporter:
+    profiles: ["observability"]
     image: quay.io/prometheuscommunity/postgres-exporter:v0.19.1
     restart: unless-stopped
     environment:
@@ -122,6 +123,7 @@ services:
       - internal
 
   redis-exporter:
+    profiles: ["observability"]
     image: oliver006/redis_exporter:v1.84.0
     restart: unless-stopped
     environment:
@@ -133,6 +135,7 @@ services:
       - internal
 
   nginx-exporter:
+    profiles: ["observability"]
     image: nginx/nginx-prometheus-exporter:1.5.1
     restart: unless-stopped
     command: ["--nginx.scrape-uri=http://frontend:8080/stub_status"]
@@ -143,6 +146,7 @@ services:
       - internal
 
   node-exporter:
+    profiles: ["observability"]
     image: quay.io/prometheus/node-exporter:v1.11.1
     restart: unless-stopped
     command:
@@ -155,6 +159,7 @@ services:
       - internal
 
   cadvisor:
+    profiles: ["observability"]
     image: ghcr.io/google/cadvisor:v0.60.5
     restart: unless-stopped
     privileged: true
@@ -172,6 +177,7 @@ services:
       - internal
 
   prometheus:
+    profiles: ["observability"]
     image: prom/prometheus:v3.12.0
     restart: unless-stopped
     command:
@@ -193,6 +199,7 @@ services:
       - internal
 
   grafana:
+    profiles: ["observability"]
     image: grafana/grafana:13.1.0
     restart: unless-stopped
     environment:

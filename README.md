@@ -76,7 +76,7 @@ Supported application statuses: `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `
 
 Local configuration is documented in [backend/.env.example](backend/.env.example) and [frontend/.env.example](frontend/.env.example). The Docker Compose defaults work without additional configuration.
 
-Every API response includes an `X-Request-Id`. Unexpected error messages display the same safe reference so an operator can find the matching structured API log without exposing internal details. Development logs are human-readable; production API and worker logs are JSON with service, environment, release, and commit metadata.
+Every API response includes an `X-Request-Id`. Unexpected error messages display the same safe reference so an operator can find the matching structured API log without exposing internal details. Development logs are human-readable; production API and worker logs are JSON with service, environment, release, and commit metadata. Resource-intensive production metrics and dashboards are disabled by default and can be selected with `OBSERVABILITY_ENABLED=true` on a suitably sized host.
 
 Production Compose also runs a private Prometheus and Grafana stack. It collects API and worker latency, errors, traffic, BullMQ depth and failures, PostgreSQL, Redis, Nginx, host, and container saturation metrics. Provisioned dashboards and sustained symptom-based alert rules are installed automatically; Grafana binds only to EC2 loopback and is accessed through an SSM or SSH tunnel.
 
