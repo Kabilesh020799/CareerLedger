@@ -56,7 +56,7 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 - Store new production resume bytes in private S3 using short-lived browser permissions and the EC2 instance role.
 - Keep legacy database-backed resumes downloadable and migrate them to S3 at startup.
 - Keep uploaded résumé documents in a private preview library, label résumé strategies with suggested or custom tags, and compare outcomes by tag.
-- Act on due and inactive applications before reviewing dashboard pipeline, source, résumé-tag, and milestone analytics.
+- Scan headline metrics, act on a compact list of due or inactive applications, and switch between source and résumé-tag insights from the dashboard.
 - Receive accessible in-app confirmation after important create, update, status, reminder, tag, and synchronization actions.
 - Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates. Deterministic rules classify known recruitment messages, with an optional validated LLM fallback for ambiguous messages. New applications created from Gmail reviews can include a résumé tag and private résumé upload.
 - Capture job postings from a clean light/dark Manifest V3 extension workflow, review or refresh extracted details, and preserve skills, experience requirements, salary, location, work mode, original URL, description, and capture date with revocable user-scoped access.

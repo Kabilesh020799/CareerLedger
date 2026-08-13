@@ -6,16 +6,17 @@ import type { ReminderWithApplication } from '../../types/reminder'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { formatReminderDate, partitionOpenReminders } from '../../utils/reminder'
 
-export function DashboardReminders() {
+export function DashboardReminders({ compact = false }: { compact?: boolean }) {
   const remindersQuery = useOpenReminders()
   const updateReminder = useUpdateReminder()
 
   return (
     <Stack gap="4">
-      <Stack gap="1">
+      {!compact && <Stack gap="1">
         <Heading as="h3" size="lg">Reminders</Heading>
         <Text color="fg.muted" fontSize="sm">Upcoming actions and deadlines across your applications.</Text>
-      </Stack>
+      </Stack>}
+      {compact && <Heading as="h3" size="md">Reminders</Heading>}
 
       {updateReminder.isError && (
         <Alert.Root status="error" borderRadius="md">
@@ -54,10 +55,15 @@ export function DashboardReminders() {
 
       {remindersQuery.isSuccess && remindersQuery.data.length > 0 && (
         <ReminderGroups
-          reminders={remindersQuery.data}
+          reminders={remindersQuery.data.slice(0, 3)}
           updatingId={updateReminder.isPending ? updateReminder.variables?.id : undefined}
           onComplete={(id) => updateReminder.mutate({ id, completed: true })}
         />
+      )}
+      {remindersQuery.isSuccess && remindersQuery.data.length > 3 && (
+        <ChakraLink asChild alignSelf="start" color="purple.fg" fontSize="sm" fontWeight="semibold">
+          <Link to="/calendar">View all {remindersQuery.data.length} reminders</Link>
+        </ChakraLink>
       )}
     </Stack>
   )

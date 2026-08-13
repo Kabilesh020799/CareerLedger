@@ -14,7 +14,7 @@ vi.mock('../hooks/useCalendar', () => ({
   useDownloadCalendar: vi.fn(),
   useRevokeCalendarSubscription: vi.fn(),
 }))
-vi.mock('../hooks/useApplications', () => ({ useApplications: () => ({ isPending: false, data: { data: [{ id: 'app-1', company: 'Acme', jobTitle: 'Engineer' }] } }) }))
+vi.mock('../hooks/useApplicationOptions', () => ({ useApplicationOptions: () => ({ isPending: false, isError: false, data: [{ id: 'app-1', company: 'Acme', jobTitle: 'Engineer' }] }) }))
 
 describe('CalendarPage', () => {
   const create = vi.fn()
@@ -56,7 +56,8 @@ describe('CalendarPage', () => {
     await user.click(buttons.at(-1)!)
     expect(screen.getByRole('dialog', { name: 'Add calendar item' })).toBeInTheDocument()
     expect(screen.getByLabelText('Calendar item type')).toBeInTheDocument()
-    expect(screen.getByLabelText('Linked application')).toBeInTheDocument()
+    await user.click(screen.getByLabelText('Linked application'))
+    expect(screen.getByRole('option', { name: 'Acme — Engineer' })).toBeInTheDocument()
   })
 
   it('replaces or revokes an active subscription', async () => {

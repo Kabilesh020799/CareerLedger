@@ -5,18 +5,19 @@ import { useFollowUpSuggestions } from '../../hooks/useFollowUpSuggestions'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { formatReminderDate } from '../../utils/reminder'
 
-export function FollowUpSuggestions() {
+export function FollowUpSuggestions({ compact = false }: { compact?: boolean }) {
   const suggestionsQuery = useFollowUpSuggestions()
   const createFollowUp = useCreateSuggestedFollowUp()
 
   return (
     <Stack gap="4">
-      <Stack gap="1">
+      {!compact && <Stack gap="1">
         <Heading as="h3" size="lg">Suggested follow-ups</Heading>
         <Text color="fg.muted" fontSize="sm">
           Applied applications with no activity or follow-up for more than seven days.
         </Text>
-      </Stack>
+      </Stack>}
+      {compact && <Heading as="h3" size="md">Suggested follow-ups</Heading>}
 
       {createFollowUp.isError && (
         <Alert.Root status="error" borderRadius="md">
@@ -55,7 +56,7 @@ export function FollowUpSuggestions() {
 
       {suggestionsQuery.isSuccess && suggestionsQuery.data.length > 0 && (
         <Stack gap="3">
-          {suggestionsQuery.data.map((suggestion) => (
+          {suggestionsQuery.data.slice(0, 3).map((suggestion) => (
             <Flex
               align={{ base: 'start', md: 'center' }}
               as="article"
@@ -92,6 +93,11 @@ export function FollowUpSuggestions() {
               </Button>
             </Flex>
           ))}
+          {suggestionsQuery.data.length > 3 && (
+            <ChakraLink asChild alignSelf="start" color="purple.fg" fontSize="sm" fontWeight="semibold">
+              <Link to="/applications">View all applications</Link>
+            </ChakraLink>
+          )}
         </Stack>
       )}
     </Stack>

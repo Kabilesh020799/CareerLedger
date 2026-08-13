@@ -4,10 +4,18 @@ Feature: Understand the current application pipeline
   I want a dashboard of useful application metrics
   So that I can see my current progress and where opportunities are converting
 
-  Scenario: See actionable work before analytics
+  Scenario: Scan progress before acting on priorities
     Given I have reminders or inactive applications requiring attention
     When I open the dashboard
-    Then overdue and upcoming work should appear before pipeline analytics
+    Then I should see headline application metrics first
+    And overdue, upcoming, and inactive work should share one compact section
+    And long action lists should link me to the full workflow
+
+  Scenario: Switch between performance insights
+    Given I have source and resume tag outcome data
+    When I open the dashboard
+    Then source outcomes should be selected initially
+    And I should be able to switch to resume tag outcomes without leaving the dashboard
 
   Scenario: View current application totals
     Given I own applications with different statuses

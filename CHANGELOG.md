@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.23.0] - 2026-08-12
+
+### Added
+
+- Streamlined the dashboard around headline metrics, a compact action panel, pipeline conversion, and tabbed source or resume-tag insights with a prominent application action.
+
+### Fixed
+
+- Restored the application choices in the calendar-item dialog and now distinguish loading or request failures from choosing no linked application.
+
 ## [3.22.0] - 2026-08-12
 
 ### Added
@@ -320,7 +330,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.19.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.23.0...HEAD
+[3.23.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.22.0...v3.23.0
+[3.22.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.21.0...v3.22.0
+[3.21.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.20.0...v3.21.0
+[3.20.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.19.0...v3.20.0
 [3.19.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.18.2...v3.19.0
 [3.18.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.18.1...v3.18.2
 [3.18.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.18.0...v3.18.1

@@ -81,8 +81,18 @@ describe('DashboardPage', () => {
     expect(within(screen.getByRole('article', { name: 'Interview progression' })).getByText('28.6%')).toBeInTheDocument()
     expect(within(screen.getByRole('article', { name: 'Offer progression' })).getByText('14.3%')).toBeInTheDocument()
     expect(screen.getByText(/7 submitted applications/)).toBeInTheDocument()
-    expect(screen.getByRole('row', { name: 'Outcomes for Full-stack resume' })).toBeInTheDocument()
     expect(screen.getByRole('row', { name: 'Outcomes for LinkedIn' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Add application' })).toHaveAttribute('href', '/applications/new')
+  })
+
+  it('keeps analytics compact behind source and resume tabs', async () => {
+    const user = userEvent.setup()
+    vi.mocked(useDashboardSummary).mockReturnValue({ isPending: false, isError: false, isSuccess: true, data: summary } as never)
+    renderPage()
+
+    expect(screen.getByRole('tab', { name: 'By source' })).toHaveAttribute('data-selected')
+    await user.click(screen.getByRole('tab', { name: 'By resume tag' }))
+    expect(screen.getByRole('row', { name: 'Outcomes for Full-stack resume' })).toBeInTheDocument()
   })
 
   it('shows zero metrics and a creation action for an empty dashboard', () => {
