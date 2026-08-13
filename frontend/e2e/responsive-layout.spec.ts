@@ -88,10 +88,12 @@ test('phone workflows fit the viewport and use status tabs for the board', async
     applicationId = (await applicationResponse.json()).id
 
     await page.goto('/dashboard')
+    await page.getByRole('tab', { name: 'By resume tag' }).click()
     await expect(page.getByRole('row', { name: `Outcomes for Responsive resume ${suffix}` })).toBeVisible()
     await expectNoPageOverflow(page)
-    await expectInternalHorizontalScroll(page.getByRole('region', { name: 'Scrollable source outcome comparison' }))
     await expectInternalHorizontalScroll(page.getByRole('region', { name: 'Scrollable resume outcome comparison' }))
+    await page.getByRole('tab', { name: 'By source' }).click()
+    await expectInternalHorizontalScroll(page.getByRole('region', { name: 'Scrollable source outcome comparison' }))
 
     await page.goto(`/applications/${applicationId}`)
     await page.getByRole('button', { name: 'Delete', exact: true }).click()

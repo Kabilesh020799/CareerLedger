@@ -46,6 +46,7 @@ test('manage a resume tag and associate it with an application', async ({ page }
   await expect(page.getByText('Resume tag', { exact: true }).locator('..')).toContainText(revisedName)
 
   await page.getByRole('link', { name: 'Dashboard' }).click()
+  await page.getByRole('tab', { name: 'By resume tag' }).click()
   const outcomeRow = page.getByRole('row', { name: `Outcomes for ${revisedName}` })
   await expect(outcomeRow.getByText('1', { exact: true })).toBeVisible()
   await expect(outcomeRow.getByText('100%')).toHaveCount(2)

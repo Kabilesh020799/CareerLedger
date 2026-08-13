@@ -15,6 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - Restored the application choices in the calendar-item dialog and now distinguish loading or request failures from choosing no linked application.
+- Kept critical browser coverage aligned with the dashboard's tabbed performance insights on desktop and mobile.
 
 ## [3.22.0] - 2026-08-12
 
