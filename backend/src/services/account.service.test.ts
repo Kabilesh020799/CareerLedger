@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const prismaMock = vi.hoisted(() => ({
   user: { findUnique: vi.fn(), update: vi.fn(), delete: vi.fn() },
   applicationResume: { findMany: vi.fn() },
-  resumeObjectDeletion: { upsert: vi.fn() },
+  resumeObjectDeletion: { createMany: vi.fn() },
   session: { deleteMany: vi.fn() },
   $transaction: vi.fn(),
 }));
@@ -51,13 +51,17 @@ describe("accountService", () => {
   it("queues owned S3 resumes before deleting the user and cleans up best effort", async () => {
     prismaMock.user.findUnique.mockResolvedValue({ email: "user@example.com", passwordHash: null });
     prismaMock.applicationResume.findMany.mockResolvedValue([{ storageKey: "resumes/active/user-1/file.pdf" }, { storageKey: null }]);
-    prismaMock.resumeObjectDeletion.upsert.mockResolvedValue({});
+    prismaMock.resumeObjectDeletion.createMany.mockResolvedValue({ count: 1 });
     prismaMock.session.deleteMany.mockResolvedValue({ count: 2 });
     prismaMock.user.delete.mockResolvedValue({});
 
     await accountService.deleteAccount("user-1", { email: "user@example.com" });
 
-    expect(prismaMock.resumeObjectDeletion.upsert).toHaveBeenCalledBefore(prismaMock.user.delete);
+    expect(prismaMock.resumeObjectDeletion.createMany).toHaveBeenCalledWith({
+      data: [{ storageKey: "resumes/active/user-1/file.pdf" }],
+      skipDuplicates: true,
+    });
+    expect(prismaMock.resumeObjectDeletion.createMany).toHaveBeenCalledBefore(prismaMock.user.delete);
     expect(prismaMock.session.deleteMany).toHaveBeenCalledWith({ where: { userId: "user-1" } });
     expect(queueMock.unschedule).toHaveBeenCalledWith("user-1");
     expect(storageMock.processQueuedDeletion).toHaveBeenCalledWith("resumes/active/user-1/file.pdf");

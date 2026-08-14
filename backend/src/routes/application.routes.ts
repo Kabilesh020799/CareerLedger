@@ -13,7 +13,7 @@ export const applicationRouter = Router();
  *   get:
  *     tags: [Applications]
  *     summary: List the signed-in user's applications
- *     description: Returns applications for the table, board, filtering, and search views.
+ *     description: Returns the legacy complete list. New collection consumers use the bounded search endpoint.
  *     security:
  *       - sessionCookie: []
  *     responses:
@@ -35,6 +35,26 @@ applicationRouter.get("/", applicationController.list);
  *         description: Application created
  */
 applicationRouter.post("/", uploadApplicationResume, applicationController.create);
+/**
+ * @swagger
+ * /api/applications/search:
+ *   get:
+ *     tags: [Applications]
+ *     summary: Search, filter, sort, and paginate applications
+ *     description: Returns bounded pages of at most 50 applications and reports aggregate request and database timing in response headers.
+ *     security:
+ *       - sessionCookie: []
+ *     responses:
+ *       200:
+ *         description: Paginated application results
+ *         headers:
+ *           Server-Timing:
+ *             description: Aggregate database and total request durations; no query text or request data is retained.
+ *             schema: { type: string }
+ *           X-Response-Time-Ms:
+ *             description: Total request duration in milliseconds.
+ *             schema: { type: string }
+ */
 applicationRouter.get("/search", applicationController.search);
 applicationRouter.post(
   "/resume-uploads",

@@ -66,6 +66,8 @@ describe("authentication API boundary", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ status: "ok" });
+    expect(response.headers["server-timing"]).toMatch(/^total;dur=\d+\.\d$/);
+    expect(response.headers["x-response-time-ms"]).toMatch(/^\d+\.\d$/);
   });
 
   it("allows browser-extension origins without exposing application sessions", async () => {

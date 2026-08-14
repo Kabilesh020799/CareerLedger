@@ -80,11 +80,10 @@ export const accountService = {
         select: { storageKey: true },
       });
       const keys = resumes.flatMap(({ storageKey }) => storageKey ? [storageKey] : []);
-      for (const storageKey of keys) {
-        await transaction.resumeObjectDeletion.upsert({
-          where: { storageKey },
-          create: { storageKey },
-          update: {},
+      if (keys.length) {
+        await transaction.resumeObjectDeletion.createMany({
+          data: keys.map((storageKey) => ({ storageKey })),
+          skipDuplicates: true,
         });
       }
       await transaction.session.deleteMany({ where: { userId } });

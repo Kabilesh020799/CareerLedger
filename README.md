@@ -46,7 +46,7 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 
 ## Features
 
-- Create, search, progressively filter, sort, edit, and delete applications, with quick status, note, and reminder actions from application details.
+- Create, search, progressively filter, sort, edit, and delete applications with indexed server-side discovery and bounded pagination, plus quick status, note, and reminder actions from application details.
 - Use a responsive workspace with consistent icons, grouped desktop navigation, mobile shortcuts, application cards on phones, and a tabbed mobile status board.
 - Work in a consistent accessible light or dark design system with compact semantic application-status badges, focused page hierarchy, responsive forms, and page-shaped loading states.
 - Track application timelines, notes, status changes, follow-ups, and deadlines.
@@ -138,6 +138,8 @@ All management and user-data endpoints require an authenticated session and enfo
 | Dashboard | `GET /api/dashboard/summary` |
 | Gmail | `GET /api/gmail/status`, `GET /api/gmail/connect`, `POST /api/gmail/sync`, `PATCH /api/gmail/schedule`, `GET /api/gmail/reviews`, `PATCH /api/gmail/reviews/:id`, `DELETE /api/gmail/connection` |
 | Browser extension | `GET/POST /api/browser-extension/tokens`, `DELETE /api/browser-extension/tokens/:id`, `POST /api/browser-extension/captures` |
+
+API responses include `Server-Timing` and `X-Response-Time-Ms` headers. Application list/search responses also report aggregate database duration and query count; query text, parameters, and request data are not logged or retained. The applications table uses the requested page size, while board and chooser views load every application through bounded pages of 50.
 
 ## Development
 

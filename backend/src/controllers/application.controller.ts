@@ -9,6 +9,7 @@ import {
 } from "../validators/application.validator";
 import { validateApplicationResume } from "../validators/application-resume.validator";
 import { selectedWorkspaceId } from "../services/workspace-access.service";
+import { measureDatabase } from "../middleware/request-performance";
 
 function validationError(res: Response, error: unknown) {
   return res.status(400).json({
@@ -82,7 +83,12 @@ function resolvedStorageKey(
 
 export const applicationController = {
   async list(req: Request, res: Response) {
-    const applications = await applicationService.list(getUserId(req), getWorkspaceId(req));
+    const workspaceId = getWorkspaceId(req);
+    const applications = await measureDatabase(
+      res,
+      workspaceId ? 2 : 1,
+      () => applicationService.list(getUserId(req), workspaceId),
+    );
     res.json(applications);
   },
 
@@ -96,7 +102,12 @@ export const applicationController = {
       return;
     }
 
-    const result = await applicationService.search(getUserId(req), parsed.data, getWorkspaceId(req));
+    const workspaceId = getWorkspaceId(req);
+    const result = await measureDatabase(
+      res,
+      workspaceId ? 3 : 2,
+      () => applicationService.search(getUserId(req), parsed.data, workspaceId),
+    );
     res.json(result);
   },
 

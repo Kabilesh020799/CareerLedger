@@ -126,8 +126,25 @@ async function updateWithResume(
 /** Application API operations used by the frontend query and mutation hooks. */
 export const applicationService = {
   async list() {
-    const response = await api.get<Application[]>('/applications')
-    return response.data
+    const firstPage = await applicationService.search({
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+      page: 1,
+      limit: 50,
+    })
+    if (firstPage.pagination.pages <= 1) return firstPage.data
+
+    const applications = [...firstPage.data]
+    for (let page = 2; page <= firstPage.pagination.pages; page += 1) {
+      const result = await applicationService.search({
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+        page,
+        limit: 50,
+      })
+      applications.push(...result.data)
+    }
+    return applications
   },
 
   async search(query: ApplicationDiscoveryQuery) {

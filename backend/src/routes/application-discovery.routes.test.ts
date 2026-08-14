@@ -14,10 +14,12 @@ vi.mock("../services/application-event.service", () => ({
 }));
 
 import { applicationRouter } from "./application.routes";
+import { requestPerformance } from "../middleware/request-performance";
 
 function createTestApp() {
   const app = express();
   app.use(express.json());
+  app.use(requestPerformance);
   app.use((req, _res, next) => {
     req.user = {
       id: "user-1",
@@ -50,6 +52,9 @@ describe("application discovery API", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(result);
+    expect(response.headers["server-timing"]).toMatch(
+      /^db;dur=\d+\.\d;desc="2 queries", total;dur=\d+\.\d$/,
+    );
     expect(applicationServiceMock.search).toHaveBeenCalledWith("user-1", {
       search: "engineer",
       status: "INTERVIEW",

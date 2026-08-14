@@ -7,7 +7,7 @@ const prismaMock = vi.hoisted(() => ({
 }));
 const transactionMock = vi.hoisted(() => ({
   workspaceMember: { findUnique: vi.fn() },
-  application: { findFirst: vi.fn(), create: vi.fn() },
+  application: { findMany: vi.fn(), create: vi.fn() },
 }));
 
 vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
@@ -50,7 +50,14 @@ describe("dataTransferService", () => {
       workspace: { id: "workspace-1", name: "Team", isPersonal: false },
     });
     transactionMock.workspaceMember.findUnique.mockResolvedValue({ role: "MEMBER" });
-    transactionMock.application.findFirst.mockResolvedValueOnce({ id: "existing" }).mockResolvedValueOnce(null);
+    transactionMock.application.findMany.mockResolvedValue([
+      {
+        company: "Acme",
+        jobTitle: "Engineer",
+        jobUrl: null,
+        appliedAt: new Date("2026-08-01T00:00:00.000Z"),
+      },
+    ]);
     transactionMock.application.create.mockResolvedValue({ id: "created" });
     const application = {
       company: "Acme", jobTitle: "Engineer", location: null, jobUrl: null, source: null,
@@ -63,10 +70,18 @@ describe("dataTransferService", () => {
 
     const result = await dataTransferService.importWorkspace("user-1", {
       workspaceId: "workspace-1",
-      document: { ...emptyDocument, applications: [application, { ...application, company: "Beta" }] },
+      document: {
+        ...emptyDocument,
+        applications: [
+          application,
+          { ...application, company: "Beta" },
+          { ...application, company: "Beta" },
+        ],
+      },
     });
 
-    expect(result).toEqual({ created: 1, skipped: 1, total: 2 });
+    expect(result).toEqual({ created: 1, skipped: 2, total: 3 });
+    expect(transactionMock.application.findMany).toHaveBeenCalledTimes(1);
     expect(transactionMock.application.create).toHaveBeenCalledTimes(1);
     expect(transactionMock.application.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ company: "Beta", userId: "user-1", workspaceId: "workspace-1" }),
@@ -79,7 +94,14 @@ describe("dataTransferService", () => {
       workspace: { id: "personal-1", name: "Personal", isPersonal: true },
     });
     transactionMock.workspaceMember.findUnique.mockResolvedValue({ role: "OWNER" });
-    transactionMock.application.findFirst.mockResolvedValue({ id: "legacy" });
+    transactionMock.application.findMany.mockResolvedValue([
+      {
+        company: "Acme",
+        jobTitle: "Engineer",
+        jobUrl: null,
+        appliedAt: null,
+      },
+    ]);
     const application = {
       company: "Acme", jobTitle: "Engineer", location: null, jobUrl: null, source: null,
       status: "SAVED" as const, notes: null, jobDescription: null, skills: [],
@@ -92,11 +114,24 @@ describe("dataTransferService", () => {
       workspaceId: "personal-1", document: { ...emptyDocument, applications: [application] },
     });
 
-    expect(transactionMock.application.findFirst).toHaveBeenCalledWith({
-      where: expect.objectContaining({
-        OR: [{ workspaceId: "personal-1" }, { workspaceId: null, userId: "user-1" }],
-      }),
-      select: { id: true },
+    expect(transactionMock.application.findMany).toHaveBeenCalledWith({
+      where: {
+        AND: expect.arrayContaining([
+          {
+            OR: [
+              { workspaceId: "personal-1" },
+              { workspaceId: null, userId: "user-1" },
+            ],
+          },
+          expect.objectContaining({ OR: expect.any(Array) }),
+        ]),
+      },
+      select: {
+        company: true,
+        jobTitle: true,
+        jobUrl: true,
+        appliedAt: true,
+      },
     });
     expect(transactionMock.application.create).not.toHaveBeenCalled();
   });

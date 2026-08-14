@@ -17,6 +17,20 @@ function iso(value: Date | null) {
   return value?.toISOString() ?? null;
 }
 
+function applicationIdentity(application: {
+  company: string;
+  jobTitle: string;
+  jobUrl: string | null;
+  appliedAt: Date | null;
+}) {
+  return JSON.stringify([
+    application.company,
+    application.jobTitle,
+    application.jobUrl,
+    application.appliedAt?.toISOString() ?? null,
+  ]);
+}
+
 export const dataTransferService = {
   async exportWorkspace(userId: string, workspaceId: string, now = new Date()): Promise<PortableDataDocument> {
     const access = await accessibleWorkspace(userId, workspaceId);
@@ -98,28 +112,57 @@ export const dataTransferService = {
         throw new WorkspaceForbiddenError("Workspace write access is required");
       }
 
+      const ownership = access.workspace.isPersonal
+        ? {
+            OR: [
+              { workspaceId: input.workspaceId },
+              { workspaceId: null, userId },
+            ],
+          }
+        : { workspaceId: input.workspaceId };
+      const importedApplications = input.document.applications.map(
+        (application) => ({
+          ...application,
+          parsedAppliedAt: application.appliedAt
+            ? new Date(application.appliedAt)
+            : null,
+        }),
+      );
+      const existingApplications = importedApplications.length
+        ? await transaction.application.findMany({
+            where: {
+              AND: [
+                ownership,
+                {
+                  OR: importedApplications.map((application) => ({
+                    company: application.company,
+                    jobTitle: application.jobTitle,
+                    jobUrl: application.jobUrl,
+                    appliedAt: application.parsedAppliedAt,
+                  })),
+                },
+              ],
+            },
+            select: {
+              company: true,
+              jobTitle: true,
+              jobUrl: true,
+              appliedAt: true,
+            },
+          })
+        : [];
+      const knownApplications = new Set(
+        existingApplications.map(applicationIdentity),
+      );
+
       let created = 0;
       let skipped = 0;
-      for (const application of input.document.applications) {
-        const appliedAt = application.appliedAt ? new Date(application.appliedAt) : null;
-        const duplicate = await transaction.application.findFirst({
-          where: {
-            ...(access.workspace.isPersonal
-              ? {
-                  OR: [
-                    { workspaceId: input.workspaceId },
-                    { workspaceId: null, userId },
-                  ],
-                }
-              : { workspaceId: input.workspaceId }),
-            company: application.company,
-            jobTitle: application.jobTitle,
-            jobUrl: application.jobUrl,
-            appliedAt,
-          },
-          select: { id: true },
+      for (const application of importedApplications) {
+        const identity = applicationIdentity({
+          ...application,
+          appliedAt: application.parsedAppliedAt,
         });
-        if (duplicate) {
+        if (knownApplications.has(identity)) {
           skipped += 1;
           continue;
         }
@@ -142,7 +185,7 @@ export const dataTransferService = {
             salaryPeriod: application.salaryPeriod,
             workMode: application.workMode,
             capturedAt: application.capturedAt ? new Date(application.capturedAt) : null,
-            appliedAt,
+            appliedAt: application.parsedAppliedAt,
             createdAt: new Date(application.createdAt),
             userId,
             workspaceId: input.workspaceId,
@@ -165,6 +208,7 @@ export const dataTransferService = {
             },
           },
         });
+        knownApplications.add(identity);
         created += 1;
       }
 

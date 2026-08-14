@@ -1,5 +1,7 @@
 # Security and privacy
 
+Performance timing headers expose only aggregate millisecond durations and application-list query counts. They never include SQL, bind parameters, request bodies, identifiers, or stored history, and do not reintroduce a logging subsystem.
+
 ## Infrastructure state
 
 Production Terraform state belongs in the dedicated private S3 state bucket with encryption, versioning, Block Public Access, and native lockfiles enabled. State, saved plans, and `.tfvars` files are ignored because they can contain infrastructure metadata or sensitive values. Terraform does not manage Gmail OAuth secrets, application credentials, or database contents.

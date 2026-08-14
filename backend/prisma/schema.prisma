@@ -98,12 +98,20 @@ model Application {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([userId, appliedAt])
-  @@index([userId, company])
-  @@index([userId, createdAt])
-  @@index([userId, status])
-  @@index([userId, updatedAt])
-  @@index([workspaceId, updatedAt])
+  @@index([userId, appliedAt, id])
+  @@index([userId, company, id])
+  @@index([userId, createdAt, id])
+  @@index([userId, status, createdAt, id])
+  @@index([userId, updatedAt, id])
+  @@index([workspaceId, appliedAt, id])
+  @@index([workspaceId, company, id])
+  @@index([workspaceId, createdAt, id])
+  @@index([workspaceId, status, createdAt, id])
+  @@index([workspaceId, updatedAt, id])
+  @@index([company(ops: raw("gin_trgm_ops"))], type: Gin, map: "Application_company_trgm_idx")
+  @@index([jobTitle(ops: raw("gin_trgm_ops"))], type: Gin, map: "Application_jobTitle_trgm_idx")
+  @@index([location(ops: raw("gin_trgm_ops"))], type: Gin, map: "Application_location_trgm_idx")
+  @@index([source(ops: raw("gin_trgm_ops"))], type: Gin, map: "Application_source_trgm_idx")
   @@index([resumeVersionId])
 }
 

@@ -6,6 +6,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.25.0] - 2026-08-14
+
+### Added
+
+- Added privacy-safe API and database duration headers so slow application requests can be measured without restoring logging or retaining request details.
+
+### Changed
+
+- Application boards and choosers now load large collections through bounded pages of 50, while PostgreSQL uses pagination-aware and trigram indexes for application discovery.
+
+### Fixed
+
+- Removed per-application duplicate lookups during workspace imports and per-resume cleanup writes during account deletion.
+
 ## [3.24.4] - 2026-08-13
 
 ### Fixed
@@ -355,7 +369,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.3...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.25.0...HEAD
+[3.25.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.4...v3.25.0
+[3.24.4]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.0...v3.24.4
 [3.24.3]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.0...v3.24.3
 [3.24.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.23.1...v3.24.0
 [3.23.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.23.0...v3.23.1

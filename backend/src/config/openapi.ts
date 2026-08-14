@@ -22,6 +22,17 @@ export const openApiDocument: OpenAPIV3.Document = {
     { name: "Notifications" },
   ],
   components: {
+    headers: {
+      ServerTiming: {
+        description:
+          "Aggregate request timing. Application collection endpoints also include database duration and query count without SQL or parameter data.",
+        schema: { type: "string" },
+      },
+      ResponseTimeMs: {
+        description: "Total request duration in milliseconds.",
+        schema: { type: "string" },
+      },
+    },
     securitySchemes: {
       sessionCookie: { type: "apiKey", in: "cookie", name: "job-tracker-session" },
       extensionToken: { type: "http", scheme: "bearer", bearerFormat: "Job Tracker extension token" },
@@ -65,13 +76,13 @@ export const openApiDocument: OpenAPIV3.Document = {
     },
   },
   paths: {
-    "/api/health": { get: { tags: ["Health"], summary: "Check whether the API is running", description: "Use this endpoint for container health checks and load-balancer probes. It does not require authentication.", responses: { "200": { description: "The API is healthy." } } } },
+    "/api/health": { get: { tags: ["Health"], summary: "Check whether the API is running", description: "Use this endpoint for container health checks and load-balancer probes. It does not require authentication.", responses: { "200": { description: "The API is healthy.", headers: { "Server-Timing": { $ref: "#/components/headers/ServerTiming" }, "X-Response-Time-Ms": { $ref: "#/components/headers/ResponseTimeMs" } } } } } },
     "/api/auth/signup": { post: { tags: ["Authentication"], summary: "Create a password account", description: "Creates a private user account, hashes the password with bcrypt, and starts an authenticated session. Available when password authentication is enabled and protected by separate Redis account/IP attempt limits.", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["name", "username", "email", "password"], properties: { name: { type: "string", minLength: 2, maxLength: 80 }, username: { type: "string", minLength: 3, maxLength: 32, pattern: "^[a-zA-Z0-9_-]+$" }, email: { type: "string", format: "email", maxLength: 254 }, password: { type: "string", format: "password", minLength: 12, maxLength: 72, description: "Must include uppercase and lowercase letters and a number." } } } } } }, responses: { "201": { description: "Account created and session started." }, "400": { description: "Account details failed validation.", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }, "409": { description: "The username or email is already registered.", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }, "429": { description: "Account or IP signup-attempt limit reached.", headers: { "Retry-After": { schema: { type: "integer" } } }, content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } } } } },
     "/api/auth/login": { post: { tags: ["Authentication"], summary: "Sign in with username and password", description: "Creates the secure session cookie used by protected endpoints. Redis-backed account and IP limits progressively delay repeated attempts and temporarily lock abusive clients.", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["username", "password"], properties: { username: { type: "string" }, password: { type: "string", format: "password" } } } } } }, responses: { "200": { description: "Signed in and session created." }, "401": { description: "Invalid credentials. The response does not identify which credential failed.", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }, "429": { description: "Account or IP attempt limit reached. Retry-After contains the remaining lockout duration.", headers: { "Retry-After": { schema: { type: "integer" }, description: "Seconds until another attempt is permitted." } }, content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } } } } },
     "/api/auth/session": { get: { tags: ["Authentication"], summary: "Get the current signed-in user", description: "Lets the frontend restore authentication state after a page refresh.", responses: { "200": { description: "Current session details." } } } },
     "/api/auth/logout": { post: { tags: ["Authentication"], summary: "Sign out the current user", description: "Clears the session cookie and ends the current login session.", responses: { "204": { description: "Signed out." } } } },
     "/api/applications": {
-      get: { tags: ["Applications"], summary: "List applications", description: "Returns the signed-in user's applications for the table, board, and search views.", security: [{ sessionCookie: [] }], responses: { "200": { description: "Applications", content: { "application/json": { schema: { type: "array", items: { $ref: "#/components/schemas/Application" } } } } } } },
+      get: { tags: ["Applications"], summary: "List applications", description: "Returns the signed-in user's applications. New collection consumers should use the bounded search endpoint.", security: [{ sessionCookie: [] }], responses: { "200": { description: "Applications", headers: { "Server-Timing": { $ref: "#/components/headers/ServerTiming" }, "X-Response-Time-Ms": { $ref: "#/components/headers/ResponseTimeMs" } }, content: { "application/json": { schema: { type: "array", items: { $ref: "#/components/schemas/Application" } } } } } } },
       post: { tags: ["Applications"], summary: "Create an application", description: "Adds a company and role to the user's job-search pipeline. A resume upload can be attached separately before saving.", security: [{ sessionCookie: [] }], requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ApplicationInput" } } } }, responses: { "201": { description: "Application created." }, "400": { description: "Validation error" } } },
     },
     "/api/applications/search": { get: { tags: ["Applications"], summary: "Search, filter, sort, and paginate applications", description: "Supports text search, status/source/date filters, sorting, and page sizes of 10, 20, or 50.", security: [{ sessionCookie: [] }], parameters: [
@@ -79,7 +90,7 @@ export const openApiDocument: OpenAPIV3.Document = {
       { name: "appliedFrom", in: "query", schema: { type: "string", format: "date" } }, { name: "appliedTo", in: "query", schema: { type: "string", format: "date" } },
       { name: "sortBy", in: "query", schema: { type: "string", enum: ["appliedAt", "createdAt", "updatedAt", "company"], default: "createdAt" } }, { name: "sortOrder", in: "query", schema: { type: "string", enum: ["asc", "desc"], default: "desc" } },
       { name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } }, { name: "limit", in: "query", schema: { type: "integer", enum: [10, 20, 50], default: 20 } },
-    ], responses: { "200": { description: "Paginated discovery result." }, "400": { description: "Invalid query." } } } },
+    ], responses: { "200": { description: "Paginated discovery result.", headers: { "Server-Timing": { $ref: "#/components/headers/ServerTiming" }, "X-Response-Time-Ms": { $ref: "#/components/headers/ResponseTimeMs" } } }, "400": { description: "Invalid query." } } } },
     "/api/applications/resume-uploads": {
       post: { tags: ["Resumes"], summary: "Prepare a resume upload", description: "Validates file metadata and returns either S3 form fields or database fallback instructions.", security: [{ sessionCookie: [] }], requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["fileName", "mimeType", "size"], properties: { fileName: { type: "string" }, mimeType: { type: "string" }, size: { type: "integer", maximum: 5242880 } } } } } }, responses: { "200": { description: "Upload preparation." }, "400": { description: "Unsupported or oversized file." } } },
       delete: { tags: ["Resumes"], summary: "Abandon a pending resume upload", description: "Deletes a pending object owned by the current user.", security: [{ sessionCookie: [] }], responses: { "204": { description: "Pending upload removed." } } },

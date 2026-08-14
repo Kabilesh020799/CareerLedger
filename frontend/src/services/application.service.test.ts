@@ -44,11 +44,32 @@ const event = {
 describe('applicationService', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('lists applications from the API', async () => {
-    vi.mocked(api.get).mockResolvedValue({ data: [application] })
+  it('loads large application lists through bounded pages', async () => {
+    const secondApplication = { ...application, id: 'application-2' }
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({
+        data: {
+          data: [application],
+          pagination: { page: 1, limit: 50, total: 51, pages: 2 },
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          data: [secondApplication],
+          pagination: { page: 2, limit: 50, total: 51, pages: 2 },
+        },
+      })
 
-    await expect(applicationService.list()).resolves.toEqual([application])
-    expect(api.get).toHaveBeenCalledWith('/applications')
+    await expect(applicationService.list()).resolves.toEqual([
+      application,
+      secondApplication,
+    ])
+    expect(api.get).toHaveBeenNthCalledWith(1, '/applications/search', {
+      params: { sortBy: 'createdAt', sortOrder: 'desc', page: 1, limit: 50 },
+    })
+    expect(api.get).toHaveBeenNthCalledWith(2, '/applications/search', {
+      params: { sortBy: 'createdAt', sortOrder: 'desc', page: 2, limit: 50 },
+    })
   })
 
   it('searches applications with server-side discovery parameters', async () => {

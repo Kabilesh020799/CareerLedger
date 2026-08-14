@@ -6,6 +6,12 @@ The backend publishes an OpenAPI contract and renders it with Swagger UI:
 - Local OpenAPI JSON: <http://localhost:3000/api-docs.json>
 - Production Swagger UI: `https://<application-origin>/api-docs/`
 
+## Performance timing and pagination
+
+Every `/api` response includes a standard `Server-Timing` header and an `X-Response-Time-Ms` total. Database-backed application list and discovery requests add aggregate database duration and query count to `Server-Timing`. These measurements contain no SQL text, parameter values, request bodies, user identifiers, or retained history.
+
+`GET /api/applications/search` is the bounded collection contract. It accepts `page` and a `limit` of `10`, `20`, or `50`, and returns `data` plus `page`, `limit`, `total`, and `pages` metadata. The frontend table requests the selected page; board and application-choice views fetch successive pages of 50 rather than requesting one unbounded response.
+
 The OpenAPI document describes endpoint purpose, session authentication, path/query parameters, request bodies, response meanings, validation limits, and common conflicts. Swagger's **Try it out** feature can call the running API. Sign in through the application first so the browser has the `job-tracker-session` cookie.
 
 Shared schemas and security definitions live in `backend/src/config/openapi.ts`. Endpoint-specific Swagger JSDoc belongs next to the matching Express route. `swagger-jsdoc` merges both sources at runtime.

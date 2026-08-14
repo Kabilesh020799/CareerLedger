@@ -21,6 +21,7 @@ import { calendarFeedRouter, calendarRouter } from "./routes/calendar.routes";
 import { workspaceRouter } from "./routes/workspace.routes";
 import { dataTransferRouter } from "./routes/data-transfer.routes";
 import { WorkspaceAccessError } from "./services/workspace-access.service";
+import { requestPerformance } from "./middleware/request-performance";
 
 export function createApp() {
   const app = express();
@@ -53,6 +54,7 @@ export function createApp() {
   );
   app.use(passport.initialize());
   app.use(passport.session());
+  app.use("/api", requestPerformance);
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok" });
   });

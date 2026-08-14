@@ -2,6 +2,12 @@
 
 PostgreSQL is managed through Prisma migrations in `backend/prisma/migrations`. Do not edit an applied migration.
 
+## Application discovery indexes
+
+Application discovery uses compound B-tree indexes aligned with user/workspace ownership, supported sort fields, status filtering, and the stable identifier tie-breaker used by pagination. PostgreSQL's `pg_trgm` extension supplies GIN trigram indexes for case-insensitive contains searches across company, job title, location, and source.
+
+Migration `20260814021000_optimize_application_discovery` replaces the earlier shorter application indexes with pagination-aware variants and creates the trigram indexes. Apply it with `cd backend && npm run db:migrate`. Portable-data imports prefetch all matching application identities once before transactional writes, and account deletion queues all owned resume-object deletions with one bulk insert.
+
 ## Relationships
 
 ```text

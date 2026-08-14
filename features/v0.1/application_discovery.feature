@@ -38,6 +38,18 @@ Feature: Find and navigate applications
     Then the response should contain the second page of my applications
     And pagination metadata should include page, limit, total, and pages
 
+  Scenario: Load large board and application-choice collections in bounded pages
+    Given I own more than 50 applications
+    When I open the application board or an application chooser
+    Then the interface should request applications in pages of at most 50
+    And every owned application should remain available after all pages load
+
+  Scenario: Inspect API and database duration without enabling logging
+    When I request a page of applications
+    Then the response should include total request duration timing
+    And the response should include aggregate database duration and query count
+    And no request or query details should be retained
+
   Scenario: Keep discovery scoped to the authenticated user
     Given another user owns an application matching my search
     When I search my applications
