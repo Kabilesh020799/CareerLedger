@@ -165,7 +165,7 @@ docker compose --env-file .env -f compose.production.yml ps
 docker compose --env-file .env -f compose.production.yml logs --tail=100
 ```
 
-Production request logging, API metrics, Prometheus, Grafana, cAdvisor, and exporter containers are disabled. Deployments remove any obsolete monitoring containers while preserving the application, PostgreSQL, Redis, and their named volumes.
+Deployments remove obsolete containers while preserving the application, PostgreSQL, Redis, and their named volumes.
 
 Manual rollback:
 

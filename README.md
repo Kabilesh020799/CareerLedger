@@ -76,8 +76,6 @@ Supported application statuses: `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `
 
 Local configuration is documented in [backend/.env.example](backend/.env.example) and [frontend/.env.example](frontend/.env.example). The Docker Compose defaults work without additional configuration.
 
-Every API response includes an `X-Request-Id` so unexpected errors can provide a safe reference without exposing internal details. Request logging, API metrics, and the monitoring dashboard stack are disabled in production to keep the application responsive on its current host.
-
 For production resume storage, configure:
 
 ```text

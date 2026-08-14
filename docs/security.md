@@ -62,8 +62,6 @@ Notification preferences and Web Push subscriptions are scoped to the authentica
 - Back up PostgreSQL and test restores regularly.
 - Review dependency and container-image updates before release.
 
-Production request logging and metrics are disabled. The server still generates a request ID for safe client error references; do not treat it as authentication.
-
 ## Recovery, sharing, and portable data
 
 Password-reset and email-verification links use 256-bit random tokens; only SHA-256 hashes are stored. Links expire and are single-use, recovery requests do not disclose account existence, and password reset revokes all sessions. Account deletion requires the exact account email and the current password for password users; S3 objects are queued before database cascades.

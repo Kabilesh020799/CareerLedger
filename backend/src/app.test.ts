@@ -66,31 +66,6 @@ describe("authentication API boundary", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ status: "ok" });
-    expect(response.headers["x-request-id"]).toMatch(/^[0-9a-f-]{36}$/);
-  });
-
-  it("serves Prometheus metrics only from the internal application path", async () => {
-    const metrics = await request(app).get("/internal/metrics");
-    const publicPath = await request(app).get("/api/metrics");
-
-    expect(metrics.status).toBe(200);
-    expect(metrics.headers["content-type"]).toContain("text/plain");
-    expect(metrics.text).toContain("job_tracker_info");
-    expect(publicPath.status).toBe(404);
-  });
-
-  it("generates a canonical request ID without trusting a caller-provided value", async () => {
-    const response = await request(app).get("/api/health").set("X-Request-Id", "caller-request-123");
-
-    expect(response.headers["x-request-id"]).toMatch(/^[0-9a-f-]{36}$/);
-    expect(response.headers["x-request-id"]).not.toBe("caller-request-123");
-  });
-
-  it("includes a request reference in unexpected error responses", async () => {
-    const response = await request(app).get("/api/health").set("Origin", "https://untrusted.example");
-
-    expect(response.status).toBe(500);
-    expect(response.body).toEqual({ error: "Internal server error", requestId: response.headers["x-request-id"] });
   });
 
   it("allows browser-extension origins without exposing application sessions", async () => {

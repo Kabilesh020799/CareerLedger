@@ -181,13 +181,12 @@ test("runs automatic Gmail synchronization on a private persistent queue", () =>
   assert.doesNotMatch(compose, /6379:6379/);
 });
 
-test("keeps resource-intensive observability services out of production", () => {
+test("removes production observability packages and services", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
   const compose = fs.readFileSync(productionComposePath, "utf8");
 
   assert.doesNotMatch(compose, /prometheus:|grafana:|postgres-exporter:|redis-exporter:|nginx-exporter:|cadvisor:|node-exporter:/);
-  assert.match(compose, /LOG_LEVEL: silent/);
-  assert.match(compose, /METRICS_ENABLED: "false"/);
+  assert.doesNotMatch(compose, /LOG_LEVEL|LOG_FORMAT|METRICS_ENABLED|WORKER_METRICS_PORT/);
   assert.doesNotMatch(workflow, /deploy\/monitoring/);
 });
 

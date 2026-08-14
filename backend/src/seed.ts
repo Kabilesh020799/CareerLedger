@@ -3,7 +3,6 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "./generated/prisma/client";
 import { hash } from "bcryptjs";
 import { builtInDemoUser } from "./config/demo-user";
-import { logger } from "./config/logger";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -130,12 +129,14 @@ async function main() {
     data: { userId: demoUser.id },
   });
 
-  logger.info({ createdApplications: result.count, claimedApplications: claimed.count }, "database seed completed");
+  console.log(
+    `Seed complete: demo user ready; ${result.count} application(s) created and ${claimed.count} legacy demo application(s) assigned.`,
+  );
 }
 
 main()
   .catch((error: unknown) => {
-    logger.error({ err: error }, "database seed failed");
+    console.error("Database seed failed", error);
     process.exitCode = 1;
   })
   .finally(async () => {

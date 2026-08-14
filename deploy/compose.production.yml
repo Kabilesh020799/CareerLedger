@@ -38,13 +38,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PORT: 3000
       NODE_ENV: production
-      APP_ENV: production
       APP_VERSION: ${IMAGE_TAG}
       APP_COMMIT_SHA: ${APP_COMMIT_SHA:-unknown}
-      LOG_LEVEL: silent
-      LOG_FORMAT: json
-      SERVICE_NAME: job-tracker-backend
-      METRICS_ENABLED: "false"
       SEED_DEMO_DATA: "false"
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
       ENABLE_PASSWORD_LOGIN: "true"
@@ -73,14 +68,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       NODE_ENV: production
-      APP_ENV: production
       APP_VERSION: ${IMAGE_TAG}
       APP_COMMIT_SHA: ${APP_COMMIT_SHA:-unknown}
-      LOG_LEVEL: silent
-      LOG_FORMAT: json
-      SERVICE_NAME: job-tracker-worker
-      METRICS_ENABLED: "false"
-      WORKER_METRICS_PORT: 9464
       REDIS_URL: redis://redis:6379
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
     env_file:

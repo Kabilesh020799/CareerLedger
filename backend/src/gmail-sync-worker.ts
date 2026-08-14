@@ -9,9 +9,6 @@ import {
 } from "./services/gmail-sync-queue.service";
 import { notificationJobName, notificationQueueName } from "./services/notification-queue.service";
 import { notificationService } from "./services/notification.service";
-import { logger } from "./config/logger";
-import { metricsService } from "./services/metrics.service";
-import { workerMetricsService } from "./services/worker-metrics.service";
 
 const worker = new Worker<GmailSyncJobData>(
   gmailSyncQueueName,
@@ -31,34 +28,16 @@ const notificationWorker = new Worker(
   { connection: createRedisConnection(), concurrency: 1 },
 );
 
-worker.on("active", (job) => {
-  logger.info({ worker: "gmail-sync", jobId: job.id, userId: job.data.userId, attempt: job.attemptsMade + 1 }, "background job started");
+worker.on("failed", (job) => {
+  console.error(`Gmail synchronization job ${job?.id ?? "unknown"} failed`);
 });
-worker.on("completed", (job) => {
-  metricsService.increment("job_tracker_background_jobs_total", { outcome: "completed", worker: "gmail-sync" });
-  if (job.finishedOn && job.processedOn) metricsService.observe("job_tracker_background_job_duration_seconds", (job.finishedOn - job.processedOn) / 1000, { worker: "gmail-sync" });
-  logger.info({ worker: "gmail-sync", jobId: job.id, userId: job.data.userId, attempt: job.attemptsMade + 1, durationMs: job.finishedOn && job.processedOn ? job.finishedOn - job.processedOn : undefined }, "background job completed");
-});
-worker.on("failed", (job, error) => {
-  metricsService.increment("job_tracker_background_jobs_total", { outcome: "failed", worker: "gmail-sync" });
-  logger.error({ err: error, worker: "gmail-sync", jobId: job?.id ?? "unknown", userId: job?.data.userId, attempt: (job?.attemptsMade ?? 0) + 1, durationMs: job?.finishedOn && job.processedOn ? job.finishedOn - job.processedOn : undefined }, "background job failed");
-});
-notificationWorker.on("active", (job) => {
-  logger.info({ worker: "reminder-notification", jobId: job.id, attempt: job.attemptsMade + 1 }, "background job started");
-});
-notificationWorker.on("completed", (job) => {
-  metricsService.increment("job_tracker_background_jobs_total", { outcome: "completed", worker: "reminder-notification" });
-  logger.info({ worker: "reminder-notification", jobId: job.id, attempt: job.attemptsMade + 1, durationMs: job.finishedOn && job.processedOn ? job.finishedOn - job.processedOn : undefined }, "background job completed");
-});
-notificationWorker.on("failed", (job, error) => {
-  metricsService.increment("job_tracker_background_jobs_total", { outcome: "failed", worker: "reminder-notification" });
-  logger.error({ err: error, worker: "reminder-notification", jobId: job?.id ?? "unknown", attempt: (job?.attemptsMade ?? 0) + 1, durationMs: job?.finishedOn && job.processedOn ? job.finishedOn - job.processedOn : undefined }, "background job failed");
+notificationWorker.on("failed", (job) => {
+  console.error(`Reminder notification job ${job?.id ?? "unknown"} failed`);
 });
 
 async function shutdown() {
   await worker.close();
   await notificationWorker.close();
-  await workerMetricsService.stop();
   await prisma.$disconnect();
   process.exit(0);
 }
@@ -66,5 +45,4 @@ async function shutdown() {
 process.on("SIGINT", () => void shutdown());
 process.on("SIGTERM", () => void shutdown());
 
-logger.info({ workers: ["gmail-sync", "reminder-notification"] }, "background workers running");
-workerMetricsService.start();
+console.log("Background workers running");
