@@ -253,6 +253,11 @@ test("deploys through SSM while retaining temporary SSH fallback cleanup", () =>
   );
   assert.match(workflow, /IpRanges=\[\{CidrIp=\$runner_cidr\}\]/);
   assert.match(workflow, /vars\.DEPLOY_METHOD == 'ssm'/);
+  assert.match(workflow, /id: ssh_install\s+continue-on-error: true/);
+  assert.match(
+    workflow,
+    /vars\.DEPLOY_METHOD == 'ssm' \|\| steps\.ssh_install\.outcome == 'failure'/,
+  );
   assert.match(workflow, /aws ssm put-parameter/);
   assert.match(workflow, /aws ssm send-command/);
   assert.match(workflow, /aws ssm delete-parameters/);

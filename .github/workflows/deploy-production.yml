@@ -184,6 +184,8 @@ jobs:
 
       - name: Install deployment files
         if: vars.DEPLOY_METHOD != 'ssm'
+        id: ssh_install
+        continue-on-error: true
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -195,7 +197,7 @@ jobs:
           ssh -o ConnectTimeout=15 -o ConnectionAttempts=2 -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "chmod 700 /opt/job-application-tracker/deploy-production.sh"
 
       - name: Configure application environment
-        if: vars.DEPLOY_METHOD != 'ssm'
+        if: vars.DEPLOY_METHOD != 'ssm' && steps.ssh_install.outcome == 'success'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -268,7 +270,7 @@ jobs:
           } | ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "umask 077; cat > /opt/job-application-tracker/.auth.env"
 
       - name: Authenticate instance to GHCR
-        if: vars.DEPLOY_METHOD != 'ssm'
+        if: vars.DEPLOY_METHOD != 'ssm' && steps.ssh_install.outcome == 'success'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -279,7 +281,7 @@ jobs:
           printf '%s' "$GHCR_TOKEN" | ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
 
       - name: Deploy immutable images
-        if: vars.DEPLOY_METHOD != 'ssm'
+        if: vars.DEPLOY_METHOD != 'ssm' && steps.ssh_install.outcome == 'success'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -289,7 +291,7 @@ jobs:
           ssh -i ~/.ssh/deploy_key -p "$port" "$DEPLOY_USER@$DEPLOY_HOST" "/opt/job-application-tracker/deploy-production.sh '${{ needs.plan_release.outputs.release_tag }}' '${{ github.sha }}'"
 
       - name: Store short-lived SSM deployment parameters
-        if: vars.DEPLOY_METHOD == 'ssm'
+        if: vars.DEPLOY_METHOD == 'ssm' || steps.ssh_install.outcome == 'failure'
         id: ssm_parameters
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -321,7 +323,7 @@ jobs:
           echo "auth_parameter=$auth_parameter" >> "$GITHUB_OUTPUT"
 
       - name: Deploy immutable images through Systems Manager
-        if: vars.DEPLOY_METHOD == 'ssm'
+        if: vars.DEPLOY_METHOD == 'ssm' || steps.ssh_install.outcome == 'failure'
         env:
           INSTANCE_ID: ${{ vars.DEPLOY_INSTANCE_ID }}
           TOKEN_PARAMETER: ${{ steps.ssm_parameters.outputs.token_parameter }}
@@ -346,7 +348,7 @@ jobs:
           exit 1
 
       - name: Remove short-lived SSM deployment parameters
-        if: always() && vars.DEPLOY_METHOD == 'ssm' && steps.ssm_parameters.outputs.token_parameter != ''
+        if: always() && (vars.DEPLOY_METHOD == 'ssm' || steps.ssh_install.outcome == 'failure') && steps.ssm_parameters.outputs.token_parameter != ''
         env:
           TOKEN_PARAMETER: ${{ steps.ssm_parameters.outputs.token_parameter }}
           AUTH_PARAMETER: ${{ steps.ssm_parameters.outputs.auth_parameter }}

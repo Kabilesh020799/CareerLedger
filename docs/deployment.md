@@ -6,6 +6,8 @@ AWS resources are described separately in [`infrastructure/`](../infrastructure/
 
 For a new isolated environment, run `./scripts/provision-production.sh` from a clean revision already pushed to `master`. It provisions the complete `infrastructure/standalone` stack, updates non-secret GitHub environment variables, builds and starts the first release through SSM, and verifies HTTPS health. It prompts before both saved Terraform plans and never uses `-auto-approve`. Override its defaults with `AWS_REGION`, `TF_STATE_BUCKET`, `RESUME_BUCKET`, `NAME_PREFIX`, `INSTANCE_TYPE`, or `ROOT_VOLUME_SIZE`.
 
+Production releases configured for legacy SSH deployment automatically retry through Systems Manager when the host does not accept the SSH connection. This fallback uses the existing instance and deployment settings and removes its short-lived encrypted parameters after the attempt.
+
 ## 1. Prepare the instance
 
 Install Docker Engine with the Compose plugin using the instructions for the instance's Linux distribution. Create a non-root deployment user and grant it permission to run Docker.

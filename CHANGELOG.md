@@ -10,7 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
-- Republished the logging-free production build after the previous deployment could not connect to the application host.
+- Republished the logging-free production build and made legacy SSH releases fall back to Systems Manager when the application host does not accept the SSH connection.
 
 ## [3.24.3] - 2026-08-13
 
