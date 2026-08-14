@@ -8,7 +8,7 @@ For a new isolated environment, run `./scripts/provision-production.sh` from a c
 
 Production releases configured for legacy SSH deployment automatically retry through Systems Manager when the host does not accept the SSH connection. This fallback uses the existing instance and deployment settings and removes its short-lived encrypted parameters after the attempt.
 
-The deployment script stops the existing Compose stack and removes orphaned services before pulling replacement images. This creates a short maintenance window, but prevents services removed by a release from exhausting a small host while the new images are downloaded.
+The deployment script stops the existing Compose stack, removes orphaned services, and prunes only unused Docker images before pulling replacements. Volumes are retained. This creates a short maintenance window, but prevents services or images removed by a release from exhausting a small host while the new images are downloaded.
 
 ## 1. Prepare the instance
 

@@ -148,6 +148,7 @@ set_commit_sha "$NEW_COMMIT_SHA"
 # Stop the current stack before pulling so removed services cannot consume the
 # host's limited memory while replacement images are downloaded.
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" down --remove-orphans
+docker image prune --all --force
 
 if [ "$SKIP_IMAGE_PULL" != "true" ]; then
   docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull backend frontend

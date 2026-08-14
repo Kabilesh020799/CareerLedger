@@ -88,13 +88,15 @@ session_secret="$(sed -n 's/^SESSION_SECRET=//p' "$TEST_DIRECTORY/app/.env")"
 APP_DIR="$TEST_DIRECTORY/app" FAKE_HEALTH=ok sh "$REPOSITORY_ROOT/scripts/deploy-production.sh" new-tag abc123
 grep -q "^SESSION_SECRET=$session_secret$" "$TEST_DIRECTORY/app/.env"
 grep -q 'down --remove-orphans' "$FAKE_DOCKER_LOG"
+grep -q 'image prune --all --force' "$FAKE_DOCKER_LOG"
 grep -q 'pull backend frontend' "$FAKE_DOCKER_LOG"
 grep -q 'up -d --remove-orphans --wait --wait-timeout 180' "$FAKE_DOCKER_LOG"
 
 first_down_line="$(grep -n -m 1 'down --remove-orphans' "$FAKE_DOCKER_LOG" | cut -d: -f1)"
+first_prune_line="$(grep -n -m 1 'image prune --all --force' "$FAKE_DOCKER_LOG" | cut -d: -f1)"
 first_pull_line="$(grep -n -m 1 'pull backend frontend' "$FAKE_DOCKER_LOG" | cut -d: -f1)"
-if [ "$first_down_line" -ge "$first_pull_line" ]; then
-  echo "Expected the existing stack to stop before replacement images are pulled." >&2
+if [ "$first_down_line" -ge "$first_prune_line" ] || [ "$first_prune_line" -ge "$first_pull_line" ]; then
+  echo "Expected the existing stack to stop and unused images to be pruned before replacement images are pulled." >&2
   exit 1
 fi
 

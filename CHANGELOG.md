@@ -10,7 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
-- Republished the logging-free production build, made legacy SSH releases fall back to Systems Manager when available, and stop obsolete services before pulling images so they cannot exhaust a small host during deployment.
+- Republished the logging-free production build, made legacy SSH releases fall back to Systems Manager when available, and remove obsolete services and unused images before pulling replacements so they cannot exhaust a small host during deployment.
 
 ## [3.24.3] - 2026-08-13
 
