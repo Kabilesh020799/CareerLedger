@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.24.4] - 2026-08-13
+
+### Fixed
+
+- Republished the logging-free production build after the previous deployment could not connect to the application host.
+
 ## [3.24.3] - 2026-08-13
 
 ### Fixed
