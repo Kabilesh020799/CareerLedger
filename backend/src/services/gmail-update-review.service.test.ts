@@ -61,6 +61,7 @@ describe("buildGmailUpdateSuggestion", () => {
     const suggestion = await buildGmailUpdateSuggestion(
       { ...message, subject: "Interview invitation" },
       [],
+      "user@example.com",
       { classify },
     );
 
@@ -75,9 +76,14 @@ describe("buildGmailUpdateSuggestion", () => {
       confidence: 90,
     });
 
-    const suggestion = await buildGmailUpdateSuggestion(message, [], { classify });
+    const suggestion = await buildGmailUpdateSuggestion(
+      message,
+      [],
+      "user@example.com",
+      { classify },
+    );
 
-    expect(classify).toHaveBeenCalledWith(message);
+    expect(classify).toHaveBeenCalledWith(message, "user@example.com");
     expect(suggestion).toMatchObject({
       providerMessageId: "message-1",
       applicationId: null,
@@ -89,7 +95,7 @@ describe("buildGmailUpdateSuggestion", () => {
     const classify = vi.fn().mockResolvedValue(null);
 
     await expect(
-      buildGmailUpdateSuggestion(message, [], { classify }),
+      buildGmailUpdateSuggestion(message, [], "user@example.com", { classify }),
     ).resolves.toBeNull();
   });
 });

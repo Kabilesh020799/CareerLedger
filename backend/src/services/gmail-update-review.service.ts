@@ -19,11 +19,13 @@ export class GmailUpdateReviewConflictError extends Error {}
 export async function buildGmailUpdateSuggestion(
   message: GmailMessageMetadata,
   applications: GmailApplicationCandidate[],
+  accountEmail: string,
   llmClassifier: Pick<typeof gmailLlmClassifier, "classify"> = gmailLlmClassifier,
 ) {
   const deterministicClassification = classifyGmailMessage(message);
   const classification =
-    deterministicClassification ?? (await llmClassifier.classify(message));
+    deterministicClassification ??
+    (await llmClassifier.classify(message, accountEmail));
   if (!classification) return null;
   const match = matchGmailMessage(message, applications);
 

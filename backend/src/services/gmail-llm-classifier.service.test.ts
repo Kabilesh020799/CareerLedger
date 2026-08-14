@@ -9,6 +9,7 @@ const message = {
 
 const config = {
   apiKey: "test-key",
+  allowedAccountEmails: new Set(["user@example.com"]),
   model: "test-model",
   confidenceThreshold: 80,
   timeoutMs: 1_000,
@@ -29,7 +30,7 @@ describe("gmailLlmClassifier", () => {
       apiKey: "",
     });
 
-    await expect(classifier.classify(message)).resolves.toBeNull();
+    await expect(classifier.classify(message, "user@example.com")).resolves.toBeNull();
     expect(request).not.toHaveBeenCalled();
   });
 
@@ -45,7 +46,7 @@ describe("gmailLlmClassifier", () => {
     );
 
     await expect(
-      createGmailLlmClassifier(request, config).classify(message),
+      createGmailLlmClassifier(request, config).classify(message, "USER@example.com"),
     ).resolves.toEqual({
       status: "INTERVIEW",
       confidence: 91,
@@ -67,7 +68,7 @@ describe("gmailLlmClassifier", () => {
       .mockResolvedValue(response({ output_text: JSON.stringify(result) }));
 
     await expect(
-      createGmailLlmClassifier(request, config).classify(message),
+      createGmailLlmClassifier(request, config).classify(message, "user@example.com"),
     ).resolves.toBeNull();
   });
 
@@ -80,10 +81,19 @@ describe("gmailLlmClassifier", () => {
       .mockResolvedValue(response({ output_text: "not json" }));
 
     await expect(
-      createGmailLlmClassifier(unavailable, config).classify(message),
+      createGmailLlmClassifier(unavailable, config).classify(message, "user@example.com"),
     ).resolves.toBeNull();
     await expect(
-      createGmailLlmClassifier(invalid, config).classify(message),
+      createGmailLlmClassifier(invalid, config).classify(message, "user@example.com"),
     ).resolves.toBeNull();
+  });
+
+  it("does not call OpenAI for an account outside the allowlist", async () => {
+    const request = vi.fn<typeof fetch>();
+
+    await expect(
+      createGmailLlmClassifier(request, config).classify(message, "other@example.com"),
+    ).resolves.toBeNull();
+    expect(request).not.toHaveBeenCalled();
   });
 });

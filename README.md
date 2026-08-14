@@ -104,12 +104,13 @@ Ambiguous Gmail messages can optionally use OpenAI after deterministic classific
 
 ```text
 OPENAI_API_KEY
+OPENAI_ALLOWED_ACCOUNT_EMAILS=user@example.com
 OPENAI_GMAIL_MODEL=gpt-5-mini
 OPENAI_GMAIL_CONFIDENCE_THRESHOLD=80
 OPENAI_GMAIL_TIMEOUT_MS=10000
 ```
 
-`OPENAI_API_KEY` is optional. When it is absent—or the provider times out, fails, or returns invalid or insufficiently confident output—Gmail synchronization continues with the deterministic classifier and leaves that ambiguous message unmatched. The fallback validates structured output and only creates a review suggestion; it never changes an application directly.
+`OPENAI_API_KEY` is optional and server-side only. `OPENAI_ALLOWED_ACCOUNT_EMAILS` is a comma-separated allowlist of application login emails; it defaults to empty, so configuring a key alone grants no account access. When the signed-in account is not allowed—or the provider times out, fails, or returns invalid or insufficiently confident output—Gmail synchronization continues with the deterministic classifier and leaves that ambiguous message unmatched. The fallback validates structured output and only creates a review suggestion; it never changes an application directly.
 
 The SMTP configuration also sends password-reset and email-verification links. Without SMTP, authentication and profile management continue to work, while recovery requests return a non-disclosing acknowledgement without sending mail. Set `PUBLIC_API_URL` to the externally reachable backend origin so calendar subscription URLs work outside the browser.
 

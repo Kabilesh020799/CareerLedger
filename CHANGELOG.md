@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.26.0] - 2026-08-14
+
+### Added
+
+- Added a fail-closed account email allowlist for the optional OpenAI Gmail classifier, with deployment support for selecting authorized accounts without exposing or persisting the API key.
+
 ## [3.25.0] - 2026-08-14
 
 ### Added
@@ -369,7 +375,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.25.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.26.0...HEAD
+[3.26.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.25.0...v3.26.0
 [3.25.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.4...v3.25.0
 [3.24.4]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.0...v3.24.4
 [3.24.3]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.0...v3.24.3

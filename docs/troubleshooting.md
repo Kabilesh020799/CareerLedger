@@ -60,7 +60,7 @@ If an improved classifier should recover an older unmatched email, deploy the up
 
 ## Ambiguous Gmail messages are not suggested
 
-Deterministic classification always runs first. The optional LLM fallback runs only when those rules return no result. Confirm `OPENAI_API_KEY` is available to both `backend` and `gmail-worker`; optionally verify `OPENAI_GMAIL_MODEL`, `OPENAI_GMAIL_CONFIDENCE_THRESHOLD`, and `OPENAI_GMAIL_TIMEOUT_MS`. Restart both services after changing their environment.
+Deterministic classification always runs first. The optional LLM fallback runs only when those rules return no result. Confirm `OPENAI_API_KEY` is available to both `backend` and `gmail-worker`, and that the signed-in application's login email appears in the comma-separated `OPENAI_ALLOWED_ACCOUNT_EMAILS` value. Matching is case-insensitive; an empty allowlist denies everyone. Optionally verify `OPENAI_GMAIL_MODEL`, `OPENAI_GMAIL_CONFIDENCE_THRESHOLD`, and `OPENAI_GMAIL_TIMEOUT_MS`. Restart both services after changing their environment.
 
 An absent key, timeout, provider error, non-success response, malformed structured response, or result below the confidence threshold intentionally leaves the message unmatched and does not fail synchronization. Never print the API key or email content while investigating. After correcting configuration, choose **Sync now** to re-evaluate eligible stored messages.
 

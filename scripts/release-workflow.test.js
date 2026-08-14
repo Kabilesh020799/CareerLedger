@@ -210,6 +210,8 @@ test("deploys optional Gmail LLM fallback configuration without requiring it", (
   const compose = fs.readFileSync(productionComposePath, "utf8");
 
   assert.match(workflow, /OPENAI_API_KEY: \$\{\{ secrets\.OPENAI_API_KEY \}\}/);
+  assert.match(workflow, /OPENAI_ALLOWED_ACCOUNT_EMAILS: \$\{\{ vars\.OPENAI_ALLOWED_ACCOUNT_EMAILS \}\}/);
+  assert.match(workflow, /printf 'OPENAI_ALLOWED_ACCOUNT_EMAILS=%s\\n'/);
   assert.match(workflow, /OPENAI_GMAIL_MODEL: \$\{\{ vars\.OPENAI_GMAIL_MODEL \}\}/);
   assert.match(workflow, /OPENAI_GMAIL_CONFIDENCE_THRESHOLD: \$\{\{ vars\.OPENAI_GMAIL_CONFIDENCE_THRESHOLD \}\}/);
   assert.match(workflow, /OPENAI_GMAIL_TIMEOUT_MS: \$\{\{ vars\.OPENAI_GMAIL_TIMEOUT_MS \}\}/);

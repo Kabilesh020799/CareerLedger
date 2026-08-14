@@ -79,6 +79,7 @@ Add environment variables:
 | `VAPID_PUBLIC_KEY` | Public Web Push application-server key |
 | `VAPID_SUBJECT` | Web Push contact URI, such as `mailto:administrator@example.com` |
 | `SMTP_HOST` | Optional SMTP server hostname |
+| `OPENAI_ALLOWED_ACCOUNT_EMAILS` | Comma-separated application login emails allowed to use OpenAI; empty denies every account |
 | `OPENAI_GMAIL_MODEL` | Optional Gmail fallback model; defaults to `gpt-5-mini` |
 | `OPENAI_GMAIL_CONFIDENCE_THRESHOLD` | Minimum accepted fallback confidence from 0 to 100; defaults to `80` |
 | `OPENAI_GMAIL_TIMEOUT_MS` | Maximum provider request duration in milliseconds; defaults to `10000` |

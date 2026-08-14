@@ -53,8 +53,16 @@ export function createGmailLlmClassifier(
   return {
     async classify(
       message: Pick<GmailMessageMetadata, "subject" | "sender" | "snippet">,
+      accountEmail: string,
     ): Promise<{ status: (typeof supportedStatuses)[number]; confidence: number } | null> {
-      if (!config.apiKey) return null;
+      if (
+        !config.apiKey ||
+        !config.allowedAccountEmails.has(
+          accountEmail.trim().toLocaleLowerCase("en-US"),
+        )
+      ) {
+        return null;
+      }
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), config.timeoutMs);

@@ -82,6 +82,13 @@ Feature: Manually synchronize Gmail
     Then a pending Gmail review should be suggested from the validated classification
     And the raw LLM response should not update an application directly
 
+  Scenario: Restrict the LLM fallback to selected accounts
+    Given the optional LLM classifier is configured for selected account emails
+    And my application login email is not selected
+    When Gmail synchronization processes an ambiguous message
+    Then the message metadata should not be sent to the LLM
+    And synchronization should continue with deterministic classification
+
   Scenario: Continue synchronization when the LLM fallback is not configured
     Given deterministic rules cannot classify a synchronized Gmail message
     And the optional LLM classifier is not configured

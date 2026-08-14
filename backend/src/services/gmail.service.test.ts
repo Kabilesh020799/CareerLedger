@@ -193,6 +193,7 @@ describe("gmailService", () => {
       id: "connection-1",
       encryptedCredentials: encryptJson(credentials),
       historyId: "100",
+      user: { email: "user@example.com" },
     });
     gmailApiMock.synchronize.mockResolvedValue({
       credentials: { ...credentials, accessToken: "refreshed-access" },
@@ -314,6 +315,7 @@ describe("gmailService", () => {
       id: "connection-1",
       encryptedCredentials: encryptJson(credentials),
       historyId: "120",
+      user: { email: "user@example.com" },
     });
     gmailApiMock.synchronize.mockResolvedValue({
       credentials,
@@ -378,6 +380,7 @@ describe("gmailService", () => {
       id: "connection-1",
       encryptedCredentials: encryptJson(credentials),
       historyId: "100",
+      user: { email: "user@example.com" },
     });
     gmailApiMock.synchronize.mockRejectedValue(new Error("Gmail unavailable"));
 

@@ -122,6 +122,7 @@ export const gmailService = {
         id: true,
         encryptedCredentials: true,
         historyId: true,
+        user: { select: { email: true } },
       },
     });
     if (!connection) throw new GmailNotConnectedError("Gmail is not connected");
@@ -196,7 +197,11 @@ export const gmailService = {
       Awaited<ReturnType<typeof buildGmailUpdateSuggestion>>
     >[] = [];
     for (const message of metadataResult.messages) {
-      const suggestion = await buildGmailUpdateSuggestion(message, applications);
+      const suggestion = await buildGmailUpdateSuggestion(
+        message,
+        applications,
+        connection.user.email,
+      );
       if (suggestion) suggestions.push(suggestion);
     }
 
