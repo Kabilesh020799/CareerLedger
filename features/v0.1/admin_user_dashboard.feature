@@ -22,7 +22,8 @@ Feature: Review user accounts as an administrator
     Then the administrator navigation should not be shown
     And the API should reject the request without returning account metadata
 
-  Scenario: Disable administration by default
+  Scenario: Use the first demo account as the default administrator
     Given no administrator account emails are configured
-    When any signed-in user requests account summaries
-    Then the API should reject the request
+    When the first built-in demo account requests account summaries
+    Then the administrator dashboard should be available
+    And another signed-in account should still be rejected

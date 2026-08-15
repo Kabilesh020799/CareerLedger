@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.27.1] - 2026-08-15
+
+### Changed
+
+- The first built-in demo account is the default administrator when no administrator email list is configured; an explicit list replaces the demo default.
+
+### Security
+
+- Documented that the default administrator uses public demo credentials and must not be used with private production account data.
+
 ## [3.27.0] - 2026-08-15
 
 ### Added
@@ -381,7 +391,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.1...HEAD
+[3.27.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.0...v3.27.1
 [3.27.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.26.0...v3.27.0
 [3.26.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.25.0...v3.26.0
 [3.25.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.4...v3.25.0

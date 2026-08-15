@@ -1,8 +1,14 @@
 import "dotenv/config";
+import { builtInDemoUser } from "./demo-user";
 
-export function parseAdminAccountEmails(value: string | undefined) {
+export const defaultAdminAccountEmail = `${builtInDemoUser.username}@jobtracker.invalid`;
+
+export function parseAdminAccountEmails(
+  value: string | undefined,
+  fallback = defaultAdminAccountEmail,
+) {
   return new Set(
-    (value ?? "")
+    (value?.trim() || fallback)
       .split(",")
       .map((email) => email.trim().toLocaleLowerCase("en-US"))
       .filter(Boolean),

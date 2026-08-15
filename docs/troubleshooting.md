@@ -66,7 +66,7 @@ An absent key, timeout, provider error, non-success response, malformed structur
 
 ## The user-account dashboard is missing
 
-Confirm the signed-in application's login email appears in the comma-separated `ADMIN_ACCOUNT_EMAILS` production environment variable. Matching is case-insensitive and an empty value disables administrator access. Sign out and back in, or refresh the page, after changing the setting so the session endpoint refreshes the navigation flag. A direct API request from a non-admin correctly returns `403`.
+By default, sign in as the first built-in demo account (`demo`, using its documented demo password). To use another administrator, confirm that account's login email appears in the comma-separated `ADMIN_ACCOUNT_EMAILS` production environment variable. Matching is case-insensitive and a configured list replaces the demo default. Sign out and back in, or refresh the page, after changing the setting so the session endpoint refreshes the navigation flag. A direct API request from a non-admin correctly returns `403`.
 
 ## Password login is temporarily limited
 

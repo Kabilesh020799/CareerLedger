@@ -30,7 +30,7 @@ Requests follow `Route -> Validation -> Controller -> Service -> Prisma`. Routes
 
 Password signup and login create the same PostgreSQL-backed HTTP-only session cookie. Signup validates and normalizes identifiers before the credential service creates the user with a bcrypt password hash. Every user-owned query is scoped to the authenticated user. Application status changes and timeline events are saved in one Prisma transaction.
 
-Administrator authorization is derived on the server from a fail-closed normalized email allowlist. The admin route applies authentication and administrator middleware before its controller and service. Its paginated query selects only account metadata and aggregate relation counts; it does not traverse private user-owned records.
+Administrator authorization is derived on the server from a normalized email allowlist, defaulting to the first built-in demo account when no list is supplied. The admin route applies authentication and administrator middleware before its controller and service. Its paginated query selects only account metadata and aggregate relation counts; it does not traverse private user-owned records.
 
 The first Express middleware creates a canonical request ID so unhandled errors can carry a safe client reference. Production disables request log output and metrics collection and runs no monitoring containers.
 
