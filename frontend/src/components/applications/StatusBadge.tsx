@@ -1,16 +1,6 @@
 import { Badge } from '@chakra-ui/react'
 import type { ApplicationStatus } from '../../types/application'
-
-const palettes: Record<ApplicationStatus, string> = {
-  SAVED: 'gray',
-  APPLIED: 'blue',
-  SCREENING: 'cyan',
-  ASSESSMENT: 'purple',
-  INTERVIEW: 'orange',
-  OFFER: 'green',
-  REJECTED: 'red',
-  WITHDRAWN: 'gray',
-}
+import { applicationStatusPalettes } from '../ui/palette'
 
 const labels: Record<ApplicationStatus, string> = {
   SAVED: 'Saved',
@@ -28,7 +18,7 @@ export function StatusBadge({ status }: { status: ApplicationStatus }) {
     <Badge
       alignSelf="flex-start"
       borderRadius="full"
-      colorPalette={palettes[status]}
+      colorPalette={applicationStatusPalettes[status]}
       flexShrink="0"
       fontSize="xs"
       fontWeight="semibold"

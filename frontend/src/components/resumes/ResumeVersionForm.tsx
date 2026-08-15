@@ -47,7 +47,7 @@ export function ResumeVersionForm({
           <Field.ErrorText>{errors.name?.message}</Field.ErrorText>
         </Field.Root>
         <Stack direction={{ base: 'column', sm: 'row' }} gap="3">
-          <Button colorPalette="purple" loading={isSubmitting} type="submit">
+          <Button colorPalette="brand" loading={isSubmitting} type="submit">
             {submitLabel}
           </Button>
           {onCancel && (

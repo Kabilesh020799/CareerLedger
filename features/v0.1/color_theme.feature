@@ -22,6 +22,12 @@ Feature: Choose an application color theme
     Then neutral surfaces should remain visually distinct
     And status, success, warning, and error colors should retain their meaning and readable contrast
 
+  Scenario: Understand color hierarchy
+    Given I am using the application in light or dark mode
+    Then primary actions should use a consistent indigo accent
+    And application statuses should retain distinct semantic colors
+    And text, surfaces, borders, and focus indicators should remain clearly legible
+
   Scenario: Remember the selected theme
     Given I selected the dark theme
     When I reload the application

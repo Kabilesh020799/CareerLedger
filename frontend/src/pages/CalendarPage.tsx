@@ -49,8 +49,8 @@ export function CalendarPage() {
 
       <Box bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" p={{ base: '5', md: '8' }}>
         <Flex align={{ base: 'start', sm: 'center' }} direction={{ base: 'column', sm: 'row' }} gap="5" justify="space-between">
-          <Flex align="start" gap="4"><Flex align="center" bg="purple.subtle" borderRadius="lg" color="purple.fg" h="11" justify="center" w="11"><Download aria-hidden size={21} /></Flex><Stack gap="1"><Heading as="h2" size="lg">Download calendar</Heading><Text color="fg.muted">Export a current snapshot as an .ics file for Apple Calendar, Google Calendar, Outlook, or another calendar app.</Text></Stack></Flex>
-          <Button colorPalette="purple" loading={download.isPending} minW={{ sm: '10rem' }} onClick={() => download.mutate()}>Download .ics</Button>
+          <Flex align="start" gap="4"><Flex align="center" bg="brand.subtle" borderRadius="lg" color="brand.fg" h="11" justify="center" w="11"><Download aria-hidden size={21} /></Flex><Stack gap="1"><Heading as="h2" size="lg">Download calendar</Heading><Text color="fg.muted">Export a current snapshot as an .ics file for Apple Calendar, Google Calendar, Outlook, or another calendar app.</Text></Stack></Flex>
+          <Button colorPalette="brand" loading={download.isPending} minW={{ sm: '10rem' }} onClick={() => download.mutate()}>Download .ics</Button>
         </Flex>
       </Box>
 
@@ -62,7 +62,7 @@ export function CalendarPage() {
         {subscriptionUrl && <Alert.Root status="warning" borderRadius="lg"><Alert.Indicator /><Alert.Content><Alert.Title>Copy this private link now</Alert.Title><Alert.Description>It is shown only after creation. Anyone with this link can view your calendar events.</Alert.Description><Input aria-label="Calendar subscription URL" fontFamily="mono" mt="3" readOnly value={subscriptionUrl} /><Button alignSelf="start" mt="3" size="sm" variant="outline" onClick={copyFeed}><Clipboard aria-hidden size={16} />Copy link</Button></Alert.Content></Alert.Root>}
 
         {status.data && <Flex gap="3" wrap="wrap">
-          <Button colorPalette="purple" loading={create.isPending} onClick={createFeed}>{status.data.active ? <RotateCw aria-hidden size={17} /> : <Link2 aria-hidden size={17} />}{status.data.active ? 'Replace subscription link' : 'Create subscription link'}</Button>
+          <Button colorPalette="brand" loading={create.isPending} onClick={createFeed}>{status.data.active ? <RotateCw aria-hidden size={17} /> : <Link2 aria-hidden size={17} />}{status.data.active ? 'Replace subscription link' : 'Create subscription link'}</Button>
           {status.data.active && <Button colorPalette="red" loading={revoke.isPending} variant="outline" onClick={revokeFeed}><Unlink aria-hidden size={17} />Revoke link</Button>}
         </Flex>}
         <Text color="fg.subtle" fontSize="sm">Replacing or revoking the link immediately stops the previous link from receiving updates.</Text>

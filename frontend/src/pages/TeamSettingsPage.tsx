@@ -35,7 +35,7 @@ export function TeamSettingsPage() {
       <form aria-label="Create invitation" noValidate onSubmit={inviteForm.handleSubmit((values) => invite.mutate(values))}><Stack bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" gap="4" h="full" p={{ base: '5', md: '6' }}>
         <Box><Text fontSize="lg" fontWeight="semibold">Create an invitation</Text><Text color="fg.muted" fontSize="sm">Generate a one-time invitation token to share securely with a collaborator.</Text></Box>
         <Field.Root invalid={Boolean(inviteForm.formState.errors.email)} required><Field.Label>Email address</Field.Label><Input type="email" autoComplete="email" {...inviteForm.register('email')} /><Field.ErrorText>{inviteForm.formState.errors.email?.message}</Field.ErrorText></Field.Root>
-        <Button alignSelf="start" colorPalette="purple" type="submit" loading={invite.isPending}>Create invitation</Button>
+        <Button alignSelf="start" colorPalette="brand" type="submit" loading={invite.isPending}>Create invitation</Button>
         {token && <Alert.Root status="info"><Alert.Indicator /><Alert.Content><Alert.Title>Copy this invitation now</Alert.Title><Alert.Description>This token is shown once. Send it to the collaborator through a trusted channel.</Alert.Description><Box as="code" bg="bg.muted" borderRadius="md" mt="2" overflowWrap="anywhere" p="3">{token}</Box></Alert.Content></Alert.Root>}
       </Stack></form>
       <Stack bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" gap="4" p={{ base: '5', md: '6' }}>

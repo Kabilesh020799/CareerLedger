@@ -76,7 +76,7 @@ function DashboardContent({ summary }: { summary: DashboardSummary }) {
         >
           <Heading as="h3" size="lg">No application activity yet</Heading>
           <Text color="fg.muted">Create your first application to start measuring your pipeline.</Text>
-          <Button asChild colorPalette="purple" mt="2">
+          <Button asChild colorPalette="brand" mt="2">
             <Link to="/applications/new">Create your first application</Link>
           </Button>
         </Stack>
@@ -192,7 +192,7 @@ function RateCard({
     >
       <Flex align="baseline" justify="space-between" gap="3" wrap="wrap">
         <Text color="fg" fontWeight="semibold">{label}</Text>
-        <Text color="purple.fg" fontSize="2xl" fontWeight="bold">{formatPercentage(value)}</Text>
+        <Text color="brand.fg" fontSize="2xl" fontWeight="bold">{formatPercentage(value)}</Text>
       </Flex>
       <Box
         aria-label={`${label}: ${formatPercentage(value)}`}
@@ -205,7 +205,7 @@ function RateCard({
         overflow="hidden"
         role="progressbar"
       >
-        <Box bg="purple.solid" h="full" width={`${Math.min(value, 100)}%`} />
+        <Box bg="brand.solid" h="full" width={`${Math.min(value, 100)}%`} />
       </Box>
       <Text color="fg.subtle" fontSize="xs">{description}</Text>
     </Stack>

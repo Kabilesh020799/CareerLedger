@@ -44,7 +44,7 @@ export function ApplicationsPage() {
 
       <Flex align="center" justify="space-between" gap="3">
         <Text color="fg.muted" fontSize="sm">{applicationsQuery.data?.pagination.total ?? 0} application{applicationsQuery.data?.pagination.total === 1 ? '' : 's'}</Text>
-        <Button aria-expanded={filtersOpen} display={{ base: 'inline-flex', md: 'none' }} size="sm" variant="outline" onClick={() => setFiltersOpen((value) => !value)}>Filters {hasFilters && <Badge colorPalette="purple" ml="2" variant="solid">On</Badge>}</Button>
+        <Button aria-expanded={filtersOpen} display={{ base: 'inline-flex', md: 'none' }} size="sm" variant="outline" onClick={() => setFiltersOpen((value) => !value)}>Filters {hasFilters && <Badge colorPalette="brand" ml="2" variant="solid">On</Badge>}</Button>
       </Flex>
       <Box display={{ base: filtersOpen ? 'block' : 'none', md: 'block' }}>
         <ApplicationDiscoveryControls query={query} onChange={setQuery} onClear={clearFilters} />
@@ -69,7 +69,7 @@ export function ApplicationsPage() {
         <Stack align="center" bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" p={{ base: '8', md: '12' }} textAlign="center" gap="3">
           <Heading as="h3" size="lg">No applications yet</Heading>
           <Text color="fg.muted">Add your first opportunity to start tracking your job search.</Text>
-          <Button asChild colorPalette="purple" mt="2">
+          <Button asChild colorPalette="brand" mt="2">
             <Link to="/applications/new">Create your first application</Link>
           </Button>
         </Stack>
@@ -79,7 +79,7 @@ export function ApplicationsPage() {
         <Stack align="center" bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" p={{ base: '8', md: '12' }} textAlign="center" gap="3">
           <Heading as="h3" size="lg">No matching applications</Heading>
           <Text color="fg.muted">Try changing your search or clearing the filters.</Text>
-          <Button colorPalette="purple" mt="2" onClick={clearFilters}>Clear filters</Button>
+          <Button colorPalette="brand" mt="2" onClick={clearFilters}>Clear filters</Button>
         </Stack>
       )}
 
@@ -87,7 +87,7 @@ export function ApplicationsPage() {
         <Stack align="center" bg="bg.panel" borderColor="border" borderWidth="1px" borderRadius="xl" p="8" textAlign="center" gap="3">
           <Heading as="h3" size="lg">No applications on this page</Heading>
           <Button
-            colorPalette="purple"
+            colorPalette="brand"
             onClick={() => setQuery({ ...query, page: Math.max(1, query.page - 1) })}
           >
             Previous page

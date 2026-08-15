@@ -122,7 +122,7 @@ export function ApplicationForm({
           {allowResumeAttachment && (
             <FormField label={currentResumeFileName ? 'Replace resume' : 'Attach resume'} error={errors.resume?.message}>
               {currentResumeFileName && <Text color="fg.muted" fontSize="sm">Current file: {currentResumeFileName}</Text>}
-              <Box borderColor={selectedResume ? 'purple.emphasized' : 'border'} borderRadius="lg" borderStyle="dashed" borderWidth="2px" bg={selectedResume ? 'purple.subtle' : 'bg.subtle'} p="5" textAlign="center">
+              <Box borderColor={selectedResume ? 'brand.emphasized' : 'border'} borderRadius="lg" borderStyle="dashed" borderWidth="2px" bg={selectedResume ? 'brand.subtle' : 'bg.subtle'} p="5" textAlign="center">
                 <Input {...register('resume')} accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" cursor="pointer" p="1.5" type="file" />
                 <Text color="fg.muted" fontSize="sm" mt="2">{selectedResume ? `${selectedResume.name} selected` : 'Choose a file'}</Text>
                 <Text color="fg.subtle" fontSize="xs" mt="1">PDF, DOC, or DOCX up to 5 MB.</Text>
@@ -134,7 +134,7 @@ export function ApplicationForm({
 
         <Flex bg="bg.panel" borderColor="border" borderTopWidth="1px" bottom={{ base: '18', lg: '0' }} direction={{ base: 'column-reverse', sm: 'row' }} gap="3" justify="flex-end" mx={{ base: '-5', md: '-8' }} px={{ base: '5', md: '8' }} py="4" position="sticky" zIndex="base">
         {cancelTo && <Button asChild flex={{ base: '1', sm: 'initial' }} variant="outline"><Link to={cancelTo}>Cancel</Link></Button>}
-        <Button minH="11" w={{ base: 'full', sm: 'auto' }} colorPalette="purple" loading={isSubmitting} type="submit">
+        <Button minH="11" w={{ base: 'full', sm: 'auto' }} colorPalette="brand" loading={isSubmitting} type="submit">
           {submitLabel}
         </Button>
         </Flex>

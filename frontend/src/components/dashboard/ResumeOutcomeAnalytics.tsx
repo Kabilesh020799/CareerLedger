@@ -27,7 +27,7 @@ export function ResumeOutcomeAnalytics({ outcomes }: { outcomes: ResumeOutcome[]
           <Text color="fg.muted" fontSize="sm">
             Create a resume tag and associate it with applications to compare results.
           </Text>
-          <Button asChild colorPalette="purple" size="sm">
+          <Button asChild colorPalette="brand" size="sm">
             <Link to="/resumes">Manage resume tags</Link>
           </Button>
         </Stack>

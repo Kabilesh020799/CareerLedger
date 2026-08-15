@@ -76,11 +76,11 @@ export function DataSettingsPage() {
     <PageHeader title="Data and backups" description="Download a portable backup or restore applications into the selected workspace." eyebrow="Settings" />
     {(message || error) && <Alert.Root status={error ? 'error' : 'success'}><Alert.Indicator /><Alert.Content><Alert.Title>{error || message}</Alert.Title></Alert.Content></Alert.Root>}
     <Stack bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" gap="4" p={{ base: '5', md: '7' }}>
-      <Flex align="start" gap="4"><Box color="purple.fg"><Download aria-hidden /></Box><Box><Text fontSize="lg" fontWeight="semibold">Download backup</Text><Text color="fg.muted" fontSize="sm">Includes applications, reminders, and timeline events. Resume files and account secrets are excluded.</Text></Box></Flex>
-      <Button alignSelf="start" colorPalette="purple" onClick={download} loading={busy}><Download aria-hidden size={17} />Download JSON backup</Button>
+      <Flex align="start" gap="4"><Box color="brand.fg"><Download aria-hidden /></Box><Box><Text fontSize="lg" fontWeight="semibold">Download backup</Text><Text color="fg.muted" fontSize="sm">Includes applications, reminders, and timeline events. Resume files and account secrets are excluded.</Text></Box></Flex>
+      <Button alignSelf="start" colorPalette="brand" onClick={download} loading={busy}><Download aria-hidden size={17} />Download JSON backup</Button>
     </Stack>
     <Stack bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" gap="4" p={{ base: '5', md: '7' }}>
-      <Flex align="start" gap="4"><Box color="purple.fg"><Upload aria-hidden /></Box><Box><Text fontSize="lg" fontWeight="semibold">Restore from backup</Text><Text color="fg.muted" fontSize="sm">Choose a file to review its contents before anything is imported.</Text></Box></Flex>
+      <Flex align="start" gap="4"><Box color="brand.fg"><Upload aria-hidden /></Box><Box><Text fontSize="lg" fontWeight="semibold">Restore from backup</Text><Text color="fg.muted" fontSize="sm">Choose a file to review its contents before anything is imported.</Text></Box></Flex>
       <Field.Root>
         <Field.Label>Job Tracker backup</Field.Label>
         <Input
@@ -107,7 +107,7 @@ export function DataSettingsPage() {
         </Flex>
         <Field.HelperText>JSON files only. Maximum 1,000 applications.</Field.HelperText>
       </Field.Root>
-      {preview && <Alert.Root status="info"><Alert.Indicator /><Alert.Content><Alert.Title>Review import</Alert.Title><Alert.Description><Text><strong>{preview.fileName}</strong> contains {preview.applicationCount} application{preview.applicationCount === 1 ? '' : 's'}{preview.workspaceName ? ` from ${preview.workspaceName}` : ''}. Existing duplicates will be skipped.</Text><Flex gap="3" mt="4" wrap="wrap"><Button colorPalette="purple" loading={busy} onClick={importBackup}>Import applications</Button><Button variant="outline" onClick={() => { setPreview(null); if (fileInputRef.current) fileInputRef.current.value = '' }}>Cancel</Button></Flex></Alert.Description></Alert.Content></Alert.Root>}
+      {preview && <Alert.Root status="info"><Alert.Indicator /><Alert.Content><Alert.Title>Review import</Alert.Title><Alert.Description><Text><strong>{preview.fileName}</strong> contains {preview.applicationCount} application{preview.applicationCount === 1 ? '' : 's'}{preview.workspaceName ? ` from ${preview.workspaceName}` : ''}. Existing duplicates will be skipped.</Text><Flex gap="3" mt="4" wrap="wrap"><Button colorPalette="brand" loading={busy} onClick={importBackup}>Import applications</Button><Button variant="outline" onClick={() => { setPreview(null); if (fileInputRef.current) fileInputRef.current.value = '' }}>Cancel</Button></Flex></Alert.Description></Alert.Content></Alert.Root>}
     </Stack>
   </Stack>
 }

@@ -10,7 +10,7 @@ export function ProtectedRoute() {
     return (
       <Center minH="100vh">
         <Stack align="center" gap="3">
-          <Spinner color="purple.fg" />
+          <Spinner color="brand.fg" />
           <Text color="fg.muted">Checking your session…</Text>
         </Stack>
       </Center>

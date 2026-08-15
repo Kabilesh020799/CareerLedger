@@ -44,13 +44,13 @@ export function LoginPage() {
       </Box>
       <Container maxW="6xl">
         <SimpleGrid bg="bg.panel" borderColor="border" borderRadius="2xl" borderWidth="1px" boxShadow="xl" columns={{ base: 1, lg: 2 }} overflow="hidden">
-        <Stack bg="purple.solid" color="purple.contrast" display={{ base: 'none', lg: 'flex' }} gap="8" justify="space-between" minH="34rem" p="12">
+        <Stack bg="brand.solid" color="brand.contrast" display={{ base: 'none', lg: 'flex' }} gap="8" justify="space-between" minH="34rem" p="12">
           <Stack gap="5"><Flex align="center" bg="whiteAlpha.300" borderRadius="xl" fontSize="xl" fontWeight="bold" h="12" justify="center" w="12">JT</Flex><Heading fontSize="4xl" letterSpacing="-0.04em" maxW="sm">Keep every opportunity moving.</Heading><Text color="whiteAlpha.800" fontSize="lg" maxW="md">One focused workspace for applications, follow-ups, documents, and recruitment updates.</Text></Stack>
           <Text color="whiteAlpha.700" fontSize="sm">Your job search stays private to your account.</Text>
         </Stack>
         <Stack gap="6" justify="center" p={{ base: '6', sm: '9', md: '12' }}>
           <Stack gap="2">
-            <Text color="purple.fg" fontSize="sm" fontWeight="bold" letterSpacing="0.08em" textTransform="uppercase">Job Tracker</Text>
+            <Text color="brand.fg" fontSize="sm" fontWeight="bold" letterSpacing="0.08em" textTransform="uppercase">Job Tracker</Text>
             <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }}>Welcome back</Heading>
             <Text color="fg.muted">Sign in to continue your job search.</Text>
           </Stack>
@@ -100,7 +100,7 @@ export function LoginPage() {
                   <Field.ErrorText>{errors.password?.message}</Field.ErrorText>
                 </Field.Root>
 
-                <Button type="submit" colorPalette="purple" loading={passwordLogin.isPending} minH="11">
+                <Button type="submit" colorPalette="brand" loading={passwordLogin.isPending} minH="11">
                   Sign in
                 </Button>
                 <Text fontSize="sm" textAlign="center"><Link to="/forgot-password">Forgot your password?</Link></Text>
@@ -114,7 +114,7 @@ export function LoginPage() {
           {passwordLoginEnabled && googleLoginEnabled && <Separator />}
 
           {googleLoginEnabled && (
-            <Button asChild colorPalette="purple" size="lg">
+            <Button asChild colorPalette="brand" size="lg">
               <a href={googleLoginUrl}>Continue with Google</a>
             </Button>
           )}

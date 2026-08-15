@@ -109,7 +109,7 @@ export function ApplicationReminders({ applicationId }: { applicationId: string 
 
             <Button
               alignSelf={{ base: 'stretch', sm: 'start' }}
-              colorPalette="purple"
+              colorPalette="brand"
               loading={createReminder.isPending}
               type="submit"
             >
@@ -160,7 +160,7 @@ function ReminderEntries({
   if (isPending) {
     return (
       <Flex align="center" aria-label="Loading application reminders" gap="3">
-        <Spinner color="purple.fg" size="sm" />
+        <Spinner color="brand.fg" size="sm" />
         <Text color="fg.muted">Loading reminders…</Text>
       </Flex>
     )
@@ -206,10 +206,10 @@ function ReminderEntries({
             <Flex align="start" gap="3" justify="space-between" wrap="wrap">
               <Stack gap="2">
                 <Flex gap="2" wrap="wrap">
-                  <Badge colorPalette={reminder.type === 'DEADLINE' ? 'purple' : 'blue'}>
+                  <Badge colorPalette={reminder.type === 'DEADLINE' ? 'brand' : 'blue'}>
                     {reminder.type === 'DEADLINE' ? 'Deadline' : 'Follow-up'}
                   </Badge>
-                  <Badge colorPalette={status === 'Overdue' ? 'red' : status === 'Completed' ? 'green' : 'purple'}>
+                  <Badge colorPalette={status === 'Overdue' ? 'red' : status === 'Completed' ? 'green' : 'brand'}>
                     {status}
                   </Badge>
                 </Flex>

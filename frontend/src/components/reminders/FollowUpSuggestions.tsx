@@ -31,7 +31,7 @@ export function FollowUpSuggestions({ compact = false }: { compact?: boolean }) 
 
       {suggestionsQuery.isPending && (
         <Flex align="center" aria-label="Loading follow-up suggestions" gap="3">
-          <Spinner color="purple.fg" size="sm" />
+          <Spinner color="brand.fg" size="sm" />
           <Text color="fg.muted">Checking for follow-ups…</Text>
         </Flex>
       )}
@@ -73,7 +73,7 @@ export function FollowUpSuggestions({ compact = false }: { compact?: boolean }) 
             >
               <Stack gap="2">
                 <Badge alignSelf="start" colorPalette="orange">Suggested</Badge>
-                <ChakraLink asChild color="purple.fg" fontWeight="semibold">
+                <ChakraLink asChild color="brand.fg" fontWeight="semibold">
                   <Link to={`/applications/${suggestion.application.id}`}>
                     {suggestion.application.company} — {suggestion.application.jobTitle}
                   </Link>
@@ -84,7 +84,7 @@ export function FollowUpSuggestions({ compact = false }: { compact?: boolean }) 
               </Stack>
               <Button
                 alignSelf={{ base: 'stretch', md: 'auto' }}
-                colorPalette="purple"
+                colorPalette="brand"
                 loading={createFollowUp.isPending && createFollowUp.variables === suggestion.application.id}
                 size="sm"
                 onClick={() => createFollowUp.mutate(suggestion.application.id)}
@@ -94,7 +94,7 @@ export function FollowUpSuggestions({ compact = false }: { compact?: boolean }) 
             </Flex>
           ))}
           {suggestionsQuery.data.length > 3 && (
-            <ChakraLink asChild alignSelf="start" color="purple.fg" fontSize="sm" fontWeight="semibold">
+            <ChakraLink asChild alignSelf="start" color="brand.fg" fontSize="sm" fontWeight="semibold">
               <Link to="/applications">View all applications</Link>
             </ChakraLink>
           )}

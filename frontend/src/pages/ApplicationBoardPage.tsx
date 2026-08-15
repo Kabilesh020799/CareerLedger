@@ -75,7 +75,7 @@ export function ApplicationBoardPage() {
         >
           <Heading as="h3" size="lg">No applications on your board</Heading>
           <Text color="fg.muted">Create your first application to start building your pipeline.</Text>
-          <Button asChild colorPalette="purple" mt="2">
+          <Button asChild colorPalette="brand" mt="2">
             <Link to="/applications/new">Create your first application</Link>
           </Button>
         </Stack>

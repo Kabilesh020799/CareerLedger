@@ -120,7 +120,7 @@ export function GmailUpdateReviewCard({
             <Text color="fg.subtle" fontSize="sm">Received {formatDateTime(review.receivedAt)}</Text>
           )}
         </Stack>
-        <Badge colorPalette="purple" size="lg">Suggested: {statusLabels[review.suggestedStatus]}</Badge>
+        <Badge colorPalette="brand" size="lg">Suggested: {statusLabels[review.suggestedStatus]}</Badge>
       </Flex>
 
       {review.application ? (
@@ -254,7 +254,7 @@ export function GmailUpdateReviewCard({
           )}
 
           <Flex direction={{ base: 'column', sm: 'row' }} gap="3">
-            <Button colorPalette="purple" loading={resolveReview.isPending} type="submit">
+            <Button colorPalette="brand" loading={resolveReview.isPending} type="submit">
               {target === 'EXISTING' ? 'Apply update' : 'Create application'}
             </Button>
             <Button

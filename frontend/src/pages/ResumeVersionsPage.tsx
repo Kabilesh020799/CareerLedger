@@ -33,8 +33,8 @@ export function ResumeVersionsPage() {
       <PageHeader title="Resumes" description="Preview uploaded documents and tag résumé strategies for outcome analytics." eyebrow="Documents" />
 
       <Flex aria-label="Resume sections" bg="bg.muted" borderRadius="lg" gap="1" p="1" role="tablist" w={{ base: 'full', sm: 'fit-content' }}>
-        <Button aria-selected={section === 'uploads'} flex="1" role="tab" size="sm" variant={section === 'uploads' ? 'solid' : 'ghost'} colorPalette={section === 'uploads' ? 'purple' : 'gray'} onClick={() => setSection('uploads')}>Uploaded resumes</Button>
-        <Button aria-selected={section === 'tags'} flex="1" role="tab" size="sm" variant={section === 'tags' ? 'solid' : 'ghost'} colorPalette={section === 'tags' ? 'purple' : 'gray'} onClick={() => setSection('tags')}>Strategy tags</Button>
+        <Button aria-selected={section === 'uploads'} flex="1" role="tab" size="sm" variant={section === 'uploads' ? 'solid' : 'ghost'} colorPalette={section === 'uploads' ? 'brand' : 'gray'} onClick={() => setSection('uploads')}>Uploaded resumes</Button>
+        <Button aria-selected={section === 'tags'} flex="1" role="tab" size="sm" variant={section === 'tags' ? 'solid' : 'ghost'} colorPalette={section === 'tags' ? 'brand' : 'gray'} onClick={() => setSection('tags')}>Strategy tags</Button>
       </Flex>
 
       {section === 'uploads' && <Stack gap="4" role="tabpanel">
@@ -45,7 +45,7 @@ export function ResumeVersionsPage() {
 
         {uploadedResumes.isPending && (
           <Flex align="center" aria-label="Loading uploaded resumes" gap="3">
-            <Spinner color="purple.fg" />
+            <Spinner color="brand.fg" />
             <Text color="fg.muted">Loading uploaded resumes…</Text>
           </Flex>
         )}
@@ -142,7 +142,7 @@ export function ResumeVersionsPage() {
 
       {resumeVersions.isPending && (
         <Flex align="center" aria-label="Loading resume tags" gap="3">
-          <Spinner color="purple.fg" />
+          <Spinner color="brand.fg" />
           <Text color="fg.muted">Loading resume tags…</Text>
         </Flex>
       )}

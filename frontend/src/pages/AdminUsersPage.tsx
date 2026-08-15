@@ -36,7 +36,7 @@ export function AdminUsersPage() {
           <Box as="form" borderBottomWidth="1px" borderColor="border" p="4" onSubmit={submitSearch}>
             <Flex gap="3" direction={{ base: 'column', sm: 'row' }}>
               <Input aria-label="Search users" placeholder="Search name, username, or email" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} />
-              <Button type="submit" colorPalette="purple">Search</Button>
+              <Button type="submit" colorPalette="brand">Search</Button>
             </Flex>
           </Box>
 

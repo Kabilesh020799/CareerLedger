@@ -94,7 +94,7 @@ export function ApplicationTimeline({ applicationId }: { applicationId: string }
                 <Input {...register('occurredAt')} type="date" />
                 <Field.ErrorText>{errors.occurredAt?.message}</Field.ErrorText>
               </Field.Root>
-              <Button alignSelf={{ base: 'stretch', sm: 'auto' }} colorPalette="purple" loading={createEvent.isPending} type="submit">
+              <Button alignSelf={{ base: 'stretch', sm: 'auto' }} colorPalette="brand" loading={createEvent.isPending} type="submit">
                 Add note
               </Button>
             </Flex>
@@ -123,7 +123,7 @@ function TimelineEntries({ events, error, isPending, onRetry }: TimelineEntriesP
   if (isPending) {
     return (
       <Flex align="center" gap="3" aria-label="Loading application timeline">
-        <Spinner color="purple.fg" size="sm" />
+        <Spinner color="brand.fg" size="sm" />
         <Text color="fg.muted">Loading timeline…</Text>
       </Flex>
     )
@@ -158,7 +158,7 @@ function TimelineEntries({ events, error, isPending, onRetry }: TimelineEntriesP
           as="li"
           key={event.id}
           borderLeftWidth="2px"
-          borderColor={event.type === 'STATUS_CHANGE' ? 'purple.emphasized' : 'border.emphasized'}
+          borderColor={event.type === 'STATUS_CHANGE' ? 'brand.emphasized' : 'border.emphasized'}
           pb="6"
           pl="5"
           position="relative"
@@ -166,7 +166,7 @@ function TimelineEntries({ events, error, isPending, onRetry }: TimelineEntriesP
         >
           <Box
             aria-hidden="true"
-            bg={event.type === 'STATUS_CHANGE' ? 'purple.solid' : 'bg.emphasized'}
+            bg={event.type === 'STATUS_CHANGE' ? 'brand.solid' : 'bg.emphasized'}
             borderRadius="full"
             boxSize="2.5"
             left="-1.5"
@@ -174,7 +174,7 @@ function TimelineEntries({ events, error, isPending, onRetry }: TimelineEntriesP
             top="1.5"
           />
           <Flex align="center" gap="3" justify="space-between" wrap="wrap">
-            <Badge colorPalette={event.type === 'STATUS_CHANGE' ? 'purple' : 'gray'}>
+            <Badge colorPalette={event.type === 'STATUS_CHANGE' ? 'brand' : 'gray'}>
               {event.type === 'STATUS_CHANGE' ? 'Status change' : 'Note'}
             </Badge>
             <Text color="fg.subtle" fontSize="sm">{formatEventDate(event.occurredAt)}</Text>

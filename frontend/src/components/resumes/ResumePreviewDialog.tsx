@@ -58,7 +58,7 @@ export function ResumePreviewDialog({ resume }: ResumePreviewDialogProps) {
                   <iframe src={previewUrl} title={`Preview of ${resume.fileName}`} />
                 </Box>
               ) : canPreview && !previewError ? (
-                <Flex align="center" aria-label="Loading resume preview" flex="1" justify="center"><Spinner color="purple.fg" size="xl" /></Flex>
+                <Flex align="center" aria-label="Loading resume preview" flex="1" justify="center"><Spinner color="brand.fg" size="xl" /></Flex>
               ) : previewError ? (
                 <Alert.Root alignSelf="center" maxW="lg" status="error"><Alert.Indicator /><Alert.Content><Alert.Title>Unable to preview resume</Alert.Title><Alert.Description>Try opening the document in a new tab.</Alert.Description></Alert.Content></Alert.Root>
               ) : (
@@ -71,7 +71,7 @@ export function ResumePreviewDialog({ resume }: ResumePreviewDialogProps) {
             <Dialog.Footer borderTopColor="border" borderTopWidth="1px">
               <Flex gap="3" justify="flex-end" w="full">
                 <Dialog.ActionTrigger asChild><Button variant="outline">Close</Button></Dialog.ActionTrigger>
-                <Button asChild colorPalette="purple"><a href={resumeUrl} rel="noreferrer" target="_blank">Open in new tab</a></Button>
+                <Button asChild colorPalette="brand"><a href={resumeUrl} rel="noreferrer" target="_blank">Open in new tab</a></Button>
               </Flex>
             </Dialog.Footer>
             <Dialog.CloseTrigger asChild><CloseButton size="sm" /></Dialog.CloseTrigger>

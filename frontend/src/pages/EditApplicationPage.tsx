@@ -13,7 +13,7 @@ export function EditApplicationPage() {
   const updateApplication = useUpdateApplication()
 
   if (applicationQuery.isPending) {
-    return <Flex minH="18rem" align="center" justify="center" aria-label="Loading application"><Spinner color="purple.fg" size="xl" /></Flex>
+    return <Flex minH="18rem" align="center" justify="center" aria-label="Loading application"><Spinner color="brand.fg" size="xl" /></Flex>
   }
 
   if (applicationQuery.isError || !id) {

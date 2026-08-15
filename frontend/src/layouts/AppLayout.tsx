@@ -109,7 +109,7 @@ export function AppLayout() {
         <Stack gap={{ base: '0', lg: '7' }} minH={{ lg: '100vh' }} px={{ base: '4', sm: '6', lg: '5' }} py={{ base: '3', lg: '6' }} position={{ lg: 'sticky' }} top="0">
           <Flex align="center" gap="3" justify="space-between">
             <Flex align="center" gap="3" minW="0">
-            <Flex align="center" bg="purple.solid" borderRadius="lg" color="purple.contrast" fontWeight="bold" h="9" justify="center" shadow="sm" w="9">JT</Flex>
+            <Flex align="center" bg="brand.solid" borderRadius="lg" color="brand.contrast" fontWeight="bold" h="9" justify="center" shadow="sm" w="9">JT</Flex>
             <Box minW="0">
               <Heading as="div" fontSize="md" letterSpacing="-0.02em" whiteSpace="nowrap">Job Tracker</Heading>
               <Text color="fg.muted" display={{ base: 'none', lg: 'block' }} fontSize="sm" mt="1">Keep your search moving.</Text>
@@ -142,7 +142,7 @@ export function AppLayout() {
                 {visibleNavigation.map((group) => (
                   <Stack gap="1" key={group.label}>
                     {group.label === 'Workspace' ? <Text color="fg.subtle" fontSize="2xs" fontWeight="bold" letterSpacing="0.1em" px="3" textTransform="uppercase">{group.label}</Text> : <Button aria-expanded={expandedGroups.includes(group.label)} justifyContent="space-between" size="sm" variant="ghost" onClick={() => setExpandedGroups((groups) => groups.includes(group.label) ? groups.filter((label) => label !== group.label) : [...groups, group.label])}>{group.label}<ChevronDown aria-hidden size={16} style={{ transform: expandedGroups.includes(group.label) ? 'rotate(180deg)' : undefined }} /></Button>}
-                    {(group.label === 'Workspace' || expandedGroups.includes(group.label)) && group.items.map((item) => <Link asChild key={item.to} borderRadius="lg" minH="11" px="3" py="2" fontSize="sm" fontWeight="medium" color="fg.muted" _currentPage={{ bg: 'purple.subtle', color: 'purple.fg' }} _hover={{ bg: 'bg.muted', color: 'fg', textDecoration: 'none' }}>
+                    {(group.label === 'Workspace' || expandedGroups.includes(group.label)) && group.items.map((item) => <Link asChild key={item.to} borderRadius="lg" minH="11" px="3" py="2" fontSize="sm" fontWeight="medium" color="fg.muted" _currentPage={{ bg: 'brand.subtle', color: 'brand.fg' }} _hover={{ bg: 'bg.muted', color: 'fg', textDecoration: 'none' }}>
                       <NavLink to={item.to}>
                         <Flex align="center" gap="3" justify="space-between" w="full">
                           <Flex align="center" gap="3"><item.icon aria-hidden size={18} /><Text>{item.label}</Text></Flex>
@@ -190,8 +190,8 @@ export function AppLayout() {
         </Container>
       </Box>
       <Flex as="nav" aria-label="Mobile navigation" align="center" bg="bg.panel" borderColor="border" borderTopWidth="1px" bottom="0" display={{ base: 'flex', lg: 'none' }} h="18" justify="space-around" left="0" position="fixed" right="0" zIndex="docked">
-        {mobileNavigation.map((item) => <Link asChild key={item.to} color="fg.muted" _currentPage={{ color: 'purple.fg' }} _hover={{ textDecoration: 'none' }}><NavLink aria-label={`${item.label} tab`} to={item.to}><Stack align="center" gap="0.5" minW="20"><item.icon aria-hidden size={20} /><Text fontSize="xs" fontWeight="semibold">{item.label}</Text></Stack></NavLink></Link>)}
-        <Button ref={moreButtonRef} aria-controls={navigationId} aria-expanded={navigationOpen} aria-label={navigationOpen ? 'Close more navigation' : 'Open more navigation'} color={navigationOpen ? 'purple.fg' : 'fg.muted'} h="auto" minW="20" p="0" variant="plain" onClick={() => setNavigationOpen((open) => !open)}><Stack align="center" gap="0.5">{navigationOpen ? <X aria-hidden size={20} /> : <Menu aria-hidden size={20} />}<Text fontSize="xs" fontWeight="semibold">More</Text></Stack></Button>
+        {mobileNavigation.map((item) => <Link asChild key={item.to} color="fg.muted" _currentPage={{ color: 'brand.fg' }} _hover={{ textDecoration: 'none' }}><NavLink aria-label={`${item.label} tab`} to={item.to}><Stack align="center" gap="0.5" minW="20"><item.icon aria-hidden size={20} /><Text fontSize="xs" fontWeight="semibold">{item.label}</Text></Stack></NavLink></Link>)}
+        <Button ref={moreButtonRef} aria-controls={navigationId} aria-expanded={navigationOpen} aria-label={navigationOpen ? 'Close more navigation' : 'Open more navigation'} color={navigationOpen ? 'brand.fg' : 'fg.muted'} h="auto" minW="20" p="0" variant="plain" onClick={() => setNavigationOpen((open) => !open)}><Stack align="center" gap="0.5">{navigationOpen ? <X aria-hidden size={20} /> : <Menu aria-hidden size={20} />}<Text fontSize="xs" fontWeight="semibold">More</Text></Stack></Button>
       </Flex>
     </Flex>
   )

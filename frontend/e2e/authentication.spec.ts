@@ -24,9 +24,16 @@ test('switch and retain the application color theme', async ({ page }) => {
   await page.evaluate(() => window.localStorage.removeItem('job-tracker-color-mode'))
   await page.reload()
 
+  await expect(page.getByRole('button', { name: 'Sign in', exact: true }))
+    .toHaveCSS('background-color', 'rgb(67, 56, 202)')
+  await expect(page.locator('body')).toHaveCSS('color', 'rgb(15, 23, 42)')
+
   await page.getByRole('button', { name: 'Switch to dark theme' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await expect(page.getByRole('button', { name: 'Switch to light theme' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sign in', exact: true }))
+    .toHaveCSS('background-color', 'rgb(79, 70, 229)')
+  await expect(page.locator('body')).toHaveCSS('color', 'rgb(248, 250, 252)')
 
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')

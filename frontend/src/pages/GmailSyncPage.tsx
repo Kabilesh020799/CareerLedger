@@ -106,7 +106,7 @@ export function GmailSyncPage() {
           <Text color="fg.muted">
             Job Tracker requests read-only message metadata access and stores authorization securely on the server. Google may ask you to approve this restricted Gmail scope.
           </Text>
-          <Button alignSelf="start" asChild colorPalette="purple">
+          <Button alignSelf="start" asChild colorPalette="brand">
             <a href={gmailConnectUrl}>Authorize Gmail</a>
           </Button>
         </Stack>
@@ -161,7 +161,7 @@ export function GmailSyncPage() {
           )}
 
           <Flex align={{ base: 'stretch', sm: 'center' }} direction={{ base: 'column', sm: 'row' }} gap="3">
-            <Button colorPalette="purple" loading={synchronize.isPending} onClick={() => synchronize.mutate()}>
+            <Button colorPalette="brand" loading={synchronize.isPending} onClick={() => synchronize.mutate()}>
               Sync now
             </Button>
             <DisconnectGmailDialog
@@ -249,7 +249,7 @@ export function GmailSyncPage() {
 
           {reviewsQuery.isPending && (
             <Flex align="center" aria-label="Loading Gmail updates" justify="center" minH="12rem">
-              <Spinner color="purple.fg" size="lg" />
+              <Spinner color="brand.fg" size="lg" />
             </Flex>
           )}
 

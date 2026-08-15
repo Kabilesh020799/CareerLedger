@@ -30,7 +30,7 @@ export function SourceOutcomeAnalytics({ outcomes }: { outcomes: SourceOutcome[]
           <Text color="fg.muted" fontSize="sm">
             Add a source to an application to compare where your opportunities originate.
           </Text>
-          <Button asChild colorPalette="purple" size="sm">
+          <Button asChild colorPalette="brand" size="sm">
             <Link to="/applications/new">Create an application</Link>
           </Button>
         </Stack>

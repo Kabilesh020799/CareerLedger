@@ -48,7 +48,7 @@ export function ApplicationBoard({
     <Stack gap="4">
       <Stack display={{ base: 'flex', md: 'none' }} gap="1">
         <Flex aria-label="Choose board status" gap="2" overflowX="auto" pb="2" role="tablist">
-          {applicationStatuses.map((status) => <Button aria-controls={`board-panel-${status}`} aria-selected={mobileStatus === status} flexShrink="0" id={`board-tab-${status}`} key={status} role="tab" size="sm" variant={mobileStatus === status ? 'solid' : 'outline'} colorPalette={mobileStatus === status ? 'purple' : 'gray'} onClick={() => setMobileStatus(status)}>{applicationStatusLabels[status]} <Badge ml="1" variant="subtle">{grouped[status].length}</Badge></Button>)}
+          {applicationStatuses.map((status) => <Button aria-controls={`board-panel-${status}`} aria-selected={mobileStatus === status} flexShrink="0" id={`board-tab-${status}`} key={status} role="tab" size="sm" variant={mobileStatus === status ? 'solid' : 'outline'} colorPalette={mobileStatus === status ? 'brand' : 'gray'} onClick={() => setMobileStatus(status)}>{applicationStatusLabels[status]} <Badge ml="1" variant="subtle">{grouped[status].length}</Badge></Button>)}
         </Flex>
         <Text color="fg.subtle" fontSize="xs">Scroll to review every stage.</Text>
       </Stack>
@@ -75,8 +75,8 @@ export function ApplicationBoard({
             as="section"
             aria-labelledby={`board-tab-${status}`}
             aria-label={`${label} applications`}
-            bg={isDropTarget ? 'purple.subtle' : 'bg.muted'}
-            borderColor={isDropTarget ? 'purple.emphasized' : 'transparent'}
+            bg={isDropTarget ? 'brand.subtle' : 'bg.muted'}
+            borderColor={isDropTarget ? 'brand.emphasized' : 'transparent'}
             borderRadius="xl"
             borderWidth="2px"
             flex="0 0 17rem"
@@ -96,7 +96,7 @@ export function ApplicationBoard({
           >
             <Flex align="center" justify="space-between" px="1">
               <Heading as="h3" size="sm">{label}</Heading>
-              <Badge colorPalette="purple" variant="subtle">
+              <Badge colorPalette="brand" variant="subtle">
                 {statusApplications.length}
               </Badge>
             </Flex>
@@ -183,7 +183,7 @@ function ApplicationBoardCard({
       onDragStart={onDragStart}
     >
       <Stack gap="1">
-        <ChakraLink asChild fontWeight="semibold" color="purple.fg">
+        <ChakraLink asChild fontWeight="semibold" color="brand.fg">
           <Link to={`/applications/${application.id}`}>{application.company}</Link>
         </ChakraLink>
         <Text color="fg" fontSize="sm">{application.jobTitle}</Text>

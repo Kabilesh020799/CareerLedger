@@ -35,7 +35,7 @@ export function SignupPage() {
       <Container maxW="lg">
         <Stack bg="bg.panel" borderColor="border" borderRadius="2xl" borderWidth="1px" boxShadow="xl" gap="6" p={{ base: '6', sm: '9' }}>
           <Stack gap="2">
-            <Text color="purple.fg" fontSize="sm" fontWeight="bold" letterSpacing="0.08em" textTransform="uppercase">Job Tracker</Text>
+            <Text color="brand.fg" fontSize="sm" fontWeight="bold" letterSpacing="0.08em" textTransform="uppercase">Job Tracker</Text>
             <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }}>Create your account</Heading>
             <Text color="fg.muted">Start tracking applications in your private workspace.</Text>
           </Stack>
@@ -57,7 +57,7 @@ export function SignupPage() {
               <Field.Root invalid={Boolean(errors.email)} required><Field.Label>Email</Field.Label><Input {...register('email')} autoComplete="email" type="email" /><Field.ErrorText>{errors.email?.message}</Field.ErrorText></Field.Root>
               <Field.Root invalid={Boolean(errors.password)} required><Field.Label>Password</Field.Label><Input {...register('password')} autoComplete="new-password" type="password" /><Field.HelperText>Use 12–72 characters with upper and lowercase letters and a number.</Field.HelperText><Field.ErrorText>{errors.password?.message}</Field.ErrorText></Field.Root>
               <Field.Root invalid={Boolean(errors.confirmPassword)} required><Field.Label>Confirm password</Field.Label><Input {...register('confirmPassword')} autoComplete="new-password" type="password" /><Field.ErrorText>{errors.confirmPassword?.message}</Field.ErrorText></Field.Root>
-              <Button type="submit" colorPalette="purple" loading={signup.isPending} minH="11">Create account</Button>
+              <Button type="submit" colorPalette="brand" loading={signup.isPending} minH="11">Create account</Button>
             </Stack>
           </form>
 

@@ -30,7 +30,7 @@ export function DashboardReminders({ compact = false }: { compact?: boolean }) {
 
       {remindersQuery.isPending && (
         <Flex align="center" aria-label="Loading dashboard reminders" gap="3">
-          <Spinner color="purple.fg" size="sm" />
+          <Spinner color="brand.fg" size="sm" />
           <Text color="fg.muted">Loading reminders…</Text>
         </Flex>
       )}
@@ -61,7 +61,7 @@ export function DashboardReminders({ compact = false }: { compact?: boolean }) {
         />
       )}
       {remindersQuery.isSuccess && remindersQuery.data.length > 3 && (
-        <ChakraLink asChild alignSelf="start" color="purple.fg" fontSize="sm" fontWeight="semibold">
+        <ChakraLink asChild alignSelf="start" color="brand.fg" fontSize="sm" fontWeight="semibold">
           <Link to="/calendar">View all {remindersQuery.data.length} reminders</Link>
         </ChakraLink>
       )}
@@ -136,15 +136,15 @@ function ReminderGroup({
           >
             <Stack gap="2">
               <Flex gap="2" wrap="wrap">
-                <Badge colorPalette={heading === 'Overdue' ? 'red' : 'purple'}>{heading}</Badge>
-                <Badge colorPalette={reminder.type === 'DEADLINE' ? 'purple' : 'blue'}>
+                <Badge colorPalette={heading === 'Overdue' ? 'red' : 'brand'}>{heading}</Badge>
+                <Badge colorPalette={reminder.type === 'DEADLINE' ? 'brand' : 'blue'}>
                   {reminder.type === 'DEADLINE' ? 'Deadline' : 'Follow-up'}
                 </Badge>
               </Flex>
               <Text fontWeight="medium">{reminder.description}</Text>
               <Text color="fg.subtle" fontSize="sm">
                 Due {formatReminderDate(reminder.dueAt)} ·{' '}
-                <ChakraLink asChild color="purple.fg">
+                <ChakraLink asChild color="brand.fg">
                   <Link to={`/applications/${reminder.application.id}`}>
                     {reminder.application.company} — {reminder.application.jobTitle}
                   </Link>
