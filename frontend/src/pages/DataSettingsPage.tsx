@@ -1,6 +1,6 @@
 import { Alert, Box, Button, Field, Flex, Input, Stack, Text } from '@chakra-ui/react'
 import { Download, Upload } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { PageHeader } from '../components/ui/PageHeader'
 import { useWorkspace } from '../contexts/WorkspaceContext'
 import { dataTransferService } from '../services/data-transfer.service'
@@ -23,6 +23,7 @@ export function DataSettingsPage() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [preview, setPreview] = useState<BackupPreview | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const download = async () => {
     if (!workspaceId) return
@@ -54,6 +55,7 @@ export function DataSettingsPage() {
       const result = await dataTransferService.importWorkspace(workspaceId, preview.document)
       setMessage(`Imported ${result.created} application${result.created === 1 ? '' : 's'}; skipped ${result.skipped} duplicate${result.skipped === 1 ? '' : 's'}.`)
       setPreview(null)
+      if (fileInputRef.current) fileInputRef.current.value = ''
     } catch { setError('Import failed. The backup may be invalid or incompatible.') } finally { setBusy(false) }
   }
 
@@ -66,8 +68,33 @@ export function DataSettingsPage() {
     </Stack>
     <Stack bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" gap="4" p={{ base: '5', md: '7' }}>
       <Flex align="start" gap="4"><Box color="purple.fg"><Upload aria-hidden /></Box><Box><Text fontSize="lg" fontWeight="semibold">Restore from backup</Text><Text color="fg.muted" fontSize="sm">Choose a file to review its contents before anything is imported.</Text></Box></Flex>
-      <Field.Root><Field.Label>Job Tracker backup</Field.Label><Input aria-label="Import JSON backup" type="file" accept="application/json,.json" disabled={busy} onChange={(event) => void selectFile(event.target.files?.[0])} /></Field.Root>
-      {preview && <Alert.Root status="warning"><Alert.Indicator /><Alert.Content><Alert.Title>Review import</Alert.Title><Alert.Description><Text><strong>{preview.fileName}</strong> contains {preview.applicationCount} application{preview.applicationCount === 1 ? '' : 's'}{preview.workspaceName ? ` from ${preview.workspaceName}` : ''}. Existing duplicates will be skipped.</Text><Flex gap="3" mt="4" wrap="wrap"><Button colorPalette="purple" loading={busy} onClick={importBackup}>Import applications</Button><Button variant="outline" onClick={() => setPreview(null)}>Cancel</Button></Flex></Alert.Description></Alert.Content></Alert.Root>}
+      <Field.Root>
+        <Field.Label>Job Tracker backup</Field.Label>
+        <Input
+          ref={fileInputRef}
+          id="backup-file"
+          aria-label="Import JSON backup"
+          type="file"
+          accept="application/json,.json"
+          disabled={busy}
+          position="absolute"
+          h="1px"
+          w="1px"
+          opacity="0"
+          overflow="hidden"
+          onChange={(event) => void selectFile(event.target.files?.[0])}
+        />
+        <Flex align={{ base: 'stretch', sm: 'center' }} direction={{ base: 'column', sm: 'row' }} gap="3">
+          <Button asChild alignSelf={{ base: 'stretch', sm: 'start' }} variant="outline">
+            <label htmlFor="backup-file"><Upload aria-hidden size={17} />Choose JSON backup</label>
+          </Button>
+          <Text color="fg.muted" fontSize="sm" overflowWrap="anywhere">
+            {preview?.fileName ?? 'No file selected'}
+          </Text>
+        </Flex>
+        <Field.HelperText>JSON files only. Maximum 1,000 applications.</Field.HelperText>
+      </Field.Root>
+      {preview && <Alert.Root status="warning"><Alert.Indicator /><Alert.Content><Alert.Title>Review import</Alert.Title><Alert.Description><Text><strong>{preview.fileName}</strong> contains {preview.applicationCount} application{preview.applicationCount === 1 ? '' : 's'}{preview.workspaceName ? ` from ${preview.workspaceName}` : ''}. Existing duplicates will be skipped.</Text><Flex gap="3" mt="4" wrap="wrap"><Button colorPalette="purple" loading={busy} onClick={importBackup}>Import applications</Button><Button variant="outline" onClick={() => { setPreview(null); if (fileInputRef.current) fileInputRef.current.value = '' }}>Cancel</Button></Flex></Alert.Description></Alert.Content></Alert.Root>}
     </Stack>
   </Stack>
 }

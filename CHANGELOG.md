@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.27.4] - 2026-08-15
+
+### Fixed
+
+- Replaced the mismatched native backup file input with a responsive, accessible picker that clearly shows the selected JSON filename.
+
 ## [3.27.3] - 2026-08-15
 
 ### Changed
@@ -412,7 +418,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.3...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.4...HEAD
+[3.27.4]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.3...v3.27.4
 [3.27.3]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.2...v3.27.3
 [3.27.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.1...v3.27.2
 [3.27.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.0...v3.27.1

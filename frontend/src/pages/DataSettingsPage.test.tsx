@@ -22,9 +22,13 @@ describe('DataSettingsPage', () => {
     vi.mocked(dataTransferService.importWorkspace).mockResolvedValue({ created: 2, skipped: 1, total: 3 })
     render(<AppProvider><DataSettingsPage /></AppProvider>)
 
+    expect(screen.getByText('Choose JSON backup')).toBeVisible()
+    expect(screen.getByText('No file selected')).toBeVisible()
+
     const backup = new File([JSON.stringify({ workspace: { name: 'Search team' }, applications: [{}, {}, {}] })], 'backup.json', { type: 'application/json' })
     await user.upload(screen.getByLabelText('Import JSON backup'), backup)
 
+    expect(await screen.findAllByText('backup.json')).toHaveLength(2)
     expect(await screen.findByText(/contains 3 applications from Search team/)).toBeInTheDocument()
     expect(dataTransferService.importWorkspace).not.toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: 'Import applications' }))
