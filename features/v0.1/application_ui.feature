@@ -49,6 +49,7 @@ Feature: Manage applications in the React interface
     Given I am viewing the application discovery controls
     When I change search, status, sorting, or another filter
     Then matching applications should update without a separate apply action
+    And the filter controls should remain available while I refine the results
     And the selected controls should remain represented in the page URL
 
   Scenario: Display consistent application dropdowns

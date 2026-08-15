@@ -47,7 +47,7 @@ export function ApplicationsPage() {
         <Button aria-expanded={filtersOpen} display={{ base: 'inline-flex', md: 'none' }} size="sm" variant="outline" onClick={() => setFiltersOpen((value) => !value)}>Filters {hasFilters && <Badge colorPalette="purple" ml="2" variant="solid">On</Badge>}</Button>
       </Flex>
       <Box display={{ base: filtersOpen ? 'block' : 'none', md: 'block' }}>
-        <ApplicationDiscoveryControls query={query} onChange={(value) => { setQuery(value); setFiltersOpen(false) }} onClear={clearFilters} />
+        <ApplicationDiscoveryControls query={query} onChange={setQuery} onClear={clearFilters} />
       </Box>
 
       {applicationsQuery.isPending && (

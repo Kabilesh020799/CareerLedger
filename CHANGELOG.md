@@ -15,7 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
-- Prevented long application content from clipping mobile status information or causing horizontal page drift, and completed the mobile board tab and navigation accessibility behavior.
+- Prevented long application content from clipping mobile status information or causing horizontal page drift, completed the mobile board tab and navigation accessibility behavior, and kept mobile filters open while results are refined.
 
 ### Security
 
