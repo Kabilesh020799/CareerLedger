@@ -136,21 +136,21 @@ describe('application routing', () => {
     const user = userEvent.setup()
     renderApp('/dashboard')
 
-    const menuButton = await screen.findByRole('button', { name: 'Open navigation' })
+    const menuButton = await screen.findByRole('button', { name: 'Open more navigation' })
     expect(menuButton).toHaveAttribute('aria-expanded', 'false')
     await user.click(menuButton)
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Email sync' })).toHaveAttribute('href', '/gmail')
     await user.click(screen.getByRole('link', { name: 'Applications' }))
     expect(await screen.findByRole('heading', { name: 'Applications' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Open navigation' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: 'Open more navigation' })).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('navigates to the application board', async () => {
     const user = userEvent.setup()
     renderApp('/applications')
 
-    await user.click(await screen.findByRole('button', { name: 'Open navigation' }))
+    await user.click(await screen.findByRole('button', { name: 'Open more navigation' }))
     await user.click(screen.getByRole('link', { name: 'Board' }))
 
     expect(await screen.findByRole('heading', { name: 'Application board' })).toBeInTheDocument()
@@ -169,7 +169,7 @@ describe('application routing', () => {
     } as never)
     renderApp('/dashboard')
 
-    await user.click(await screen.findByRole('button', { name: 'Open navigation' }))
+    await user.click(await screen.findByRole('button', { name: 'Open more navigation' }))
 
     expect(screen.getByLabelText('2 pending email updates')).toHaveTextContent('2')
     expect(screen.getByRole('link', { name: /Email sync/ })).toHaveAttribute('href', '/gmail')

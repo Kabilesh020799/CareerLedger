@@ -16,13 +16,13 @@ Signup uses separate Redis counters so account creation cannot consume login all
 
 Set `ENABLE_PASSWORD_LOGIN=false` when password authentication is not required. Google configuration does not silently change this setting, preventing an operator from accidentally locking out an existing deployment.
 
-The repository includes public demo credentials for demonstration only. The accounts have separate ownership boundaries, but neither should store private job-search data because their passwords are public.
+The repository contains no demo passwords. Optional demo identities are loaded from runtime environment configuration, and production passwords belong in protected GitHub environment secrets. A migration invalidates the passwords previously published for legacy demo usernames; operators must provide replacement secrets to keep those logins available. The accounts retain separate ownership boundaries and should still contain demonstration data only.
 
 ## Authorization
 
 Application, resume, reminder, dashboard, and Gmail routes require authentication. Services scope owned-resource reads and writes to the authenticated user. A caller must receive a not-found or authorization-safe response instead of learning whether another user's record exists.
 
-The account-administration route additionally requires the normalized signed-in email to appear in the server-side administrator allowlist. Empty `ADMIN_ACCOUNT_EMAILS` configuration grants access to the first built-in demo account (`demo@jobtracker.invalid`); its password is public, so this default is suitable only for demonstration data and must be replaced before storing private account information. A configured list replaces the demo default, users cannot promote themselves, and administrator-reserved emails cannot create accounts through password signup or Google account creation. Reserved-email rejection uses the normal duplicate-account response so it does not disclose administrator configuration. The frontend's `isAdmin` flag is display-only; the backend independently returns `403` for every non-admin request. Account summaries exclude password hashes, OAuth identifiers, session records, tokens, and private user content.
+The account-administration route additionally requires the normalized signed-in email to appear in the server-side administrator allowlist. Empty `ADMIN_ACCOUNT_EMAILS` configuration grants access to the first environment-configured demo account; when no demo identity exists, it grants nobody access. A configured list replaces the demo default, users cannot promote themselves, and administrator-reserved emails cannot create accounts through password signup or Google account creation. Reserved-email rejection uses the normal duplicate-account response so it does not disclose administrator configuration. The frontend's `isAdmin` flag is display-only; the backend independently returns `403` for every non-admin request. Account summaries exclude password hashes, OAuth identifiers, session records, tokens, and private user content.
 
 ## Resume files
 

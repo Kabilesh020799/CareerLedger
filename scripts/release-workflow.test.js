@@ -225,6 +225,14 @@ test("deploys an optional administrator account allowlist", () => {
   assert.match(workflow, /printf 'ADMIN_ACCOUNT_EMAILS=%s\\n'/);
 });
 
+test("keeps production demo credentials in protected environment settings", () => {
+  const workflow = fs.readFileSync(workflowPath, "utf8");
+  assert.match(workflow, /DEMO_USER_PASSWORD: \$\{\{ secrets\.DEMO_USER_PASSWORD \}\}/);
+  assert.match(workflow, /DEMO_USER_2_PASSWORD: \$\{\{ secrets\.DEMO_USER_2_PASSWORD \}\}/);
+  assert.match(workflow, /DEMO_USER_USERNAME: \$\{\{ vars\.DEMO_USER_USERNAME \}\}/);
+  assert.match(workflow, /printf 'DEMO_USER_PASSWORD=%s\\n'/);
+});
+
 test("keeps the database upload fallback aligned with the five-megabyte limit", () => {
   const nginx = fs.readFileSync(frontendNginxPath, "utf8");
 

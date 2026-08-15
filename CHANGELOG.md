@@ -6,6 +6,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.27.3] - 2026-08-15
+
+### Changed
+
+- Streamlined workspace navigation, prioritized dashboard actions, applied application filters automatically, reduced duplicate detail actions, and progressively disclosed optional form content.
+- Reworked team and data settings into consistent guided workflows, including review-before-import for portable backups.
+
+### Fixed
+
+- Prevented long application content from clipping mobile status information or causing horizontal page drift, and completed the mobile board tab and navigation accessibility behavior.
+
+### Security
+
+- Removed repository-defined demo credentials, moved optional demo identities to protected runtime configuration, and invalidated the previously published demo passwords during database migration.
+
 ## [3.27.2] - 2026-08-15
 
 ### Security
@@ -397,7 +412,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.2...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.3...HEAD
+[3.27.3]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.2...v3.27.3
 [3.27.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.1...v3.27.2
 [3.27.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.0...v3.27.1
 [3.27.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.26.0...v3.27.0

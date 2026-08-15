@@ -47,9 +47,12 @@ export function ApplicationBoard({
 
   return (
     <Stack gap="4">
-      <Flex aria-label="Choose board status" display={{ base: 'flex', md: 'none' }} gap="2" overflowX="auto" pb="1" role="tablist">
-        {applicationStatuses.map((status) => <Button aria-selected={mobileStatus === status} flexShrink="0" key={status} role="tab" size="sm" variant={mobileStatus === status ? 'solid' : 'outline'} colorPalette={mobileStatus === status ? 'purple' : 'gray'} onClick={() => setMobileStatus(status)}>{applicationStatusLabels[status]} <Badge ml="1" variant="subtle">{grouped[status].length}</Badge></Button>)}
-      </Flex>
+      <Stack display={{ base: 'flex', md: 'none' }} gap="1">
+        <Flex aria-label="Choose board status" gap="2" overflowX="auto" pb="2" role="tablist">
+          {applicationStatuses.map((status) => <Button aria-controls={`board-panel-${status}`} aria-selected={mobileStatus === status} flexShrink="0" id={`board-tab-${status}`} key={status} role="tab" size="sm" variant={mobileStatus === status ? 'solid' : 'outline'} colorPalette={mobileStatus === status ? 'purple' : 'gray'} onClick={() => setMobileStatus(status)}>{applicationStatusLabels[status]} <Badge ml="1" variant="subtle">{grouped[status].length}</Badge></Button>)}
+        </Flex>
+        <Text color="fg.subtle" fontSize="xs">Scroll to review every stage.</Text>
+      </Stack>
       <Flex
       align="stretch"
       gap="4"
@@ -71,6 +74,7 @@ export function ApplicationBoard({
         return (
           <Stack
             as="section"
+            aria-labelledby={`board-tab-${status}`}
             aria-label={`${label} applications`}
             bg={isDropTarget ? 'purple.subtle' : 'bg.muted'}
             borderColor={isDropTarget ? 'purple.emphasized' : 'transparent'}
@@ -80,10 +84,12 @@ export function ApplicationBoard({
             display={{ base: mobileStatus === status ? 'flex' : 'none', md: 'flex' }}
             gap="3"
             key={status}
+            id={`board-panel-${status}`}
             minH={{ base: 'auto', md: '24rem' }}
             p="3"
             transition="background 0.15s ease, border-color 0.15s ease"
             scrollSnapAlign="start"
+            role="tabpanel"
             w={{ base: 'full', md: 'auto' }}
             onDragEnter={() => setDropTarget(status)}
             onDragOver={(event) => event.preventDefault()}

@@ -1,14 +1,6 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { chooseCustomSelectOption } from './support/custom-select'
-
-async function signIn(page: Page) {
-  await page.goto('/applications')
-  await expect(page).toHaveURL(/\/login$/)
-  await page.getByLabel('Username').fill('demo')
-  await page.getByLabel('Password').fill('JobTrackerDemo123!')
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page).toHaveURL(/\/applications$/)
-}
+import { signInAsDemoUser } from './support/demo-auth'
 
 test('manage a resume tag and associate it with an application', async ({ page }) => {
   const suffix = Date.now()
@@ -16,7 +8,7 @@ test('manage a resume tag and associate it with an application', async ({ page }
   const revisedName = `Backend resume ${suffix}`
   const company = `Resume verification ${suffix}`
 
-  await signIn(page)
+  await signInAsDemoUser(page)
   await page.getByRole('link', { name: 'Resumes' }).click()
   await page.getByRole('tab', { name: 'Strategy tags' }).click()
   await page.getByLabel('Tag name').fill(initialName)

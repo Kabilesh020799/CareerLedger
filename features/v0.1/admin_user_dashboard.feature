@@ -24,7 +24,8 @@ Feature: Review user accounts as an administrator
 
   Scenario: Use the first demo account as the default administrator
     Given no administrator account emails are configured
-    When the first built-in demo account requests account summaries
+    And a demo identity is configured through the environment
+    When the first configured demo account requests account summaries
     Then the administrator dashboard should be available
     And another signed-in account should still be rejected
 

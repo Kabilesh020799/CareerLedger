@@ -2,6 +2,8 @@
 
 PostgreSQL is managed through Prisma migrations in `backend/prisma/migrations`. Do not edit an applied migration.
 
+The `20260815090000_revoke_legacy_demo_passwords` security migration clears password hashes for the two legacy demo usernames whose credentials were previously published. Runtime bootstrap assigns a replacement hash only when operators provide a complete demo identity through environment configuration; the migration does not delete either user or their data.
+
 ## Application discovery indexes
 
 Application discovery uses compound B-tree indexes aligned with user/workspace ownership, supported sort fields, status filtering, and the stable identifier tie-breaker used by pagination. PostgreSQL's `pg_trgm` extension supplies GIN trigram indexes for case-insensitive contains searches across company, job title, location, and source.

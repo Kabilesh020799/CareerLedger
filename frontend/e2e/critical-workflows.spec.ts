@@ -1,19 +1,11 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { chooseCustomSelectOption } from './support/custom-select'
-
-async function signIn(page: Page) {
-  await page.goto('/applications')
-  await expect(page).toHaveURL(/\/login$/)
-  await page.getByLabel('Username').fill('demo')
-  await page.getByLabel('Password').fill('JobTrackerDemo123!')
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page).toHaveURL(/\/applications$/)
-}
+import { signInAsDemoUser } from './support/demo-auth'
 
 test('sign in, create, open, edit, and delete an application, then sign out', async ({ page }) => {
   const suffix = Date.now()
   const company = `Critical workflow ${suffix}`
-  await signIn(page)
+  await signInAsDemoUser(page)
 
   await page.getByRole('link', { name: 'Add application' }).click()
   await page.getByLabel('Company').fill(company)
@@ -28,7 +20,6 @@ test('sign in, create, open, edit, and delete an application, then sign out', as
 
   await page.getByRole('link', { name: 'Applications', exact: true }).click()
   await page.getByLabel('Search').fill(company)
-  await page.getByRole('button', { name: 'Apply filters' }).click()
   await page.getByRole('row').filter({ hasText: company }).getByRole('link', { name: 'View' }).click()
   await expect(page).toHaveURL(applicationUrl)
 
@@ -51,7 +42,7 @@ test('sign in, create, open, edit, and delete an application, then sign out', as
 })
 
 test('shows validation without creating an incomplete application', async ({ page }) => {
-  await signIn(page)
+  await signInAsDemoUser(page)
   await page.getByRole('link', { name: 'Add application' }).click()
   await page.getByRole('button', { name: 'Create application' }).click()
   await expect(page.getByText('Company is required')).toBeVisible()
@@ -60,7 +51,7 @@ test('shows validation without creating an incomplete application', async ({ pag
 })
 
 test('shows notification delivery capabilities from the authenticated API', async ({ page }) => {
-  await signIn(page)
+  await signInAsDemoUser(page)
   await page.getByRole('link', { name: 'Notifications' }).click()
   await expect(page.getByRole('heading', { name: 'Notifications' })).toBeVisible()
   await expect(page.getByText(/configure SMTP/)).toBeVisible()

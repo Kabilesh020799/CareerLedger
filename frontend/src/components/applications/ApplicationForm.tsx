@@ -68,7 +68,7 @@ export function ApplicationForm({
         </Alert.Root>
       )}
 
-      <FormSection title="Job details" description="The role and company you want to track.">
+      <FormSection title="Essentials" description="Add the details you need to recognize and act on this opportunity.">
       <SimpleGrid columns={{ base: 1, md: 2 }} gap="5">
         <FormField label="Company" error={errors.company?.message} required>
           <Input {...register('company')} autoComplete="organization" />
@@ -91,10 +91,7 @@ export function ApplicationForm({
         </FormField>
 
       </SimpleGrid>
-      </FormSection>
-
-      <FormSection title="Application progress" description="Where this opportunity is in your pipeline.">
-      <SimpleGrid columns={{ base: 1, md: 2 }} gap="5">
+      <SimpleGrid columns={{ base: 1, md: 2 }} gap="5" mt="1">
         <FormField label="Applied date" error={errors.appliedAt?.message}>
           <Input {...register('appliedAt')} type="date" />
         </FormField>
@@ -115,31 +112,25 @@ export function ApplicationForm({
       </SimpleGrid>
       </FormSection>
 
-      <FormSection title="Notes" description="Interview context, contacts, or anything worth remembering.">
-        <FormField label="Notes" error={errors.notes?.message}>
-          <Textarea {...register('notes')} minH="8rem" placeholder="Add context or next steps…" resize="vertical" />
-        </FormField>
-      </FormSection>
+      <Box as="details" bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" p={{ base: '4', md: '5' }}>
+        <Box as="summary" cursor="pointer" fontWeight="semibold">Notes and documents <Text as="span" color="fg.muted" fontSize="sm" fontWeight="normal">(optional)</Text></Box>
+        <Stack gap="6" mt="5">
+          <FormField label="Notes" error={errors.notes?.message}>
+            <Textarea {...register('notes')} minH="8rem" placeholder="Interview context, contacts, or next steps…" resize="vertical" />
+          </FormField>
 
-      {allowResumeAttachment && (
-        <FormSection title="Documents" description="Attach the resume used for this application.">
-        <FormField
-          label={currentResumeFileName ? 'Replace resume' : 'Attach resume'}
-          error={errors.resume?.message}
-        >
-          {currentResumeFileName && (
-            <Text color="fg.muted" fontSize="sm">
-              Current file: {currentResumeFileName}
-            </Text>
+          {allowResumeAttachment && (
+            <FormField label={currentResumeFileName ? 'Replace resume' : 'Attach resume'} error={errors.resume?.message}>
+              {currentResumeFileName && <Text color="fg.muted" fontSize="sm">Current file: {currentResumeFileName}</Text>}
+              <Box borderColor={selectedResume ? 'purple.emphasized' : 'border'} borderRadius="lg" borderStyle="dashed" borderWidth="2px" bg={selectedResume ? 'purple.subtle' : 'bg.subtle'} p="5" textAlign="center">
+                <Input {...register('resume')} accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" cursor="pointer" p="1.5" type="file" />
+                <Text color="fg.muted" fontSize="sm" mt="2">{selectedResume ? `${selectedResume.name} selected` : 'Choose a file'}</Text>
+                <Text color="fg.subtle" fontSize="xs" mt="1">PDF, DOC, or DOCX up to 5 MB.</Text>
+              </Box>
+            </FormField>
           )}
-          <Box borderColor={selectedResume ? 'purple.emphasized' : 'border'} borderRadius="lg" borderStyle="dashed" borderWidth="2px" bg={selectedResume ? 'purple.subtle' : 'bg.subtle'} p="5" textAlign="center">
-            <Input {...register('resume')} accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" cursor="pointer" p="1.5" type="file" />
-            <Text color="fg.muted" fontSize="sm" mt="2">{selectedResume ? `${selectedResume.name} selected` : 'Choose a file'}</Text>
-            <Text color="fg.subtle" fontSize="xs" mt="1">PDF, DOC, or DOCX up to 5 MB. Selecting a file saves it as Role_Company.</Text>
-          </Box>
-        </FormField>
-        </FormSection>
-      )}
+        </Stack>
+      </Box>
 
         <Flex bg="bg.panel" borderColor="border" borderTopWidth="1px" bottom={{ base: '18', lg: '0' }} direction={{ base: 'column-reverse', sm: 'row' }} gap="3" justify="flex-end" mx={{ base: '-5', md: '-8' }} px={{ base: '5', md: '8' }} py="4" position="sticky" zIndex="base">
         {cancelTo && <Button asChild flex={{ base: '1', sm: 'initial' }} variant="outline"><Link to={cancelTo}>Cancel</Link></Button>}

@@ -11,7 +11,7 @@ const prisma = new client_1.PrismaClient({
     adapter: new adapter_pg_1.PrismaPg({ connectionString }),
 });
 async function main() {
-    await (0, demo_user_bootstrap_service_1.bootstrapBuiltInDemoUser)(prisma);
+    await (0, demo_user_bootstrap_service_1.bootstrapConfiguredDemoUsers)(prisma);
     console.log("Production user bootstrap completed.");
 }
 if (require.main === module) {

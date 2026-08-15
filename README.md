@@ -12,21 +12,16 @@ Requirements: Docker and Docker Compose.
 docker compose up --build
 ```
 
-Open <http://localhost:5173> and sign in with the built-in demo account:
+Optionally configure a local demo identity in an untracked `.env` file before starting:
 
 ```text
-Username: demo
-Password: JobTrackerDemo123!
+DEMO_USER_USERNAME=choose-a-demo-username
+DEMO_USER_PASSWORD=choose-a-strong-demo-password
+DEMO_USER_EMAIL=demo@example.invalid
+DEMO_USER_NAME=Demo User
 ```
 
-The second demo account, also created automatically in production, is:
-
-```text
-Username: demo2
-Password: JobTrackerDemo456!
-```
-
-These credentials are intentionally public and suitable only for a demo deployment. Do not use them for sensitive data.
+Then set `SEED_DEMO_DATA=true` and run `docker compose up --build`, open <http://localhost:5173>, and sign in with the values you supplied. Without demo variables, the application starts with no demo account and you can create a regular account through signup. No demo username or password is stored in the repository. A second optional identity uses the corresponding `DEMO_USER_2_*` variables.
 
 Useful local URLs:
 
@@ -46,8 +41,8 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 
 ## Features
 
-- Create, search, progressively filter, sort, edit, and delete applications with indexed server-side discovery and bounded pagination, plus quick status, note, and reminder actions from application details.
-- Use a responsive workspace with consistent icons, grouped desktop navigation, mobile shortcuts, application cards on phones, and a tabbed mobile status board.
+- Create, live-search, progressively filter, sort, edit, and delete applications with indexed server-side discovery and bounded pagination, plus focused status, note, and reminder actions from application details.
+- Use a responsive workspace with streamlined desktop groups, one mobile More menu, persistent mobile shortcuts, overflow-safe application cards, and an accessible tabbed mobile status board.
 - Work in a consistent accessible light or dark design system with compact semantic application-status badges, focused page hierarchy, responsive forms, and page-shaped loading states.
 - Track application timelines, notes, status changes, follow-ups, and deadlines.
 - Receive due follow-ups and deadlines through opt-in email or browser push notifications with automatic retry.
@@ -64,8 +59,8 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 - Keep applications, Gmail data, resumes, reminders, and analytics scoped to the signed-in user.
 - Create a private account with a unique username and email, then enter the workspace immediately through an authenticated session.
 - Recover password accounts through expiring single-use email links, verify account email addresses, edit profile details, and permanently delete an account with reauthentication.
-- Create team workspaces, invite members with role-based access, switch between personal and shared application data, and preserve at least one workspace owner.
-- Export a workspace as privacy-filtered JSON and import supported exports atomically, with duplicate applications safely skipped.
+- Create team workspaces through validated inline forms, invite members with role-based access, switch between personal and shared application data, and preserve at least one workspace owner.
+- Export a workspace as privacy-filtered JSON and review a backup's source and application count before importing it atomically, with duplicate applications safely skipped.
 - Review deadlines and interview milestones in a responsive month calendar, click a date to add a persistent task, event, or reminder with an optional application link, download everything as an iCalendar file, or create a revocable private subscription URL.
 - Protect password login with progressive delays, temporary account and network limits, uniform credential failures, and sanitized security events.
 - Use custom accessible dropdown menus for application filtering and form selections.
@@ -77,7 +72,7 @@ Supported application statuses: `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `
 
 Local configuration is documented in [backend/.env.example](backend/.env.example) and [frontend/.env.example](frontend/.env.example). The Docker Compose defaults work without additional configuration.
 
-The first built-in demo account (`demo@jobtracker.invalid`) has administrator access by default. Its credentials are public and must not be used with private account data. Set `ADMIN_ACCOUNT_EMAILS` to a comma-separated list of application login emails to replace that default with explicitly authorized administrators. Administrator-reserved emails cannot create accounts through public password signup or Google account creation; those accounts must already exist or be provisioned outside the application signup flow.
+The first environment-configured demo account has administrator access by default. Set `ADMIN_ACCOUNT_EMAILS` to a comma-separated list of application login emails to replace that default with explicitly authorized administrators. If neither a demo account nor an explicit list is configured, nobody has administrator access. Administrator-reserved emails cannot create accounts through public password signup or Google account creation; those accounts must already exist or be provisioned outside the application signup flow.
 
 For production resume storage, configure:
 
@@ -200,7 +195,7 @@ The existing AWS infrastructure is described in [infrastructure](infrastructure/
 
 To create an isolated production environment and start every service with one interactive command, authenticate the AWS CLI and GitHub CLI, install Terraform 1.10+, and run `./scripts/provision-production.sh`. The command shows saved Terraform plans for approval, provisions the stack without SSH, starts Docker Compose through Systems Manager, configures GitHub deployment variables, and waits for the public HTTPS health check.
 
-The built-in demo credentials are public. Do not use this deployment for sensitive personal data without changing the authentication and deployment configuration.
+Demo credentials are runtime secrets. Do not commit them, reuse them elsewhere, or use demonstration accounts for sensitive personal data.
 
 Read [docs/deployment.md](docs/deployment.md) before configuring a new instance.
 

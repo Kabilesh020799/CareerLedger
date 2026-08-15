@@ -46,9 +46,7 @@ describe('ApplicationForm resume attachment', () => {
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce())
     expect(onSubmit.mock.calls[0][0].resume.item(0)).toBe(resume)
-    expect(screen.getByText(/PDF, DOC, or DOCX/)).toHaveTextContent(
-      'saves it as Role_Company',
-    )
+    expect(screen.getByText(/PDF, DOC, or DOCX/)).toHaveTextContent('up to 5 MB')
   })
 
   it('shows a validation error for an unsupported resume', async () => {

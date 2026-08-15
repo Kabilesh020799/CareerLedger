@@ -66,7 +66,7 @@ An absent key, timeout, provider error, non-success response, malformed structur
 
 ## The user-account dashboard is missing
 
-By default, sign in as the first built-in demo account (`demo`, using its documented demo password). To use another administrator, confirm that account's login email appears in the comma-separated `ADMIN_ACCOUNT_EMAILS` production environment variable. Matching is case-insensitive and a configured list replaces the demo default. Sign out and back in, or refresh the page, after changing the setting so the session endpoint refreshes the navigation flag. A direct API request from a non-admin correctly returns `403`.
+When `ADMIN_ACCOUNT_EMAILS` is empty, sign in as the first environment-configured demo account. If no demo identity is configured, nobody receives administrator access by default. To use another administrator, confirm that account's login email appears in `ADMIN_ACCOUNT_EMAILS`. Matching is case-insensitive and a configured list replaces the demo default. Sign out and back in, or refresh the page, after changing the setting so the session endpoint refreshes the navigation flag. A direct API request from a non-admin correctly returns `403`.
 
 If an intended administrator cannot sign up, that is expected: allowlisted administrator emails are reserved from public account creation. Provision the account before adding its email to the allowlist, then restart the backend and sign in normally.
 

@@ -7,7 +7,9 @@ Feature: Portable application data
 
   Scenario: Import a valid export
     Given I can edit the selected workspace
-    When I import a supported portable JSON document
+    When I select a supported portable JSON document
+    Then I should review its source workspace and application count before importing
+    When I confirm the reviewed import
     Then new applications and their nested history are created atomically
     And natural-key duplicates are skipped and reported
 

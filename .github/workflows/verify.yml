@@ -114,6 +114,12 @@ jobs:
           npm ci --prefix backend
           npm ci --prefix frontend
           npm run db:generate --prefix backend
+      - name: Generate isolated browser-test credentials
+        run: |
+          echo "DEMO_USER_USERNAME=e2e_demo" >> "$GITHUB_ENV"
+          echo "DEMO_USER_EMAIL=e2e-demo@example.invalid" >> "$GITHUB_ENV"
+          echo "DEMO_USER_NAME=E2E Demo" >> "$GITHUB_ENV"
+          echo "DEMO_USER_PASSWORD=Ci$(openssl rand -hex 24)Aa1" >> "$GITHUB_ENV"
       - name: Run critical workflows
         working-directory: frontend
         env:

@@ -90,20 +90,22 @@ const demoApplications = [
     },
 ];
 async function main() {
-    const demoUsername = (process.env.DEMO_USER_USERNAME ?? demo_user_1.builtInDemoUser.username).toLowerCase();
-    const demoPassword = process.env.DEMO_USER_PASSWORD ?? demo_user_1.builtInDemoUser.password;
-    const passwordHash = await (0, bcryptjs_1.hash)(demoPassword, 12);
+    if (!demo_user_1.firstConfiguredDemoUser) {
+        throw new Error("Demo data seeding requires a configured demo user");
+    }
+    const passwordHash = await (0, bcryptjs_1.hash)(demo_user_1.firstConfiguredDemoUser.password, 12);
     const demoUser = await prisma.user.upsert({
-        where: { username: demoUsername },
+        where: { username: demo_user_1.firstConfiguredDemoUser.username },
         create: {
-            username: demoUsername,
+            username: demo_user_1.firstConfiguredDemoUser.username,
             passwordHash,
-            email: "demo@jobtracker.local",
-            name: "Demo User",
+            email: demo_user_1.firstConfiguredDemoUser.email,
+            name: demo_user_1.firstConfiguredDemoUser.name,
         },
         update: {
             passwordHash,
-            name: "Demo User",
+            email: demo_user_1.firstConfiguredDemoUser.email,
+            name: demo_user_1.firstConfiguredDemoUser.name,
         },
     });
     const result = await prisma.application.createMany({

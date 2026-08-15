@@ -71,12 +71,12 @@ describe("credentialAuthService", () => {
       email: "demo@jobtracker.local",
       name: "Demo User",
       avatarUrl: null,
-      passwordHash: await hash("JobTrackerDemo123!", 4),
+      passwordHash: await hash("ValidTestPassword1", 4),
     });
 
     const user = await credentialAuthService.authenticate({
       username: "DEMO",
-      password: "JobTrackerDemo123!",
+      password: "ValidTestPassword1",
     });
 
     expect(prismaMock.user.findUnique).toHaveBeenCalledWith(

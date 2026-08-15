@@ -1,16 +1,6 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { chooseCustomSelectOption } from './support/custom-select'
-
-async function signIn(page: Page) {
-  await page.goto('/applications')
-
-  await expect(page).toHaveURL(/\/login$/)
-  await page.getByLabel('Username').fill('demo')
-  await page.getByLabel('Password').fill('JobTrackerDemo123!')
-  await page.getByRole('button', { name: 'Sign in' }).click()
-
-  await expect(page).toHaveURL(/\/applications$/)
-}
+import { signInAsDemoUser } from './support/demo-auth'
 
 test('create an account and enter its private workspace', async ({ page }) => {
   const suffix = `${Date.now()}-${test.info().parallelIndex}`
@@ -40,7 +30,7 @@ test('switch and retain the application color theme', async ({ page }) => {
 
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  await signIn(page)
+  await signInAsDemoUser(page)
   const signOutButton = page.getByRole('button', { name: 'Sign out' })
   const lightThemeButton = page.getByRole('button', { name: 'Switch to light theme' })
   await expect(lightThemeButton).toBeVisible()
@@ -55,14 +45,14 @@ test('switch and retain the application color theme', async ({ page }) => {
 })
 
 test('sign in with the demo user and access its applications', async ({ page }) => {
-  await signIn(page)
+  await signInAsDemoUser(page)
 
   await expect(page.getByRole('heading', { name: 'Applications' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Shopify' })).toBeVisible()
 })
 
 test('view email synchronization configuration status', async ({ page }) => {
-  await signIn(page)
+  await signInAsDemoUser(page)
   await page.getByRole('link', { name: 'Email sync' }).click()
 
   await expect(page.getByRole('heading', { name: 'Email sync' })).toBeVisible()
@@ -71,7 +61,7 @@ test('view email synchronization configuration status', async ({ page }) => {
 })
 
 test('view authenticated dashboard totals, pipeline rates, and source outcomes', async ({ page }) => {
-  await signIn(page)
+  await signInAsDemoUser(page)
   const summaryResponse = await page.request.get(
     'http://127.0.0.1:3001/api/dashboard/summary',
   )
@@ -106,7 +96,7 @@ test('view authenticated dashboard totals, pipeline rates, and source outcomes',
 })
 
 test('create a reminder from an inactive application suggestion', async ({ page }) => {
-  await signIn(page)
+  await signInAsDemoUser(page)
 
   const existingRemindersResponse = await page.request.get(
     'http://127.0.0.1:3001/api/applications/demo-cove-quality-engineer/reminders',
@@ -147,7 +137,7 @@ test('create, complete, reopen, and delete an application reminder', async ({ pa
   const suffix = Date.now()
   const company = `Reminder verification ${suffix}`
   const description = `Submit the take-home assessment ${suffix}`
-  await signIn(page)
+  await signInAsDemoUser(page)
 
   await page.getByRole('link', { name: 'Add application' }).click()
   await page.getByLabel('Company').fill(company)
@@ -211,14 +201,12 @@ test('create, complete, reopen, and delete an application reminder', async ({ pa
 })
 
 test('search, filter, sort, and retain application discovery controls', async ({ page }) => {
-  await signIn(page)
+  await signInAsDemoUser(page)
 
   await page.getByLabel('Search').fill('shopify')
   await chooseCustomSelectOption(page, 'Status', 'Interview')
   await page.getByRole('button', { name: 'More filters' }).click()
   await page.getByLabel('Source').fill('Company Website')
-  await page.getByRole('button', { name: 'Apply filters' }).click()
-
   await expect(page).toHaveURL(/search=shopify/)
   await expect(page).toHaveURL(/status=INTERVIEW/)
   await expect(page.getByRole('link', { name: 'Shopify' })).toBeVisible()
@@ -235,14 +223,12 @@ test('search, filter, sort, and retain application discovery controls', async ({
   await expect(page.getByLabel('Source')).toHaveValue('')
   await chooseCustomSelectOption(page, 'Sort by', 'Company')
   await chooseCustomSelectOption(page, 'Order', 'Ascending')
-  await page.getByRole('button', { name: 'Apply filters' }).click()
-
   await expect(page.getByRole('row').nth(1)).toContainText('Atlas')
 })
 
 test('move an application across the board and record its timeline', async ({ page }) => {
   const company = `Board verification ${Date.now()}`
-  await signIn(page)
+  await signInAsDemoUser(page)
 
   await page.getByRole('link', { name: 'Add application' }).click()
   await page.getByLabel('Company').fill(company)
@@ -292,7 +278,7 @@ test('move an application across the board and record its timeline', async ({ pa
 })
 
 test('add a note and record a status change in the application timeline', async ({ page }) => {
-  await signIn(page)
+  await signInAsDemoUser(page)
 
   await page.getByRole('link', { name: 'Add application' }).click()
   await page.getByLabel('Company').fill('Timeline verification')

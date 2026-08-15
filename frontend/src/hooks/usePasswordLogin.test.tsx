@@ -33,7 +33,7 @@ describe('usePasswordLogin', () => {
     const { result } = renderHook(usePasswordLogin, { wrapper })
 
     await act(() =>
-      result.current.mutateAsync({ username: 'demo', password: 'JobTrackerDemo123!' }),
+      result.current.mutateAsync({ username: 'demo', password: 'ValidTestPassword1' }),
     )
 
     expect(queryClient.getQueryData(sessionQueryKey)).toEqual(session)

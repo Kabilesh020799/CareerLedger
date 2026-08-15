@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  defaultAdminAccountEmail,
+  adminAccountEmails,
   isUnprovisionedAdminAccount,
   parseAdminAccountEmails,
 } from "./admin";
@@ -12,14 +12,18 @@ describe("admin account configuration", () => {
     ]);
   });
 
-  it("defaults the first built-in demo user to administrator access", () => {
-    expect([...parseAdminAccountEmails(undefined)]).toEqual([defaultAdminAccountEmail]);
-    expect([...parseAdminAccountEmails("")]).toEqual([defaultAdminAccountEmail]);
+  it("defaults to a configured demo email and otherwise grants nobody access", () => {
+    expect([...parseAdminAccountEmails(undefined, "demo@example.invalid")]).toEqual([
+      "demo@example.invalid",
+    ]);
+    expect([...parseAdminAccountEmails("", "")]).toEqual([]);
   });
 
   it("reserves an administrator email only until it is provisioned", () => {
-    expect(isUnprovisionedAdminAccount(defaultAdminAccountEmail, false)).toBe(true);
-    expect(isUnprovisionedAdminAccount(defaultAdminAccountEmail, true)).toBe(false);
+    adminAccountEmails.add("admin@example.invalid");
+    expect(isUnprovisionedAdminAccount("admin@example.invalid", false)).toBe(true);
+    expect(isUnprovisionedAdminAccount("admin@example.invalid", true)).toBe(false);
     expect(isUnprovisionedAdminAccount("user@example.com", false)).toBe(false);
+    adminAccountEmails.delete("admin@example.invalid");
   });
 });

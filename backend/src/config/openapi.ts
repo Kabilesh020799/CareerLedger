@@ -112,7 +112,7 @@ export const openApiDocument: OpenAPIV3.Document = {
       get: {
         tags: ["Administration"],
         summary: "List account summaries",
-        description: "Returns searchable, paginated account metadata and aggregate account totals. Requires a signed-in authorized administrator; an empty ADMIN_ACCOUNT_EMAILS value defaults to the first built-in demo account.",
+        description: "Returns searchable, paginated account metadata and aggregate account totals. Requires a signed-in authorized administrator; an empty ADMIN_ACCOUNT_EMAILS value defaults to the first environment-configured demo account.",
         security: [{ sessionCookie: [] }],
         parameters: [
           { name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } },

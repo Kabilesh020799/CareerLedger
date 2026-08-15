@@ -1,5 +1,5 @@
 import { hash } from "bcryptjs";
-import { builtInDemoUsers } from "../config/demo-user";
+import { configuredDemoUsers } from "../config/demo-user";
 
 type PasswordHasher = (password: string, rounds: number) => Promise<string>;
 
@@ -13,16 +13,16 @@ interface BootstrapUserDatabase {
         email: string;
         name: string;
       };
-      update: { passwordHash: string };
+      update: { passwordHash: string; email: string; name: string };
     }): Promise<unknown>;
   };
 }
 
-export async function bootstrapBuiltInDemoUsers(
+export async function bootstrapConfiguredDemoUsers(
   database: BootstrapUserDatabase,
   passwordHasher: PasswordHasher = hash,
 ) {
-  for (const { username, password } of builtInDemoUsers) {
+  for (const { username, password, email, name } of configuredDemoUsers) {
     const passwordHash = await passwordHasher(password, 12);
 
     await database.user.upsert({
@@ -30,10 +30,10 @@ export async function bootstrapBuiltInDemoUsers(
       create: {
         username,
         passwordHash,
-        email: `${username}@jobtracker.invalid`,
-        name: username,
+        email,
+        name,
       },
-      update: { passwordHash },
+      update: { passwordHash, email, name },
     });
   }
 }

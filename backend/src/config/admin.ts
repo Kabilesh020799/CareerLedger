@@ -1,7 +1,7 @@
 import "dotenv/config";
-import { builtInDemoUser } from "./demo-user";
+import { firstConfiguredDemoUser } from "./demo-user";
 
-export const defaultAdminAccountEmail = `${builtInDemoUser.username}@jobtracker.invalid`;
+export const defaultAdminAccountEmail = firstConfiguredDemoUser?.email ?? "";
 
 export function parseAdminAccountEmails(
   value: string | undefined,

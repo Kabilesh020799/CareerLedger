@@ -120,8 +120,6 @@ describe('ApplicationsPage', () => {
     await user.click(screen.getByRole('button', { name: 'More filters' }))
     await user.click(screen.getByRole('combobox', { name: 'Order' }))
     await user.click(screen.getByRole('option', { name: 'Ascending' }))
-    await user.click(screen.getByRole('button', { name: 'Apply filters' }))
-
     await waitFor(() => {
       expect(useApplications).toHaveBeenLastCalledWith({
         search: 'Acme',

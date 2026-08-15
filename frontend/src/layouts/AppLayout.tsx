@@ -1,5 +1,5 @@
 import { Badge, Box, Button, Container, Flex, Heading, Link, Stack, Text } from '@chakra-ui/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useLogout } from '../hooks/useLogout'
 import { useSession } from '../hooks/useSession'
@@ -10,15 +10,15 @@ import { useWorkspace } from '../contexts/WorkspaceContext'
 import { CustomSelect } from '../components/ui/CustomSelect'
 
 const navigation = [
-  { label: 'Workspace', items: [{ label: 'Dashboard', to: '/dashboard', icon: Gauge }] },
-  { label: 'Applications', items: [
+  { label: 'Workspace', items: [
+    { label: 'Dashboard', to: '/dashboard', icon: Gauge },
     { label: 'Applications', to: '/applications', icon: BriefcaseBusiness },
     { label: 'Board', to: '/board', icon: Columns3 },
-  ] },
-  { label: 'Documents', items: [{ label: 'Resumes', to: '/resumes', icon: FileText }] },
-  { label: 'Automation', items: [
-    { label: 'Email sync', to: '/gmail', icon: Mail },
     { label: 'Calendar', to: '/calendar', icon: CalendarDays },
+  ] },
+  { label: 'Tools', items: [
+    { label: 'Resumes', to: '/resumes', icon: FileText },
+    { label: 'Email sync', to: '/gmail', icon: Mail },
     { label: 'Browser extension', to: '/browser-extension', icon: Puzzle },
   ] },
   { label: 'Settings', items: [
@@ -42,6 +42,8 @@ export function AppLayout() {
   const location = useLocation()
   const gmailReviews = useGmailUpdateReviews()
   const [navigationOpen, setNavigationOpen] = useState(false)
+  const navigationId = useId()
+  const moreButtonRef = useRef<HTMLButtonElement>(null)
   const workspace = useWorkspace()
   const pendingGmailUpdates = gmailReviews.data?.length ?? 0
   const visibleNavigation = session.data?.user?.isAdmin
@@ -51,6 +53,18 @@ export function AppLayout() {
   useEffect(() => {
     setNavigationOpen(false)
   }, [location.pathname])
+
+  useEffect(() => {
+    if (!navigationOpen) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setNavigationOpen(false)
+        moreButtonRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [navigationOpen])
 
   const signOut = () => {
     logout.mutate(undefined, {
@@ -81,29 +95,19 @@ export function AppLayout() {
               <Text color="fg.muted" display={{ base: 'none', lg: 'block' }} fontSize="sm" mt="1">Keep your search moving.</Text>
             </Box>
             </Flex>
-            <Button
-              aria-controls="responsive-primary-navigation"
-              aria-expanded={navigationOpen}
-              aria-label={navigationOpen ? 'Close navigation' : 'Open navigation'}
-              display={{ base: 'inline-flex', lg: 'none' }}
-              minH="11"
-              variant="outline"
-              onClick={() => setNavigationOpen((open) => !open)}
-            >
-              {navigationOpen ? <X aria-hidden size={18} /> : <Menu aria-hidden size={18} />}
-              <Text display={{ base: 'none', sm: 'block' }}>Menu</Text>
-            </Button>
           </Flex>
 
+          {navigationOpen && <Box aria-hidden bg="blackAlpha.700" display={{ base: 'block', lg: 'none' }} inset="0" position="fixed" onClick={() => setNavigationOpen(false)} />}
           <Box
+            aria-label="More navigation"
             bg="bg.panel"
             borderColor="border"
             borderBottomWidth={{ base: '1px', lg: '0' }}
             boxShadow={{ base: 'lg', lg: 'none' }}
             display={{ base: navigationOpen ? 'block' : 'none', lg: 'block' }}
-            id="responsive-primary-navigation"
+            id={navigationId}
             left={{ base: '0', lg: 'auto' }}
-            maxH={{ base: 'calc(100dvh - 4rem)', lg: 'none' }}
+            maxH={{ base: 'calc(100dvh - 8.5rem)', lg: 'none' }}
             overflowY={{ base: 'auto', lg: 'visible' }}
             p={{ base: '4', lg: '0' }}
             position={{ base: 'absolute', lg: 'static' }}
@@ -164,7 +168,7 @@ export function AppLayout() {
       </Box>
       <Flex as="nav" aria-label="Mobile navigation" align="center" bg="bg.panel" borderColor="border" borderTopWidth="1px" bottom="0" display={{ base: 'flex', lg: 'none' }} h="18" justify="space-around" left="0" position="fixed" right="0" zIndex="docked">
         {mobileNavigation.map((item) => <Link asChild key={item.to} color="fg.muted" _currentPage={{ color: 'purple.fg' }} _hover={{ textDecoration: 'none' }}><NavLink aria-label={`${item.label} tab`} to={item.to}><Stack align="center" gap="0.5" minW="20"><item.icon aria-hidden size={20} /><Text fontSize="xs" fontWeight="semibold">{item.label}</Text></Stack></NavLink></Link>)}
-        <Button aria-controls="responsive-primary-navigation" aria-expanded={navigationOpen} color="fg.muted" h="auto" minW="20" p="0" variant="plain" onClick={() => setNavigationOpen((open) => !open)}><Stack align="center" gap="0.5"><Menu aria-hidden size={20} /><Text fontSize="xs" fontWeight="semibold">More</Text></Stack></Button>
+        <Button ref={moreButtonRef} aria-controls={navigationId} aria-expanded={navigationOpen} aria-label={navigationOpen ? 'Close more navigation' : 'Open more navigation'} color={navigationOpen ? 'purple.fg' : 'fg.muted'} h="auto" minW="20" p="0" variant="plain" onClick={() => setNavigationOpen((open) => !open)}><Stack align="center" gap="0.5">{navigationOpen ? <X aria-hidden size={20} /> : <Menu aria-hidden size={20} />}<Text fontSize="xs" fontWeight="semibold">More</Text></Stack></Button>
       </Flex>
     </Flex>
   )

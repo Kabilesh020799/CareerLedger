@@ -11,7 +11,7 @@ import { getApiErrorMessage } from '../utils/apiError'
 import { LoadingSkeleton, Surface } from '../components/ui/LoadingSkeleton'
 import { useMoveApplication } from '../hooks/useMoveApplication'
 import { applicationStatuses, type ApplicationStatus } from '../types/application'
-import { BellPlus, Edit3, MessageSquarePlus } from 'lucide-react'
+import { BellPlus, MessageSquarePlus } from 'lucide-react'
 import { CustomSelect } from '../components/ui/CustomSelect'
 
 const statusLabels: Record<ApplicationStatus, string> = {
@@ -76,11 +76,6 @@ export function ApplicationDetailsPage() {
           <Button asChild flex={{ base: '1', sm: 'initial' }} variant="outline">
             <Link to={`/applications/${application.id}/edit`}>Edit</Link>
           </Button>
-          <DeleteApplicationDialog
-            company={application.company}
-            isDeleting={deleteApplication.isPending}
-            onConfirm={() => deleteApplication.mutate(application.id, { onSuccess: () => navigate('/applications') })}
-          />
         </Flex>
       </Flex>
 
@@ -93,7 +88,6 @@ export function ApplicationDetailsPage() {
           <Flex gap="2" wrap="wrap">
             <Button asChild size="sm" variant="outline"><a href="#timeline"><MessageSquarePlus aria-hidden size={17} />Add note</a></Button>
             <Button asChild size="sm" variant="outline"><a href="#reminders"><BellPlus aria-hidden size={17} />Add reminder</a></Button>
-            <Button asChild colorPalette="purple" size="sm"><Link to={`/applications/${application.id}/edit`}><Edit3 aria-hidden size={17} />Edit details</Link></Button>
           </Flex>
         </Flex>
       </Surface>
@@ -138,6 +132,13 @@ export function ApplicationDetailsPage() {
 
       <Box id="reminders" scrollMarginTop="6rem"><ApplicationReminders applicationId={application.id} /></Box>
       <Box id="timeline" scrollMarginTop="6rem"><ApplicationTimeline applicationId={application.id} /></Box>
+      <Flex borderColor="border" borderTopWidth="1px" justify="flex-end" pt="5">
+        <DeleteApplicationDialog
+          company={application.company}
+          isDeleting={deleteApplication.isPending}
+          onConfirm={() => deleteApplication.mutate(application.id, { onSuccess: () => navigate('/applications') })}
+        />
+      </Flex>
     </Stack>
   )
 }

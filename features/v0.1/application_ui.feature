@@ -13,7 +13,7 @@ Feature: Manage applications in the React interface
   Scenario: Understand the workspace navigation
     Given I am signed in
     When I open the primary navigation
-    Then destinations should be grouped by workspace, applications, documents, automation, and settings
+    Then destinations should be grouped by workspace, tools, and settings
     And pending email updates should be visible beside email sync
 
   Scenario: Open an unknown page
@@ -45,6 +45,12 @@ Feature: Manage applications in the React interface
     Then search, status, and sorting should remain immediately available
     And source, dates, order, and result count should remain collapsed until I request more filters
 
+  Scenario: Apply discovery controls immediately
+    Given I am viewing the application discovery controls
+    When I change search, status, sorting, or another filter
+    Then matching applications should update without a separate apply action
+    And the selected controls should remain represented in the page URL
+
   Scenario: Display consistent application dropdowns
     Given I am filtering or editing applications
     Then each dropdown should open a custom accessible selection menu
@@ -62,6 +68,11 @@ Feature: Manage applications in the React interface
     When I submit valid application details
     Then the application should be saved
     And I should see the application in the interface
+
+  Scenario: Reveal optional application details
+    Given I am creating or editing an application
+    Then essential job and progress fields should remain immediately visible
+    And notes and documents should remain collapsed until I choose to add them
 
   Scenario: Show form validation errors
     Given I am on the new application page

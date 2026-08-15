@@ -61,6 +61,8 @@ Add environment secrets:
 | `GOOGLE_CLIENT_ID` | Optional Google web OAuth client ID used for Gmail connection |
 | `GOOGLE_CLIENT_SECRET` | Optional Google web OAuth client secret used for Gmail connection |
 | `OPENAI_API_KEY` | Optional OpenAI API key used only to classify Gmail messages that deterministic rules cannot classify |
+| `DEMO_USER_PASSWORD` | Optional password for the first environment-configured demo identity |
+| `DEMO_USER_2_PASSWORD` | Optional password for the second environment-configured demo identity |
 | `VAPID_PRIVATE_KEY` | Web Push private key generated with its matching public key |
 | `SMTP_USER` | Optional SMTP login username |
 | `SMTP_PASSWORD` | Optional SMTP login password |
@@ -79,7 +81,13 @@ Add environment variables:
 | `VAPID_PUBLIC_KEY` | Public Web Push application-server key |
 | `VAPID_SUBJECT` | Web Push contact URI, such as `mailto:administrator@example.com` |
 | `SMTP_HOST` | Optional SMTP server hostname |
-| `ADMIN_ACCOUNT_EMAILS` | Comma-separated application login emails authorized for the account-administration dashboard; empty defaults to the first public demo account |
+| `ADMIN_ACCOUNT_EMAILS` | Comma-separated application login emails authorized for the account-administration dashboard; empty defaults to the first configured demo account, or nobody when no demo exists |
+| `DEMO_USER_USERNAME` | Optional username for the first demo identity; configure it together with its password and email |
+| `DEMO_USER_EMAIL` | Optional login email for the first demo identity |
+| `DEMO_USER_NAME` | Optional display name for the first demo identity; defaults to its username |
+| `DEMO_USER_2_USERNAME` | Optional username for the second demo identity; configure it together with its password and email |
+| `DEMO_USER_2_EMAIL` | Optional login email for the second demo identity |
+| `DEMO_USER_2_NAME` | Optional display name for the second demo identity; defaults to its username |
 | `OPENAI_ALLOWED_ACCOUNT_EMAILS` | Comma-separated application login emails allowed to use OpenAI; empty denies every account |
 | `OPENAI_GMAIL_MODEL` | Optional Gmail fallback model; defaults to `gpt-5-mini` |
 | `OPENAI_GMAIL_CONFIDENCE_THRESHOLD` | Minimum accepted fallback confidence from 0 to 100; defaults to `80` |
@@ -89,7 +97,7 @@ Add environment variables:
 
 Restrict the environment to the `master` branch. Add required approval if deployments should pause for confirmation after images are published.
 
-Every email in `ADMIN_ACCOUNT_EMAILS` is reserved from public password signup and first-time Google account creation. Provision those identities before adding them to the list, or use the built-in demo administrator created by the production bootstrap. The application does not provide a public path for creating or promoting administrators.
+Every email in `ADMIN_ACCOUNT_EMAILS` is reserved from public password signup and first-time Google account creation. Provision those identities before adding them to the list, or configure the first demo identity through the protected production environment. The application does not provide a public path for creating or promoting administrators.
 
 Generate a VAPID pair once with `npx web-push generate-vapid-keys` and retain it across deployments so existing browser subscriptions remain valid. Store its private key as a protected secret. SMTP and Web Push are independent and either can be omitted; the production worker reads the same protected notification configuration as the API.
 
@@ -107,17 +115,9 @@ CloudFront distribution `EI1Q2B9SNAQJH` serves browser-facing HTTPS at `d2g95c1j
 
 CloudFront encrypts browser traffic and the application issues a `Secure`, HTTP-only session cookie. The CloudFront-to-EC2 origin connection currently uses HTTP, so transport encryption is not end-to-end. The frontend passes CloudFront's viewer protocol to Express through `X-Forwarded-Proto` so secure cookies are issued correctly.
 
-The application bootstraps these built-in production accounts on every container start:
+The application contains no demo credentials. To provision a demo identity, provide its username, email, and display name as GitHub production environment variables and its password as a protected GitHub production environment secret. The first identity uses `DEMO_USER_USERNAME`, `DEMO_USER_EMAIL`, `DEMO_USER_NAME`, and `DEMO_USER_PASSWORD`; the optional second identity uses the corresponding `DEMO_USER_2_*` settings. Username, email, and password must be configured together. With no complete identity configured, the bootstrap creates no demo users.
 
-```text
-Username: demo
-Password: JobTrackerDemo123!
-
-Username: demo2
-Password: JobTrackerDemo456!
-```
-
-The passwords are intentionally present in the application source and are therefore public. The bootstrap process stores only their bcrypt hashes in PostgreSQL and updates existing demo-user hashes when necessary. Each account owns separate data. Production does not seed any demo application records. Do not store private information behind these shared accounts.
+The bootstrap stores only bcrypt password hashes in PostgreSQL and updates an existing configured username's hash on each deployment. A security migration invalidates passwords for the legacy source-defined demo usernames before runtime bootstrap applies operator-provided replacements. Removing the variables later does not delete existing accounts, but no repository-defined password is restored. Each account owns separate data. Production does not seed demo application records. Do not store private information behind shared accounts.
 
 ## 5. Publish a release automatically
 
@@ -143,7 +143,7 @@ The workflow:
 6. Writes the public application origin and HTTP cookie mode to the instance.
 7. Authenticates the instance to GHCR with the workflow's short-lived token.
 8. Pulls and starts the exact release version.
-9. On the first deployment, generates protected database and session credentials, bootstraps the built-in demo users, and starts the PostgreSQL container and volume.
+9. On the first deployment, generates protected database and session credentials, bootstraps any environment-configured demo users, and starts the PostgreSQL container and volume.
 10. Waits for Compose health checks and verifies the proxied API.
 11. Restores the previous release version when deployment fails.
 12. Creates the version tag and GitHub Release with the matching changelog entries only after deployment succeeds.

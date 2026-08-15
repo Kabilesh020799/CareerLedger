@@ -8,7 +8,8 @@ Feature: Use the application across screen sizes
     Given I am signed in on a narrow phone screen
     When I open an authenticated page
     Then I should see a compact application header
-    And I should be able to open and close the primary navigation
+    And I should be able to open and close the remaining navigation from one More control
+    And the remaining navigation should close with Escape or its backdrop
     And choosing a destination should close the navigation
     And I should see persistent shortcuts for dashboard, applications, and board
     And the page should not scroll horizontally

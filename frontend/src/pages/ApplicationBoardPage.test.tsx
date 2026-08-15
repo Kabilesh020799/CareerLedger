@@ -67,12 +67,12 @@ describe('ApplicationBoardPage', () => {
 
     renderPage()
 
-    const appliedColumn = screen.getByRole('region', { name: 'Applied applications' })
+    const appliedColumn = screen.getByRole('tabpanel', { name: /Applied/ })
     expect(within(appliedColumn).getByRole('article', { name: 'Acme Corp, Software Engineer' })).toBeInTheDocument()
     expect(within(appliedColumn).getByText('1')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Acme Corp' })).toHaveAttribute('href', '/applications/application-1')
     await user.click(screen.getByRole('tab', { name: 'Interview 0' }))
-    const interviewColumn = screen.getByRole('region', { name: 'Interview applications' })
+    const interviewColumn = screen.getByRole('tabpanel', { name: /Interview/ })
     expect(within(interviewColumn).getByText('0')).toBeInTheDocument()
   })
 
@@ -120,7 +120,7 @@ describe('ApplicationBoardPage', () => {
     const card = screen.getByRole('article', { name: 'Acme Corp, Software Engineer' })
     fireEvent.dragStart(card, { dataTransfer })
     await user.click(screen.getByRole('tab', { name: 'Interview 0' }))
-    const interviewColumn = screen.getByRole('region', { name: 'Interview applications' })
+    const interviewColumn = screen.getByRole('tabpanel', { name: /Interview/ })
     fireEvent.dragEnter(interviewColumn, { dataTransfer })
     fireEvent.dragOver(interviewColumn, { dataTransfer })
     fireEvent.drop(interviewColumn, { dataTransfer })

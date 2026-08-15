@@ -146,10 +146,10 @@ export function ApplicationsPage() {
                 <Link aria-label={`Open ${application.company} application`} to={`/applications/${application.id}`}>
                   <Stack gap="3">
                     <Flex align="start" gap="3" justify="space-between">
-                      <Box minW="0"><Heading as="h3" fontSize="md" truncate>{application.company}</Heading><Text color="fg.muted" fontSize="sm" mt="0.5">{application.jobTitle}</Text></Box>
-                      <StatusBadge status={application.status} />
+                      <Box flex="1" minW="0"><Heading as="h3" fontSize="md" overflowWrap="anywhere">{application.company}</Heading><Text color="fg.muted" fontSize="sm" mt="0.5" overflowWrap="anywhere">{application.jobTitle}</Text></Box>
+                      <Box flexShrink="0"><StatusBadge status={application.status} /></Box>
                     </Flex>
-                    <Flex color="fg.subtle" fontSize="xs" gap="3" justify="space-between"><Text>{application.source ?? 'Source not added'}</Text><Text>{formatDate(application.appliedAt)}</Text></Flex>
+                    <Flex color="fg.subtle" fontSize="xs" gap="3" justify="space-between" minW="0"><Text minW="0" truncate>{application.source ?? 'Source not added'}</Text><Text flexShrink="0">{formatDate(application.appliedAt)}</Text></Flex>
                   </Stack>
                 </Link>
               </Surface>

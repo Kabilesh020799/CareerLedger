@@ -84,15 +84,15 @@ Feature: Secure user-owned application data
 
   Scenario: Sign in to the production HTTP deployment
     Given password login is enabled in production
-    And the built-in demo users were bootstrapped
-    When I sign in with the documented demo username and password
+    And a demo identity was configured through the production environment
+    When I sign in with that configured username and password
     Then I should have an authenticated application session
     And the login page should warn that HTTP does not protect credentials in transit
 
   Scenario: Do not seed demo application records in production
     Given the application is running in production
     When the database bootstrap runs
-    Then the built-in demo users should be created
+    Then only environment-configured demo users should be created
     But demo applications should not be seeded
 
   Scenario: Report the current signed-in user

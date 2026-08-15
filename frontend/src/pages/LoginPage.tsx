@@ -44,7 +44,7 @@ export function LoginPage() {
       </Box>
       <Container maxW="6xl">
         <SimpleGrid bg="bg.panel" borderColor="border" borderRadius="2xl" borderWidth="1px" boxShadow="xl" columns={{ base: 1, lg: 2 }} overflow="hidden">
-        <Stack bg="purple.solid" color="purple.contrast" display={{ base: 'none', lg: 'flex' }} gap="8" justify="space-between" minH="40rem" p="12">
+        <Stack bg="purple.solid" color="purple.contrast" display={{ base: 'none', lg: 'flex' }} gap="8" justify="space-between" minH="34rem" p="12">
           <Stack gap="5"><Flex align="center" bg="whiteAlpha.300" borderRadius="xl" fontSize="xl" fontWeight="bold" h="12" justify="center" w="12">JT</Flex><Heading fontSize="4xl" letterSpacing="-0.04em" maxW="sm">Keep every opportunity moving.</Heading><Text color="whiteAlpha.800" fontSize="lg" maxW="md">One focused workspace for applications, follow-ups, documents, and recruitment updates.</Text></Stack>
           <Text color="whiteAlpha.700" fontSize="sm">Your job search stays private to your account.</Text>
         </Stack>
@@ -119,9 +119,7 @@ export function LoginPage() {
             </Button>
           )}
 
-          <Text color="fg.subtle" fontSize="xs">
-            Your applications are private to your signed-in account.
-          </Text>
+          <Text color="fg.subtle" fontSize="xs">Private workspace · Your data is visible only to signed-in members.</Text>
         </Stack>
         </SimpleGrid>
       </Container>

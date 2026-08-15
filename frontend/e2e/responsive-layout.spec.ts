@@ -1,13 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-
-async function signIn(page: Page) {
-  await page.goto('/applications')
-  await expect(page).toHaveURL(/\/login$/)
-  await page.getByLabel('Username').fill('demo')
-  await page.getByLabel('Password').fill('JobTrackerDemo123!')
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page).toHaveURL(/\/applications$/)
-}
+import { signInAsDemoUser } from './support/demo-auth'
 
 async function expectNoPageOverflow(page: Page) {
   const dimensions = await page.evaluate(() => ({
@@ -29,22 +21,22 @@ test('phone workflows fit the viewport and use status tabs for the board', async
   await page.setViewportSize({ width: 320, height: 720 })
   await page.goto('/login')
   await expectNoPageOverflow(page)
-  await signIn(page)
+  await signInAsDemoUser(page)
 
-  const menuButton = page.getByRole('button', { name: 'Open navigation' })
+  const menuButton = page.getByRole('button', { name: 'Open more navigation' })
   await expect(menuButton).toBeVisible()
   await menuButton.click()
   await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
   await page.getByRole('navigation', { name: 'Primary navigation' }).getByRole('link', { name: 'Board', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Application board' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Open navigation' })).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.getByRole('button', { name: 'Open more navigation' })).toHaveAttribute('aria-expanded', 'false')
   await expectNoPageOverflow(page)
   const statusTabs = page.getByRole('tablist', { name: 'Choose board status' })
   await expect(statusTabs).toBeVisible()
   await expectInternalHorizontalScroll(statusTabs)
   await page.getByRole('tab', { name: /Interview/ }).click()
-  await expect(page.getByRole('region', { name: 'Interview applications' })).toBeVisible()
-  await expect(page.getByRole('region', { name: 'Applied applications' })).toBeHidden()
+  await expect(page.getByRole('tabpanel', { name: /Interview/ })).toBeVisible()
+  await expect(page.getByRole('tabpanel', { name: /Applied/ })).toBeHidden()
 
   const routes = [
     ['/applications', 'Applications'],
@@ -117,9 +109,9 @@ test('phone workflows fit the viewport and use status tabs for the board', async
 
 test('tablet layout uses available width and adaptive form columns', async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 1024 })
-  await signIn(page)
+  await signInAsDemoUser(page)
 
-  await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Open more navigation' })).toBeVisible()
   await expectNoPageOverflow(page)
   await page.goto('/applications/new')
   await expect(page.getByRole('heading', { name: 'Add application' })).toBeVisible()
@@ -140,9 +132,9 @@ test('tablet layout uses available width and adaptive form columns', async ({ pa
 
 test('desktop layout keeps persistent navigation beside bounded content', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
-  await signIn(page)
+  await signInAsDemoUser(page)
 
-  await expect(page.getByRole('button', { name: 'Open navigation' })).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Open more navigation' })).toBeHidden()
   await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
   const header = await page.locator('header').boundingBox()
   const main = await page.locator('main').boundingBox()
