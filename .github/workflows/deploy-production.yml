@@ -262,7 +262,7 @@ jobs:
           esac
           case "$DEMO_USER_USERNAME$DEMO_USER_2_USERNAME" in *[!A-Za-z0-9_-]*) echo "Demo usernames contain invalid characters." >&2; exit 1 ;; esac
           case "$DEMO_USER_EMAIL$DEMO_USER_2_EMAIL" in *[!A-Za-z0-9@._+-]*) echo "Demo emails contain invalid characters." >&2; exit 1 ;; esac
-          case "$DEMO_USER_NAME$DEMO_USER_2_NAME" in *[!A-Za-z0-9 ._-]*) echo "Demo names contain invalid characters." >&2; exit 1 ;; esac
+          case "$DEMO_USER_NAME$DEMO_USER_2_NAME" in *[!A-Za-z0-9._\ -]*) echo "Demo names contain invalid characters." >&2; exit 1 ;; esac
           case "$DEMO_USER_PASSWORD$DEMO_USER_2_PASSWORD" in *[!A-Za-z0-9@%+=:,._-]*) echo "Demo passwords contain invalid characters." >&2; exit 1 ;; esac
 
           port="${DEPLOY_PORT:-22}"
@@ -361,7 +361,7 @@ jobs:
           esac
           case "$DEMO_USER_USERNAME$DEMO_USER_2_USERNAME" in *[!A-Za-z0-9_-]*) echo "Demo usernames contain invalid characters." >&2; exit 1 ;; esac
           case "$DEMO_USER_EMAIL$DEMO_USER_2_EMAIL" in *[!A-Za-z0-9@._+-]*) echo "Demo emails contain invalid characters." >&2; exit 1 ;; esac
-          case "$DEMO_USER_NAME$DEMO_USER_2_NAME" in *[!A-Za-z0-9 ._-]*) echo "Demo names contain invalid characters." >&2; exit 1 ;; esac
+          case "$DEMO_USER_NAME$DEMO_USER_2_NAME" in *[!A-Za-z0-9._\ -]*) echo "Demo names contain invalid characters." >&2; exit 1 ;; esac
           case "$DEMO_USER_PASSWORD$DEMO_USER_2_PASSWORD" in *[!A-Za-z0-9@%+=:,._-]*) echo "Demo passwords contain invalid characters." >&2; exit 1 ;; esac
           token_parameter="${PARAMETER_PREFIX}/${GITHUB_RUN_ID}/ghcr"
           auth_parameter="${PARAMETER_PREFIX}/${GITHUB_RUN_ID}/auth"

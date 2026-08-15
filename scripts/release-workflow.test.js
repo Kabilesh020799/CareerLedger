@@ -231,6 +231,11 @@ test("keeps production demo credentials in protected environment settings", () =
   assert.match(workflow, /DEMO_USER_2_PASSWORD: \$\{\{ secrets\.DEMO_USER_2_PASSWORD \}\}/);
   assert.match(workflow, /DEMO_USER_USERNAME: \$\{\{ vars\.DEMO_USER_USERNAME \}\}/);
   assert.match(workflow, /printf 'DEMO_USER_PASSWORD=%s\\n'/);
+  assert.equal(
+    (workflow.match(/\*\[!A-Za-z0-9\._\\ -\]\*/g) ?? []).length,
+    2,
+    "demo display-name validation must escape spaces in both deployment paths",
+  );
 });
 
 test("keeps the database upload fallback aligned with the five-megabyte limit", () => {
