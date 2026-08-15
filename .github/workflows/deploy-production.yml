@@ -210,6 +210,7 @@ jobs:
           OPENAI_GMAIL_MODEL: ${{ vars.OPENAI_GMAIL_MODEL }}
           OPENAI_GMAIL_CONFIDENCE_THRESHOLD: ${{ vars.OPENAI_GMAIL_CONFIDENCE_THRESHOLD }}
           OPENAI_GMAIL_TIMEOUT_MS: ${{ vars.OPENAI_GMAIL_TIMEOUT_MS }}
+          ADMIN_ACCOUNT_EMAILS: ${{ vars.ADMIN_ACCOUNT_EMAILS }}
           RESUME_BUCKET: ${{ vars.RESUME_BUCKET }}
           APPLICATION_AWS_REGION: ${{ vars.AWS_REGION }}
           VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
@@ -248,6 +249,9 @@ jobs:
           case "$OPENAI_ALLOWED_ACCOUNT_EMAILS" in
             *[!A-Za-z0-9@._,+-]*) echo "OPENAI_ALLOWED_ACCOUNT_EMAILS contains invalid characters." >&2; exit 1 ;;
           esac
+          case "$ADMIN_ACCOUNT_EMAILS" in
+            *[!A-Za-z0-9@._,+-]*) echo "ADMIN_ACCOUNT_EMAILS contains invalid characters." >&2; exit 1 ;;
+          esac
 
           port="${DEPLOY_PORT:-22}"
           {
@@ -260,6 +264,7 @@ jobs:
             printf 'OPENAI_GMAIL_MODEL=%s\n' "${OPENAI_GMAIL_MODEL:-gpt-5-mini}"
             printf 'OPENAI_GMAIL_CONFIDENCE_THRESHOLD=%s\n' "${OPENAI_GMAIL_CONFIDENCE_THRESHOLD:-80}"
             printf 'OPENAI_GMAIL_TIMEOUT_MS=%s\n' "${OPENAI_GMAIL_TIMEOUT_MS:-10000}"
+            printf 'ADMIN_ACCOUNT_EMAILS=%s\n' "$ADMIN_ACCOUNT_EMAILS"
             printf 'GMAIL_CALLBACK_URL=%s/api/gmail/callback\n' "${PRODUCTION_URL%/}"
             printf 'AWS_REGION=%s\n' "$APPLICATION_AWS_REGION"
             printf 'RESUME_BUCKET=%s\n' "$RESUME_BUCKET"
@@ -307,6 +312,7 @@ jobs:
           OPENAI_GMAIL_MODEL: ${{ vars.OPENAI_GMAIL_MODEL }}
           OPENAI_GMAIL_CONFIDENCE_THRESHOLD: ${{ vars.OPENAI_GMAIL_CONFIDENCE_THRESHOLD }}
           OPENAI_GMAIL_TIMEOUT_MS: ${{ vars.OPENAI_GMAIL_TIMEOUT_MS }}
+          ADMIN_ACCOUNT_EMAILS: ${{ vars.ADMIN_ACCOUNT_EMAILS }}
           PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
           RESUME_BUCKET: ${{ vars.RESUME_BUCKET }}
           PARAMETER_PREFIX: ${{ vars.DEPLOY_PARAMETER_PREFIX }}
@@ -322,10 +328,13 @@ jobs:
           case "$OPENAI_ALLOWED_ACCOUNT_EMAILS" in
             *[!A-Za-z0-9@._,+-]*) echo "OPENAI_ALLOWED_ACCOUNT_EMAILS contains invalid characters." >&2; exit 1 ;;
           esac
+          case "$ADMIN_ACCOUNT_EMAILS" in
+            *[!A-Za-z0-9@._,+-]*) echo "ADMIN_ACCOUNT_EMAILS contains invalid characters." >&2; exit 1 ;;
+          esac
           token_parameter="${PARAMETER_PREFIX}/${GITHUB_RUN_ID}/ghcr"
           auth_parameter="${PARAMETER_PREFIX}/${GITHUB_RUN_ID}/auth"
-          auth_content="$(printf 'FRONTEND_URL=%s\nCOOKIE_SECURE=true\nGOOGLE_CLIENT_ID=%s\nGOOGLE_CLIENT_SECRET=%s\nOPENAI_API_KEY=%s\nOPENAI_ALLOWED_ACCOUNT_EMAILS=%s\nOPENAI_GMAIL_MODEL=%s\nOPENAI_GMAIL_CONFIDENCE_THRESHOLD=%s\nOPENAI_GMAIL_TIMEOUT_MS=%s\nGMAIL_CALLBACK_URL=%s/api/gmail/callback\nAWS_REGION=%s\nRESUME_BUCKET=%s\nRESUME_UPLOAD_EXPIRES_SECONDS=300\nVAPID_PUBLIC_KEY=%s\nVAPID_PRIVATE_KEY=%s\nVAPID_SUBJECT=%s\nSMTP_HOST=%s\nSMTP_PORT=%s\nSMTP_USER=%s\nSMTP_PASSWORD=%s\nSMTP_FROM=%s\n' \
-            "${PRODUCTION_URL%/}" "$GOOGLE_CLIENT_ID" "$GOOGLE_CLIENT_SECRET" "$OPENAI_API_KEY" "$OPENAI_ALLOWED_ACCOUNT_EMAILS" "${OPENAI_GMAIL_MODEL:-gpt-5-mini}" "${OPENAI_GMAIL_CONFIDENCE_THRESHOLD:-80}" "${OPENAI_GMAIL_TIMEOUT_MS:-10000}" "${PRODUCTION_URL%/}" "${{ vars.AWS_REGION }}" "$RESUME_BUCKET" "$VAPID_PUBLIC_KEY" "$VAPID_PRIVATE_KEY" "$VAPID_SUBJECT" "$SMTP_HOST" "${SMTP_PORT:-587}" "$SMTP_USER" "$SMTP_PASSWORD" "$SMTP_FROM")"
+          auth_content="$(printf 'FRONTEND_URL=%s\nCOOKIE_SECURE=true\nGOOGLE_CLIENT_ID=%s\nGOOGLE_CLIENT_SECRET=%s\nOPENAI_API_KEY=%s\nOPENAI_ALLOWED_ACCOUNT_EMAILS=%s\nOPENAI_GMAIL_MODEL=%s\nOPENAI_GMAIL_CONFIDENCE_THRESHOLD=%s\nOPENAI_GMAIL_TIMEOUT_MS=%s\nADMIN_ACCOUNT_EMAILS=%s\nGMAIL_CALLBACK_URL=%s/api/gmail/callback\nAWS_REGION=%s\nRESUME_BUCKET=%s\nRESUME_UPLOAD_EXPIRES_SECONDS=300\nVAPID_PUBLIC_KEY=%s\nVAPID_PRIVATE_KEY=%s\nVAPID_SUBJECT=%s\nSMTP_HOST=%s\nSMTP_PORT=%s\nSMTP_USER=%s\nSMTP_PASSWORD=%s\nSMTP_FROM=%s\n' \
+            "${PRODUCTION_URL%/}" "$GOOGLE_CLIENT_ID" "$GOOGLE_CLIENT_SECRET" "$OPENAI_API_KEY" "$OPENAI_ALLOWED_ACCOUNT_EMAILS" "${OPENAI_GMAIL_MODEL:-gpt-5-mini}" "${OPENAI_GMAIL_CONFIDENCE_THRESHOLD:-80}" "${OPENAI_GMAIL_TIMEOUT_MS:-10000}" "$ADMIN_ACCOUNT_EMAILS" "${PRODUCTION_URL%/}" "${{ vars.AWS_REGION }}" "$RESUME_BUCKET" "$VAPID_PUBLIC_KEY" "$VAPID_PRIVATE_KEY" "$VAPID_SUBJECT" "$SMTP_HOST" "${SMTP_PORT:-587}" "$SMTP_USER" "$SMTP_PASSWORD" "$SMTP_FROM")"
           aws ssm put-parameter --name "$token_parameter" --type SecureString --value "$GHCR_TOKEN" --overwrite >/dev/null
           aws ssm put-parameter --name "$auth_parameter" --type SecureString --value "$auth_content" --overwrite >/dev/null
           echo "token_parameter=$token_parameter" >> "$GITHUB_OUTPUT"

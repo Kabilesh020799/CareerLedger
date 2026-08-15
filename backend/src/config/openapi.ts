@@ -20,6 +20,7 @@ export const openApiDocument: OpenAPIV3.Document = {
     { name: "Gmail" },
     { name: "Browser Extension" },
     { name: "Notifications" },
+    { name: "Administration" },
   ],
   components: {
     headers: {
@@ -72,6 +73,7 @@ export const openApiDocument: OpenAPIV3.Document = {
       ResumeVersion: { type: "object", properties: { id: { type: "string" }, name: { type: "string" }, notes: { type: "string", nullable: true }, createdAt: { type: "string", format: "date-time" }, updatedAt: { type: "string", format: "date-time" } } },
       GmailStatus: { type: "object", required: ["configured", "connected", "synchronizedMessages", "automaticSync"], properties: { configured: { type: "boolean" }, connected: { type: "boolean" }, gmailEmail: { type: "string", nullable: true }, lastSyncedAt: { type: "string", format: "date-time", nullable: true }, synchronizedMessages: { type: "integer" }, automaticSync: { type: "object", required: ["enabled", "intervalMinutes"], properties: { enabled: { type: "boolean" }, intervalMinutes: { type: "integer", enum: [15, 30, 60, 180, 360, 720, 1440] }, lastAttemptAt: { type: "string", format: "date-time", nullable: true }, lastError: { type: "string", nullable: true } } } } },
       NotificationSettings: { type: "object", required: ["emailEnabled", "browserPushEnabled", "emailAvailable", "browserPushAvailable", "browserSubscribed"], properties: { emailEnabled: { type: "boolean" }, browserPushEnabled: { type: "boolean" }, emailAvailable: { type: "boolean" }, browserPushAvailable: { type: "boolean" }, browserSubscribed: { type: "boolean" }, vapidPublicKey: { type: "string", nullable: true } } },
+      AdminUserSummary: { type: "object", required: ["id", "email", "createdAt", "authMethods", "applicationCount", "workspaceCount"], properties: { id: { type: "string" }, username: { type: "string", nullable: true }, email: { type: "string", format: "email" }, name: { type: "string", nullable: true }, emailVerifiedAt: { type: "string", format: "date-time", nullable: true }, createdAt: { type: "string", format: "date-time" }, authMethods: { type: "object", required: ["password", "google"], properties: { password: { type: "boolean" }, google: { type: "boolean" } } }, applicationCount: { type: "integer" }, workspaceCount: { type: "integer" } } },
       Error: { type: "object", properties: { error: { type: "string" } } },
     },
   },
@@ -79,7 +81,7 @@ export const openApiDocument: OpenAPIV3.Document = {
     "/api/health": { get: { tags: ["Health"], summary: "Check whether the API is running", description: "Use this endpoint for container health checks and load-balancer probes. It does not require authentication.", responses: { "200": { description: "The API is healthy.", headers: { "Server-Timing": { $ref: "#/components/headers/ServerTiming" }, "X-Response-Time-Ms": { $ref: "#/components/headers/ResponseTimeMs" } } } } } },
     "/api/auth/signup": { post: { tags: ["Authentication"], summary: "Create a password account", description: "Creates a private user account, hashes the password with bcrypt, and starts an authenticated session. Available when password authentication is enabled and protected by separate Redis account/IP attempt limits.", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["name", "username", "email", "password"], properties: { name: { type: "string", minLength: 2, maxLength: 80 }, username: { type: "string", minLength: 3, maxLength: 32, pattern: "^[a-zA-Z0-9_-]+$" }, email: { type: "string", format: "email", maxLength: 254 }, password: { type: "string", format: "password", minLength: 12, maxLength: 72, description: "Must include uppercase and lowercase letters and a number." } } } } } }, responses: { "201": { description: "Account created and session started." }, "400": { description: "Account details failed validation.", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }, "409": { description: "The username or email is already registered.", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }, "429": { description: "Account or IP signup-attempt limit reached.", headers: { "Retry-After": { schema: { type: "integer" } } }, content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } } } } },
     "/api/auth/login": { post: { tags: ["Authentication"], summary: "Sign in with username and password", description: "Creates the secure session cookie used by protected endpoints. Redis-backed account and IP limits progressively delay repeated attempts and temporarily lock abusive clients.", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["username", "password"], properties: { username: { type: "string" }, password: { type: "string", format: "password" } } } } } }, responses: { "200": { description: "Signed in and session created." }, "401": { description: "Invalid credentials. The response does not identify which credential failed.", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }, "429": { description: "Account or IP attempt limit reached. Retry-After contains the remaining lockout duration.", headers: { "Retry-After": { schema: { type: "integer" }, description: "Seconds until another attempt is permitted." } }, content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } } } } },
-    "/api/auth/session": { get: { tags: ["Authentication"], summary: "Get the current signed-in user", description: "Lets the frontend restore authentication state after a page refresh.", responses: { "200": { description: "Current session details." } } } },
+    "/api/auth/session": { get: { tags: ["Authentication"], summary: "Get the current signed-in user", description: "Lets the frontend restore authentication state and its server-derived administrator flag after a page refresh.", responses: { "200": { description: "Current session details." } } } },
     "/api/auth/logout": { post: { tags: ["Authentication"], summary: "Sign out the current user", description: "Clears the session cookie and ends the current login session.", responses: { "204": { description: "Signed out." } } } },
     "/api/applications": {
       get: { tags: ["Applications"], summary: "List applications", description: "Returns the signed-in user's applications. New collection consumers should use the bounded search endpoint.", security: [{ sessionCookie: [] }], responses: { "200": { description: "Applications", headers: { "Server-Timing": { $ref: "#/components/headers/ServerTiming" }, "X-Response-Time-Ms": { $ref: "#/components/headers/ResponseTimeMs" } }, content: { "application/json": { schema: { type: "array", items: { $ref: "#/components/schemas/Application" } } } } } } },
@@ -106,6 +108,39 @@ export const openApiDocument: OpenAPIV3.Document = {
       delete: { tags: ["Applications"], summary: "Delete an application", description: "Permanently removes the selected application and its related user-owned records.", security: [{ sessionCookie: [] }], responses: { "204": { description: "Deleted" } } },
     },
     "/api/dashboard/summary": { get: { tags: ["Dashboard"], summary: "Get dashboard metrics", description: "Returns pipeline counts, source analytics, response/interview/offer rates, and milestone summaries for the dashboard.", security: [{ sessionCookie: [] }], responses: { "200": { description: "Dashboard summary." } } } },
+    "/api/admin/users": {
+      get: {
+        tags: ["Administration"],
+        summary: "List account summaries",
+        description: "Returns searchable, paginated account metadata and aggregate account totals. Requires a signed-in account whose normalized email is configured in ADMIN_ACCOUNT_EMAILS.",
+        security: [{ sessionCookie: [] }],
+        parameters: [
+          { name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } },
+          { name: "pageSize", in: "query", schema: { type: "integer", minimum: 1, maximum: 100, default: 25 } },
+          { name: "search", in: "query", schema: { type: "string", maxLength: 200 } },
+        ],
+        responses: {
+          "200": {
+            description: "Paginated account summaries.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    summary: { type: "object", properties: { totalUsers: { type: "integer" }, verifiedUsers: { type: "integer" }, passwordUsers: { type: "integer" }, googleUsers: { type: "integer" } } },
+                    users: { type: "array", items: { $ref: "#/components/schemas/AdminUserSummary" } },
+                    pagination: { type: "object", properties: { page: { type: "integer" }, pageSize: { type: "integer" }, totalItems: { type: "integer" }, totalPages: { type: "integer" } } },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid pagination or search query." },
+          "401": { description: "Authentication required." },
+          "403": { description: "Administrator access required." },
+        },
+      },
+    },
     "/api/resumes/uploads": { get: { tags: ["Resumes"], summary: "List uploaded resumes", description: "Shows the signed-in user's uploaded resume files and the applications they are attached to.", security: [{ sessionCookie: [] }], responses: { "200": { description: "Uploaded resumes." } } } },
     "/api/resumes": { get: { tags: ["Resumes"], summary: "List reusable resume tags", security: [{ sessionCookie: [] }], responses: { "200": { description: "Resume tags." } } }, post: { tags: ["Resumes"], summary: "Create a reusable resume tag", security: [{ sessionCookie: [] }], requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["name"], properties: { name: { type: "string", maxLength: 80 }, notes: { type: "string", nullable: true, maxLength: 500, deprecated: true, description: "Legacy field retained for API compatibility; the tag interface does not use notes." } } } } } }, responses: { "201": { description: "Resume tag created." }, "409": { description: "Name already exists." } } } },
     "/api/resumes/{id}": { parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], patch: { tags: ["Resumes"], summary: "Update a reusable resume tag", security: [{ sessionCookie: [] }], responses: { "200": { description: "Resume tag updated." } } }, delete: { tags: ["Resumes"], summary: "Delete an unused resume tag", security: [{ sessionCookie: [] }], responses: { "204": { description: "Resume tag deleted." }, "409": { description: "Tag is still assigned to applications." } } } },

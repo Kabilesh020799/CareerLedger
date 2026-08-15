@@ -3,6 +3,7 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { AppLayout } from './layouts/AppLayout'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { LoadingSkeleton } from './components/ui/LoadingSkeleton'
+import { AdminRoute } from './components/auth/AdminRoute'
 
 const ApplicationDetailsPage = lazy(() => import('./pages/ApplicationDetailsPage').then((module) => ({ default: module.ApplicationDetailsPage })))
 const ApplicationBoardPage = lazy(() => import('./pages/ApplicationBoardPage').then((module) => ({ default: module.ApplicationBoardPage })))
@@ -24,6 +25,7 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage').then((module) => ({
 const CalendarPage = lazy(() => import('./pages/CalendarPage').then((module) => ({ default: module.CalendarPage })))
 const TeamSettingsPage = lazy(() => import('./pages/TeamSettingsPage').then((module) => ({ default: module.TeamSettingsPage })))
 const DataSettingsPage = lazy(() => import('./pages/DataSettingsPage').then((module) => ({ default: module.DataSettingsPage })))
+const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage').then((module) => ({ default: module.AdminUsersPage })))
 
 function App() {
   const load = (page: ReactNode) => <Suspense fallback={<LoadingSkeleton label="Loading page" />}>{page}</Suspense>
@@ -47,6 +49,9 @@ function App() {
           <Route path="profile" element={load(<ProfilePage />)} />
           <Route path="team" element={load(<TeamSettingsPage />)} />
           <Route path="data" element={load(<DataSettingsPage />)} />
+          <Route element={<AdminRoute />}>
+            <Route path="admin/users" element={load(<AdminUsersPage />)} />
+          </Route>
           <Route path="applications" element={load(<ApplicationsPage />)} />
           <Route path="applications/new" element={load(<NewApplicationPage />)} />
           <Route path="applications/:id" element={load(<ApplicationDetailsPage />)} />

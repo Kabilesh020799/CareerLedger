@@ -1,0 +1,28 @@
+@v0.1 @api @ui @admin
+Feature: Review user accounts as an administrator
+  As an authorized administrator
+  I want to review account summaries
+  So that I can understand account adoption without opening private user data
+
+  Scenario: List account summaries
+    Given my application login email is configured as an administrator
+    When I open the user account dashboard
+    Then I should see aggregate account totals
+    And I should see paginated user identity, verification, authentication, signup, application, and workspace details
+    And I should not see credentials, sessions, tokens, or private application content
+
+  Scenario: Search account summaries
+    Given I am viewing the user account dashboard
+    When I search by a user's name, username, or email
+    Then I should see only matching paginated account summaries
+
+  Scenario: Reject a regular account
+    Given my application login email is not configured as an administrator
+    When I request the user account dashboard or its API
+    Then the administrator navigation should not be shown
+    And the API should reject the request without returning account metadata
+
+  Scenario: Disable administration by default
+    Given no administrator account emails are configured
+    When any signed-in user requests account summaries
+    Then the API should reject the request

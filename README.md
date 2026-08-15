@@ -69,12 +69,15 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 - Review deadlines and interview milestones in a responsive month calendar, click a date to add a persistent task, event, or reminder with an optional application link, download everything as an iCalendar file, or create a revocable private subscription URL.
 - Protect password login with progressive delays, temporary account and network limits, uniform credential failures, and sanitized security events.
 - Use custom accessible dropdown menus for application filtering and form selections.
+- Let server-authorized administrators search and review paginated account summaries, verification status, authentication methods, signup dates, and high-level usage counts without exposing credentials or private user content.
 
 Supported application statuses: `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `INTERVIEW`, `OFFER`, `REJECTED`, and `WITHDRAWN`.
 
 ## Configuration
 
 Local configuration is documented in [backend/.env.example](backend/.env.example) and [frontend/.env.example](frontend/.env.example). The Docker Compose defaults work without additional configuration.
+
+Administrator access is disabled by default. Set `ADMIN_ACCOUNT_EMAILS` to a comma-separated list of application login emails to reveal and authorize the user-account dashboard for those accounts.
 
 For production resume storage, configure:
 

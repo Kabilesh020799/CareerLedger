@@ -22,6 +22,8 @@ import { workspaceRouter } from "./routes/workspace.routes";
 import { dataTransferRouter } from "./routes/data-transfer.routes";
 import { WorkspaceAccessError } from "./services/workspace-access.service";
 import { requestPerformance } from "./middleware/request-performance";
+import { requireAdmin } from "./middleware/require-admin";
+import { adminRouter } from "./routes/admin.routes";
 
 export function createApp() {
   const app = express();
@@ -66,6 +68,7 @@ export function createApp() {
   app.use("/api/calendar/feed", calendarFeedRouter);
   app.use("/api/browser-extension", browserExtensionRouter);
   app.use("/api/account", requireAuth, accountRouter);
+  app.use("/api/admin", requireAuth, requireAdmin, adminRouter);
   app.use("/api/calendar", requireAuth, calendarRouter);
   app.use("/api/workspaces", requireAuth, workspaceRouter);
   app.use("/api/data", requireAuth, dataTransferRouter);

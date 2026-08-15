@@ -5,7 +5,7 @@ import { useLogout } from '../hooks/useLogout'
 import { useSession } from '../hooks/useSession'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
 import { useGmailUpdateReviews } from '../hooks/useGmailUpdateReviews'
-import { Bell, BriefcaseBusiness, CalendarDays, Columns3, Database, FileText, Gauge, Mail, Menu, Puzzle, UserRound, Users, X } from 'lucide-react'
+import { Bell, BriefcaseBusiness, CalendarDays, Columns3, Database, FileText, Gauge, Mail, Menu, Puzzle, ShieldCheck, UserRound, Users, X } from 'lucide-react'
 import { useWorkspace } from '../contexts/WorkspaceContext'
 import { CustomSelect } from '../components/ui/CustomSelect'
 
@@ -44,6 +44,9 @@ export function AppLayout() {
   const [navigationOpen, setNavigationOpen] = useState(false)
   const workspace = useWorkspace()
   const pendingGmailUpdates = gmailReviews.data?.length ?? 0
+  const visibleNavigation = session.data?.user?.isAdmin
+    ? [...navigation, { label: 'Admin', items: [{ label: 'User accounts', to: '/admin/users', icon: ShieldCheck }] }]
+    : navigation
 
   useEffect(() => {
     setNavigationOpen(false)
@@ -109,7 +112,7 @@ export function AppLayout() {
           >
             <Stack gap="6" justify="space-between" minH={{ lg: 'calc(100vh - 7rem)' }}>
               <Stack as="nav" aria-label="Primary navigation" gap="5">
-                {navigation.map((group) => (
+                {visibleNavigation.map((group) => (
                   <Stack gap="1" key={group.label}>
                     <Text color="fg.subtle" fontSize="2xs" fontWeight="bold" letterSpacing="0.1em" px="3" textTransform="uppercase">{group.label}</Text>
                     {group.items.map((item) => <Link asChild key={item.to} borderRadius="lg" minH="11" px="3" py="2" fontSize="sm" fontWeight="medium" color="fg.muted" _currentPage={{ bg: 'purple.subtle', color: 'purple.fg' }} _hover={{ bg: 'bg.muted', color: 'fg', textDecoration: 'none' }}>

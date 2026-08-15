@@ -21,7 +21,8 @@ describe('usePasswordLogin', () => {
         email: 'demo@jobtracker.local',
         name: 'Demo User',
       avatarUrl: null,
-      emailVerifiedAt: null,
+        emailVerifiedAt: null,
+        isAdmin: false,
       },
     }
     vi.mocked(authService.login).mockResolvedValue(session)

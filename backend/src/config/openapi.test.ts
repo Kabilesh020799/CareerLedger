@@ -9,7 +9,7 @@ const documentedOperations = [
   ["/api/applications/{id}/events", "get"], ["/api/applications/{id}/events", "post"],
   ["/api/applications/{id}/reminders", "get"], ["/api/applications/{id}/reminders", "post"],
   ["/api/applications/{id}/resume", "get"], ["/api/applications/{id}/resume-download", "get"],
-  ["/api/dashboard/summary", "get"], ["/api/resumes", "get"], ["/api/resumes", "post"],
+  ["/api/dashboard/summary", "get"], ["/api/admin/users", "get"], ["/api/resumes", "get"], ["/api/resumes", "post"],
   ["/api/resumes/uploads", "get"], ["/api/resumes/{id}", "patch"], ["/api/resumes/{id}", "delete"],
   ["/api/reminders", "get"], ["/api/reminders/suggestions", "get"], ["/api/reminders/suggestions/{id}", "post"],
   ["/api/reminders/{id}", "patch"], ["/api/reminders/{id}", "delete"],

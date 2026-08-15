@@ -219,6 +219,12 @@ test("deploys optional Gmail LLM fallback configuration without requiring it", (
   assert.match(compose, /env_file:\s*\n\s*- \.auth\.env/);
 });
 
+test("deploys an optional administrator account allowlist", () => {
+  const workflow = fs.readFileSync(workflowPath, "utf8");
+  assert.match(workflow, /ADMIN_ACCOUNT_EMAILS: \$\{\{ vars\.ADMIN_ACCOUNT_EMAILS \}\}/);
+  assert.match(workflow, /printf 'ADMIN_ACCOUNT_EMAILS=%s\\n'/);
+});
+
 test("keeps the database upload fallback aligned with the five-megabyte limit", () => {
   const nginx = fs.readFileSync(frontendNginxPath, "utf8");
 

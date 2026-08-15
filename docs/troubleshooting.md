@@ -64,6 +64,10 @@ Deterministic classification always runs first. The optional LLM fallback runs o
 
 An absent key, timeout, provider error, non-success response, malformed structured response, or result below the confidence threshold intentionally leaves the message unmatched and does not fail synchronization. Never print the API key or email content while investigating. After correcting configuration, choose **Sync now** to re-evaluate eligible stored messages.
 
+## The user-account dashboard is missing
+
+Confirm the signed-in application's login email appears in the comma-separated `ADMIN_ACCOUNT_EMAILS` production environment variable. Matching is case-insensitive and an empty value disables administrator access. Sign out and back in, or refresh the page, after changing the setting so the session endpoint refreshes the navigation flag. A direct API request from a non-admin correctly returns `403`.
+
 ## Password login is temporarily limited
 
 A `429` response means the account or network address exceeded its temporary login allowance. Respect the response's `Retry-After` seconds instead of repeatedly retrying. If valid logins are never delayed or logs contain `auth.login.protection_unavailable`, confirm Redis is healthy and `REDIS_URL` is reachable from the backend. Do not print raw usernames, passwords, or Redis connection strings while investigating.

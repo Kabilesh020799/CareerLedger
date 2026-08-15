@@ -47,6 +47,7 @@ services:
       OPENAI_GMAIL_MODEL: ${OPENAI_GMAIL_MODEL:-gpt-5-mini}
       OPENAI_GMAIL_CONFIDENCE_THRESHOLD: ${OPENAI_GMAIL_CONFIDENCE_THRESHOLD:-80}
       OPENAI_GMAIL_TIMEOUT_MS: ${OPENAI_GMAIL_TIMEOUT_MS:-10000}
+      ADMIN_ACCOUNT_EMAILS: ${ADMIN_ACCOUNT_EMAILS:-}
       GOOGLE_CALLBACK_URL: http://localhost:5173/api/auth/google/callback
       GMAIL_CALLBACK_URL: http://localhost:5173/api/gmail/callback
       SESSION_SECRET: ${SESSION_SECRET:-local-docker-session-secret-change-me}

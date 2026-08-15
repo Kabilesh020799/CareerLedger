@@ -4,9 +4,14 @@ import { CredentialAlreadyExistsError, credentialAuthService } from "../services
 import { loginAbuseProtectionService } from "../services/login-abuse-protection.service";
 import { signupAbuseProtectionService } from "../services/signup-abuse-protection.service";
 import { authTokenService } from "../services/auth-token.service";
+import { isAdminAccount } from "../config/admin";
 import { emailRequestSchema, passwordLoginSchema, passwordSignupSchema, resetPasswordSchema, tokenSchema } from "../validators/auth.validator";
 
 const invalidCredentialsResponse = { error: "Invalid username or password" };
+
+function sessionUser(user: Express.User) {
+  return { ...user, isAdmin: isAdminAccount(user.email) };
+}
 
 function delay(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -14,7 +19,7 @@ function delay(milliseconds: number) {
 
 export const authController = {
   session(req: Request, res: Response) {
-    res.json({ user: req.user ?? null });
+    res.json({ user: req.user ? sessionUser(req.user) : null });
   },
 
   callback(_req: Request, res: Response) {
@@ -48,7 +53,7 @@ export const authController = {
       req.login(user, (error) => {
         if (error) return next(error);
         void signupAbuseProtectionService.recordSuccess(decision.attempt);
-        res.status(201).json({ user });
+        res.status(201).json({ user: sessionUser(user) });
       });
     } catch (error) {
       if (error instanceof CredentialAlreadyExistsError) {
@@ -146,7 +151,7 @@ export const authController = {
       req.login(user, (error) => {
         if (error) return next(error);
         void loginAbuseProtectionService.recordSuccess(decision.attempt);
-        res.json({ user });
+        res.json({ user: sessionUser(user) });
       });
     } catch (error) {
       next(error);

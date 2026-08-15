@@ -22,6 +22,8 @@ The repository includes public demo credentials for demonstration only. The acco
 
 Application, resume, reminder, dashboard, and Gmail routes require authentication. Services scope owned-resource reads and writes to the authenticated user. A caller must receive a not-found or authorization-safe response instead of learning whether another user's record exists.
 
+The account-administration route additionally requires the normalized signed-in email to appear in the server-side `ADMIN_ACCOUNT_EMAILS` allowlist. Empty configuration grants no administrator access, users cannot promote themselves, and the frontend's `isAdmin` flag is display-only. The backend independently returns `403` for every non-admin request. Account summaries exclude password hashes, OAuth identifiers, session records, tokens, and private user content.
+
 ## Resume files
 
 - Accept only PDF, DOC, and DOCX files up to 5 MB.
