@@ -189,7 +189,7 @@ test('create, complete, reopen, and delete an application reminder', async ({ pa
   )
   expect(cascadeReminder?.id).toBeTruthy()
 
-  await page.getByRole('button', { name: 'Delete', exact: true }).first().click()
+  await page.getByRole('button', { name: 'Delete', exact: true }).last().click()
   await page.getByRole('button', { name: 'Delete application' }).click()
   await expect(page).toHaveURL(/\/applications$/)
 
@@ -240,8 +240,8 @@ test('move an application across the board and record its timeline', async ({ pa
   const card = page.getByRole('article', {
     name: `${company}, Pipeline Engineer`,
   })
-  const screeningColumn = page.getByRole('region', {
-    name: 'Screening applications',
+  const screeningColumn = page.getByRole('tabpanel', {
+    name: /Screening/,
   })
   const applicationHref = await card.getByRole('link', { name: company }).getAttribute('href')
   const applicationId = applicationHref?.split('/').at(-1)
@@ -261,8 +261,8 @@ test('move an application across the board and record its timeline', async ({ pa
     name: `${company}, Pipeline Engineer`,
   })
   await chooseCustomSelectOption(page, `Move ${company} to status`, 'Interview', movedCard)
-  const interviewColumn = page.getByRole('region', {
-    name: 'Interview applications',
+  const interviewColumn = page.getByRole('tabpanel', {
+    name: /Interview/,
   })
   await expect(interviewColumn.getByRole('article', {
     name: `${company}, Pipeline Engineer`,
