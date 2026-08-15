@@ -1,11 +1,25 @@
 import { Alert, Box, Button, Field, Flex, Input, Stack, Text } from '@chakra-ui/react'
 import { Download, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
+import { z } from 'zod'
 import { PageHeader } from '../components/ui/PageHeader'
 import { useWorkspace } from '../contexts/WorkspaceContext'
 import { dataTransferService } from '../services/data-transfer.service'
 
 type BackupPreview = { document: unknown; fileName: string; applicationCount: number; workspaceName?: string }
+
+const backupPreviewSchema = z.object({
+  schemaVersion: z.literal(1),
+  exportedAt: z.iso.datetime({ offset: true }),
+  workspace: z.object({ name: z.string().trim().min(1) }),
+  applications: z.array(z.object({
+    company: z.string().trim().min(1),
+    jobTitle: z.string().trim().min(1),
+    status: z.string().trim().min(1),
+    events: z.array(z.unknown()),
+    reminders: z.array(z.unknown()),
+  }).passthrough()).max(1_000),
+}).passthrough()
 
 function readTextFile(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -42,9 +56,8 @@ export function DataSettingsPage() {
     setMessage(''); setError(''); setPreview(null)
     if (!file) return
     try {
-      const document = JSON.parse(await readTextFile(file)) as { applications?: unknown[]; workspace?: { name?: string } }
-      if (!Array.isArray(document.applications)) throw new Error('Invalid backup')
-      setPreview({ document, fileName: file.name, applicationCount: document.applications.length, workspaceName: document.workspace?.name })
+      const document = backupPreviewSchema.parse(JSON.parse(await readTextFile(file)))
+      setPreview({ document, fileName: file.name, applicationCount: document.applications.length, workspaceName: document.workspace.name })
     } catch { setError('This is not a valid Job Tracker backup.') }
   }
 
@@ -94,7 +107,7 @@ export function DataSettingsPage() {
         </Flex>
         <Field.HelperText>JSON files only. Maximum 1,000 applications.</Field.HelperText>
       </Field.Root>
-      {preview && <Alert.Root status="warning"><Alert.Indicator /><Alert.Content><Alert.Title>Review import</Alert.Title><Alert.Description><Text><strong>{preview.fileName}</strong> contains {preview.applicationCount} application{preview.applicationCount === 1 ? '' : 's'}{preview.workspaceName ? ` from ${preview.workspaceName}` : ''}. Existing duplicates will be skipped.</Text><Flex gap="3" mt="4" wrap="wrap"><Button colorPalette="purple" loading={busy} onClick={importBackup}>Import applications</Button><Button variant="outline" onClick={() => { setPreview(null); if (fileInputRef.current) fileInputRef.current.value = '' }}>Cancel</Button></Flex></Alert.Description></Alert.Content></Alert.Root>}
+      {preview && <Alert.Root status="info"><Alert.Indicator /><Alert.Content><Alert.Title>Review import</Alert.Title><Alert.Description><Text><strong>{preview.fileName}</strong> contains {preview.applicationCount} application{preview.applicationCount === 1 ? '' : 's'}{preview.workspaceName ? ` from ${preview.workspaceName}` : ''}. Existing duplicates will be skipped.</Text><Flex gap="3" mt="4" wrap="wrap"><Button colorPalette="purple" loading={busy} onClick={importBackup}>Import applications</Button><Button variant="outline" onClick={() => { setPreview(null); if (fileInputRef.current) fileInputRef.current.value = '' }}>Cancel</Button></Flex></Alert.Description></Alert.Content></Alert.Root>}
     </Stack>
   </Stack>
 }

@@ -14,6 +14,7 @@ Feature: Manage applications in the React interface
     Given I am signed in
     When I open the primary navigation
     Then destinations should be grouped by workspace, tools, and settings
+    And secondary tool and settings destinations should be collapsible
     And pending email updates should be visible beside email sync
 
   Scenario: Open an unknown page
@@ -24,8 +25,9 @@ Feature: Manage applications in the React interface
   Scenario: View the applications table
     Given applications exist
     When I open the applications page
-    Then I should see columns for company, position, status, applied date, source, and actions
+    Then I should see columns for company, position, status, applied date, and source
     And each application should appear in the table
+    And the company should open its application without a duplicate action
 
   Scenario: View applications on a phone
     Given applications exist
@@ -49,6 +51,7 @@ Feature: Manage applications in the React interface
     Given I am viewing the application discovery controls
     When I change search, status, sorting, or another filter
     Then matching applications should update without a separate apply action
+    But invalid filter values should show validation and should not update the results
     And the filter controls should remain available while I refine the results
     And the selected controls should remain represented in the page URL
 

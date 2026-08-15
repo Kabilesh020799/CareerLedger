@@ -44,7 +44,7 @@ export function ApplicationBoardPage() {
       </Text>
 
       {boardQuery.isPending && (
-        <LoadingSkeleton label="Loading application board" variant="cards" />
+        <LoadingSkeleton label="Loading application board" variant="board" />
       )}
 
       {boardQuery.isError && (

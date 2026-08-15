@@ -53,6 +53,7 @@ test('sign in with the demo user and access its applications', async ({ page }) 
 
 test('view email synchronization configuration status', async ({ page }) => {
   await signInAsDemoUser(page)
+  await page.getByRole('button', { name: 'Tools' }).click()
   await page.getByRole('link', { name: 'Email sync' }).click()
 
   await expect(page.getByRole('heading', { name: 'Email sync' })).toBeVisible()
@@ -206,6 +207,12 @@ test('search, filter, sort, and retain application discovery controls', async ({
   await page.getByLabel('Search').fill('shopify')
   await chooseCustomSelectOption(page, 'Status', 'Interview')
   await page.getByRole('button', { name: 'More filters' }).click()
+  await page.getByLabel('Applied from').fill('2026-08-20')
+  await page.getByLabel('Applied to').fill('2026-08-10')
+  await expect(page.getByText('From date must be before or equal to to date')).toBeVisible()
+  await expect(page).not.toHaveURL(/appliedFrom=/)
+  await page.getByLabel('Applied from').fill('')
+  await page.getByLabel('Applied to').fill('')
   await page.getByLabel('Source').fill('Company Website')
   await expect(page).toHaveURL(/search=shopify/)
   await expect(page).toHaveURL(/status=INTERVIEW/)
@@ -260,7 +267,8 @@ test('move an application across the board and record its timeline', async ({ pa
   const movedCard = screeningColumn.getByRole('article', {
     name: `${company}, Pipeline Engineer`,
   })
-  await chooseCustomSelectOption(page, `Move ${company} to status`, 'Interview', movedCard)
+  await movedCard.getByRole('button', { name: `Move ${company} to another status` }).click()
+  await page.getByRole('menuitem', { name: 'Interview' }).click()
   const interviewColumn = page.getByRole('tabpanel', {
     name: /Interview/,
   })

@@ -87,6 +87,8 @@ Update the root `README.md` whenever a feature adds or changes user-visible beha
 
 Before finalizing any feature or bug fix, follow [`skills/update-project-documentation/SKILL.md`](skills/update-project-documentation/SKILL.md). Review the API, architecture, database, security, deployment, troubleshooting, contributor, Gherkin, README, environment, and JSDoc surfaces identified by its checklist, and update every affected document.
 
+Whenever a change touches the UI, follow [`skills/test-ui-changes/SKILL.md`](skills/test-ui-changes/SKILL.md). Every UI change must add or update both meaningful frontend unit tests and Playwright end-to-end tests for the changed user-visible contract, and both test layers must pass before the change is complete.
+
 ## Verification
 
 Run checks proportionate to the changed surface:

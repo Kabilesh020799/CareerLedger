@@ -41,8 +41,8 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 
 ## Features
 
-- Create, live-search, progressively filter, sort, edit, and delete applications with indexed server-side discovery and bounded pagination, plus focused status, note, and reminder actions from application details.
-- Use a responsive workspace with streamlined desktop groups, one mobile More menu, persistent mobile shortcuts, overflow-safe application cards, and an accessible tabbed mobile status board.
+- Create, live-search, progressively filter, sort, edit, and delete applications with validated server-side discovery and bounded pagination, plus focused status, note, and reminder actions from application details.
+- Use a responsive workspace with collapsible secondary navigation groups, a focus-contained mobile More menu, persistent mobile shortcuts, clamped application cards, and an accessible tabbed mobile status board.
 - Work in a consistent accessible light or dark design system with compact semantic application-status badges, focused page hierarchy, responsive forms, and page-shaped loading states.
 - Track application timelines, notes, status changes, follow-ups, and deadlines.
 - Receive due follow-ups and deadlines through opt-in email or browser push notifications with automatic retry.
@@ -60,7 +60,7 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 - Create a private account with a unique username and email, then enter the workspace immediately through an authenticated session.
 - Recover password accounts through expiring single-use email links, verify account email addresses, edit profile details, and permanently delete an account with reauthentication.
 - Create team workspaces through validated inline forms, invite members with role-based access, switch between personal and shared application data, and preserve at least one workspace owner.
-- Export a workspace as privacy-filtered JSON and review a backup's source and application count before importing it atomically, with duplicate applications safely skipped.
+- Export a workspace as privacy-filtered JSON and validate a backup's format, source, and application count before importing it atomically, with duplicate applications safely skipped.
 - Review deadlines and interview milestones in a responsive month calendar, click a date to add a persistent task, event, or reminder with an optional application link, download everything as an iCalendar file, or create a revocable private subscription URL.
 - Protect password login with progressive delays, temporary account and network limits, uniform credential failures, and sanitized security events.
 - Use custom accessible dropdown menus for application filtering and form selections.
@@ -181,7 +181,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Playwright migrates and seeds the test database, starts the backend and frontend on ports `3001` and `4173`, and covers login/logout, application CRUD and validation, board/timeline/reminder workflows, resume tags and uploads, dashboards, notification capabilities, themes, and responsive layouts. Pull-request verification runs this suite against isolated PostgreSQL and uploads traces, screenshots, videos, and the HTML report after failures.
+Playwright refuses a non-test database URL, defaults local runs to `jobtracker_test`, generates an ephemeral local demo password when protected test credentials are absent, and uses the Compose Redis service exposed on port `6379`. It migrates and seeds the isolated database, starts the backend and frontend on ports `3001` and `4173`, and covers login/logout, application CRUD and validation, board/timeline/reminder workflows, resume tags and uploads, dashboards, notification capabilities, themes, and responsive layouts. Pull-request verification uploads traces, screenshots, videos, and the HTML report after failures.
 
 ## Production deployment
 

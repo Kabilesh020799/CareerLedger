@@ -1,4 +1,4 @@
-import { Badge, Button, Flex, Heading, Link as ChakraLink, Stack, Text } from '@chakra-ui/react'
+import { Badge, Button, Flex, Heading, Link as ChakraLink, Menu, Portal, Stack, Text } from '@chakra-ui/react'
 import { useMemo, useState, type DragEvent } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -10,7 +10,6 @@ import {
   applicationStatusLabels,
   groupApplicationsByStatus,
 } from '../../utils/applicationBoard'
-import { CustomSelect } from '../ui/CustomSelect'
 
 type ApplicationBoardProps = {
   applications: Application[]
@@ -193,7 +192,10 @@ function ApplicationBoardCard({
         )}
       </Stack>
 
-      <CustomSelect aria-label={`Move ${application.company} to status`} disabled={disabled} options={applicationStatuses.map((status) => ({ label: applicationStatusLabels[status], value: status }))} value={application.status} onChange={(value) => onMove(application.id, value as ApplicationStatus)} />
+      <Menu.Root onSelect={({ value }) => onMove(application.id, value as ApplicationStatus)}>
+        <Menu.Trigger asChild><Button aria-label={`Move ${application.company} to another status`} disabled={disabled} size="sm" variant="outline">Move to…</Button></Menu.Trigger>
+        <Portal><Menu.Positioner><Menu.Content>{applicationStatuses.filter((status) => status !== application.status).map((status) => <Menu.Item key={status} value={status}>{applicationStatusLabels[status]}</Menu.Item>)}</Menu.Content></Menu.Positioner></Portal>
+      </Menu.Root>
     </Stack>
   )
 }

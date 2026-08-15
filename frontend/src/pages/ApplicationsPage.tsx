@@ -118,22 +118,16 @@ export function ApplicationsPage() {
                 <Table.ColumnHeader>Status</Table.ColumnHeader>
                 <Table.ColumnHeader>Applied date</Table.ColumnHeader>
                 <Table.ColumnHeader>Source</Table.ColumnHeader>
-                <Table.ColumnHeader textAlign="end">Actions</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
               {applicationsQuery.data.data.map((application) => (
                 <Table.Row key={application.id}>
-                  <Table.Cell fontWeight="semibold"><Link to={`/applications/${application.id}`}>{application.company}</Link></Table.Cell>
+                  <Table.Cell fontWeight="semibold"><Link aria-label={`Open ${application.company} application`} to={`/applications/${application.id}`}>{application.company}</Link></Table.Cell>
                   <Table.Cell>{application.jobTitle}</Table.Cell>
                   <Table.Cell><StatusBadge status={application.status} /></Table.Cell>
                   <Table.Cell>{formatDate(application.appliedAt)}</Table.Cell>
                   <Table.Cell>{application.source ?? '—'}</Table.Cell>
-                  <Table.Cell textAlign="end">
-                    <Button asChild size="sm" variant="ghost">
-                      <Link to={`/applications/${application.id}`}>View</Link>
-                    </Button>
-                  </Table.Cell>
                 </Table.Row>
               ))}
             </Table.Body>
@@ -146,7 +140,7 @@ export function ApplicationsPage() {
                 <Link aria-label={`Open ${application.company} application`} to={`/applications/${application.id}`}>
                   <Stack gap="3">
                     <Flex align="start" gap="3" justify="space-between">
-                      <Box flex="1" minW="0"><Heading as="h3" fontSize="md" overflowWrap="anywhere">{application.company}</Heading><Text color="fg.muted" fontSize="sm" mt="0.5" overflowWrap="anywhere">{application.jobTitle}</Text></Box>
+                      <Box flex="1" minW="0"><Heading as="h3" fontSize="md" lineClamp="1">{application.company}</Heading><Text color="fg.muted" fontSize="sm" lineClamp="2" mt="0.5">{application.jobTitle}</Text></Box>
                       <Box flexShrink="0"><StatusBadge status={application.status} /></Box>
                     </Flex>
                     <Flex color="fg.subtle" fontSize="xs" gap="3" justify="space-between" minW="0"><Text minW="0" truncate>{application.source ?? 'Source not added'}</Text><Text flexShrink="0">{formatDate(application.appliedAt)}</Text></Flex>

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test UI Changes"
+  short_description: "Require unit and end-to-end UI coverage"
+  default_prompt: "Use $test-ui-changes to add and verify unit and end-to-end tests for this UI change."

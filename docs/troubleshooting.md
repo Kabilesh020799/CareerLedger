@@ -20,6 +20,8 @@ If `docker info` cannot access `/var/run/docker.sock`, add the deployment user t
 
 `--env-file` belongs to Docker Compose, not the root Docker command. Install the Compose plugin and use `docker compose --env-file .env -f compose.production.yml up -d`.
 
+Local Playwright runs use the isolated `jobtracker_test` database and the Compose Redis service on `127.0.0.1:6379`. Start both dependencies with `docker compose up -d postgres redis`; do not point `DATABASE_URL` at the development database.
+
 ## Deployment SSH timeout
 
 Confirm the instance is running, `DEPLOY_HOST` uses its current Elastic IP or stable hostname, port 22 is reachable, and the workflow's OIDC role can temporarily update the intended security group.

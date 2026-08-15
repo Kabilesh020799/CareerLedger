@@ -20,7 +20,7 @@ test('sign in, create, open, edit, and delete an application, then sign out', as
 
   await page.getByRole('link', { name: 'Applications', exact: true }).click()
   await page.getByLabel('Search').fill(company)
-  await page.getByRole('row').filter({ hasText: company }).getByRole('link', { name: 'View' }).click()
+  await page.getByRole('row').filter({ hasText: company }).getByRole('link', { name: `Open ${company} application` }).click()
   await expect(page).toHaveURL(applicationUrl)
 
   await page.getByRole('link', { name: 'Edit', exact: true }).click()
@@ -52,6 +52,7 @@ test('shows validation without creating an incomplete application', async ({ pag
 
 test('shows notification delivery capabilities from the authenticated API', async ({ page }) => {
   await signInAsDemoUser(page)
+  await page.getByRole('button', { name: 'Settings' }).click()
   await page.getByRole('link', { name: 'Notifications' }).click()
   await expect(page.getByRole('heading', { name: 'Notifications' })).toBeVisible()
   await expect(page.getByText(/configure SMTP/)).toBeVisible()
@@ -60,4 +61,14 @@ test('shows notification delivery capabilities from the authenticated API', asyn
   await expect(channelSwitches).toHaveCount(2)
   await expect(channelSwitches.first()).toBeDisabled()
   await expect(channelSwitches.last()).toBeDisabled()
+
+  await page.goto('/team')
+  await page.getByLabel('Email address').fill('not-an-email')
+  await page.getByRole('button', { name: 'Create invitation' }).click()
+  await expect(page.getByText('Enter a valid email address')).toBeVisible()
+
+  await page.goto('/data')
+  await expect(page.getByText('No file selected')).toBeVisible()
+  await expect(page.getByText('JSON files only. Maximum 1,000 applications.')).toBeVisible()
+  await expect(page.getByText('Choose JSON backup')).toBeVisible()
 })

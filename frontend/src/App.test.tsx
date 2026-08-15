@@ -140,6 +140,7 @@ describe('application routing', () => {
     expect(menuButton).toHaveAttribute('aria-expanded', 'false')
     await user.click(menuButton)
     expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Tools' }))
     expect(screen.getByRole('link', { name: 'Email sync' })).toHaveAttribute('href', '/gmail')
     await user.click(screen.getByRole('link', { name: 'Applications' }))
     expect(await screen.findByRole('heading', { name: 'Applications' })).toBeInTheDocument()
@@ -170,6 +171,7 @@ describe('application routing', () => {
     renderApp('/dashboard')
 
     await user.click(await screen.findByRole('button', { name: 'Open more navigation' }))
+    await user.click(screen.getByRole('button', { name: 'Tools' }))
 
     expect(screen.getByLabelText('2 pending email updates')).toHaveTextContent('2')
     expect(screen.getByRole('link', { name: /Email sync/ })).toHaveAttribute('href', '/gmail')

@@ -43,7 +43,7 @@ Prerequisites:
 Start PostgreSQL from the repository root:
 
 ```bash
-docker compose up -d postgres
+docker compose up -d postgres redis
 ```
 
 Install dependencies:

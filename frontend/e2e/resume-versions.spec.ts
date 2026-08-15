@@ -9,6 +9,7 @@ test('manage a resume tag and associate it with an application', async ({ page }
   const company = `Resume verification ${suffix}`
 
   await signInAsDemoUser(page)
+  await page.getByRole('button', { name: 'Tools' }).click()
   await page.getByRole('link', { name: 'Resumes' }).click()
   await page.getByRole('tab', { name: 'Strategy tags' }).click()
   await page.getByLabel('Tag name').fill(initialName)

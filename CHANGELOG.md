@@ -8,20 +8,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [3.27.4] - 2026-08-15
 
-### Fixed
-
-- Replaced the mismatched native backup file input with a responsive, accessible picker that clearly shows the selected JSON filename.
-
-## [3.27.3] - 2026-08-15
-
 ### Changed
 
 - Streamlined workspace navigation, prioritized dashboard actions, applied application filters automatically, reduced duplicate detail actions, and progressively disclosed optional form content.
 - Reworked team and data settings into consistent guided workflows, including review-before-import for portable backups.
+- Collapsed secondary navigation groups, replaced board status fields with focused move menus, and brought headline dashboard metrics back into the first view.
 
 ### Fixed
 
+- Replaced the mismatched native backup file input with a responsive, accessible picker that clearly shows the selected JSON filename.
 - Prevented long application content from clipping mobile status information or causing horizontal page drift, completed the mobile board tab and navigation accessibility behavior, and kept mobile filters open while results are refined.
+- Prevented invalid live filters from changing results, contained keyboard focus and page scrolling in the mobile menu, matched board loading placeholders to the final layout, and validated backup structure before import.
+- Isolated local browser tests from the development database, generated ephemeral test credentials, and connected them to local Redis so interrupted verification runs no longer pollute a user's application list or stall repeated sign-ins.
+
+## [3.27.3] - 2026-08-15
 
 ### Security
 

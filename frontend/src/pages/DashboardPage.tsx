@@ -38,8 +38,8 @@ export function DashboardPage() {
 
       {summaryQuery.isSuccess && (
         <>
-          <AttentionPanel />
           <DashboardContent summary={summaryQuery.data} />
+          <AttentionPanel />
           <PerformanceInsights summary={summaryQuery.data} />
         </>
       )}

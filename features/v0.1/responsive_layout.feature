@@ -10,6 +10,7 @@ Feature: Use the application across screen sizes
     Then I should see a compact application header
     And I should be able to open and close the remaining navigation from one More control
     And the remaining navigation should close with Escape or its backdrop
+    And keyboard focus should remain inside the open navigation and return to the More control when it closes
     And choosing a destination should close the navigation
     And I should see persistent shortcuts for dashboard, applications, and board
     And the page should not scroll horizontally

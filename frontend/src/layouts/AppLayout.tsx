@@ -5,7 +5,7 @@ import { useLogout } from '../hooks/useLogout'
 import { useSession } from '../hooks/useSession'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
 import { useGmailUpdateReviews } from '../hooks/useGmailUpdateReviews'
-import { Bell, BriefcaseBusiness, CalendarDays, Columns3, Database, FileText, Gauge, Mail, Menu, Puzzle, ShieldCheck, UserRound, Users, X } from 'lucide-react'
+import { Bell, BriefcaseBusiness, CalendarDays, ChevronDown, Columns3, Database, FileText, Gauge, Mail, Menu, Puzzle, ShieldCheck, UserRound, Users, X } from 'lucide-react'
 import { useWorkspace } from '../contexts/WorkspaceContext'
 import { CustomSelect } from '../components/ui/CustomSelect'
 
@@ -42,8 +42,10 @@ export function AppLayout() {
   const location = useLocation()
   const gmailReviews = useGmailUpdateReviews()
   const [navigationOpen, setNavigationOpen] = useState(false)
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(() => navigation.filter((group) => group.items.some((item) => location.pathname.startsWith(item.to))).map((group) => group.label))
   const navigationId = useId()
   const moreButtonRef = useRef<HTMLButtonElement>(null)
+  const navigationPanelRef = useRef<HTMLDivElement>(null)
   const workspace = useWorkspace()
   const pendingGmailUpdates = gmailReviews.data?.length ?? 0
   const visibleNavigation = session.data?.user?.isAdmin
@@ -52,6 +54,8 @@ export function AppLayout() {
 
   useEffect(() => {
     setNavigationOpen(false)
+    const activeGroup = navigation.find((group) => group.items.some((item) => location.pathname.startsWith(item.to)))?.label ?? (location.pathname.startsWith('/admin/') ? 'Admin' : undefined)
+    if (activeGroup && activeGroup !== 'Workspace') setExpandedGroups((groups) => groups.includes(activeGroup) ? groups : [...groups, activeGroup])
   }, [location.pathname])
 
   useEffect(() => {
@@ -61,10 +65,26 @@ export function AppLayout() {
         setNavigationOpen(false)
         moreButtonRef.current?.focus()
       }
+      if (event.key === 'Tab') {
+        const focusable = Array.from(navigationPanelRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? [])
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+      }
     }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
     window.addEventListener('keydown', closeOnEscape)
-    return () => window.removeEventListener('keydown', closeOnEscape)
+    window.requestAnimationFrame(() => navigationPanelRef.current?.querySelector<HTMLElement>('a[href], button:not([disabled])')?.focus())
+    return () => { window.removeEventListener('keydown', closeOnEscape); document.body.style.overflow = previousOverflow }
   }, [navigationOpen])
+
+  const closeNavigation = () => {
+    setNavigationOpen(false)
+    moreButtonRef.current?.focus()
+  }
 
   const signOut = () => {
     logout.mutate(undefined, {
@@ -97,9 +117,11 @@ export function AppLayout() {
             </Flex>
           </Flex>
 
-          {navigationOpen && <Box aria-hidden bg="blackAlpha.700" display={{ base: 'block', lg: 'none' }} inset="0" position="fixed" onClick={() => setNavigationOpen(false)} />}
+          {navigationOpen && <Box aria-hidden bg="blackAlpha.700" display={{ base: 'block', lg: 'none' }} inset="0" position="fixed" onClick={closeNavigation} />}
           <Box
+            ref={navigationPanelRef}
             aria-label="More navigation"
+            aria-modal={navigationOpen ? true : undefined}
             bg="bg.panel"
             borderColor="border"
             borderBottomWidth={{ base: '1px', lg: '0' }}
@@ -112,14 +134,15 @@ export function AppLayout() {
             p={{ base: '4', lg: '0' }}
             position={{ base: 'absolute', lg: 'static' }}
             right={{ base: '0', lg: 'auto' }}
+            role={navigationOpen ? 'dialog' : undefined}
             top={{ base: 'full', lg: 'auto' }}
           >
             <Stack gap="6" justify="space-between" minH={{ lg: 'calc(100vh - 7rem)' }}>
               <Stack as="nav" aria-label="Primary navigation" gap="5">
                 {visibleNavigation.map((group) => (
                   <Stack gap="1" key={group.label}>
-                    <Text color="fg.subtle" fontSize="2xs" fontWeight="bold" letterSpacing="0.1em" px="3" textTransform="uppercase">{group.label}</Text>
-                    {group.items.map((item) => <Link asChild key={item.to} borderRadius="lg" minH="11" px="3" py="2" fontSize="sm" fontWeight="medium" color="fg.muted" _currentPage={{ bg: 'purple.subtle', color: 'purple.fg' }} _hover={{ bg: 'bg.muted', color: 'fg', textDecoration: 'none' }}>
+                    {group.label === 'Workspace' ? <Text color="fg.subtle" fontSize="2xs" fontWeight="bold" letterSpacing="0.1em" px="3" textTransform="uppercase">{group.label}</Text> : <Button aria-expanded={expandedGroups.includes(group.label)} justifyContent="space-between" size="sm" variant="ghost" onClick={() => setExpandedGroups((groups) => groups.includes(group.label) ? groups.filter((label) => label !== group.label) : [...groups, group.label])}>{group.label}<ChevronDown aria-hidden size={16} style={{ transform: expandedGroups.includes(group.label) ? 'rotate(180deg)' : undefined }} /></Button>}
+                    {(group.label === 'Workspace' || expandedGroups.includes(group.label)) && group.items.map((item) => <Link asChild key={item.to} borderRadius="lg" minH="11" px="3" py="2" fontSize="sm" fontWeight="medium" color="fg.muted" _currentPage={{ bg: 'purple.subtle', color: 'purple.fg' }} _hover={{ bg: 'bg.muted', color: 'fg', textDecoration: 'none' }}>
                       <NavLink to={item.to}>
                         <Flex align="center" gap="3" justify="space-between" w="full">
                           <Flex align="center" gap="3"><item.icon aria-hidden size={18} /><Text>{item.label}</Text></Flex>

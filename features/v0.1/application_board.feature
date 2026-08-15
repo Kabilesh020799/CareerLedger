@@ -32,7 +32,7 @@ Feature: Manage applications on a status board
 
   Scenario: Move an application without dragging
     Given I own an application in the "APPLIED" column
-    When I choose "INTERVIEW" from the card's status control
+    When I choose "INTERVIEW" from the card's move menu
     Then the application should move to the "INTERVIEW" column
     And the backend should change its status to "INTERVIEW"
 

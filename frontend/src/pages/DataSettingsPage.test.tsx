@@ -25,7 +25,9 @@ describe('DataSettingsPage', () => {
     expect(screen.getByText('Choose JSON backup')).toBeVisible()
     expect(screen.getByText('No file selected')).toBeVisible()
 
-    const backup = new File([JSON.stringify({ workspace: { name: 'Search team' }, applications: [{}, {}, {}] })], 'backup.json', { type: 'application/json' })
+    const application = { company: 'Acme', jobTitle: 'Engineer', status: 'APPLIED', events: [], reminders: [] }
+    const document = { schemaVersion: 1, exportedAt: '2026-08-15T12:00:00.000Z', workspace: { name: 'Search team' }, applications: [application, application, application] }
+    const backup = new File([JSON.stringify(document)], 'backup.json', { type: 'application/json' })
     await user.upload(screen.getByLabelText('Import JSON backup'), backup)
 
     expect(await screen.findAllByText('backup.json')).toHaveLength(2)
@@ -33,7 +35,7 @@ describe('DataSettingsPage', () => {
     expect(dataTransferService.importWorkspace).not.toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: 'Import applications' }))
 
-    await waitFor(() => expect(dataTransferService.importWorkspace).toHaveBeenCalledWith('workspace-1', expect.objectContaining({ applications: [{}, {}, {}] })))
+    await waitFor(() => expect(dataTransferService.importWorkspace).toHaveBeenCalledWith('workspace-1', document))
     expect(await screen.findByText('Imported 2 applications; skipped 1 duplicate.')).toBeInTheDocument()
   })
 

@@ -50,7 +50,7 @@ export function ApplicationDiscoveryControls({
     control,
     register,
     reset,
-    getValues,
+    handleSubmit,
     formState: { errors },
   } = useForm<ApplicationDiscoveryFormValues>({
     resolver: zodResolver(applicationDiscoveryFormSchema),
@@ -69,17 +69,21 @@ export function ApplicationDiscoveryControls({
 
   useEffect(() => () => window.clearTimeout(applyTimer.current), [])
 
+  const applyValidValues = handleSubmit((values) => {
+    applyingFormChange.current = true
+    onChange(applicationDiscoveryFormToQuery(values))
+  })
+
   const applySoon = () => {
     window.clearTimeout(applyTimer.current)
     applyTimer.current = window.setTimeout(() => {
-      applyingFormChange.current = true
-      onChange(applicationDiscoveryFormToQuery(getValues()))
+      void applyValidValues()
     }, 300)
   }
 
   return (
     <Box bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" p={{ base: '4', md: '5' }}>
-      <form onSubmit={(event) => { event.preventDefault(); window.clearTimeout(applyTimer.current); applyingFormChange.current = true; onChange(applicationDiscoveryFormToQuery(getValues())) }} noValidate>
+      <form onSubmit={(event) => { window.clearTimeout(applyTimer.current); void applyValidValues(event) }} noValidate>
         <Stack gap="4">
           <SimpleGrid columns={{ base: 1, md: 3 }} gap="4">
             <FilterField label="Search" error={errors.search?.message}>
@@ -110,7 +114,7 @@ export function ApplicationDiscoveryControls({
 
           <Stack direction={{ base: 'column', sm: 'row' }} gap="3">
             <Button aria-expanded={advancedOpen} type="button" variant="ghost" onClick={() => setAdvancedOpen((open) => !open)}><SlidersHorizontal aria-hidden size={17} />{advancedOpen ? 'Fewer filters' : 'More filters'}</Button>
-            <Button type="button" variant="outline" onClick={onClear}>Clear filters</Button>
+            {(query.search || query.status || query.source || query.appliedFrom || query.appliedTo) && <Button type="button" variant="outline" onClick={onClear}>Clear filters</Button>}
           </Stack>
         </Stack>
       </form>

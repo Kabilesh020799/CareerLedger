@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -130,6 +130,19 @@ describe('ApplicationsPage', () => {
         limit: 20,
       })
     })
+  })
+
+  it('does not apply an invalid live date range', async () => {
+    const user = userEvent.setup()
+    vi.mocked(useApplications).mockReturnValue(successResult() as never)
+    renderPage()
+    await user.click(screen.getByRole('button', { name: 'Filters' }))
+    await user.click(screen.getByRole('button', { name: 'More filters' }))
+    fireEvent.change(screen.getByLabelText('Applied from'), { target: { value: '2026-08-20' } })
+    fireEvent.change(screen.getByLabelText('Applied to'), { target: { value: '2026-08-10' } })
+
+    expect(await screen.findByText('From date must be before or equal to to date')).toBeInTheDocument()
+    expect(useApplications).not.toHaveBeenCalledWith(expect.objectContaining({ appliedFrom: '2026-08-20', appliedTo: '2026-08-10' }))
   })
 
   it('moves between pages through the URL query', async () => {
