@@ -2,6 +2,7 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { prisma } from "./prisma";
 import { authConfig, isGoogleAuthConfigured } from "./auth";
+import { isUnprovisionedAdminAccount } from "./admin";
 
 const publicUserSelect = {
   id: true,
@@ -43,6 +44,9 @@ if (isGoogleAuthConfigured) {
           }
 
           const existingByEmail = await prisma.user.findUnique({ where: { email } });
+          if (isUnprovisionedAdminAccount(email, Boolean(existingByEmail))) {
+            return done(new Error("An account already exists for this email address"));
+          }
           if (existingByEmail && existingByEmail.googleId !== profile.id) {
             return done(new Error("An account already exists for this email address"));
           }

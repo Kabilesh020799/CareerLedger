@@ -89,6 +89,8 @@ Add environment variables:
 
 Restrict the environment to the `master` branch. Add required approval if deployments should pause for confirmation after images are published.
 
+Every email in `ADMIN_ACCOUNT_EMAILS` is reserved from public password signup and first-time Google account creation. Provision those identities before adding them to the list, or use the built-in demo administrator created by the production bootstrap. The application does not provide a public path for creating or promoting administrators.
+
 Generate a VAPID pair once with `npx web-push generate-vapid-keys` and retain it across deployments so existing browser subscriptions remain valid. Store its private key as a protected secret. SMTP and Web Push are independent and either can be omitted; the production worker reads the same protected notification configuration as the API.
 
 The deployment job uses GitHub OIDC to assume a least-privilege IAM role. That role can only authorize and revoke ingress on the application's security group. At the start of a deployment, the workflow permits SSH from the active GitHub runner's public IPv4 `/32`; its final step removes that rule even when deployment fails. No long-lived AWS access key is stored in GitHub, and port 22 does not need permanent public ingress.

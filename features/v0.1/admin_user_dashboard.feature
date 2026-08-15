@@ -27,3 +27,9 @@ Feature: Review user accounts as an administrator
     When the first built-in demo account requests account summaries
     Then the administrator dashboard should be available
     And another signed-in account should still be rejected
+
+  Scenario: Prevent public creation of administrator accounts
+    Given an email is reserved for administrator access
+    When a visitor tries to sign up with that email using password or Google authentication
+    Then the application should not create the administrator account
+    And the response should not reveal whether the email is administrator-reserved

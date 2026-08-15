@@ -32,6 +32,8 @@ Password signup and login create the same PostgreSQL-backed HTTP-only session co
 
 Administrator authorization is derived on the server from a normalized email allowlist, defaulting to the first built-in demo account when no list is supplied. The admin route applies authentication and administrator middleware before its controller and service. Its paginated query selects only account metadata and aggregate relation counts; it does not traverse private user-owned records.
 
+Password registration and first-time Google authentication consult the same administrator allowlist before creating a user. Reserved emails receive the existing duplicate-account failure, while deployment bootstrap remains a separate direct provisioning path for the built-in demo administrator.
+
 The first Express middleware creates a canonical request ID so unhandled errors can carry a safe client reference. Production disables request log output and metrics collection and runs no monitoring containers.
 
 ## Frontend boundaries

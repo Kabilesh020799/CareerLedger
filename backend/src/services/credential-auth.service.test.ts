@@ -6,6 +6,9 @@ const prismaMock = vi.hoisted(() => ({
 }));
 
 vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
+vi.mock("../config/admin", () => ({
+  isAdminAccount: (email: string) => email === "admin@example.com",
+}));
 
 import { credentialAuthService } from "./credential-auth.service";
 
@@ -49,6 +52,16 @@ describe("credentialAuthService", () => {
       email: "person@example.com",
       password: "SecurePassword1",
     })).rejects.toThrow("An account already exists with that username or email");
+  });
+
+  it("does not create an administrator through public signup", async () => {
+    await expect(credentialAuthService.register({
+      name: "Admin",
+      username: "admin",
+      email: "ADMIN@EXAMPLE.COM",
+      password: "SecurePassword1",
+    })).rejects.toThrow("An account already exists with that username or email");
+    expect(prismaMock.user.create).not.toHaveBeenCalled();
   });
 
   it("returns the public user for a valid password without returning its hash", async () => {

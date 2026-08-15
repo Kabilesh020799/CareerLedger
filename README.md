@@ -77,7 +77,7 @@ Supported application statuses: `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `
 
 Local configuration is documented in [backend/.env.example](backend/.env.example) and [frontend/.env.example](frontend/.env.example). The Docker Compose defaults work without additional configuration.
 
-The first built-in demo account (`demo@jobtracker.invalid`) has administrator access by default. Its credentials are public and must not be used with private account data. Set `ADMIN_ACCOUNT_EMAILS` to a comma-separated list of application login emails to replace that default with explicitly authorized administrators.
+The first built-in demo account (`demo@jobtracker.invalid`) has administrator access by default. Its credentials are public and must not be used with private account data. Set `ADMIN_ACCOUNT_EMAILS` to a comma-separated list of application login emails to replace that default with explicitly authorized administrators. Administrator-reserved emails cannot create accounts through public password signup or Google account creation; those accounts must already exist or be provisioned outside the application signup flow.
 
 For production resume storage, configure:
 

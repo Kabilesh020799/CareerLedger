@@ -1,6 +1,7 @@
 import { compare, hash, hashSync } from "bcryptjs";
 import { prisma } from "../config/prisma";
 import type { PasswordLoginInput, PasswordSignupInput } from "../validators/auth.validator";
+import { isAdminAccount } from "../config/admin";
 
 const FALLBACK_PASSWORD_HASH = hashSync("unavailable-account-password", 12);
 const publicUserSelect = {
@@ -20,12 +21,18 @@ function isUniqueConstraintError(error: unknown) {
 
 export const credentialAuthService = {
   async register(input: PasswordSignupInput) {
+    const normalizedEmail = input.email.trim().toLowerCase();
+    if (isAdminAccount(normalizedEmail)) {
+      throw new CredentialAlreadyExistsError(
+        "An account already exists with that username or email",
+      );
+    }
     try {
       return await prisma.user.create({
         data: {
           name: input.name.trim(),
           username: input.username.trim().toLowerCase(),
-          email: input.email.trim().toLowerCase(),
+          email: normalizedEmail,
           passwordHash: await hash(input.password, 12),
         },
         select: publicUserSelect,

@@ -23,3 +23,8 @@ export const adminAccountEmails = parseAdminAccountEmails(
 export function isAdminAccount(email: string) {
   return adminAccountEmails.has(email.trim().toLocaleLowerCase("en-US"));
 }
+
+/** Prevents public identity providers from provisioning reserved administrators. */
+export function isUnprovisionedAdminAccount(email: string, accountExists: boolean) {
+  return !accountExists && isAdminAccount(email);
+}
