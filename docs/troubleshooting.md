@@ -70,6 +70,8 @@ If the job remains queued, verify that the Gmail worker can reach Redis. If it f
 
 Deterministic classification always runs first. The optional LLM fallback runs only when those rules return no result. Confirm `OPENAI_API_KEY` is available to both `backend` and `gmail-worker`, and that the signed-in application's login email appears in the comma-separated `OPENAI_ALLOWED_ACCOUNT_EMAILS` value. Matching is case-insensitive; an empty allowlist denies everyone. Optionally verify `OPENAI_GMAIL_MODEL`, `OPENAI_GMAIL_CONFIDENCE_THRESHOLD`, and `OPENAI_GMAIL_TIMEOUT_MS`. Restart both services after changing their environment.
 
+The worker groups ambiguous messages into batches of at most eight and sends no more than two batches concurrently. A malformed or incomplete batch is discarded rather than partially trusted. If repeated ambiguous messages remain unmatched, verify the selected model supports Responses API structured outputs and raise the timeout only after checking provider latency; increasing metadata or output limits is not required for normal Gmail snippets.
+
 An absent key, timeout, provider error, non-success response, malformed structured response, or result below the confidence threshold intentionally leaves the message unmatched and does not fail synchronization. Never print the API key or email content while investigating. After correcting configuration, choose **Sync now** to re-evaluate eligible stored messages.
 
 ## The user-account dashboard is missing

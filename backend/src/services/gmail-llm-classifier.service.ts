@@ -14,15 +14,26 @@ const supportedStatuses = [
 
 const classificationSchema = z
   .object({
-    isRecruitmentUpdate: z.boolean(),
+    index: z.number().int().nonnegative(),
     status: z.enum(supportedStatuses).nullable(),
     confidence: z.number().int().min(0).max(100),
   })
-  .strict()
-  .refine(
-    (result) => result.isRecruitmentUpdate === (result.status !== null),
-    "Recruitment updates must include a status and unrelated messages must not",
-  );
+  .strict();
+
+const batchClassificationSchema = z
+  .object({ results: z.array(classificationSchema) })
+  .strict();
+
+const MAX_MESSAGES_PER_REQUEST = 8;
+const MAX_CONCURRENT_REQUESTS = 2;
+const SUBJECT_CHARACTER_LIMIT = 240;
+const SENDER_CHARACTER_LIMIT = 160;
+const SNIPPET_CHARACTER_LIMIT = 600;
+
+type Classification = {
+  status: (typeof supportedStatuses)[number];
+  confidence: number;
+};
 
 type Fetch = typeof fetch;
 
@@ -45,94 +56,183 @@ function outputText(response: ResponsesApiResult) {
   return null;
 }
 
-/** Creates a fail-safe classifier that accepts only validated structured output. */
+function isAllowed(config: typeof openAiConfig, accountEmail: string) {
+  return Boolean(
+    config.apiKey &&
+      config.allowedAccountEmails.has(
+        accountEmail.trim().toLocaleLowerCase("en-US"),
+      ),
+  );
+}
+
+/** Creates a token-bounded classifier that accepts only validated structured output. */
 export function createGmailLlmClassifier(
   request: Fetch = fetch,
   config = openAiConfig,
 ) {
-  return {
-    async classify(
-      message: Pick<GmailMessageMetadata, "subject" | "sender" | "snippet">,
-      accountEmail: string,
-    ): Promise<{ status: (typeof supportedStatuses)[number]; confidence: number } | null> {
-      if (
-        !config.apiKey ||
-        !config.allowedAccountEmails.has(
-          accountEmail.trim().toLocaleLowerCase("en-US"),
-        )
-      ) {
-        return null;
-      }
+  async function classifyBatch(
+    messages: Array<Pick<GmailMessageMetadata, "subject" | "sender" | "snippet">>,
+    accountEmail: string,
+  ): Promise<Array<Classification | null>> {
+    if (!messages.length) return [];
+    if (!isAllowed(config, accountEmail)) {
+      return messages.map(() => null);
+    }
 
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
-      try {
-        const response = await request("https://api.openai.com/v1/responses", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${config.apiKey}`,
-            "Content-Type": "application/json",
-          },
-          signal: controller.signal,
-          body: JSON.stringify({
-            model: config.model,
-            store: false,
-            instructions:
-              "Classify whether this email metadata is a job-application lifecycle update. Use only the supplied metadata. Marketing, newsletters, job alerts, and unrelated mail are not recruitment updates. Never invent a status.",
-            input: JSON.stringify({
-              subject: message.subject.slice(0, 500),
-              sender: message.sender.slice(0, 320),
-              snippet: message.snippet.slice(0, 2_000),
-            }),
-            text: {
-              format: {
-                type: "json_schema",
-                name: "gmail_recruitment_update",
-                strict: true,
-                schema: {
-                  type: "object",
-                  additionalProperties: false,
-                  required: ["isRecruitmentUpdate", "status", "confidence"],
-                  properties: {
-                    isRecruitmentUpdate: { type: "boolean" },
-                    status: {
-                      anyOf: [
-                        { type: "string", enum: supportedStatuses },
-                        { type: "null" },
-                      ],
+    const chunks = chunk(messages, MAX_MESSAGES_PER_REQUEST);
+    const chunkResults = await mapWithConcurrency(
+      chunks,
+      MAX_CONCURRENT_REQUESTS,
+      async (messageChunk): Promise<Array<Classification | null>> => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
+        try {
+          const response = await request("https://api.openai.com/v1/responses", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${config.apiKey}`,
+              "Content-Type": "application/json",
+            },
+            signal: controller.signal,
+            body: JSON.stringify({
+              model: config.model,
+              store: false,
+              instructions:
+                "Classify job-application lifecycle email metadata. Return one result per input index. APPLIED=application receipt; SCREENING=recruiter or phone screen; ASSESSMENT=test or assignment; INTERVIEW=interview; OFFER=employment offer; REJECTED=decline; WITHDRAWN=candidate withdrawal. Use null for marketing, job alerts, newsletters, sourcing, unrelated mail, or uncertain events. Use only supplied text.",
+              input: JSON.stringify(
+                messageChunk.map((message, index) => ({
+                  index,
+                  subject: message.subject.slice(0, SUBJECT_CHARACTER_LIMIT),
+                  sender: message.sender.slice(0, SENDER_CHARACTER_LIMIT),
+                  snippet: message.snippet.slice(0, SNIPPET_CHARACTER_LIMIT),
+                })),
+              ),
+              max_output_tokens: Math.max(256, messageChunk.length * 64),
+              text: {
+                format: {
+                  type: "json_schema",
+                  name: "gmail_recruitment_update",
+                  strict: true,
+                  schema: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["results"],
+                    properties: {
+                      results: {
+                        type: "array",
+                        minItems: messageChunk.length,
+                        maxItems: messageChunk.length,
+                        items: {
+                          type: "object",
+                          additionalProperties: false,
+                          required: ["index", "status", "confidence"],
+                          properties: {
+                            index: {
+                              type: "integer",
+                              minimum: 0,
+                              maximum: messageChunk.length - 1,
+                            },
+                            status: {
+                              anyOf: [
+                                { type: "string", enum: supportedStatuses },
+                                { type: "null" },
+                              ],
+                            },
+                            confidence: {
+                              type: "integer",
+                              minimum: 0,
+                              maximum: 100,
+                            },
+                          },
+                        },
+                      },
                     },
-                    confidence: { type: "integer", minimum: 0, maximum: 100 },
                   },
                 },
               },
-            },
-          }),
-        });
-        if (!response.ok) return null;
+            }),
+          });
+          if (!response.ok) return messageChunk.map(() => null);
 
-        const body = (await response.json()) as ResponsesApiResult;
-        const text = outputText(body);
-        if (!text) return null;
-        const parsed = classificationSchema.safeParse(JSON.parse(text));
-        if (!parsed.success) return null;
-        if (
-          !parsed.data.isRecruitmentUpdate ||
-          parsed.data.status === null ||
-          parsed.data.confidence < config.confidenceThreshold
-        ) {
-          return null;
+          const body = (await response.json()) as ResponsesApiResult;
+          const text = outputText(body);
+          if (!text) return messageChunk.map(() => null);
+          const parsed = batchClassificationSchema.safeParse(JSON.parse(text));
+          if (
+            !parsed.success ||
+            parsed.data.results.length !== messageChunk.length
+          ) {
+            return messageChunk.map(() => null);
+          }
+
+          const byIndex = new Map<number, Classification | null>();
+          for (const result of parsed.data.results) {
+            if (
+              result.index >= messageChunk.length ||
+              byIndex.has(result.index)
+            ) {
+              return messageChunk.map(() => null);
+            }
+            byIndex.set(
+              result.index,
+              result.status && result.confidence >= config.confidenceThreshold
+                ? { status: result.status, confidence: result.confidence }
+                : null,
+            );
+          }
+          if (byIndex.size !== messageChunk.length) {
+            return messageChunk.map(() => null);
+          }
+          return messageChunk.map(
+            (_message, index) => byIndex.get(index) ?? null,
+          );
+        } catch {
+          return messageChunk.map(() => null);
+        } finally {
+          clearTimeout(timeout);
         }
-        return {
-          status: parsed.data.status,
-          confidence: parsed.data.confidence,
-        };
-      } catch {
-        return null;
-      } finally {
-        clearTimeout(timeout);
-      }
+      },
+    );
+    return chunkResults.flat();
+  }
+
+  return {
+    classifyBatch,
+    async classify(
+      message: Pick<GmailMessageMetadata, "subject" | "sender" | "snippet">,
+      accountEmail: string,
+    ) {
+      return (await classifyBatch([message], accountEmail))[0] ?? null;
     },
   };
+}
+
+function chunk<T>(items: T[], size: number) {
+  return Array.from(
+    { length: Math.ceil(items.length / size) },
+    (_unused, index) => items.slice(index * size, (index + 1) * size),
+  );
+}
+
+async function mapWithConcurrency<T, TResult>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<TResult>,
+) {
+  const results = new Array<TResult>(items.length);
+  let nextIndex = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const index = nextIndex;
+        nextIndex += 1;
+        results[index] = await mapper(items[index]);
+      }
+    },
+  );
+  await Promise.all(workers);
+  return results;
 }
 
 /** Optional production classifier; an absent API key makes it a no-op. */

@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.28.2] - 2026-08-17
+
+### Fixed
+
+- Reduce optional OpenAI usage by applying deterministic Gmail rules first, batching only ambiguous messages with bounded metadata and output, and retaining strict indexed confidence validation.
+
 ## [3.28.1] - 2026-08-17
 
 ### Fixed
@@ -440,7 +446,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.1...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.2...HEAD
+[3.28.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.1...v3.28.2
 [3.28.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.0...v3.28.1
 [3.28.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.5...v3.28.0
 [3.27.5]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.4...v3.27.5

@@ -27,6 +27,7 @@ vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
 
 import {
   buildGmailUpdateSuggestion,
+  buildGmailUpdateSuggestions,
   GmailUpdateReviewConflictError,
   GmailUpdateReviewNotFoundError,
   gmailUpdateReviewService,
@@ -97,6 +98,31 @@ describe("buildGmailUpdateSuggestion", () => {
     await expect(
       buildGmailUpdateSuggestion(message, [], "user@example.com", { classify }),
     ).resolves.toBeNull();
+  });
+
+  it("batches only ambiguous messages while preserving deterministic results", async () => {
+    const classifyBatch = vi.fn().mockResolvedValue([
+      { status: "SCREENING", confidence: 91 },
+    ]);
+    const deterministicMessage = {
+      ...message,
+      id: "message-2",
+      subject: "Thank you for applying to Acme",
+      snippet: "Your application was received.",
+    };
+
+    const suggestions = await buildGmailUpdateSuggestions(
+      [deterministicMessage, message],
+      [],
+      "user@example.com",
+      { classifyBatch },
+    );
+
+    expect(classifyBatch).toHaveBeenCalledWith([message], "user@example.com");
+    expect(suggestions.map((suggestion) => suggestion.suggestedStatus)).toEqual([
+      "APPLIED",
+      "SCREENING",
+    ]);
   });
 });
 

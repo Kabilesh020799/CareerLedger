@@ -118,8 +118,10 @@ Feature: Manually synchronize Gmail
     Then synchronization should continue without creating a suggestion for that message
     And no application should be changed
 
-  Scenario: Bound LLM fallback processing time
+  Scenario: Minimize LLM fallback token use
     Given several synchronized Gmail messages require the optional LLM fallback
     When the background synchronization classifies those messages
-    Then a limited number of classifications should run concurrently
+    Then only ambiguous messages should be sent in bounded batches
+    And the prompt and schema should be shared across messages in each batch
+    And each result should be validated against its message index and confidence
     And the manual API request should remain independent of provider response time

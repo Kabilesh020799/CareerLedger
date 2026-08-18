@@ -42,6 +42,54 @@ export async function buildGmailUpdateSuggestion(
   };
 }
 
+/**
+ * Applies free deterministic rules first, then classifies only ambiguous
+ * messages through the LLM's token-efficient batch interface.
+ */
+export async function buildGmailUpdateSuggestions(
+  messages: GmailMessageMetadata[],
+  applications: GmailApplicationCandidate[],
+  accountEmail: string,
+  llmClassifier: Pick<
+    typeof gmailLlmClassifier,
+    "classifyBatch"
+  > = gmailLlmClassifier,
+) {
+  const classifications = messages.map(classifyGmailMessage);
+  const ambiguousIndexes = classifications.flatMap((classification, index) =>
+    classification ? [] : [index],
+  );
+
+  if (ambiguousIndexes.length) {
+    const ambiguousClassifications = await llmClassifier.classifyBatch(
+      ambiguousIndexes.map((index) => messages[index]),
+      accountEmail,
+    );
+    ambiguousIndexes.forEach((messageIndex, resultIndex) => {
+      classifications[messageIndex] = ambiguousClassifications[resultIndex] ?? null;
+    });
+  }
+
+  return messages.flatMap((message, index) => {
+    const classification = classifications[index];
+    if (!classification) return [];
+    const match = matchGmailMessage(message, applications);
+    return [
+      {
+        providerMessageId: message.id,
+        applicationId: match?.applicationId ?? null,
+        suggestedStatus: classification.status,
+        suggestedCompany: inferCompany(message.sender) || null,
+        suggestedJobTitle: inferJobTitle(message.subject) || null,
+        subject: message.subject,
+        sender: message.sender,
+        receivedAt: message.receivedAt,
+        matchConfidence: match?.confidence ?? 0,
+      },
+    ];
+  });
+}
+
 const reviewInclude = {
   application: {
     select: { id: true, company: true, jobTitle: true, status: true },

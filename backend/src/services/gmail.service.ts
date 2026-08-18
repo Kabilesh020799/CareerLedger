@@ -6,7 +6,7 @@ import {
   gmailApiService,
   type GmailCredentials,
 } from "./gmail-api.service";
-import { buildGmailUpdateSuggestion } from "./gmail-update-review.service";
+import { buildGmailUpdateSuggestions } from "./gmail-update-review.service";
 import {
   GmailSyncJobNotFoundError,
   gmailSyncQueueService,
@@ -19,7 +19,6 @@ export class GmailNotConnectedError extends Error {}
 export class GmailQueueUnavailableError extends Error {}
 
 const CURRENT_GMAIL_CLASSIFICATION_VERSION = 4;
-const GMAIL_CLASSIFICATION_CONCURRENCY = 4;
 
 export const gmailService = {
   async status(userId: string) {
@@ -198,18 +197,10 @@ export const gmailService = {
           }),
         ])
       : [{ credentials: synchronization.credentials, messages: [] }, []];
-    const classifiedMessages = await mapWithConcurrency(
+    const suggestions = await buildGmailUpdateSuggestions(
       metadataResult.messages,
-      GMAIL_CLASSIFICATION_CONCURRENCY,
-      (message) => buildGmailUpdateSuggestion(
-        message,
-        applications,
-        connection.user.email,
-      ),
-    );
-    const suggestions = classifiedMessages.filter(
-      (suggestion): suggestion is NonNullable<typeof suggestion> =>
-        Boolean(suggestion),
+      applications,
+      connection.user.email,
     );
 
     const result = await prisma.$transaction(async (transaction) => {
@@ -363,26 +354,4 @@ function ensureConfigured() {
   if (!isGmailConfigured) {
     throw new GmailNotConfiguredError("Gmail integration is not configured");
   }
-}
-
-async function mapWithConcurrency<T, TResult>(
-  items: T[],
-  concurrency: number,
-  mapper: (item: T) => Promise<TResult>,
-) {
-  const results = new Array<TResult>(items.length);
-  let nextIndex = 0;
-    const workers = Array.from(
-    { length: Math.min(concurrency, items.length) },
-    async () => {
-      while (nextIndex < items.length) {
-        const index = nextIndex;
-        nextIndex += 1;
-        const item = items[index];
-        if (item !== undefined) results[index] = await mapper(item);
-      }
-    },
-  );
-  await Promise.all(workers);
-  return results;
 }
