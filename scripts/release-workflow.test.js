@@ -238,7 +238,7 @@ test("deploys optional Gmail LLM fallback configuration without requiring it", (
   assert.match(workflow, /OPENAI_GMAIL_MODEL: \$\{\{ vars\.OPENAI_GMAIL_MODEL \}\}/);
   assert.match(workflow, /OPENAI_GMAIL_CONFIDENCE_THRESHOLD: \$\{\{ vars\.OPENAI_GMAIL_CONFIDENCE_THRESHOLD \}\}/);
   assert.match(workflow, /OPENAI_GMAIL_TIMEOUT_MS: \$\{\{ vars\.OPENAI_GMAIL_TIMEOUT_MS \}\}/);
-  assert.match(workflow, /OPENAI_GMAIL_MODEL:-gpt-5-mini/);
+  assert.match(workflow, /OPENAI_GMAIL_MODEL:-gpt-5-nano/);
   assert.match(compose, /env_file:\s*\n\s*- \.auth\.env/);
 });
 

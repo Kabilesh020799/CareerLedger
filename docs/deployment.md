@@ -89,7 +89,7 @@ Add environment variables:
 | `DEMO_USER_2_EMAIL` | Optional login email for the second demo identity |
 | `DEMO_USER_2_NAME` | Optional display name for the second demo identity; defaults to its username |
 | `OPENAI_ALLOWED_ACCOUNT_EMAILS` | Comma-separated application login emails allowed to use OpenAI; empty denies every account |
-| `OPENAI_GMAIL_MODEL` | Optional Gmail fallback model; defaults to `gpt-5-mini` |
+| `OPENAI_GMAIL_MODEL` | Optional Gmail fallback model; production defaults to `gpt-5-nano` |
 | `OPENAI_GMAIL_CONFIDENCE_THRESHOLD` | Minimum accepted fallback confidence from 0 to 100; defaults to `80` |
 | `OPENAI_GMAIL_TIMEOUT_MS` | Maximum provider request duration in milliseconds; defaults to `10000` |
 | `SMTP_PORT` | SMTP port, normally `587` or `465` |

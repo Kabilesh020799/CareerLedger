@@ -20,7 +20,7 @@ export const openAiConfig = {
   allowedAccountEmails: parseAllowedAccountEmails(
     process.env.OPENAI_ALLOWED_ACCOUNT_EMAILS,
   ),
-  model: process.env.OPENAI_GMAIL_MODEL?.trim() || "gpt-5-mini",
+  model: process.env.OPENAI_GMAIL_MODEL?.trim() || "gpt-5-nano",
   confidenceThreshold: Math.min(
     100,
     Math.max(0, integerSetting(process.env.OPENAI_GMAIL_CONFIDENCE_THRESHOLD, 80)),
