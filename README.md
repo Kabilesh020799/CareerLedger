@@ -73,6 +73,10 @@ Supported application statuses: `SAVED`, `APPLIED`, `SCREENING`, `ASSESSMENT`, `
 
 Local configuration is documented in [backend/.env.example](backend/.env.example) and [frontend/.env.example](frontend/.env.example). The Docker Compose defaults work without additional configuration.
 
+### Frontend error monitoring
+
+The frontend supports Sentry browser error reporting, performance tracing, and privacy-conscious session replay. Configure `VITE_SENTRY_DSN` in `frontend/.env` for local use. Production images receive the DSN from the GitHub Actions repository variable `SENTRY_DSN`; restrict the DSN to the application origins in Sentry. Sampling defaults to 10% for traces and sessions, with replay captured for errors. User-identifying data and HTTP bodies are not sent by default.
+
 The first environment-configured demo account has administrator access by default. Set `ADMIN_ACCOUNT_EMAILS` to a comma-separated list of application login emails to replace that default with explicitly authorized administrators. If neither a demo account nor an explicit list is configured, nobody has administrator access. Administrator-reserved emails cannot create accounts through public password signup or Google account creation; those accounts must already exist or be provisioned outside the application signup flow.
 
 For production application-document storage, configure:

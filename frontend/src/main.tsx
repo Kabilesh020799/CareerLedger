@@ -7,6 +7,9 @@ import { AppProvider } from './components/ui/AppProvider'
 import { queryClient } from './config/queryClient'
 import './index.css'
 import { WorkspaceProvider } from './contexts/WorkspaceContext'
+import { initializeSentry } from './config/sentry'
+
+initializeSentry()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

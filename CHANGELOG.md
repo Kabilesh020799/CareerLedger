@@ -6,7 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
-## [3.28.2] - 2026-08-17
+## [3.29.0] - 2026-08-17
+
+### Added
+
+- Add optional Sentry monitoring for frontend errors, performance traces, and privacy-conscious session replay, configurable for local Docker builds and production releases.
 
 ### Fixed
 
@@ -448,7 +452,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added categorized changelog entries as the source for GitHub Release notes.
 
 [Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.2...HEAD
-[3.28.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.1...v3.28.2
+[3.29.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.1...v3.29.0
 [3.28.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.0...v3.28.1
 [3.28.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.5...v3.28.0
 [3.27.5]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.4...v3.27.5

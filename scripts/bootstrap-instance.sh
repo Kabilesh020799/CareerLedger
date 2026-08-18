@@ -34,6 +34,9 @@ docker build \
   --build-arg VITE_ENABLE_PASSWORD_LOGIN=true \
   --build-arg VITE_ENABLE_GOOGLE_LOGIN=false \
   --build-arg VITE_INSECURE_HTTP_DEPLOYMENT=false \
+  --build-arg VITE_SENTRY_DSN="${VITE_SENTRY_DSN:-}" \
+  --build-arg VITE_SENTRY_TRACES_SAMPLE_RATE="${VITE_SENTRY_TRACES_SAMPLE_RATE:-0.1}" \
+  --build-arg VITE_SENTRY_REPLAYS_SESSION_SAMPLE_RATE="${VITE_SENTRY_REPLAYS_SESSION_SAMPLE_RATE:-0.1}" \
   --tag "ghcr.io/kabilesh020799/jobapplicationtracker-frontend:$image_tag" \
   "$source_dir/frontend"
 

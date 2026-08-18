@@ -128,6 +128,10 @@ jobs:
             ${{ matrix.image }}:latest
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+          build-args: |
+            VITE_SENTRY_DSN=${{ vars.SENTRY_DSN }}
+            VITE_SENTRY_TRACES_SAMPLE_RATE=${{ vars.SENTRY_TRACES_SAMPLE_RATE || '0.1' }}
+            VITE_SENTRY_REPLAYS_SESSION_SAMPLE_RATE=${{ vars.SENTRY_REPLAYS_SESSION_SAMPLE_RATE || '0.1' }}
 
   deploy:
     name: Deploy and release production

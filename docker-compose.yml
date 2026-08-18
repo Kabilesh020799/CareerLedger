@@ -131,6 +131,9 @@ services:
         VITE_ENABLE_PASSWORD_LOGIN: "true"
         VITE_ENABLE_GOOGLE_LOGIN: ${ENABLE_GOOGLE_LOGIN:-false}
         VITE_INSECURE_HTTP_DEPLOYMENT: "false"
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+        VITE_SENTRY_TRACES_SAMPLE_RATE: ${VITE_SENTRY_TRACES_SAMPLE_RATE:-0.1}
+        VITE_SENTRY_REPLAYS_SESSION_SAMPLE_RATE: ${VITE_SENTRY_REPLAYS_SESSION_SAMPLE_RATE:-0.1}
     container_name: job-tracker-frontend
     restart: unless-stopped
     ports:
