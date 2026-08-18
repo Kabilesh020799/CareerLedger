@@ -41,6 +41,8 @@ describe("gmailLlmClassifier", () => {
           index: 0,
           status: "INTERVIEW",
           confidence: 91,
+          company: "Acme",
+          jobTitle: "Software Engineer",
         }] }),
       }),
     );
@@ -50,6 +52,8 @@ describe("gmailLlmClassifier", () => {
     ).resolves.toEqual({
       status: "INTERVIEW",
       confidence: 91,
+      company: "Acme",
+      jobTitle: "Software Engineer",
     });
 
     const body = JSON.parse(String(request.mock.calls[0]?.[1]?.body));
@@ -68,10 +72,10 @@ describe("gmailLlmClassifier", () => {
   });
 
   it.each([
-    ["low confidence", { index: 0, status: "OFFER", confidence: 79 }],
-    ["unrelated", { index: 0, status: null, confidence: 99 }],
-    ["unsupported status", { index: 0, status: "HIRED", confidence: 99 }],
-    ["invalid index", { index: 1, status: "REJECTED", confidence: 99 }],
+    ["low confidence", { index: 0, status: "OFFER", confidence: 79, company: null, jobTitle: null }],
+    ["unrelated", { index: 0, status: null, confidence: 99, company: null, jobTitle: null }],
+    ["unsupported status", { index: 0, status: "HIRED", confidence: 99, company: null, jobTitle: null }],
+    ["invalid index", { index: 1, status: "REJECTED", confidence: 99, company: null, jobTitle: null }],
   ])("rejects %s structured output", async (_name, result) => {
     const request = vi
       .fn<typeof fetch>()
@@ -114,9 +118,9 @@ describe("gmailLlmClassifier", () => {
       response({
         output_text: JSON.stringify({
           results: [
-            { index: 0, status: "ASSESSMENT", confidence: 92 },
-            { index: 1, status: null, confidence: 88 },
-            { index: 2, status: "REJECTED", confidence: 96 },
+            { index: 0, status: "ASSESSMENT", confidence: 92, company: "Acme", jobTitle: "Engineer" },
+            { index: 1, status: null, confidence: 88, company: null, jobTitle: null },
+            { index: 2, status: "REJECTED", confidence: 96, company: "Acme", jobTitle: "Engineer" },
           ],
         }),
       }),
@@ -133,9 +137,9 @@ describe("gmailLlmClassifier", () => {
         "user@example.com",
       ),
     ).resolves.toEqual([
-      { status: "ASSESSMENT", confidence: 92 },
+      { status: "ASSESSMENT", confidence: 92, company: "Acme", jobTitle: "Engineer" },
       null,
-      { status: "REJECTED", confidence: 96 },
+      { status: "REJECTED", confidence: 96, company: "Acme", jobTitle: "Engineer" },
     ]);
     expect(request).toHaveBeenCalledOnce();
     const body = JSON.parse(String(request.mock.calls[0]?.[1]?.body));
@@ -157,6 +161,8 @@ describe("gmailLlmClassifier", () => {
             index,
             status: "APPLIED",
             confidence: 90,
+            company: "Acme",
+            jobTitle: "Engineer",
           })),
         }),
       });

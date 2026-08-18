@@ -111,4 +111,13 @@ describe("Gmail recruitment update classification", () => {
   it("does not mistake an application acknowledgement for a job title", () => {
     expect(inferJobTitle("Thank you for your application to Pigmen")).toBe("");
   });
+
+  it("infers a role from a generic subject when the snippet contains it", () => {
+    expect(
+      inferJobTitle(
+        "Thanks for your interest in Accenture",
+        "We received your application for the Senior Cloud Engineer position.",
+      ),
+    ).toBe("Senior Cloud Engineer");
+  });
 });

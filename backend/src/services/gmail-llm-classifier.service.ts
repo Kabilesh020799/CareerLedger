@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { openAiConfig } from "../config/openai";
-import type { GmailMessageMetadata } from "./gmail-update-classifier";
+import type { GmailClassification, GmailMessageMetadata } from "./gmail-update-classifier";
 
 const supportedStatuses = [
   "APPLIED",
@@ -17,6 +17,8 @@ const classificationSchema = z
     index: z.number().int().nonnegative(),
     status: z.enum(supportedStatuses).nullable(),
     confidence: z.number().int().min(0).max(100),
+    company: z.string().trim().min(2).max(120).nullable(),
+    jobTitle: z.string().trim().min(2).max(120).nullable(),
   })
   .strict();
 
@@ -29,11 +31,6 @@ const MAX_CONCURRENT_REQUESTS = 2;
 const SUBJECT_CHARACTER_LIMIT = 240;
 const SENDER_CHARACTER_LIMIT = 160;
 const SNIPPET_CHARACTER_LIMIT = 600;
-
-type Classification = {
-  status: (typeof supportedStatuses)[number];
-  confidence: number;
-};
 
 type Fetch = typeof fetch;
 
@@ -73,7 +70,7 @@ export function createGmailLlmClassifier(
   async function classifyBatch(
     messages: Array<Pick<GmailMessageMetadata, "subject" | "sender" | "snippet">>,
     accountEmail: string,
-  ): Promise<Array<Classification | null>> {
+  ): Promise<Array<GmailClassification | null>> {
     if (!messages.length) return [];
     if (!isAllowed(config, accountEmail)) {
       return messages.map(() => null);
@@ -83,7 +80,7 @@ export function createGmailLlmClassifier(
     const chunkResults = await mapWithConcurrency(
       chunks,
       MAX_CONCURRENT_REQUESTS,
-      async (messageChunk): Promise<Array<Classification | null>> => {
+      async (messageChunk): Promise<Array<GmailClassification | null>> => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
         try {
@@ -98,7 +95,7 @@ export function createGmailLlmClassifier(
               model: config.model,
               store: false,
               instructions:
-                "Classify job-application lifecycle email metadata. Return one result per input index. APPLIED=application receipt; SCREENING=recruiter or phone screen; ASSESSMENT=test or assignment; INTERVIEW=interview; OFFER=employment offer; REJECTED=decline; WITHDRAWN=candidate withdrawal. Use null for marketing, job alerts, newsletters, sourcing, unrelated mail, or uncertain events. Use only supplied text.",
+                "Classify job-application lifecycle email metadata. Return one result per input index. APPLIED=application receipt; SCREENING=recruiter or phone screen; ASSESSMENT=test or assignment; INTERVIEW=interview; OFFER=employment offer; REJECTED=decline; WITHDRAWN=candidate withdrawal. Extract the company and job title from the supplied subject, sender, or snippet when clearly present; otherwise return null for that field. Use null status for marketing, job alerts, newsletters, sourcing, unrelated mail, or uncertain events. Use only supplied text.",
               input: JSON.stringify(
                 messageChunk.map((message, index) => ({
                   index,
@@ -125,7 +122,7 @@ export function createGmailLlmClassifier(
                         items: {
                           type: "object",
                           additionalProperties: false,
-                          required: ["index", "status", "confidence"],
+                          required: ["index", "status", "confidence", "company", "jobTitle"],
                           properties: {
                             index: {
                               type: "integer",
@@ -143,6 +140,8 @@ export function createGmailLlmClassifier(
                               minimum: 0,
                               maximum: 100,
                             },
+                            company: { anyOf: [{ type: "string", minLength: 2, maxLength: 120 }, { type: "null" }] },
+                            jobTitle: { anyOf: [{ type: "string", minLength: 2, maxLength: 120 }, { type: "null" }] },
                           },
                         },
                       },
@@ -165,7 +164,7 @@ export function createGmailLlmClassifier(
             return messageChunk.map(() => null);
           }
 
-          const byIndex = new Map<number, Classification | null>();
+          const byIndex = new Map<number, GmailClassification | null>();
           for (const result of parsed.data.results) {
             if (
               result.index >= messageChunk.length ||
@@ -176,7 +175,12 @@ export function createGmailLlmClassifier(
             byIndex.set(
               result.index,
               result.status && result.confidence >= config.confidenceThreshold
-                ? { status: result.status, confidence: result.confidence }
+                ? {
+                    status: result.status,
+                    confidence: result.confidence,
+                    company: result.company,
+                    jobTitle: result.jobTitle,
+                  }
                 : null,
             );
           }

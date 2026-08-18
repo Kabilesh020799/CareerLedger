@@ -17,9 +17,11 @@ export type GmailApplicationCandidate = {
   createdAt: Date;
 };
 
-type Classification = {
+export type GmailClassification = {
   status: ApplicationStatus;
   confidence: number;
+  company?: string | null;
+  jobTitle?: string | null;
 };
 
 const classificationRules: Array<{
@@ -78,7 +80,7 @@ const classificationRules: Array<{
 
 export function classifyGmailMessage(
   message: Pick<GmailMessageMetadata, "subject" | "snippet">,
-): Classification | null {
+): GmailClassification | null {
   if (isApplicationAcknowledgement(message.subject)) {
     return { status: "APPLIED", confidence: 95 };
   }
@@ -165,7 +167,7 @@ export function inferCompany(sender: string) {
   return titleCase(domainPart.replace(/[-_]+/g, " "));
 }
 
-export function inferJobTitle(subject: string) {
+export function inferJobTitle(subject: string, snippet = "") {
   const normalizedSubject = subject
     .replace(/^(re|fw|fwd):\s*/i, "")
     .replace(/\s+/g, " ")
@@ -176,10 +178,20 @@ export function inferJobTitle(subject: string) {
   const patterns = [
     /(?:application|interview|assessment|offer)\s+(?:for|for the)\s+(.+?)(?:\s+(?:role|position))?$/i,
     /^(.+?)\s+(?:interview|assessment|application|offer)(?:\s|$)/i,
+    /(?:application|interview|assessment|offer)\s+(?:for|for the)\s+(?:the\s+)?(.+?)\s+(?:role|position)\b/i,
+    /(?:role|position)\s*:\s*([^,.\n]{2,120})/i,
+    /(?:your application|regarding your application)\s*(?:for|:)?\s*([^,.\n]{2,120})/i,
   ];
+  const searchableText = `${normalizedSubject} ${snippet}`.replace(/\s+/g, " ").trim();
   for (const pattern of patterns) {
-    const match = normalizedSubject.match(pattern)?.[1]?.trim();
-    if (match && match.length >= 2 && match.length <= 120) return match;
+    const match = searchableText.match(pattern)?.[1]?.trim();
+    if (match && match.length >= 2 && match.length <= 120) {
+      return match
+        .replace(/^the\s+/i, "")
+        .replace(/\s+(?:role|position)\.?$/i, "")
+        .replace(/[.!?]+$/, "")
+        .trim();
+    }
   }
   return "";
 }

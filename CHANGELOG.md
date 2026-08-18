@@ -14,6 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Preserve company and role suggestions when Gmail subjects are generic by extracting job titles from message snippets and validated optional LLM output.
 - Reduce optional OpenAI usage by applying deterministic Gmail rules first, batching only ambiguous messages with bounded metadata and output, and retaining strict indexed confidence validation.
 - Use the lower-cost `gpt-5-nano` model by default for production's optional Gmail classification while preserving the model override setting.
 

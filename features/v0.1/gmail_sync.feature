@@ -125,3 +125,10 @@ Feature: Manually synchronize Gmail
     And the prompt and schema should be shared across messages in each batch
     And each result should be validated against its message index and confidence
     And the manual API request should remain independent of provider response time
+
+  Scenario: Preserve a role found in Gmail metadata
+    Given a recruitment message has a generic subject
+    And its subject or snippet contains a recognizable company and job title
+    When Gmail synchronization creates a pending review
+    Then the suggested company and job title should be shown in the review
+    And I should be able to edit them before creating an application
