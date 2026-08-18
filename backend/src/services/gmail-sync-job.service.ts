@@ -6,41 +6,53 @@ import {
   GmailNotConnectedError,
   gmailService,
 } from "./gmail.service";
+import type { GmailSyncJobTrigger } from "./gmail-sync-queue.service";
 
-/** Runs one enabled user's automatic sync and records retry-safe public status. */
-export async function processGmailSyncJob(userId: string, attemptedAt = new Date()) {
-  const connection = await prisma.gmailConnection.findUnique({
-    where: { userId },
-    select: { autoSyncEnabled: true },
-  });
-  if (!connection?.autoSyncEnabled) return;
+/** Runs a queued sync; automatic jobs additionally update their public schedule status. */
+export async function processGmailSyncJob(
+  userId: string,
+  trigger: GmailSyncJobTrigger = "automatic",
+  attemptedAt = new Date(),
+) {
+  if (trigger === "automatic") {
+    const connection = await prisma.gmailConnection.findUnique({
+      where: { userId },
+      select: { autoSyncEnabled: true },
+    });
+    if (!connection?.autoSyncEnabled) return;
 
-  await prisma.gmailConnection.update({
-    where: { userId },
-    data: { lastAutoSyncAttemptAt: attemptedAt },
-  });
-
-  try {
-    await gmailService.synchronize(userId, attemptedAt);
     await prisma.gmailConnection.update({
       where: { userId },
-      data: { lastAutoSyncError: null },
+      data: { lastAutoSyncAttemptAt: attemptedAt },
     });
+  }
+
+  try {
+    const result = await gmailService.synchronize(userId, attemptedAt);
+    if (trigger === "automatic") {
+      await prisma.gmailConnection.update({
+        where: { userId },
+        data: { lastAutoSyncError: null },
+      });
+    }
+    return result;
   } catch (error) {
     const authorizationRequired =
       error instanceof GmailAuthorizationRequiredError ||
       error instanceof GmailNotConfiguredError ||
       error instanceof GmailNotConnectedError;
-    await prisma.gmailConnection.updateMany({
-      where: { userId },
-      data: {
-        lastAutoSyncError: authorizationRequired
-          ? "Reconnect Gmail to resume automatic synchronization"
-          : "Automatic synchronization failed and will retry",
-      },
-    });
+    if (trigger === "automatic") {
+      await prisma.gmailConnection.updateMany({
+        where: { userId },
+        data: {
+          lastAutoSyncError: authorizationRequired
+            ? "Reconnect Gmail to resume automatic synchronization"
+            : "Automatic synchronization failed and will retry",
+        },
+      });
+    }
     if (authorizationRequired) {
-      throw new UnrecoverableError("Gmail must be reconnected before automatic synchronization can continue");
+      throw new UnrecoverableError("Gmail must be reconnected before synchronization can continue");
     }
     throw error;
   }

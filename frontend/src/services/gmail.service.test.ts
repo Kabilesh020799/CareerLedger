@@ -10,11 +10,23 @@ vi.mock('./api', () => ({
 describe('gmailService', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('loads status, synchronizes, and disconnects through the Gmail API', async () => {
+  it('loads status, waits for a queued synchronization, and disconnects through the Gmail API', async () => {
     const status = { configured: true, connected: false }
-    const synchronization = { newMessages: 2, duplicateMessages: 1 }
-    vi.mocked(api.get).mockResolvedValue({ data: status })
-    vi.mocked(api.post).mockResolvedValue({ data: synchronization })
+    const synchronization = {
+      synchronizationType: 'incremental' as const,
+      fetchedMessages: 3,
+      newMessages: 2,
+      duplicateMessages: 1,
+      analyzedMessages: 3,
+      detectedUpdates: 1,
+      lastSyncedAt: '2026-08-17T12:00:00.000Z',
+    }
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({ data: status })
+      .mockResolvedValueOnce({
+        data: { jobId: 'gmail-job-1', status: 'completed', result: synchronization },
+      })
+    vi.mocked(api.post).mockResolvedValue({ data: { jobId: 'gmail-job-1', status: 'queued' } })
     vi.mocked(api.delete).mockResolvedValue({})
 
     await expect(gmailService.status()).resolves.toEqual(status)
@@ -23,7 +35,23 @@ describe('gmailService', () => {
 
     expect(api.get).toHaveBeenCalledWith('/gmail/status')
     expect(api.post).toHaveBeenCalledWith('/gmail/sync')
+    expect(api.get).toHaveBeenCalledWith('/gmail/sync/gmail-job-1')
     expect(api.delete).toHaveBeenCalledWith('/gmail/connection')
+  })
+
+  it('surfaces the safe failure returned by a background synchronization', async () => {
+    vi.mocked(api.post).mockResolvedValue({ data: { jobId: 'gmail-job-2', status: 'queued' } })
+    vi.mocked(api.get).mockResolvedValue({
+      data: {
+        jobId: 'gmail-job-2',
+        status: 'failed',
+        error: 'Gmail synchronization failed after retrying.',
+      },
+    })
+
+    await expect(gmailService.synchronize()).rejects.toThrow(
+      'Gmail synchronization failed after retrying.',
+    )
   })
 
   it('lists and resolves private Gmail update reviews', async () => {

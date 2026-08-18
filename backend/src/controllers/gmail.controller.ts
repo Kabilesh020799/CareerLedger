@@ -20,6 +20,7 @@ import { resolveGmailUpdateReviewSchema } from "../validators/gmail-update-revie
 import { validateApplicationResume } from "../validators/application-resume.validator";
 import { applicationResumeStorageService } from "../services/application-resume-storage.service";
 import { updateGmailScheduleSchema } from "../validators/gmail-schedule.validator";
+import { GmailSyncJobNotFoundError } from "../services/gmail-sync-queue.service";
 
 function getUser(req: Request) {
   if (!req.user) throw new Error("Authenticated user is missing");
@@ -55,7 +56,11 @@ function handleGmailError(
     return;
   }
   if (error instanceof GmailQueueUnavailableError) {
-    res.status(503).json({ error: "Automatic Gmail synchronization is temporarily unavailable" });
+    res.status(503).json({ error: "Gmail synchronization is temporarily unavailable" });
+    return;
+  }
+  if (error instanceof GmailSyncJobNotFoundError) {
+    res.status(404).json({ error: "Gmail synchronization job was not found" });
     return;
   }
   if (error instanceof GmailAuthorizationRequiredError) {
@@ -131,7 +136,15 @@ export const gmailController = {
 
   async synchronize(req: Request, res: Response, next: NextFunction) {
     try {
-      res.json(await gmailService.synchronize(getUser(req).id));
+      res.status(202).json(await gmailService.requestSynchronization(getUser(req).id));
+    } catch (error) {
+      handleGmailError(error, res, next);
+    }
+  },
+
+  async synchronizationStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      res.json(await gmailService.synchronizationStatus(getUser(req).id, getId(req)));
     } catch (error) {
       handleGmailError(error, res, next);
     }

@@ -60,6 +60,12 @@ Check `docker compose ps redis gmail-worker backend`. Verify `REDIS_URL` uses th
 
 If an improved classifier should recover an older unmatched email, including a company-only acknowledgement such as “Thanks for your interest in Accenture,” deploy the updated backend and choose **Sync now**. Stored message references are re-evaluated once with the new classifier version in batches of up to 100; repeat synchronization if the account has more than 100 older references.
 
+## Manual Gmail synchronization returns a gateway timeout
+
+Current releases queue **Sync now** and return `202` before Gmail or optional OpenAI classification begins. If CloudFront still returns `504`, confirm the deployed frontend and backend use the same current release, then check `docker compose ps redis gmail-worker backend` and `docker compose logs gmail-worker`. The browser's `POST /api/gmail/sync` request should finish quickly; subsequent `GET /api/gmail/sync/:jobId` requests report background progress. Do not increase the CloudFront origin timeout to hide a synchronous or stopped-worker deployment.
+
+If the job remains queued, verify that the Gmail worker can reach Redis. If it fails, reconnect Gmail when prompted and inspect sanitized worker logs; provider responses, email content, OAuth credentials, and API keys must not be logged.
+
 ## Ambiguous Gmail messages are not suggested
 
 Deterministic classification always runs first. The optional LLM fallback runs only when those rules return no result. Confirm `OPENAI_API_KEY` is available to both `backend` and `gmail-worker`, and that the signed-in application's login email appears in the comma-separated `OPENAI_ALLOWED_ACCOUNT_EMAILS` value. Matching is case-insensitive; an empty allowlist denies everyone. Optionally verify `OPENAI_GMAIL_MODEL`, `OPENAI_GMAIL_CONFIDENCE_THRESHOLD`, and `OPENAI_GMAIL_TIMEOUT_MS`. Restart both services after changing their environment.

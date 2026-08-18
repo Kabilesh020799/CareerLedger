@@ -30,7 +30,12 @@ const gmailApiMock = vi.hoisted(() => ({
   metadata: vi.fn(),
   revoke: vi.fn(),
 }));
-const queueMock = vi.hoisted(() => ({ schedule: vi.fn(), unschedule: vi.fn() }));
+const queueMock = vi.hoisted(() => ({
+  schedule: vi.fn(),
+  unschedule: vi.fn(),
+  enqueueManual: vi.fn(),
+  manualStatus: vi.fn(),
+}));
 
 vi.mock("../config/gmail", () => ({ isGmailConfigured: true }));
 vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
@@ -51,6 +56,7 @@ describe("gmailService", () => {
     vi.clearAllMocks();
     queueMock.schedule.mockResolvedValue(undefined);
     queueMock.unschedule.mockResolvedValue(undefined);
+    queueMock.enqueueManual.mockResolvedValue({ jobId: "gmail-manual-user-1", status: "queued" });
     prismaMock.gmailMessage.findMany.mockResolvedValue([]);
     prismaMock.application.findMany.mockResolvedValue([]);
     prismaMock.gmailUpdateReview.createMany.mockResolvedValue({ count: 0 });
@@ -308,6 +314,23 @@ describe("gmailService", () => {
       GmailNotConnectedError,
     );
     expect(gmailApiMock.synchronize).not.toHaveBeenCalled();
+  });
+
+  it("validates the connection before queueing a manual synchronization", async () => {
+    prismaMock.gmailConnection.findUnique
+      .mockResolvedValueOnce({ id: "connection-1" })
+      .mockResolvedValueOnce(null);
+
+    await expect(gmailService.requestSynchronization("user-1")).resolves.toEqual({
+      jobId: "gmail-manual-user-1",
+      status: "queued",
+    });
+    expect(queueMock.enqueueManual).toHaveBeenCalledWith("user-1");
+
+    await expect(gmailService.requestSynchronization("user-2")).rejects.toBeInstanceOf(
+      GmailNotConnectedError,
+    );
+    expect(queueMock.enqueueManual).toHaveBeenCalledTimes(1);
   });
 
   it("analyzes previously synchronized message references once after upgrade", async () => {

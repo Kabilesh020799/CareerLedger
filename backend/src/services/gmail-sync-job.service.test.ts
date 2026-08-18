@@ -30,10 +30,23 @@ describe("processGmailSyncJob", () => {
     prismaMock.gmailConnection.findUnique.mockResolvedValue({ autoSyncEnabled: true });
     gmailServiceMock.synchronize.mockRejectedValue(new Error("provider secret"));
 
-    await expect(processGmailSyncJob("user-1", new Date("2026-08-10T12:00:00Z"))).rejects.toThrow();
+    await expect(
+      processGmailSyncJob("user-1", "automatic", new Date("2026-08-10T12:00:00Z")),
+    ).rejects.toThrow();
     expect(prismaMock.gmailConnection.updateMany).toHaveBeenCalledWith({
       where: { userId: "user-1" },
       data: { lastAutoSyncError: "Automatic synchronization failed and will retry" },
     });
+  });
+
+  it("runs a manual job even when automatic synchronization is disabled", async () => {
+    const result = { detectedUpdates: 1 };
+    gmailServiceMock.synchronize.mockResolvedValue(result);
+
+    await expect(processGmailSyncJob("user-1", "manual")).resolves.toBe(result);
+
+    expect(prismaMock.gmailConnection.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.gmailConnection.update).not.toHaveBeenCalled();
+    expect(gmailServiceMock.synchronize).toHaveBeenCalledWith("user-1", expect.any(Date));
   });
 });

@@ -140,6 +140,18 @@ export function GmailSyncPage() {
             </Alert.Root>
           )}
 
+          {synchronize.isPending && (
+            <Alert.Root aria-live="polite" status="info" borderRadius="lg">
+              <Spinner size="sm" />
+              <Alert.Content>
+                <Alert.Title>Synchronization is running in the background</Alert.Title>
+                <Alert.Description>
+                  The job continues if you leave this page. Keep it open to see the result while Gmail and ambiguous messages are analyzed.
+                </Alert.Description>
+              </Alert.Content>
+            </Alert.Root>
+          )}
+
           {synchronize.isError && (
             <Alert.Root status="error" borderRadius="lg">
               <Alert.Indicator />

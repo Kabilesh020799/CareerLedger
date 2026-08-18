@@ -25,9 +25,24 @@ Feature: Manually synchronize Gmail
   Scenario: Perform the first manual synchronization
     Given I connected Gmail but have not synchronized it
     When I request a Gmail synchronization
+    Then the request should be accepted without waiting for Gmail or the LLM provider
+    And I should see that synchronization is queued or running
+    When the background synchronization completes
     Then the most recent message references should be stored
     And the current Gmail history identifier should be recorded
     And the successful synchronization time should be shown
+
+  Scenario: Avoid duplicate manual synchronization jobs
+    Given my manual Gmail synchronization is queued or running
+    When I request another Gmail synchronization
+    Then the existing synchronization job should be returned
+    And a duplicate synchronization job should not be created
+
+  Scenario: Keep synchronization job status private
+    Given another user has a manual Gmail synchronization job
+    When I request that job's status
+    Then the job should be reported as not found
+    And provider failure details should never be returned
 
   Scenario: Synchronize incrementally
     Given a successful Gmail synchronization recorded a history identifier
@@ -102,3 +117,9 @@ Feature: Manually synchronize Gmail
     When the provider fails or returns an invalid or insufficiently confident result
     Then synchronization should continue without creating a suggestion for that message
     And no application should be changed
+
+  Scenario: Bound LLM fallback processing time
+    Given several synchronized Gmail messages require the optional LLM fallback
+    When the background synchronization classifies those messages
+    Then a limited number of classifications should run concurrently
+    And the manual API request should remain independent of provider response time

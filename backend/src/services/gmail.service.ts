@@ -7,7 +7,11 @@ import {
   type GmailCredentials,
 } from "./gmail-api.service";
 import { buildGmailUpdateSuggestion } from "./gmail-update-review.service";
-import { gmailSyncQueueService } from "./gmail-sync-queue.service";
+import {
+  GmailSyncJobNotFoundError,
+  gmailSyncQueueService,
+  type GmailSyncResult,
+} from "./gmail-sync-queue.service";
 import type { UpdateGmailScheduleInput } from "../validators/gmail-schedule.validator";
 
 export class GmailNotConfiguredError extends Error {}
@@ -15,6 +19,7 @@ export class GmailNotConnectedError extends Error {}
 export class GmailQueueUnavailableError extends Error {}
 
 const CURRENT_GMAIL_CLASSIFICATION_VERSION = 4;
+const GMAIL_CLASSIFICATION_CONCURRENCY = 4;
 
 export const gmailService = {
   async status(userId: string) {
@@ -114,7 +119,7 @@ export const gmailService = {
     return { gmailEmail: profile.emailAddress };
   },
 
-  async synchronize(userId: string, now = new Date()) {
+  async synchronize(userId: string, now = new Date()): Promise<GmailSyncResult> {
     ensureConfigured();
     const connection = await prisma.gmailConnection.findUnique({
       where: { userId },
@@ -193,17 +198,19 @@ export const gmailService = {
           }),
         ])
       : [{ credentials: synchronization.credentials, messages: [] }, []];
-    const suggestions: NonNullable<
-      Awaited<ReturnType<typeof buildGmailUpdateSuggestion>>
-    >[] = [];
-    for (const message of metadataResult.messages) {
-      const suggestion = await buildGmailUpdateSuggestion(
+    const classifiedMessages = await mapWithConcurrency(
+      metadataResult.messages,
+      GMAIL_CLASSIFICATION_CONCURRENCY,
+      (message) => buildGmailUpdateSuggestion(
         message,
         applications,
         connection.user.email,
-      );
-      if (suggestion) suggestions.push(suggestion);
-    }
+      ),
+    );
+    const suggestions = classifiedMessages.filter(
+      (suggestion): suggestion is NonNullable<typeof suggestion> =>
+        Boolean(suggestion),
+    );
 
     const result = await prisma.$transaction(async (transaction) => {
       const created = newReferences.length
@@ -273,6 +280,32 @@ export const gmailService = {
     };
   },
 
+  /** Validates the connection before handing manual synchronization to the worker. */
+  async requestSynchronization(userId: string) {
+    ensureConfigured();
+    const connection = await prisma.gmailConnection.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    if (!connection) throw new GmailNotConnectedError("Gmail is not connected");
+
+    try {
+      return await gmailSyncQueueService.enqueueManual(userId);
+    } catch {
+      throw new GmailQueueUnavailableError("Gmail synchronization is temporarily unavailable");
+    }
+  },
+
+  /** Reads a manual synchronization job without exposing provider errors. */
+  async synchronizationStatus(userId: string, jobId: string) {
+    try {
+      return await gmailSyncQueueService.manualStatus(userId, jobId);
+    } catch (error) {
+      if (error instanceof GmailSyncJobNotFoundError) throw error;
+      throw new GmailQueueUnavailableError("Gmail synchronization is temporarily unavailable");
+    }
+  },
+
   async updateSchedule(userId: string, input: UpdateGmailScheduleInput) {
     ensureConfigured();
     const connection = await prisma.gmailConnection.findUnique({
@@ -330,4 +363,26 @@ function ensureConfigured() {
   if (!isGmailConfigured) {
     throw new GmailNotConfiguredError("Gmail integration is not configured");
   }
+}
+
+async function mapWithConcurrency<T, TResult>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<TResult>,
+) {
+  const results = new Array<TResult>(items.length);
+  let nextIndex = 0;
+    const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const index = nextIndex;
+        nextIndex += 1;
+        const item = items[index];
+        if (item !== undefined) results[index] = await mapper(item);
+      }
+    },
+  );
+  await Promise.all(workers);
+  return results;
 }

@@ -29,6 +29,20 @@ export type GmailSyncResult = {
   lastSyncedAt: string
 }
 
+/** Acknowledgement returned after a manual Gmail synchronization is queued. */
+export type GmailSyncStart = {
+  jobId: string
+  status: 'queued' | 'running'
+}
+
+/** Progress returned while polling a queued manual Gmail synchronization. */
+export type GmailSyncJobStatus = {
+  jobId: string
+  status: 'queued' | 'running' | 'completed' | 'failed'
+  result?: GmailSyncResult
+  error?: string
+}
+
 export type GmailUpdateReview = {
   id: string
   suggestedStatus: import('./application').ApplicationStatus

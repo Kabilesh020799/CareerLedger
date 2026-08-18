@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.28.1] - 2026-08-17
+
+### Fixed
+
+- Run manual Gmail synchronization through the background worker, report progress with short status requests, and classify ambiguous messages with bounded concurrency so optional OpenAI latency no longer causes CloudFront gateway timeouts.
+
 ## [3.28.0] - 2026-08-17
 
 ### Added
@@ -434,7 +440,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.1...HEAD
+[3.28.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.0...v3.28.1
 [3.28.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.5...v3.28.0
 [3.27.5]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.4...v3.27.5
 [3.27.4]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.3...v3.27.4

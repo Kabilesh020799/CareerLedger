@@ -7,7 +7,8 @@ const serviceMock = vi.hoisted(() => ({
   status: vi.fn(),
   beginAuthorization: vi.fn(),
   completeAuthorization: vi.fn(),
-  synchronize: vi.fn(),
+  requestSynchronization: vi.fn(),
+  synchronizationStatus: vi.fn(),
   updateSchedule: vi.fn(),
   disconnect: vi.fn(),
 }));
@@ -140,26 +141,37 @@ describe("Gmail API routes", () => {
     expect(serviceMock.completeAuthorization).not.toHaveBeenCalled();
   });
 
-  it("returns synchronization counts and handles a missing connection", async () => {
-    serviceMock.synchronize
-      .mockResolvedValueOnce({
-        synchronizationType: "incremental",
-        fetchedMessages: 2,
-        newMessages: 1,
-        duplicateMessages: 1,
-        lastSyncedAt: "2026-08-09T21:00:00.000Z",
-      })
+  it("queues synchronization quickly and handles a missing connection", async () => {
+    serviceMock.requestSynchronization
+      .mockResolvedValueOnce({ jobId: "gmail-manual-user-1", status: "queued" })
       .mockRejectedValueOnce(new GmailNotConnectedError());
 
     const synchronized = await request(app).post("/api/gmail/sync");
     const disconnected = await request(app).post("/api/gmail/sync");
 
-    expect(synchronized.status).toBe(200);
-    expect(synchronized.body).toMatchObject({ newMessages: 1 });
+    expect(synchronized.status).toBe(202);
+    expect(synchronized.body).toEqual({ jobId: "gmail-manual-user-1", status: "queued" });
+    expect(serviceMock.requestSynchronization).toHaveBeenCalledWith("user-1");
     expect(disconnected.status).toBe(409);
     expect(disconnected.body).toEqual({
       error: "Connect Gmail before synchronizing",
     });
+  });
+
+  it("returns only an owned synchronization job's public status", async () => {
+    serviceMock.synchronizationStatus.mockResolvedValue({
+      jobId: "gmail-manual-user-1",
+      status: "running",
+    });
+
+    const response = await request(app).get("/api/gmail/sync/gmail-manual-user-1");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ jobId: "gmail-manual-user-1", status: "running" });
+    expect(serviceMock.synchronizationStatus).toHaveBeenCalledWith(
+      "user-1",
+      "gmail-manual-user-1",
+    );
   });
 
   it("disconnects the authenticated user's Gmail data", async () => {

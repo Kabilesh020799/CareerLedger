@@ -9,7 +9,7 @@ export function useSyncGmail() {
   return useMutation({
     mutationFn: gmailService.synchronize,
     onSuccess: () => {
-      feedback.show('Gmail sync started', { description: 'New recruitment updates will appear for review.' })
+      feedback.show('Gmail sync complete', { description: 'New recruitment updates are ready for review.' })
       return queryClient.invalidateQueries({ queryKey: gmailQueryKeys.all })
     },
   })

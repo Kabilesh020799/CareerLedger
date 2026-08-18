@@ -54,7 +54,7 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 - Keep uploaded résumé documents in a private preview library, label résumé strategies with suggested or custom tags, and compare outcomes by tag.
 - Scan headline metrics, act on a compact list of due or inactive applications, and switch between source and résumé-tag insights from the dashboard.
 - Receive accessible in-app confirmation after important create, update, status, reminder, tag, and synchronization actions.
-- Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates. Deterministic rules classify known recruitment messages, including company-only interest acknowledgements, with an optional validated LLM fallback for ambiguous messages. New applications created from Gmail reviews can include a résumé tag and private résumé upload.
+- Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates. Manual synchronization is queued immediately and reports its background progress, preventing slow Gmail or optional LLM calls from holding the browser request open. Deterministic rules classify known recruitment messages, including company-only interest acknowledgements, with an optional validated LLM fallback for ambiguous messages. New applications created from Gmail reviews can include a résumé tag and private résumé upload.
 - Capture job postings from a clean light/dark Manifest V3 extension workflow, review or refresh extracted details, and preserve skills, experience requirements, salary, location, work mode, original URL, description, and capture date with revocable user-scoped access.
 - Switch between light and dark themes.
 - Keep applications, Gmail data, resumes, reminders, and analytics scoped to the signed-in user.
@@ -137,7 +137,7 @@ All management and user-data endpoints require an authenticated session and enfo
 | Reminders | `GET /api/reminders`, `GET /api/reminders/suggestions`, `POST /api/reminders/suggestions/:id`, `PATCH/DELETE /api/reminders/:id` |
 | Notifications | `GET/PATCH /api/notifications/settings`, `POST/DELETE /api/notifications/subscriptions` |
 | Dashboard | `GET /api/dashboard/summary` |
-| Gmail | `GET /api/gmail/status`, `GET /api/gmail/connect`, `POST /api/gmail/sync`, `PATCH /api/gmail/schedule`, `GET /api/gmail/reviews`, `PATCH /api/gmail/reviews/:id`, `DELETE /api/gmail/connection` |
+| Gmail | `GET /api/gmail/status`, `GET /api/gmail/connect`, `POST /api/gmail/sync`, `GET /api/gmail/sync/:jobId`, `PATCH /api/gmail/schedule`, `GET /api/gmail/reviews`, `PATCH /api/gmail/reviews/:id`, `DELETE /api/gmail/connection` |
 | Browser extension | `GET/POST /api/browser-extension/tokens`, `DELETE /api/browser-extension/tokens/:id`, `POST /api/browser-extension/captures` |
 
 API responses include `Server-Timing` and `X-Response-Time-Ms` headers. Application list/search responses also report aggregate database duration and query count; query text, parameters, and request data are not logged or retained. The applications table uses the requested page size, while board and chooser views load every application through bounded pages of 50.

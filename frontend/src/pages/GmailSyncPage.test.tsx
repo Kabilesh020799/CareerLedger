@@ -166,6 +166,32 @@ describe('GmailSyncPage', () => {
     expect(mutate).toHaveBeenCalledOnce()
   })
 
+  it('explains that a manual synchronization continues in the background', () => {
+    vi.mocked(useGmailStatus).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: {
+        configured: true,
+        connected: true,
+        gmailEmail: 'gmail@example.com',
+        lastSyncedAt: null,
+        synchronizedMessages: 0,
+      },
+    } as never)
+    vi.mocked(useSyncGmail).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: true,
+      isSuccess: false,
+      isError: false,
+    } as never)
+
+    renderPage()
+
+    expect(screen.getByText('Synchronization is running in the background')).toBeInTheDocument()
+    expect(screen.getByText(/ambiguous messages are analyzed/)).toBeInTheDocument()
+  })
+
   it('enables automatic synchronization with the selected interval', async () => {
     const user = userEvent.setup()
     const mutate = vi.fn()

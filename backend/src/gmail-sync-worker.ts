@@ -6,16 +6,17 @@ import {
   gmailSyncJobName,
   gmailSyncQueueName,
   type GmailSyncJobData,
+  type GmailSyncResult,
 } from "./services/gmail-sync-queue.service";
 import { notificationJobName, notificationQueueName } from "./services/notification-queue.service";
 import { notificationService } from "./services/notification.service";
 
-const worker = new Worker<GmailSyncJobData>(
+const worker = new Worker<GmailSyncJobData, GmailSyncResult | undefined>(
   gmailSyncQueueName,
   async (job) => {
     if (job.name !== gmailSyncJobName) return;
 
-    await processGmailSyncJob(job.data.userId);
+    return processGmailSyncJob(job.data.userId, job.data.trigger ?? "automatic");
   },
   { connection: createRedisConnection(), concurrency: 2 },
 );
