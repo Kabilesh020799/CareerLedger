@@ -40,18 +40,18 @@ The first Express middleware creates a canonical request ID so unhandled errors 
 
 Frontend data follows `Component -> Hook -> TanStack Query -> API service`. React Hook Form and Zod handle forms, Chakra UI handles layout and accessibility, and Axios sends credentials to the backend. Mutations invalidate affected application, dashboard, reminder, resume, or Gmail query keys.
 
-## Resume storage
+## Application document storage
 
-Production resume uploads use a private S3 bucket:
+Production resume and cover-letter uploads use a private S3 bucket:
 
 ```text
-Browser -> request presigned upload -> Express verifies user and metadata
+Browser -> request a document-specific presigned upload -> Express verifies user and metadata
 Browser -> direct POST to private S3 pending key
 Browser -> save application with pending key
 Express -> verify object -> promote to active key -> save attachment metadata
 ```
 
-Downloads use short-lived signed URLs. The résumé library fetches owned PDF bytes through the authenticated API and renders a temporary browser object URL in an in-app preview; closing the preview revokes that URL. Local development can store file bytes in PostgreSQL when `RESUME_BUCKET` is unset. Files are limited to 5 MB and validated by extension, MIME type, and signature.
+Downloads use short-lived signed URLs. The résumé library fetches owned PDF bytes through the authenticated API and renders a temporary browser object URL in an in-app preview; closing the preview revokes that URL. Cover letters remain attached to their application and use a generated `Role_Company_Cover_Letter` filename. Local development can store either document's bytes in PostgreSQL when `RESUME_BUCKET` is unset. Each file is limited to 5 MB and validated by extension, MIME type, and signature.
 
 ## Gmail synchronization
 

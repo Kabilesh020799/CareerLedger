@@ -54,4 +54,15 @@ resource "aws_s3_bucket_lifecycle_configuration" "resumes" {
       days = 1
     }
   }
+
+  rule {
+    id     = "expire-incomplete-cover-letter-uploads"
+    status = "Enabled"
+    filter {
+      prefix = "resumes/cover-letters/pending/"
+    }
+    expiration {
+      days = 1
+    }
+  }
 }

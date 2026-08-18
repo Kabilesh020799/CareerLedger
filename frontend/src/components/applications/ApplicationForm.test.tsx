@@ -46,7 +46,7 @@ describe('ApplicationForm resume attachment', () => {
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce())
     expect(onSubmit.mock.calls[0][0].resume.item(0)).toBe(resume)
-    expect(screen.getByText(/PDF, DOC, or DOCX/)).toHaveTextContent('up to 5 MB')
+    expect(screen.getAllByText(/PDF, DOC, or DOCX/)).toHaveLength(2)
   })
 
   it('shows a validation error for an unsupported resume', async () => {
@@ -70,6 +70,56 @@ describe('ApplicationForm resume attachment', () => {
     await user.click(screen.getByRole('button', { name: 'Create application' }))
 
     expect(await screen.findByText('Choose a PDF, DOC, or DOCX resume')).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it('submits a supported cover letter from the create form', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    const coverLetter = new File(['%PDF-1.7\ncover letter'], 'cover-letter.pdf', {
+      type: 'application/pdf',
+    })
+
+    render(
+      <AppProvider>
+        <ApplicationForm
+          allowResumeAttachment
+          initialValues={{ ...emptyApplicationForm, company: 'Acme', jobTitle: 'Engineer' }}
+          isSubmitting={false}
+          onSubmit={onSubmit}
+          submitLabel="Create application"
+        />
+      </AppProvider>,
+    )
+
+    await user.upload(screen.getByLabelText('Attach cover letter'), coverLetter)
+    await user.click(screen.getByRole('button', { name: 'Create application' }))
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce())
+    expect(onSubmit.mock.calls[0][0].coverLetter.item(0)).toBe(coverLetter)
+  })
+
+  it('shows a validation error for an unsupported cover letter', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    const coverLetter = new File(['plain text'], 'cover-letter.pdf', { type: 'text/plain' })
+
+    render(
+      <AppProvider>
+        <ApplicationForm
+          allowResumeAttachment
+          initialValues={{ ...emptyApplicationForm, company: 'Acme', jobTitle: 'Engineer' }}
+          isSubmitting={false}
+          onSubmit={onSubmit}
+          submitLabel="Create application"
+        />
+      </AppProvider>,
+    )
+
+    await user.upload(screen.getByLabelText('Attach cover letter'), coverLetter)
+    await user.click(screen.getByRole('button', { name: 'Create application' }))
+
+    expect(await screen.findByText('Choose a PDF, DOC, or DOCX cover letter')).toBeInTheDocument()
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
@@ -99,5 +149,33 @@ describe('ApplicationForm resume attachment', () => {
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce())
     expect(onSubmit.mock.calls[0][0].resume.item(0)).toBe(resume)
+  })
+
+  it('shows the current cover letter and submits a replacement from the edit form', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    const replacement = new File(['replacement'], 'replacement.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    })
+
+    render(
+      <AppProvider>
+        <ApplicationForm
+          allowResumeAttachment
+          currentCoverLetterFileName="Engineer_Acme_Cover_Letter.pdf"
+          initialValues={{ ...emptyApplicationForm, company: 'Acme', jobTitle: 'Engineer' }}
+          isSubmitting={false}
+          onSubmit={onSubmit}
+          submitLabel="Save changes"
+        />
+      </AppProvider>,
+    )
+
+    expect(screen.getByText('Current file: Engineer_Acme_Cover_Letter.pdf')).toBeInTheDocument()
+    await user.upload(screen.getByLabelText('Replace cover letter'), replacement)
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce())
+    expect(onSubmit.mock.calls[0][0].coverLetter.item(0)).toBe(replacement)
   })
 })

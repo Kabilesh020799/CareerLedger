@@ -22,6 +22,10 @@ const applicationResumeStorageServiceMock = vi.hoisted(() => ({
   finalizeUpload: vi.fn(),
   abandonUpload: vi.fn(),
 }));
+const applicationCoverLetterServiceMock = vi.hoisted(() => ({ findForApplication: vi.fn() }));
+const applicationCoverLetterStorageServiceMock = vi.hoisted(() => ({
+  isConfigured: vi.fn(), prepareUpload: vi.fn(), finalizeUpload: vi.fn(), abandonUpload: vi.fn(),
+}));
 
 vi.mock("../services/application.service", () => ({
   applicationService: applicationServiceMock,
@@ -38,6 +42,8 @@ vi.mock("../services/application-resume.service", async (importOriginal) => {
 vi.mock("../services/application-resume-storage.service", () => ({
   applicationResumeStorageService: applicationResumeStorageServiceMock,
 }));
+vi.mock("../services/application-cover-letter.service", () => ({ applicationCoverLetterService: applicationCoverLetterServiceMock }));
+vi.mock("../services/application-cover-letter-storage.service", () => ({ applicationCoverLetterStorageService: applicationCoverLetterStorageServiceMock }));
 
 import { applicationRouter } from "./application.routes";
 
@@ -65,6 +71,8 @@ describe("application resume routes", () => {
     vi.clearAllMocks();
     applicationResumeStorageServiceMock.isConfigured.mockReturnValue(false);
     applicationResumeStorageServiceMock.abandonUpload.mockResolvedValue(true);
+    applicationCoverLetterStorageServiceMock.isConfigured.mockReturnValue(false);
+    applicationCoverLetterStorageServiceMock.abandonUpload.mockResolvedValue(true);
   });
 
   it("prepares a private S3 upload for a supported resume", async () => {
@@ -372,5 +380,29 @@ describe("application resume routes", () => {
 
     expect(response.status).toBe(404);
     expect(response.body).toEqual({ error: "Resume not found" });
+  });
+
+  it("creates an application with a validated PDF cover letter", async () => {
+    const content = Buffer.from("%PDF-1.7\ncover letter");
+    applicationServiceMock.create.mockResolvedValue({ id: "application-1", coverLetterAttachment: { fileName: "Engineer_Acme_Cover_Letter.pdf" } });
+    const response = await request(app).post("/api/applications").field("company", "Acme").field("jobTitle", "Engineer").attach("coverLetter", content, { filename: "letter.pdf", contentType: "application/pdf" });
+    expect(response.status).toBe(201);
+    expect(applicationServiceMock.create).toHaveBeenCalledWith("user-1", { company: "Acme", jobTitle: "Engineer" }, undefined, undefined, expect.objectContaining({ content, extension: ".pdf" }));
+  });
+
+  it("prepares a private S3 cover-letter upload", async () => {
+    applicationCoverLetterStorageServiceMock.isConfigured.mockReturnValue(true);
+    applicationCoverLetterStorageServiceMock.prepareUpload.mockResolvedValue({ success: true, data: { mode: "s3", storageKey: "resumes/cover-letters/pending/user-1/upload.pdf", url: "https://bucket.example/upload", fields: {}, expiresAt: "2026-08-17T12:00:00.000Z" } });
+    const response = await request(app).post("/api/applications/cover-letter-uploads").send({ fileName: "letter.pdf", mimeType: "application/pdf", size: 1024 });
+    expect(response.status).toBe(201);
+    expect(response.body.storageKey).toContain("cover-letters/");
+    expect(applicationCoverLetterStorageServiceMock.prepareUpload).toHaveBeenCalledWith("user-1", { fileName: "letter.pdf", mimeType: "application/pdf", size: 1024 });
+  });
+
+  it("returns authorization-safe 404 for an inaccessible cover letter", async () => {
+    applicationCoverLetterServiceMock.findForApplication.mockResolvedValue(null);
+    const response = await request(app).get("/api/applications/application-2/cover-letter");
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ error: "Cover letter not found" });
   });
 });

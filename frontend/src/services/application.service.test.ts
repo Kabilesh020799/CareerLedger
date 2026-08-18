@@ -149,6 +149,35 @@ describe('applicationService', () => {
     })
   })
 
+  it('uploads a cover letter directly to S3 before creating an application', async () => {
+    vi.mocked(api.post)
+      .mockResolvedValueOnce({
+        data: {
+          mode: 's3',
+          storageKey: 'resumes/cover-letters/pending/user-1/upload.pdf',
+          url: 'https://jatbucket2799.s3.amazonaws.com',
+          fields: { key: 'resumes/cover-letters/pending/user-1/upload.pdf' },
+          expiresAt: '2026-08-10T03:00:00.000Z',
+        },
+      })
+      .mockResolvedValueOnce({ data: application })
+    vi.mocked(axios.post).mockResolvedValue({ status: 204 })
+    const input = { company: 'Acme Corp', jobTitle: 'Software Engineer' }
+    const coverLetter = new File(['cover letter'], 'letter.pdf', { type: 'application/pdf' })
+
+    await expect(applicationService.create(input, { coverLetter })).resolves.toEqual(application)
+
+    expect(api.post).toHaveBeenNthCalledWith(1, '/applications/cover-letter-uploads', {
+      fileName: 'letter.pdf',
+      mimeType: 'application/pdf',
+      size: coverLetter.size,
+    })
+    expect(api.post).toHaveBeenNthCalledWith(2, '/applications', {
+      ...input,
+      coverLetterUploadKey: 'resumes/cover-letters/pending/user-1/upload.pdf',
+    })
+  })
+
   it('updates and deletes an application through the API', async () => {
     vi.mocked(api.patch).mockResolvedValue({ data: { ...application, status: 'INTERVIEW' } })
     vi.mocked(api.delete).mockResolvedValue({})
@@ -268,5 +297,18 @@ describe('applicationService', () => {
       'https://jatbucket2799.s3.amazonaws.com/signed',
       { responseType: 'blob', withCredentials: false },
     )
+  })
+
+  it('downloads a database cover letter as a blob', async () => {
+    const coverLetter = new Blob(['cover letter'], { type: 'application/pdf' })
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({ data: { mode: 'database', url: null } })
+      .mockResolvedValueOnce({ data: coverLetter })
+
+    await expect(applicationService.downloadCoverLetter('application-1')).resolves.toBe(coverLetter)
+    expect(api.get).toHaveBeenNthCalledWith(1, '/applications/application-1/cover-letter-download')
+    expect(api.get).toHaveBeenNthCalledWith(2, '/applications/application-1/cover-letter', {
+      responseType: 'blob',
+    })
   })
 })

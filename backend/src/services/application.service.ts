@@ -6,8 +6,10 @@ import type {
   UpdateApplicationInput,
 } from "../validators/application.validator";
 import type { ApplicationResumeAttachmentInput } from "../validators/application-resume.validator";
+import type { ApplicationCoverLetterAttachmentInput } from "../validators/application-cover-letter.validator";
 import { applicationResumeCreateData } from "./application-resume.service";
 import { applicationResumeStorageService } from "./application-resume-storage.service";
+import { applicationCoverLetterCreateData } from "./application-cover-letter.service";
 import { applicationAccess } from "./workspace-access.service";
 
 export const applicationService = {
@@ -75,10 +77,11 @@ export const applicationService = {
     data: CreateApplicationInput,
     resume?: ApplicationResumeAttachmentInput,
     workspaceId?: string,
+    coverLetter?: ApplicationCoverLetterAttachmentInput,
   ) {
     return prisma.$transaction(async (transaction) => {
       const access = await applicationAccess(userId, workspaceId, true);
-      const { resumeUploadKey: _resumeUploadKey, ...applicationData } = data;
+      const { resumeUploadKey: _resumeUploadKey, coverLetterUploadKey: _coverLetterUploadKey, ...applicationData } = data;
       if (applicationData.resumeVersionId) {
         const resumeVersion = await transaction.resumeVersion.findFirst({
           where: { id: applicationData.resumeVersionId, userId },
@@ -91,7 +94,7 @@ export const applicationService = {
         data: {
           ...applicationData,
           userId,
-          workspaceId: access.workspaceId,
+          ...(access.workspaceId ? { workspaceId: access.workspaceId } : {}),
           ...(resume
             ? {
                 resumeAttachment: {
@@ -102,6 +105,9 @@ export const applicationService = {
                   ),
                 },
               }
+            : {}),
+          ...(coverLetter
+            ? { coverLetterAttachment: { create: applicationCoverLetterCreateData(applicationData.jobTitle, applicationData.company, coverLetter) } }
             : {}),
         },
         include: applicationInclude,
@@ -123,13 +129,14 @@ export const applicationService = {
     data: UpdateApplicationInput,
     resume?: ApplicationResumeAttachmentInput,
     workspaceId?: string,
+    coverLetter?: ApplicationCoverLetterAttachmentInput,
   ) {
     const access = await applicationAccess(userId, workspaceId, true);
     const result = await prisma.$transaction(async (transaction) => {
-      const { resumeUploadKey: _resumeUploadKey, ...applicationData } = data;
+      const { resumeUploadKey: _resumeUploadKey, coverLetterUploadKey: _coverLetterUploadKey, ...applicationData } = data;
       const existing = await transaction.application.findFirst({
         where: { ...access.where, id },
-        include: { resumeAttachment: { select: { storageKey: true } } },
+        include: { resumeAttachment: { select: { storageKey: true } }, coverLetterAttachment: { select: { storageKey: true } } },
       });
 
       if (!existing) return null;
@@ -164,6 +171,9 @@ export const applicationService = {
                 },
               }
             : {}),
+          ...(coverLetter
+            ? { coverLetterAttachment: { upsert: { create: applicationCoverLetterCreateData(applicationData.jobTitle ?? existing.jobTitle, applicationData.company ?? existing.company, coverLetter), update: applicationCoverLetterCreateData(applicationData.jobTitle ?? existing.jobTitle, applicationData.company ?? existing.company, coverLetter) } } }
+            : {}),
         },
         include: applicationInclude,
       });
@@ -190,23 +200,18 @@ export const applicationService = {
         resume && previousStorageKey && previousStorageKey !== nextStorageKey
           ? previousStorageKey
           : undefined;
-      if (storageKeyToDelete) {
-        await transaction.resumeObjectDeletion.upsert({
-          where: { storageKey: storageKeyToDelete },
-          create: { storageKey: storageKeyToDelete },
-          update: {},
-        });
+      const previousCoverLetterStorageKey = existing.coverLetterAttachment?.storageKey;
+      const nextCoverLetterStorageKey = coverLetter && "storageKey" in coverLetter ? coverLetter.storageKey : undefined;
+      const coverLetterStorageKeyToDelete = coverLetter && previousCoverLetterStorageKey && previousCoverLetterStorageKey !== nextCoverLetterStorageKey ? previousCoverLetterStorageKey : undefined;
+      for (const storageKey of [storageKeyToDelete, coverLetterStorageKeyToDelete]) {
+        if (storageKey) await transaction.resumeObjectDeletion.upsert({ where: { storageKey }, create: { storageKey }, update: {} });
       }
 
-      return { application, storageKeyToDelete };
+      return { application, storageKeysToDelete: [storageKeyToDelete, coverLetterStorageKeyToDelete].filter((key): key is string => Boolean(key)) };
     });
 
     if (result === null || result === false) return result;
-    if (result.storageKeyToDelete) {
-      await applicationResumeStorageService.processQueuedDeletion(
-        result.storageKeyToDelete,
-      );
-    }
+    await Promise.all(result.storageKeysToDelete.map((key) => applicationResumeStorageService.processQueuedDeletion(key)));
     return result.application;
   },
 
@@ -218,28 +223,19 @@ export const applicationService = {
         select: {
           id: true,
           resumeAttachment: { select: { storageKey: true } },
+          coverLetterAttachment: { select: { storageKey: true } },
         },
       });
       if (!existing) return null;
 
-      const storageKey = existing.resumeAttachment?.storageKey;
-      if (storageKey) {
-        await transaction.resumeObjectDeletion.upsert({
-          where: { storageKey },
-          create: { storageKey },
-          update: {},
-        });
-      }
+      const storageKeys = [existing.resumeAttachment?.storageKey, existing.coverLetterAttachment?.storageKey].filter((key): key is string => Boolean(key));
+      for (const storageKey of storageKeys) await transaction.resumeObjectDeletion.upsert({ where: { storageKey }, create: { storageKey }, update: {} });
       await transaction.application.delete({ where: { id } });
-      return { storageKey };
+      return { storageKeys };
     });
 
     if (!result) return false;
-    if (result.storageKey) {
-      await applicationResumeStorageService.processQueuedDeletion(
-        result.storageKey,
-      );
-    }
+    await Promise.all(result.storageKeys.map((key) => applicationResumeStorageService.processQueuedDeletion(key)));
     return true;
   },
 };
@@ -255,6 +251,9 @@ const applicationInclude = {
       size: true,
       createdAt: true,
     },
+  },
+  coverLetterAttachment: {
+    select: { fileName: true, mimeType: true, size: true, createdAt: true },
   },
 } satisfies Prisma.ApplicationInclude;
 

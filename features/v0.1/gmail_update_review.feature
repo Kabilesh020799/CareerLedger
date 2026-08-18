@@ -14,11 +14,18 @@ Feature: Review recruitment updates discovered from Gmail
       | thank you for applying         | APPLIED    |
       | thanks for applying to Palona AI | APPLIED  |
       | thank you for your application | APPLIED    |
+      | thanks for your interest in Accenture | APPLIED |
       | coding assessment              | ASSESSMENT |
       | schedule an interview          | INTERVIEW  |
       | we will not be moving forward  | REJECTED   |
       | thanks for your interest in Pigment, Kabilesh | REJECTED |
       | pleased to offer               | OFFER      |
+
+  Scenario: Prefer explicit rejection wording over an acknowledgement subject
+    Given a synchronized Gmail subject says "Thanks for your interest in Accenture"
+    And its message preview says "We will not be moving forward"
+    When the message is processed
+    Then a pending update should suggest "REJECTED"
 
   Scenario: Leave a missing role editable in an application acknowledgement
     Given a synchronized Gmail message says "Thank you for your application to Pigmen"

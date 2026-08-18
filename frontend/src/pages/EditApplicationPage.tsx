@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApplicationForm } from '../components/applications/ApplicationForm'
 import { useApplication } from '../hooks/useApplication'
 import { useUpdateApplication } from '../hooks/useUpdateApplication'
-import { applicationFormResume, applicationFormToInput, applicationToFormValues } from '../schemas/application.schema'
+import { applicationFormCoverLetter, applicationFormResume, applicationFormToInput, applicationToFormValues } from '../schemas/application.schema'
 import { getApiErrorMessage } from '../utils/apiError'
 
 export function EditApplicationPage() {
@@ -43,11 +43,13 @@ export function EditApplicationPage() {
           allowResumeAttachment
           cancelTo={`/applications/${application.id}`}
           currentResumeFileName={application.resumeAttachment?.fileName}
+          currentCoverLetterFileName={application.coverLetterAttachment?.fileName}
           onSubmit={async (values) => {
             await updateApplication.mutateAsync({
               id,
               input: applicationFormToInput(values),
               resume: applicationFormResume(values),
+              coverLetter: applicationFormCoverLetter(values),
             })
             navigate(`/applications/${id}`)
           }}

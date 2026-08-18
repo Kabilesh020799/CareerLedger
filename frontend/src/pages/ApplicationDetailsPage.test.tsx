@@ -6,12 +6,14 @@ import { AppProvider } from '../components/ui/AppProvider'
 import { useApplication } from '../hooks/useApplication'
 import { useDeleteApplication } from '../hooks/useDeleteApplication'
 import { useDownloadApplicationResume } from '../hooks/useDownloadApplicationResume'
+import { useDownloadApplicationCoverLetter } from '../hooks/useDownloadApplicationCoverLetter'
 import { useMoveApplication } from '../hooks/useMoveApplication'
 import { ApplicationDetailsPage } from './ApplicationDetailsPage'
 
 vi.mock('../hooks/useApplication', () => ({ useApplication: vi.fn() }))
 vi.mock('../hooks/useDeleteApplication', () => ({ useDeleteApplication: vi.fn() }))
 vi.mock('../hooks/useDownloadApplicationResume', () => ({ useDownloadApplicationResume: vi.fn() }))
+vi.mock('../hooks/useDownloadApplicationCoverLetter', () => ({ useDownloadApplicationCoverLetter: vi.fn() }))
 vi.mock('../hooks/useMoveApplication', () => ({ useMoveApplication: vi.fn() }))
 vi.mock('../components/applications/DeleteApplicationDialog', () => ({
   DeleteApplicationDialog: () => <button>Delete</button>,
@@ -24,6 +26,7 @@ vi.mock('../components/reminders/ApplicationReminders', () => ({
 }))
 
 const download = vi.fn()
+const downloadCoverLetter = vi.fn()
 const move = vi.fn()
 
 describe('ApplicationDetailsPage resume attachment', () => {
@@ -36,6 +39,11 @@ describe('ApplicationDetailsPage resume attachment', () => {
     } as never)
     vi.mocked(useDownloadApplicationResume).mockReturnValue({
       mutate: download,
+      isPending: false,
+      isError: false,
+    } as never)
+    vi.mocked(useDownloadApplicationCoverLetter).mockReturnValue({
+      mutate: downloadCoverLetter,
       isPending: false,
       isError: false,
     } as never)
@@ -58,6 +66,12 @@ describe('ApplicationDetailsPage resume attachment', () => {
           fileName: 'Software_Engineer_Acme_Corp.pdf',
           mimeType: 'application/pdf',
           size: 2048,
+          createdAt: '2026-08-10T00:00:00.000Z',
+        },
+        coverLetterAttachment: {
+          fileName: 'Software_Engineer_Acme_Corp_Cover_Letter.pdf',
+          mimeType: 'application/pdf',
+          size: 1024,
           createdAt: '2026-08-10T00:00:00.000Z',
         },
         createdAt: '2026-08-10T00:00:00.000Z',
@@ -89,6 +103,12 @@ describe('ApplicationDetailsPage resume attachment', () => {
     expect(download).toHaveBeenCalledWith({
       applicationId: 'application-1',
       fileName: 'Software_Engineer_Acme_Corp.pdf',
+    })
+    expect(screen.getByText('Software_Engineer_Acme_Corp_Cover_Letter.pdf')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Download cover letter' }))
+    expect(downloadCoverLetter).toHaveBeenCalledWith({
+      applicationId: 'application-1',
+      fileName: 'Software_Engineer_Acme_Corp_Cover_Letter.pdf',
     })
   })
 })

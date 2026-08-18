@@ -13,6 +13,7 @@ describe("Gmail recruitment update classification", () => {
     ["Thank you for your application to Pigmen", "APPLIED"],
     ["Thanks for your application", "APPLIED"],
     ["We have received your application", "APPLIED"],
+    ["Thanks for your interest in Accenture", "APPLIED"],
     ["Complete your coding assessment", "ASSESSMENT"],
     ["Let us schedule an interview", "INTERVIEW"],
     ["We will not be moving forward", "REJECTED"],
@@ -38,6 +39,15 @@ describe("Gmail recruitment update classification", () => {
         snippet: "Summer skincare tips",
       }),
     ).toBeNull();
+  });
+
+  it("uses explicit rejection wording before a company interest acknowledgement", () => {
+    expect(
+      classifyGmailMessage({
+        subject: "Thanks for your interest in Accenture",
+        snippet: "We will not be moving forward with your application.",
+      })?.status,
+    ).toBe("REJECTED");
   });
 
   it("matches a unique application using company, role, sender, and timing", () => {

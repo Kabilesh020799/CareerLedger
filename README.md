@@ -1,6 +1,6 @@
 # Job Application Tracker
 
-A secure job application workspace for individuals and teams, with applications, resumes, timelines, reminders, Gmail updates, calendar feeds, and portable data.
+A secure job application workspace for individuals and teams, with applications, resumes, cover letters, timelines, reminders, Gmail updates, calendar feeds, and portable data.
 
 The stack is React, Chakra UI, Express, Prisma, and PostgreSQL. Docker Compose runs the complete application.
 
@@ -37,7 +37,7 @@ PostgreSQL data is persisted in the `postgres-data` Docker volume. Stop containe
 docker compose down --volumes
 ```
 
-Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Restore it only after reviewing the target with `CONFIRM_RESTORE=jobtracker ./scripts/restore-database.sh ./backups/<file>.dump`. Workspace JSON export/import is intended for portability and excludes resume file bytes and secrets.
+Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Restore it only after reviewing the target with `CONFIRM_RESTORE=jobtracker ./scripts/restore-database.sh ./backups/<file>.dump`. Workspace JSON export/import is intended for portability and excludes attachment file bytes and secrets.
 
 ## Features
 
@@ -47,13 +47,14 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 - Track application timelines, notes, status changes, follow-ups, and deadlines.
 - Receive due follow-ups and deadlines through opt-in email or browser push notifications with automatic retry.
 - Upload, replace, download, and review private PDF, DOC, and DOCX resumes up to 5 MB.
+- Upload, replace, and download a private PDF, DOC, or DOCX cover letter up to 5 MB alongside each application.
 - Review uploaded PDF resumes in a private in-application preview portal, with application details and a new-tab fallback for other document formats.
-- Store new production resume bytes in private S3 using short-lived browser permissions and the EC2 instance role.
+- Store new production resume and cover-letter bytes in private S3 using short-lived browser permissions and the EC2 instance role.
 - Keep legacy database-backed resumes downloadable and migrate them to S3 at startup.
 - Keep uploaded résumé documents in a private preview library, label résumé strategies with suggested or custom tags, and compare outcomes by tag.
 - Scan headline metrics, act on a compact list of due or inactive applications, and switch between source and résumé-tag insights from the dashboard.
 - Receive accessible in-app confirmation after important create, update, status, reminder, tag, and synchronization actions.
-- Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates. Deterministic rules classify known recruitment messages, with an optional validated LLM fallback for ambiguous messages. New applications created from Gmail reviews can include a résumé tag and private résumé upload.
+- Connect Gmail for manual or scheduled incremental metadata synchronization, deduplication, retryable background processing, and user-confirmed application updates. Deterministic rules classify known recruitment messages, including company-only interest acknowledgements, with an optional validated LLM fallback for ambiguous messages. New applications created from Gmail reviews can include a résumé tag and private résumé upload.
 - Capture job postings from a clean light/dark Manifest V3 extension workflow, review or refresh extracted details, and preserve skills, experience requirements, salary, location, work mode, original URL, description, and capture date with revocable user-scoped access.
 - Switch between light and dark themes.
 - Keep applications, Gmail data, resumes, reminders, and analytics scoped to the signed-in user.
@@ -74,7 +75,7 @@ Local configuration is documented in [backend/.env.example](backend/.env.example
 
 The first environment-configured demo account has administrator access by default. Set `ADMIN_ACCOUNT_EMAILS` to a comma-separated list of application login emails to replace that default with explicitly authorized administrators. If neither a demo account nor an explicit list is configured, nobody has administrator access. Administrator-reserved emails cannot create accounts through public password signup or Google account creation; those accounts must already exist or be provisioned outside the application signup flow.
 
-For production resume storage, configure:
+For production application-document storage, configure:
 
 ```text
 AWS_REGION=us-east-1
@@ -82,11 +83,11 @@ RESUME_BUCKET=jatbucket2799
 RESUME_UPLOAD_EXPIRES_SECONDS=300
 ```
 
-The EC2 instance role must allow `s3:PutObject`, `s3:GetObject`, and `s3:DeleteObject` for `arn:aws:s3:::<bucket>/resumes/*`. Do not add static AWS keys to GitHub, Docker Compose, or application environment files.
+The EC2 instance role must allow `s3:PutObject`, `s3:GetObject`, and `s3:DeleteObject` for `arn:aws:s3:::<bucket>/resumes/*`; cover letters use the nested `resumes/cover-letters/` prefix. Do not add static AWS keys to GitHub, Docker Compose, or application environment files.
 
-The S3 bucket should keep Block Public Access enabled, allow CORS from the exact application origin, and expire `resumes/pending/` objects after one day. See [the deployment guide](docs/deployment.md) for the complete policy, CORS, instance, and GitHub setup.
+The S3 bucket should keep Block Public Access enabled, allow CORS from the exact application origin, and expire both `resumes/pending/` and `resumes/cover-letters/pending/` objects after one day. See [the deployment guide](docs/deployment.md) for the complete policy, CORS, instance, and GitHub setup.
 
-Without `RESUME_BUCKET`, local development uses PostgreSQL for resume bytes. This fallback also preserves compatibility with existing database-backed attachments.
+Without `RESUME_BUCKET`, local development uses PostgreSQL for resume and cover-letter bytes. This fallback also preserves compatibility with existing database-backed resume attachments.
 
 Gmail requires a Google OAuth client and these variables:
 
@@ -129,6 +130,7 @@ All management and user-data endpoints require an authenticated session and enfo
 | Calendar | `GET /api/calendar/export`, `GET/POST/DELETE /api/calendar/subscription`, `GET /api/calendar/feed/:token` |
 | Applications | `GET/POST /api/applications`, `GET/PATCH/DELETE /api/applications/:id`, `GET /api/applications/search` |
 | Resume uploads | `POST/DELETE /api/applications/resume-uploads`, `GET /api/applications/:id/resume`, `GET /api/applications/:id/resume-download` |
+| Cover-letter uploads | `POST/DELETE /api/applications/cover-letter-uploads`, `GET /api/applications/:id/cover-letter`, `GET /api/applications/:id/cover-letter-download` |
 | Uploaded resume library | `GET /api/resumes/uploads` |
 | Resume tags (API name: resume versions) | `GET/POST /api/resumes`, `PATCH/DELETE /api/resumes/:id` |
 | Timeline | `GET/POST /api/applications/:id/events` |
@@ -181,7 +183,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Playwright refuses a non-test database URL, defaults local runs to `jobtracker_test`, generates an ephemeral local demo password when protected test credentials are absent, and uses the Compose Redis service exposed on port `6379`. It migrates and seeds the isolated database, starts the backend and frontend on ports `3001` and `4173`, and covers login/logout, application CRUD and validation, board/timeline/reminder workflows, resume tags and uploads, dashboards, notification capabilities, themes, and responsive layouts. Pull-request verification uploads traces, screenshots, videos, and the HTML report after failures.
+Playwright refuses a non-test database URL, defaults local runs to `jobtracker_test`, generates an ephemeral local demo password when protected test credentials are absent, and uses the Compose Redis service exposed on port `6379`. It migrates and seeds the isolated database, starts the backend and frontend on ports `3001` and `4173`, and covers login/logout, application CRUD and validation, board/timeline/reminder workflows, resume and cover-letter uploads, resume tags, dashboards, notification capabilities, themes, and responsive layouts. Pull-request verification uploads traces, screenshots, videos, and the HTML report after failures.
 
 ## Production deployment
 

@@ -18,6 +18,7 @@ User
 │   ├── ApplicationEvent
 │   ├── ApplicationReminder
 │   ├── ApplicationResume
+│   ├── ApplicationCoverLetter
 │   └── GmailUpdateReview
 ├── BrowserExtensionToken
 ├── NotificationPreference
@@ -38,7 +39,8 @@ ResumeObjectDeletion
 - `Application`: company, role, location, URL, source, status, notes, applied date, optional resume tag, and an optional captured posting snapshot. Structured capture fields include a skills list, experience requirements, salary minimum/maximum/currency/period, and `REMOTE`, `HYBRID`, or `ONSITE` work mode.
 - `ApplicationEvent`: chronological note or status transition. Status events record both previous and new status.
 - `ApplicationReminder`: follow-up or deadline with due and completion timestamps.
-- `ApplicationResume`: one uploaded file per application. Stores either legacy database bytes or a private S3 key.
+- `ApplicationResume`: one uploaded résumé per application. Stores either legacy database bytes or a private S3 key.
+- `ApplicationCoverLetter`: one uploaded cover letter per application. Stores either database bytes for local development or a private S3 key.
 - `ResumeVersion`: reusable user-defined resume label used to compare application outcomes.
 - `ResumeObjectDeletion`: durable retry queue for S3 objects that could not be deleted immediately.
 - `GmailConnection`: one encrypted Gmail authorization per user, including incremental history state, automatic-sync interval, enablement, last worker attempt, and sanitized retry status.
@@ -59,6 +61,6 @@ Redis queue state uses the separate named `redis-data` volume. Enabled schedules
 
 ## Accounts, workspaces, and calendars
 
-`EmailVerificationToken` and `PasswordResetToken` store expiring single-use SHA-256 hashes. `Session.userId` supports global session revocation. `Workspace`, `WorkspaceMember`, and `WorkspaceInvitation` provide personal/shared ownership and role-based membership; existing applications are backfilled to personal workspaces. `CalendarFeedToken` stores only a revocable feed-token hash. Portable workspace JSON intentionally excludes credentials, sessions, tokens, S3 keys, and resume bytes and is not a substitute for an operational PostgreSQL backup.
+`EmailVerificationToken` and `PasswordResetToken` store expiring single-use SHA-256 hashes. `Session.userId` supports global session revocation. `Workspace`, `WorkspaceMember`, and `WorkspaceInvitation` provide personal/shared ownership and role-based membership; existing applications are backfilled to personal workspaces. `CalendarFeedToken` stores only a revocable feed-token hash. Portable workspace JSON intentionally excludes credentials, sessions, tokens, S3 keys, and attachment bytes and is not a substitute for an operational PostgreSQL backup.
 
 `CalendarItem` stores user-owned tasks, events, and reminders with a required start, optional end and description, and an optional owned application relationship.

@@ -11,8 +11,8 @@ export function useCreateApplication() {
   const feedback = useFeedback()
 
   return useMutation({
-    mutationFn: ({ input, resume }: CreateApplicationRequest) =>
-      applicationService.create(input, resume),
+    mutationFn: ({ input, resume, coverLetter }: CreateApplicationRequest) =>
+      applicationService.create(input, { resume, coverLetter }),
     onSuccess: (application) => {
       feedback.show('Application created', { description: `${application.jobTitle} at ${application.company}` })
       queryClient.setQueryData(applicationQueryKeys.detail(application.id), application)

@@ -97,7 +97,7 @@ The final plan should report no changes. Import blocks are idempotent and may re
 
 The CloudFront-origin ingress and all-egress security-group rules have explicit import IDs. GitHub Actions still creates and removes temporary `/32` SSH rules outside Terraform; do not add permanent SSH ingress. The inventory found an unmanaged SSH rule for `192.168.4.239/32`; verify whether it is still required and revoke it separately if it is stale. Terraform intentionally does not adopt it.
 
-The resume bucket did not have the documented `resumes/pending/` lifecycle rule when inventoried. The first reviewed apply will propose creating that rule so abandoned pending uploads expire after one day. CloudFront currently has an AWS WAF web ACL; its ARN is included in the configuration so import cannot silently detach it.
+The document bucket did not have the documented pending-upload lifecycle rules when inventoried. The first reviewed apply will propose rules for both `resumes/pending/` and `resumes/cover-letters/pending/` so abandoned uploads expire after one day. CloudFront currently has an AWS WAF web ACL; its ARN is included in the configuration so import cannot silently detach it.
 
 ## GitHub environment outputs
 

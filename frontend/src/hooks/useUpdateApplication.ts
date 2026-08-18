@@ -10,15 +10,17 @@ type UpdateApplicationVariables = {
   id: string
   input: UpdateApplicationInput
   resume?: File
+  coverLetter?: File
 }
 
+/** Updates an application and optionally replaces its private document attachments. */
 export function useUpdateApplication() {
   const queryClient = useQueryClient()
   const feedback = useFeedback()
 
   return useMutation({
-    mutationFn: ({ id, input, resume }: UpdateApplicationVariables) =>
-      applicationService.update(id, input, resume),
+    mutationFn: ({ id, input, resume, coverLetter }: UpdateApplicationVariables) =>
+      applicationService.update(id, input, { resume, coverLetter }),
     onSuccess: (application) => {
       feedback.show('Application updated', { description: `${application.jobTitle} at ${application.company}` })
       queryClient.setQueryData(applicationQueryKeys.detail(application.id), application)

@@ -79,7 +79,11 @@ export const accountService = {
         where: { application: { userId } },
         select: { storageKey: true },
       });
-      const keys = resumes.flatMap(({ storageKey }) => storageKey ? [storageKey] : []);
+      const coverLetters = await transaction.applicationCoverLetter.findMany({
+        where: { application: { userId } },
+        select: { storageKey: true },
+      });
+      const keys = [...resumes, ...coverLetters].flatMap(({ storageKey }) => storageKey ? [storageKey] : []);
       if (keys.length) {
         await transaction.resumeObjectDeletion.createMany({
           data: keys.map((storageKey) => ({ storageKey })),

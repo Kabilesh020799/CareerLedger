@@ -90,6 +90,7 @@ model Application {
   resumeVersionId        String?
   resumeVersion          ResumeVersion?        @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
   resumeAttachment       ApplicationResume?
+  coverLetterAttachment  ApplicationCoverLetter?
   events                 ApplicationEvent[]
   reminders              ApplicationReminder[]
   gmailUpdateReviews     GmailUpdateReview[]
@@ -131,6 +132,19 @@ model BrowserExtensionToken {
 }
 
 model ApplicationResume {
+  id            String      @id @default(cuid())
+  applicationId String      @unique
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  fileName      String
+  mimeType      String
+  size          Int
+  content       Bytes?
+  storageKey    String?     @unique
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model ApplicationCoverLetter {
   id            String      @id @default(cuid())
   applicationId String      @unique
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)

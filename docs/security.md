@@ -20,19 +20,19 @@ The repository contains no demo passwords. Optional demo identities are loaded f
 
 ## Authorization
 
-Application, resume, reminder, dashboard, and Gmail routes require authentication. Services scope owned-resource reads and writes to the authenticated user. A caller must receive a not-found or authorization-safe response instead of learning whether another user's record exists.
+Application, resume, cover-letter, reminder, dashboard, and Gmail routes require authentication. Services scope owned-resource reads and writes to the authenticated user. A caller must receive a not-found or authorization-safe response instead of learning whether another user's record exists.
 
 The account-administration route additionally requires the normalized signed-in email to appear in the server-side administrator allowlist. Empty `ADMIN_ACCOUNT_EMAILS` configuration grants access to the first environment-configured demo account; when no demo identity exists, it grants nobody access. A configured list replaces the demo default, users cannot promote themselves, and administrator-reserved emails cannot create accounts through password signup or Google account creation. Reserved-email rejection uses the normal duplicate-account response so it does not disclose administrator configuration. The frontend's `isAdmin` flag is display-only; the backend independently returns `403` for every non-admin request. Account summaries exclude password hashes, OAuth identifiers, session records, tokens, and private user content.
 
-## Resume files
+## Application document files
 
 - Accept only PDF, DOC, and DOCX files up to 5 MB.
 - Validate filename extension, declared MIME type, and file signature.
 - Keep S3 Block Public Access enabled.
 - Use short-lived presigned upload and download permissions.
 - Load in-app previews through the authenticated application API into temporary browser object URLs, and revoke those URLs when the preview closes.
-- Restrict the EC2 role to the bucket's `resumes/*` prefix.
-- Expire abandoned `resumes/pending/` objects through an S3 lifecycle rule.
+- Restrict the EC2 role to the bucket's `resumes/*` prefix; cover letters remain within `resumes/cover-letters/*`.
+- Expire abandoned `resumes/pending/` and `resumes/cover-letters/pending/` objects through S3 lifecycle rules.
 
 ## Gmail data
 

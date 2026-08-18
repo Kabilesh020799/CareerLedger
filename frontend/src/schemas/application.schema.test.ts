@@ -94,4 +94,28 @@ describe('applicationFormSchema', () => {
       resume: fileList(oversized),
     }).success).toBe(false)
   })
+
+  it('accepts supported cover letters and rejects oversized cover letters', () => {
+    const coverLetter = new File(['letter'], 'cover-letter.doc', { type: 'application/msword' })
+    const oversized = new File(
+      [new Uint8Array(applicationResumeMaxBytes + 1)],
+      'cover-letter.pdf',
+      { type: 'application/pdf' },
+    )
+    const fileList = (file: File) => ({ item: () => file, length: 1, 0: file }) as unknown as FileList
+
+    expect(applicationFormSchema.safeParse({
+      ...validApplication,
+      coverLetter: fileList(coverLetter),
+    }).success).toBe(true)
+    const result = applicationFormSchema.safeParse({
+      ...validApplication,
+      coverLetter: fileList(oversized),
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.coverLetter)
+        .toContain('Cover letter must be 5 MB or smaller')
+    }
+  })
 })

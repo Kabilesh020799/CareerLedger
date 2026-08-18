@@ -7,6 +7,7 @@ import { useCreateApplication } from './useCreateApplication'
 import { useCreateApplicationEvent } from './useCreateApplicationEvent'
 import { useDeleteApplication } from './useDeleteApplication'
 import { useDownloadApplicationResume } from './useDownloadApplicationResume'
+import { useDownloadApplicationCoverLetter } from './useDownloadApplicationCoverLetter'
 import { useUpdateApplication } from './useUpdateApplication'
 
 vi.mock('../services/application.service', () => ({
@@ -16,6 +17,7 @@ vi.mock('../services/application.service', () => ({
     update: vi.fn(),
     remove: vi.fn(),
     downloadResume: vi.fn(),
+    downloadCoverLetter: vi.fn(),
   },
 }))
 
@@ -57,7 +59,7 @@ describe('application mutation hooks', () => {
 
     expect(applicationService.create).toHaveBeenCalledWith(
       { company: 'Acme Corp', jobTitle: 'Software Engineer' },
-      undefined,
+      { resume: undefined, coverLetter: undefined },
     )
 
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications'] })
@@ -80,7 +82,7 @@ describe('application mutation hooks', () => {
     expect(applicationService.update).toHaveBeenCalledWith(
       application.id,
       { status: 'INTERVIEW' },
-      resume,
+      { resume, coverLetter: undefined },
     )
     expect(setData).toHaveBeenCalledWith(['applications', application.id], expect.objectContaining({ status: 'INTERVIEW' }))
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['applications'] })
@@ -137,6 +139,29 @@ describe('application mutation hooks', () => {
     expect(createObjectUrl).toHaveBeenCalledWith(resume)
     expect(click).toHaveBeenCalledOnce()
     expect(revokeObjectUrl).toHaveBeenCalledWith('blob:resume')
+    click.mockRestore()
+    vi.unstubAllGlobals()
+  })
+
+  it('downloads a cover letter using its generated filename', async () => {
+    const coverLetter = new Blob(['cover letter'], { type: 'application/pdf' })
+    vi.mocked(applicationService.downloadCoverLetter).mockResolvedValue(coverLetter)
+    const createObjectUrl = vi.fn(() => 'blob:cover-letter')
+    const revokeObjectUrl = vi.fn()
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    vi.stubGlobal('URL', { ...URL, createObjectURL: createObjectUrl, revokeObjectURL: revokeObjectUrl })
+    const { wrapper } = setup()
+    const { result } = renderHook(useDownloadApplicationCoverLetter, { wrapper })
+
+    await act(() => result.current.mutateAsync({
+      applicationId: 'application-1',
+      fileName: 'Software_Engineer_Acme_Corp_Cover_Letter.pdf',
+    }))
+
+    expect(applicationService.downloadCoverLetter).toHaveBeenCalledWith('application-1')
+    expect(createObjectUrl).toHaveBeenCalledWith(coverLetter)
+    expect(click).toHaveBeenCalledOnce()
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:cover-letter')
     click.mockRestore()
     vi.unstubAllGlobals()
   })

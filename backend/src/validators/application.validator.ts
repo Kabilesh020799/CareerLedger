@@ -24,6 +24,7 @@ export const createApplicationSchema = z.object({
   appliedAt: z.coerce.date().nullable().optional(),
   resumeVersionId: z.string().trim().min(1).nullable().optional(),
   resumeUploadKey: z.string().trim().min(1).max(500).optional(),
+  coverLetterUploadKey: z.string().trim().min(1).max(500).optional(),
 });
 
 export const updateApplicationSchema = createApplicationSchema

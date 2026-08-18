@@ -190,10 +190,26 @@ test("removes production observability packages and services", () => {
   assert.doesNotMatch(workflow, /deploy\/monitoring/);
 });
 
-test("configures private S3 resume storage without static AWS keys", () => {
+test("configures private S3 application-document storage without static AWS keys", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
   const compose = fs.readFileSync(
     path.join(__dirname, "..", "deploy", "compose.production.yml"),
+    "utf8",
+  );
+  const productionIam = fs.readFileSync(
+    path.join(__dirname, "..", "infrastructure", "production", "iam.tf"),
+    "utf8",
+  );
+  const productionStorage = fs.readFileSync(
+    path.join(__dirname, "..", "infrastructure", "production", "storage.tf"),
+    "utf8",
+  );
+  const standaloneIam = fs.readFileSync(
+    path.join(__dirname, "..", "infrastructure", "standalone", "iam.tf"),
+    "utf8",
+  );
+  const standaloneStorage = fs.readFileSync(
+    path.join(__dirname, "..", "infrastructure", "standalone", "storage.tf"),
     "utf8",
   );
 
@@ -201,6 +217,13 @@ test("configures private S3 resume storage without static AWS keys", () => {
   assert.match(workflow, /printf 'AWS_REGION=%s\\n'/);
   assert.match(workflow, /printf 'RESUME_BUCKET=%s\\n'/);
   assert.match(compose, /env_file:\s*\n\s*- \.auth\.env/);
+  for (const iam of [productionIam, standaloneIam]) {
+    assert.match(iam, /\/resumes\/\*/);
+  }
+  for (const storage of [productionStorage, standaloneStorage]) {
+    assert.match(storage, /prefix = "resumes\/pending\/"/);
+    assert.match(storage, /prefix = "resumes\/cover-letters\/pending\/"/);
+  }
   assert.doesNotMatch(workflow, /AWS_ACCESS_KEY_ID/);
   assert.doesNotMatch(workflow, /AWS_SECRET_ACCESS_KEY/);
 });

@@ -3,7 +3,8 @@ import { applicationController } from "../controllers/application.controller";
 import { applicationResumeController } from "../controllers/application-resume.controller";
 import { applicationEventController } from "../controllers/application-event.controller";
 import { reminderController } from "../controllers/reminder.controller";
-import { uploadApplicationResume } from "../middleware/application-resume-upload";
+import { uploadApplicationAttachments } from "../middleware/application-attachment-upload";
+import { applicationCoverLetterController } from "../controllers/application-cover-letter.controller";
 
 export const applicationRouter = Router();
 
@@ -27,14 +28,14 @@ applicationRouter.get("/", applicationController.list);
  *   post:
  *     tags: [Applications]
  *     summary: Create an application
- *     description: Adds a company and role to the signed-in user's job-search pipeline.
+ *     description: Adds a company and role to the signed-in user's job-search pipeline, optionally with a private resume, cover letter, or both.
  *     security:
  *       - sessionCookie: []
  *     responses:
  *       201:
  *         description: Application created
  */
-applicationRouter.post("/", uploadApplicationResume, applicationController.create);
+applicationRouter.post("/", uploadApplicationAttachments, applicationController.create);
 /**
  * @swagger
  * /api/applications/search:
@@ -64,6 +65,8 @@ applicationRouter.delete(
   "/resume-uploads",
   applicationResumeController.abandonUpload,
 );
+applicationRouter.post("/cover-letter-uploads", applicationCoverLetterController.prepareUpload);
+applicationRouter.delete("/cover-letter-uploads", applicationCoverLetterController.abandonUpload);
 applicationRouter.get("/:id/events", applicationEventController.list);
 /**
  * @swagger
@@ -91,10 +94,12 @@ applicationRouter.get(
   applicationController.getResumeDownload,
 );
 applicationRouter.get("/:id/resume", applicationController.downloadResume);
+applicationRouter.get("/:id/cover-letter-download", applicationController.getCoverLetterDownload);
+applicationRouter.get("/:id/cover-letter", applicationController.downloadCoverLetter);
 applicationRouter.get("/:id", applicationController.getById);
 applicationRouter.patch(
   "/:id",
-  uploadApplicationResume,
+  uploadApplicationAttachments,
   applicationController.update,
 );
 applicationRouter.delete("/:id", applicationController.remove);

@@ -93,6 +93,10 @@ export function classifyGmailMessage(
       return { status: rule.status, confidence: 95 };
     }
   }
+
+  if (isCompanyInterestAcknowledgement(message.subject)) {
+    return { status: "APPLIED", confidence: 90 };
+  }
   return null;
 }
 
@@ -114,6 +118,18 @@ function isPersonalizedInterestRejection(subject: string) {
   return /^(?:thanks|thank you)\s+for\s+your\s+interest\s+in\s+[^,\n]{2,120},\s*[a-z][a-z .'-]{0,79}$/i.test(
     normalizedSubject,
   );
+}
+
+function isCompanyInterestAcknowledgement(subject: string) {
+  const normalizedSubject = subject
+    .replace(/^(?:re|fw|fwd):\s*/i, "")
+    .trim();
+  const target = normalizedSubject.match(
+    /^(?:thanks|thank you)\s+for\s+your\s+interest\s+in\s+([^,\n]{2,120})$/i,
+  )?.[1]?.trim();
+
+  if (!target || /^(?:our|the|this|a|an|your)\b/i.test(target)) return false;
+  return !/\bnewsletter\b/i.test(target);
 }
 
 export function matchGmailMessage(

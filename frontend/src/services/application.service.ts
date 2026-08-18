@@ -10,19 +10,38 @@ import type {
   UpdateApplicationInput,
   ResumeUploadPreparation,
   ResumeDownloadPreparation,
+  ApplicationAttachments,
 } from '../types/application'
 
 /** Converts application fields and a resume into a legacy multipart request. */
 export function applicationFormData(
   input: Record<string, unknown>,
-  resume: File,
+  resume?: File,
+  coverLetter?: File,
 ) {
   const formData = new FormData()
   for (const [key, value] of Object.entries(input)) {
     if (value !== null && value !== undefined) formData.append(key, String(value))
   }
-  formData.append('resume', resume)
+  if (resume) formData.append('resume', resume)
+  if (coverLetter) formData.append('coverLetter', coverLetter)
   return formData
+}
+
+export async function prepareCoverLetterUpload(coverLetter: File) {
+  const response = await api.post<ResumeUploadPreparation>(
+    '/applications/cover-letter-uploads',
+    { fileName: coverLetter.name, mimeType: coverLetter.type, size: coverLetter.size },
+  )
+  return response.data
+}
+
+export async function abandonCoverLetterUpload(storageKey: string) {
+  try {
+    await api.delete('/applications/cover-letter-uploads', { data: { storageKey } })
+  } catch {
+    // A bucket lifecycle rule is the final fallback for unfinished uploads.
+  }
 }
 
 /** Requests direct-upload permission or selects database fallback storage. */
@@ -61,64 +80,78 @@ export async function uploadResumeToS3(
   })
 }
 
-async function createWithResume(input: CreateApplicationInput, resume: File) {
-  const preparation = await prepareResumeUpload(resume)
-  if (preparation.mode === 'database') {
-    const response = await api.post<Application>(
-      '/applications',
-      applicationFormData(input, resume),
-    )
-    return response.data
-  }
-
-  try {
-    await uploadResumeToS3(resume, preparation)
-  } catch {
-    await abandonResumeUpload(preparation.storageKey)
-    throw new Error('Unable to upload resume. Please try again.')
-  }
-
-  try {
-    const response = await api.post<Application>('/applications', {
-      ...input,
-      resumeUploadKey: preparation.storageKey,
-    })
-    return response.data
-  } catch (error) {
-    await abandonResumeUpload(preparation.storageKey)
-    throw error
-  }
+export async function uploadCoverLetterToS3(
+  coverLetter: File,
+  preparation: Extract<ResumeUploadPreparation, { mode: 's3' }>,
+) {
+  const formData = new FormData()
+  for (const [key, value] of Object.entries(preparation.fields)) formData.append(key, value)
+  formData.append('file', coverLetter)
+  await axios.post(preparation.url, formData, { withCredentials: false })
 }
 
-async function updateWithResume(
-  id: string,
-  input: UpdateApplicationInput,
-  resume: File,
+type PreparedAttachment = {
+  kind: 'resume' | 'coverLetter'
+  file: File
+  preparation: ResumeUploadPreparation
+}
+
+function normalizeAttachments(value?: File | ApplicationAttachments): ApplicationAttachments {
+  return value instanceof File ? { resume: value } : value ?? {}
+}
+
+async function saveWithAttachments(
+  method: 'post' | 'patch',
+  url: string,
+  input: CreateApplicationInput | UpdateApplicationInput,
+  attachments: ApplicationAttachments,
 ) {
-  const preparation = await prepareResumeUpload(resume)
-  if (preparation.mode === 'database') {
-    const response = await api.patch<Application>(
-      `/applications/${id}`,
-      applicationFormData(input, resume),
-    )
-    return response.data
+  const prepared: PreparedAttachment[] = []
+  const cleanup = () => Promise.all(prepared.flatMap(({ kind, preparation }) => preparation.mode === 's3'
+    ? [kind === 'resume' ? abandonResumeUpload(preparation.storageKey) : abandonCoverLetterUpload(preparation.storageKey)]
+    : []))
+
+  try {
+    if (attachments.resume) prepared.push({ kind: 'resume', file: attachments.resume, preparation: await prepareResumeUpload(attachments.resume) })
+    if (attachments.coverLetter) prepared.push({ kind: 'coverLetter', file: attachments.coverLetter, preparation: await prepareCoverLetterUpload(attachments.coverLetter) })
+  } catch (error) {
+    await cleanup()
+    throw error
   }
 
   try {
-    await uploadResumeToS3(resume, preparation)
+    for (const attachment of prepared) {
+      if (attachment.preparation.mode !== 's3') continue
+      if (attachment.kind === 'resume') await uploadResumeToS3(attachment.file, attachment.preparation)
+      else await uploadCoverLetterToS3(attachment.file, attachment.preparation)
+    }
   } catch {
-    await abandonResumeUpload(preparation.storageKey)
-    throw new Error('Unable to upload resume. Please try again.')
+    await cleanup()
+    throw new Error('Unable to upload application documents. Please try again.')
   }
 
+  const payload: Record<string, unknown> = { ...input }
+  const resumePreparation = prepared.find(({ kind }) => kind === 'resume')?.preparation
+  const coverLetterPreparation = prepared.find(({ kind }) => kind === 'coverLetter')?.preparation
+  if (resumePreparation?.mode === 's3') payload.resumeUploadKey = resumePreparation.storageKey
+  if (coverLetterPreparation?.mode === 's3') payload.coverLetterUploadKey = coverLetterPreparation.storageKey
+
+  const hasDatabaseAttachment = prepared.some(({ preparation }) => preparation.mode === 'database')
+  const body = hasDatabaseAttachment
+    ? applicationFormData(
+        payload,
+        resumePreparation?.mode === 'database' ? attachments.resume : undefined,
+        coverLetterPreparation?.mode === 'database' ? attachments.coverLetter : undefined,
+      )
+    : payload
+
   try {
-    const response = await api.patch<Application>(`/applications/${id}`, {
-      ...input,
-      resumeUploadKey: preparation.storageKey,
-    })
+    const response = method === 'post'
+      ? await api.post<Application>(url, body)
+      : await api.patch<Application>(url, body)
     return response.data
   } catch (error) {
-    await abandonResumeUpload(preparation.storageKey)
+    await cleanup()
     throw error
   }
 }
@@ -159,8 +192,9 @@ export const applicationService = {
     return response.data
   },
 
-  async create(input: CreateApplicationInput, resume?: File) {
-    if (resume) return createWithResume(input, resume)
+  async create(input: CreateApplicationInput, attachmentsOrResume?: File | ApplicationAttachments) {
+    const attachments = normalizeAttachments(attachmentsOrResume)
+    if (attachments.resume || attachments.coverLetter) return saveWithAttachments('post', '/applications', input, attachments)
     const response = await api.post<Application>(
       '/applications',
       input,
@@ -168,8 +202,9 @@ export const applicationService = {
     return response.data
   },
 
-  async update(id: string, input: UpdateApplicationInput, resume?: File) {
-    if (resume) return updateWithResume(id, input, resume)
+  async update(id: string, input: UpdateApplicationInput, attachmentsOrResume?: File | ApplicationAttachments) {
+    const attachments = normalizeAttachments(attachmentsOrResume)
+    if (attachments.resume || attachments.coverLetter) return saveWithAttachments('patch', `/applications/${id}`, input, attachments)
     const response = await api.patch<Application>(
       `/applications/${id}`,
       input,
@@ -193,6 +228,16 @@ export const applicationService = {
       : await api.get<Blob>(`/applications/${id}/resume`, {
           responseType: 'blob',
         })
+    return response.data
+  },
+
+  async downloadCoverLetter(id: string) {
+    const preparation = await api.get<ResumeDownloadPreparation>(
+      `/applications/${id}/cover-letter-download`,
+    )
+    const response = preparation.data.mode === 's3'
+      ? await axios.get<Blob>(preparation.data.url, { responseType: 'blob', withCredentials: false })
+      : await api.get<Blob>(`/applications/${id}/cover-letter`, { responseType: 'blob' })
     return response.data
   },
 

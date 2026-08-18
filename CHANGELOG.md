@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.28.0] - 2026-08-17
+
+### Added
+
+- Added private PDF, DOC, and DOCX cover-letter attachments to application creation and editing, with generated role-and-company filenames, protected downloads, and reliable replacement and deletion cleanup.
+
+### Fixed
+
+- Recognize company-only Gmail acknowledgement subjects such as “Thanks for your interest in Accenture,” while preserving explicit rejection wording and re-evaluating previously missed messages on the next synchronization.
+
 ## [3.27.5] - 2026-08-15
 
 ### Changed
@@ -424,7 +434,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.5...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.0...HEAD
+[3.28.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.5...v3.28.0
 [3.27.5]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.4...v3.27.5
 [3.27.4]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.3...v3.27.4
 [3.27.3]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.2...v3.27.3

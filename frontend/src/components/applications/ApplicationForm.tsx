@@ -17,6 +17,7 @@ type ApplicationFormProps = {
   serverError?: string
   allowResumeAttachment?: boolean
   currentResumeFileName?: string
+  currentCoverLetterFileName?: string
   cancelTo?: string
   onSubmit: (values: ApplicationFormValues) => Promise<void>
 }
@@ -39,6 +40,7 @@ export function ApplicationForm({
   serverError,
   allowResumeAttachment = false,
   currentResumeFileName,
+  currentCoverLetterFileName,
   cancelTo,
   onSubmit,
 }: ApplicationFormProps) {
@@ -54,6 +56,7 @@ export function ApplicationForm({
     defaultValues: initialValues,
   })
   const selectedResume = watch('resume')?.item(0)
+  const selectedCoverLetter = watch('coverLetter')?.item(0)
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -120,14 +123,24 @@ export function ApplicationForm({
           </FormField>
 
           {allowResumeAttachment && (
-            <FormField label={currentResumeFileName ? 'Replace resume' : 'Attach resume'} error={errors.resume?.message}>
-              {currentResumeFileName && <Text color="fg.muted" fontSize="sm">Current file: {currentResumeFileName}</Text>}
-              <Box borderColor={selectedResume ? 'brand.emphasized' : 'border'} borderRadius="lg" borderStyle="dashed" borderWidth="2px" bg={selectedResume ? 'brand.subtle' : 'bg.subtle'} p="5" textAlign="center">
-                <Input {...register('resume')} accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" cursor="pointer" p="1.5" type="file" />
-                <Text color="fg.muted" fontSize="sm" mt="2">{selectedResume ? `${selectedResume.name} selected` : 'Choose a file'}</Text>
-                <Text color="fg.subtle" fontSize="xs" mt="1">PDF, DOC, or DOCX up to 5 MB.</Text>
-              </Box>
-            </FormField>
+            <SimpleGrid columns={{ base: 1, md: 2 }} gap="5">
+              <FormField label={currentResumeFileName ? 'Replace resume' : 'Attach resume'} error={errors.resume?.message}>
+                {currentResumeFileName && <Text color="fg.muted" fontSize="sm">Current file: {currentResumeFileName}</Text>}
+                <Box borderColor={selectedResume ? 'brand.emphasized' : 'border'} borderRadius="lg" borderStyle="dashed" borderWidth="2px" bg={selectedResume ? 'brand.subtle' : 'bg.subtle'} p="5" textAlign="center">
+                  <Input {...register('resume')} accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" cursor="pointer" p="1.5" type="file" />
+                  <Text color="fg.muted" fontSize="sm" mt="2">{selectedResume ? `${selectedResume.name} selected` : 'Choose a file'}</Text>
+                  <Text color="fg.subtle" fontSize="xs" mt="1">PDF, DOC, or DOCX up to 5 MB.</Text>
+                </Box>
+              </FormField>
+              <FormField label={currentCoverLetterFileName ? 'Replace cover letter' : 'Attach cover letter'} error={errors.coverLetter?.message}>
+                {currentCoverLetterFileName && <Text color="fg.muted" fontSize="sm">Current file: {currentCoverLetterFileName}</Text>}
+                <Box borderColor={selectedCoverLetter ? 'brand.emphasized' : 'border'} borderRadius="lg" borderStyle="dashed" borderWidth="2px" bg={selectedCoverLetter ? 'brand.subtle' : 'bg.subtle'} p="5" textAlign="center">
+                  <Input {...register('coverLetter')} accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" cursor="pointer" p="1.5" type="file" />
+                  <Text color="fg.muted" fontSize="sm" mt="2">{selectedCoverLetter ? `${selectedCoverLetter.name} selected` : 'Choose a file'}</Text>
+                  <Text color="fg.subtle" fontSize="xs" mt="1">PDF, DOC, or DOCX up to 5 MB.</Text>
+                </Box>
+              </FormField>
+            </SimpleGrid>
           )}
         </Stack>
       </Box>

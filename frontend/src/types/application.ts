@@ -39,14 +39,18 @@ export type Application = {
     name: string
     notes: string | null
   } | null
-  resumeAttachment?: {
-    fileName: string
-    mimeType: string
-    size: number
-    createdAt: string
-  } | null
+  resumeAttachment?: ApplicationAttachment | null
+  coverLetterAttachment?: ApplicationAttachment | null
   createdAt: string
   updatedAt: string
+}
+
+/** Public metadata for a private application document; file bytes and storage keys are excluded. */
+export type ApplicationAttachment = {
+  fileName: string
+  mimeType: string
+  size: number
+  createdAt: string
 }
 
 export type CreateApplicationInput = {
@@ -77,9 +81,16 @@ export type ResumeDownloadPreparation =
 
 export type UpdateApplicationInput = Partial<CreateApplicationInput>
 
+/** Optional private documents selected while creating or updating an application. */
+export type ApplicationAttachments = {
+  resume?: File
+  coverLetter?: File
+}
+
 export type CreateApplicationRequest = {
   input: CreateApplicationInput
   resume?: File
+  coverLetter?: File
 }
 
 export const applicationSortFields = [

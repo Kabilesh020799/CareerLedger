@@ -48,7 +48,7 @@ An HTTPS frontend cannot call an HTTP API. Use the same HTTPS origin with `/api`
 
 ## S3 upload CORS failure
 
-Set CORS on the S3 bucket, not the IAM role. Allow the exact application origin and `POST`, `GET`, and `HEAD`. Keep the bucket private; a 403 from the bucket root is expected.
+Set CORS on the S3 bucket, not the IAM role. Allow the exact application origin and `POST`, `GET`, and `HEAD`. Keep the bucket private; a 403 from the bucket root is expected. If only cover letters fail, confirm the EC2 role permits `resumes/*` and that the pending-object lifecycle rule does not target `resumes/cover-letters/active/`.
 
 ## Google `redirect_uri_mismatch`
 
@@ -58,7 +58,7 @@ The Google OAuth client's authorized redirect URI must exactly match the applica
 
 Check `docker compose ps redis gmail-worker backend`. Verify `REDIS_URL` uses the Compose service hostname (`redis://redis:6379`), inspect worker logs with `docker compose logs gmail-worker`, and confirm Gmail is still connected. The API recreates enabled schedules after restart; a warning on the Gmail page means the worker will retry temporary failures with exponential backoff.
 
-If an improved classifier should recover an older unmatched email, deploy the updated backend and choose **Sync now**. Stored message references are re-evaluated once with the new classifier version in batches of up to 100; repeat synchronization if the account has more than 100 older references.
+If an improved classifier should recover an older unmatched email, including a company-only acknowledgement such as “Thanks for your interest in Accenture,” deploy the updated backend and choose **Sync now**. Stored message references are re-evaluated once with the new classifier version in batches of up to 100; repeat synchronization if the account has more than 100 older references.
 
 ## Ambiguous Gmail messages are not suggested
 

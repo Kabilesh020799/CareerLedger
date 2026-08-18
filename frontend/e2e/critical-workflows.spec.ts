@@ -12,10 +12,17 @@ test('sign in, create, open, edit, and delete an application, then sign out', as
   await page.getByLabel('Job title').fill('Reliability Engineer')
   await page.getByLabel('Location').fill('Halifax, NS')
   await chooseCustomSelectOption(page, 'Status', 'Applied')
+  await page.getByLabel('Attach cover letter').setInputFiles({
+    name: 'cover-letter.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.7\nJob Tracker cover letter\n%%EOF'),
+  })
   await page.getByRole('button', { name: 'Create application' }).click()
 
   await expect(page.getByRole('heading', { name: 'Reliability Engineer' })).toBeVisible()
   await expect(page.getByText(company, { exact: true })).toBeVisible()
+  await expect(page.getByText(`Reliability_Engineer_${company.replaceAll(' ', '_')}_Cover_Letter.pdf`)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Download cover letter' })).toBeVisible()
   const applicationUrl = page.url()
 
   await page.getByRole('link', { name: 'Applications', exact: true }).click()

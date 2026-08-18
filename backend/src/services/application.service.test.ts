@@ -58,6 +58,9 @@ const applicationInclude = {
       createdAt: true,
     },
   },
+  coverLetterAttachment: {
+    select: { fileName: true, mimeType: true, size: true, createdAt: true },
+  },
 };
 
 describe("application ownership", () => {
@@ -204,6 +207,23 @@ describe("application ownership", () => {
     });
   });
 
+  it("stores a cover letter in the same application transaction", async () => {
+    transactionMock.application.create.mockResolvedValue({ id: "application-1" });
+    const content = Buffer.from("%PDF-1.7\ncover letter");
+    await applicationService.create(
+      "user-1",
+      { company: "Acme Corp", jobTitle: "Software Engineer" },
+      undefined,
+      undefined,
+      { content, extension: ".pdf", mimeType: "application/pdf", size: content.length },
+    );
+    expect(transactionMock.application.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        coverLetterAttachment: { create: expect.objectContaining({ fileName: "Software_Engineer_Acme_Corp_Cover_Letter.pdf", content: Uint8Array.from(content), storageKey: null }) },
+      }),
+    }));
+  });
+
   it("associates only an owned resume version when creating", async () => {
     transactionMock.resumeVersion.findFirst.mockResolvedValue({ id: "resume-1" });
     transactionMock.application.create.mockResolvedValue({
@@ -257,7 +277,10 @@ describe("application ownership", () => {
     expect(result).toBeNull();
     expect(transactionMock.application.findFirst).toHaveBeenCalledWith({
       where: { id: "application-2", userId: "user-1" },
-      include: { resumeAttachment: { select: { storageKey: true } } },
+      include: {
+        resumeAttachment: { select: { storageKey: true } },
+        coverLetterAttachment: { select: { storageKey: true } },
+      },
     });
     expect(transactionMock.application.update).not.toHaveBeenCalled();
     expect(transactionMock.applicationEvent.create).not.toHaveBeenCalled();
@@ -478,6 +501,7 @@ describe("application ownership", () => {
       select: {
         id: true,
         resumeAttachment: { select: { storageKey: true } },
+        coverLetterAttachment: { select: { storageKey: true } },
       },
     });
   });

@@ -8,6 +8,10 @@ import {
   updateApplicationSchema,
 } from "../validators/application.validator";
 import { validateApplicationResume } from "../validators/application-resume.validator";
+import { applicationCoverLetterService } from "../services/application-cover-letter.service";
+import { applicationCoverLetterStorageService } from "../services/application-cover-letter-storage.service";
+import { validateApplicationCoverLetter } from "../validators/application-cover-letter.validator";
+import { uploadedApplicationFile } from "../middleware/application-attachment-upload";
 import { selectedWorkspaceId } from "../services/workspace-access.service";
 import { measureDatabase } from "../middleware/request-performance";
 
@@ -37,14 +41,15 @@ async function resolveResume(
   userId: string,
   storageKey: string | undefined,
 ) {
-  if (req.file && storageKey) {
+  const file = uploadedApplicationFile(req, "resume") ?? req.file;
+  if (file && storageKey) {
     return {
       success: false as const,
       error: "Choose only one resume upload method",
     };
   }
 
-  if (req.file && applicationResumeStorageService.isConfigured()) {
+  if (file && applicationResumeStorageService.isConfigured()) {
     return {
       success: false as const,
       error: "Prepare the resume upload before saving the application",
@@ -55,7 +60,15 @@ async function resolveResume(
     return applicationResumeStorageService.finalizeUpload(userId, storageKey);
   }
 
-  return validateApplicationResume(req.file);
+  return validateApplicationResume(file);
+}
+
+async function resolveCoverLetter(req: Request, userId: string, storageKey: string | undefined) {
+  const file = uploadedApplicationFile(req, "coverLetter");
+  if (file && storageKey) return { success: false as const, error: "Choose only one cover letter upload method" };
+  if (file && applicationCoverLetterStorageService.isConfigured()) return { success: false as const, error: "Prepare the cover letter upload before saving the application" };
+  if (storageKey) return applicationCoverLetterStorageService.finalizeUpload(userId, storageKey);
+  return validateApplicationCoverLetter(file);
 }
 
 async function abandonResolvedUpload(userId: string, storageKey: string | undefined) {
@@ -65,6 +78,11 @@ async function abandonResolvedUpload(userId: string, storageKey: string | undefi
   } catch {
     // The bucket lifecycle policy remains the final fallback for unfinished uploads.
   }
+}
+
+async function abandonResolvedCoverLetterUpload(userId: string, storageKey: string | undefined) {
+  if (!storageKey) return;
+  try { await applicationCoverLetterStorageService.abandonUpload(userId, storageKey); } catch { /* lifecycle cleanup fallback */ }
 }
 
 function resolvedStorageKey(
@@ -113,7 +131,15 @@ export const applicationController = {
 
   async create(req: Request, res: Response) {
     const parsed = createApplicationSchema.safeParse(req.body);
-    if (!parsed.success) return validationError(res, parsed.error.flatten());
+    if (!parsed.success) {
+      const userId = getUserId(req);
+      const body = req.body as Record<string, unknown>;
+      await Promise.all([
+        abandonResolvedUpload(userId, typeof body.resumeUploadKey === "string" ? body.resumeUploadKey : undefined),
+        abandonResolvedCoverLetterUpload(userId, typeof body.coverLetterUploadKey === "string" ? body.coverLetterUploadKey : undefined),
+      ]);
+      return validationError(res, parsed.error.flatten());
+    }
 
     const userId = getUserId(req);
     const resume = await resolveResume(req, userId, parsed.data.resumeUploadKey);
@@ -122,20 +148,33 @@ export const applicationController = {
       parsed.data.resumeUploadKey,
     );
     if (!resume.success) {
-      await abandonResolvedUpload(userId, cleanupStorageKey);
+      await Promise.all([
+        abandonResolvedUpload(userId, cleanupStorageKey),
+        abandonResolvedCoverLetterUpload(userId, parsed.data.coverLetterUploadKey),
+      ]);
       res.status(400).json({ error: resume.error });
+      return;
+    }
+    const coverLetter = await resolveCoverLetter(req, userId, parsed.data.coverLetterUploadKey);
+    const coverLetterCleanupKey = coverLetter.success && coverLetter.data && "storageKey" in coverLetter.data ? coverLetter.data.storageKey : parsed.data.coverLetterUploadKey;
+    if (!coverLetter.success) {
+      await Promise.all([abandonResolvedUpload(userId, cleanupStorageKey), abandonResolvedCoverLetterUpload(userId, coverLetterCleanupKey)]);
+      res.status(400).json({ error: coverLetter.error });
       return;
     }
 
     let application;
     try {
-      application = await applicationService.create(userId, parsed.data, resume.data, getWorkspaceId(req));
+      application = coverLetter.data
+        ? await applicationService.create(userId, parsed.data, resume.data, getWorkspaceId(req), coverLetter.data)
+        : await applicationService.create(userId, parsed.data, resume.data, getWorkspaceId(req));
     } catch (error) {
-      await abandonResolvedUpload(userId, cleanupStorageKey);
+      await Promise.all([abandonResolvedUpload(userId, cleanupStorageKey), abandonResolvedCoverLetterUpload(userId, coverLetterCleanupKey)]);
       throw error;
     }
     if (!application) {
       await abandonResolvedUpload(userId, cleanupStorageKey);
+      await abandonResolvedCoverLetterUpload(userId, coverLetterCleanupKey);
       res.status(400).json({ error: "Resume version not found" });
       return;
     }
@@ -196,9 +235,33 @@ export const applicationController = {
     });
   },
 
+  async downloadCoverLetter(req: Request, res: Response) {
+    const attachment = await applicationCoverLetterService.findForApplication(getUserId(req), getId(req), true, getWorkspaceId(req));
+    if (!attachment) { res.status(404).json({ error: "Cover letter not found" }); return; }
+    if (attachment.kind === "s3") { res.redirect(302, attachment.url); return; }
+    res.setHeader("Content-Type", attachment.mimeType);
+    res.setHeader("Content-Length", String(attachment.size));
+    res.setHeader("Content-Disposition", `inline; filename="${attachment.fileName}"`);
+    res.send(Buffer.from(attachment.content));
+  },
+
+  async getCoverLetterDownload(req: Request, res: Response) {
+    const attachment = await applicationCoverLetterService.findForApplication(getUserId(req), getId(req), false, getWorkspaceId(req));
+    if (!attachment) { res.status(404).json({ error: "Cover letter not found" }); return; }
+    res.json({ mode: attachment.kind, url: attachment.kind === "s3" ? attachment.url : null });
+  },
+
   async update(req: Request, res: Response) {
     const parsed = updateApplicationSchema.safeParse(req.body);
-    if (!parsed.success) return validationError(res, parsed.error.flatten());
+    if (!parsed.success) {
+      const userId = getUserId(req);
+      const body = req.body as Record<string, unknown>;
+      await Promise.all([
+        abandonResolvedUpload(userId, typeof body.resumeUploadKey === "string" ? body.resumeUploadKey : undefined),
+        abandonResolvedCoverLetterUpload(userId, typeof body.coverLetterUploadKey === "string" ? body.coverLetterUploadKey : undefined),
+      ]);
+      return validationError(res, parsed.error.flatten());
+    }
 
     const userId = getUserId(req);
     const resume = await resolveResume(req, userId, parsed.data.resumeUploadKey);
@@ -207,31 +270,39 @@ export const applicationController = {
       parsed.data.resumeUploadKey,
     );
     if (!resume.success) {
-      await abandonResolvedUpload(userId, cleanupStorageKey);
+      await Promise.all([
+        abandonResolvedUpload(userId, cleanupStorageKey),
+        abandonResolvedCoverLetterUpload(userId, parsed.data.coverLetterUploadKey),
+      ]);
       res.status(400).json({ error: resume.error });
+      return;
+    }
+    const coverLetter = await resolveCoverLetter(req, userId, parsed.data.coverLetterUploadKey);
+    const coverLetterCleanupKey = coverLetter.success && coverLetter.data && "storageKey" in coverLetter.data ? coverLetter.data.storageKey : parsed.data.coverLetterUploadKey;
+    if (!coverLetter.success) {
+      await Promise.all([abandonResolvedUpload(userId, cleanupStorageKey), abandonResolvedCoverLetterUpload(userId, coverLetterCleanupKey)]);
+      res.status(400).json({ error: coverLetter.error });
       return;
     }
 
     let application;
     try {
-      application = await applicationService.update(
-        userId,
-        getId(req),
-        parsed.data,
-        resume.data,
-        getWorkspaceId(req),
-      );
+      application = coverLetter.data
+        ? await applicationService.update(userId, getId(req), parsed.data, resume.data, getWorkspaceId(req), coverLetter.data)
+        : await applicationService.update(userId, getId(req), parsed.data, resume.data, getWorkspaceId(req));
     } catch (error) {
-      await abandonResolvedUpload(userId, cleanupStorageKey);
+      await Promise.all([abandonResolvedUpload(userId, cleanupStorageKey), abandonResolvedCoverLetterUpload(userId, coverLetterCleanupKey)]);
       throw error;
     }
     if (application === false) {
       await abandonResolvedUpload(userId, cleanupStorageKey);
+      await abandonResolvedCoverLetterUpload(userId, coverLetterCleanupKey);
       res.status(400).json({ error: "Resume version not found" });
       return;
     }
     if (!application) {
       await abandonResolvedUpload(userId, cleanupStorageKey);
+      await abandonResolvedCoverLetterUpload(userId, coverLetterCleanupKey);
       res.status(404).json({ error: "Application not found" });
       return;
     }

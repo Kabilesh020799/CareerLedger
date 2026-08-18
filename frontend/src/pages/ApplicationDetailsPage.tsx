@@ -7,6 +7,7 @@ import { ApplicationReminders } from '../components/reminders/ApplicationReminde
 import { useApplication } from '../hooks/useApplication'
 import { useDeleteApplication } from '../hooks/useDeleteApplication'
 import { useDownloadApplicationResume } from '../hooks/useDownloadApplicationResume'
+import { useDownloadApplicationCoverLetter } from '../hooks/useDownloadApplicationCoverLetter'
 import { getApiErrorMessage } from '../utils/apiError'
 import { LoadingSkeleton, Surface } from '../components/ui/LoadingSkeleton'
 import { useMoveApplication } from '../hooks/useMoveApplication'
@@ -39,6 +40,7 @@ export function ApplicationDetailsPage() {
   const applicationQuery = useApplication(id)
   const deleteApplication = useDeleteApplication()
   const downloadResume = useDownloadApplicationResume()
+  const downloadCoverLetter = useDownloadApplicationCoverLetter()
   const moveApplication = useMoveApplication()
 
   if (applicationQuery.isPending) {
@@ -122,11 +124,12 @@ export function ApplicationDetailsPage() {
         </Box>}
       </Surface>
 
-      {(application.resumeVersion || application.resumeAttachment) && <Surface p={{ base: '5', md: '7' }}>
-        <SectionHeading title="Documents" description="Resume material associated with this application." />
+      {(application.resumeVersion || application.resumeAttachment || application.coverLetterAttachment) && <Surface p={{ base: '5', md: '7' }}>
+        <SectionHeading title="Documents" description="Application documents associated with this opportunity." />
         <SimpleGrid columns={{ base: 1, md: 2 }} gap="5">
           {application.resumeVersion && <Detail label="Resume tag">{application.resumeVersion.name}</Detail>}
           {application.resumeAttachment && <Detail label="Attached resume"><Stack align="start" gap="2"><Text fontWeight="medium">{application.resumeAttachment.fileName}</Text><Button loading={downloadResume.isPending} onClick={() => downloadResume.mutate({ applicationId: application.id, fileName: application.resumeAttachment!.fileName })} size="sm" variant="outline">Download resume</Button>{downloadResume.isError && <Text color="fg.error" fontSize="sm">{getApiErrorMessage(downloadResume.error, 'Unable to download resume.')}</Text>}</Stack></Detail>}
+          {application.coverLetterAttachment && <Detail label="Attached cover letter"><Stack align="start" gap="2"><Text fontWeight="medium">{application.coverLetterAttachment.fileName}</Text><Button loading={downloadCoverLetter.isPending} onClick={() => downloadCoverLetter.mutate({ applicationId: application.id, fileName: application.coverLetterAttachment!.fileName })} size="sm" variant="outline">Download cover letter</Button>{downloadCoverLetter.isError && <Text color="fg.error" fontSize="sm">{getApiErrorMessage(downloadCoverLetter.error, 'Unable to download cover letter.')}</Text>}</Stack></Detail>}
         </SimpleGrid>
       </Surface>}
 
