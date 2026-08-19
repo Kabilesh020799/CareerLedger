@@ -5,6 +5,7 @@ const authorizationEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
 const tokenEndpoint = "https://oauth2.googleapis.com/token";
 const revokeEndpoint = "https://oauth2.googleapis.com/revoke";
 const gmailApiBaseUrl = "https://gmail.googleapis.com/gmail/v1/users/me";
+const METADATA_REQUEST_CONCURRENCY = 20;
 export const gmailMetadataScope =
   "https://www.googleapis.com/auth/gmail.metadata";
 
@@ -160,18 +161,11 @@ export const gmailApiService = {
     messages: GmailMessageReference[],
   ): Promise<{ credentials: GmailCredentials; messages: GmailMessageMetadata[] }> {
     const currentCredentials = await refreshIfNeeded(credentials);
-    const metadata: GmailMessageMetadata[] = [];
-
-    for (let index = 0; index < messages.length; index += 10) {
-      const batch = messages.slice(index, index + 10);
-      metadata.push(
-        ...(await Promise.all(
-          batch.map((message) =>
-            fetchMessageMetadata(currentCredentials.accessToken, message),
-          ),
-        )),
-      );
-    }
+    const metadata = await mapWithConcurrency(
+      messages,
+      METADATA_REQUEST_CONCURRENCY,
+      (message) => fetchMessageMetadata(currentCredentials.accessToken, message),
+    );
 
     return { credentials: currentCredentials, messages: metadata };
   },
@@ -372,4 +366,24 @@ function uniqueMessageReferences(
 function requireConfig(value: string | undefined) {
   if (!value) throw new Error("Gmail integration is not configured");
   return value;
+}
+
+async function mapWithConcurrency<T, TResult>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<TResult>,
+) {
+  const results = new Array<TResult>(items.length);
+  let nextIndex = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const index = nextIndex++;
+        results[index] = await mapper(items[index]);
+      }
+    },
+  );
+  await Promise.all(workers);
+  return results;
 }

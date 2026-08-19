@@ -122,6 +122,7 @@ Feature: Manually synchronize Gmail
     Given several synchronized Gmail messages require the optional LLM fallback
     When the background synchronization classifies those messages
     Then only ambiguous messages should be sent in bounded batches
+    And unrelated messages without recruitment signals should not be sent to the LLM
     And the prompt and schema should be shared across messages in each batch
     And each result should be validated against its message index and confidence
     And the manual API request should remain independent of provider response time

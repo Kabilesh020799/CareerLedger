@@ -7,6 +7,7 @@ import {
   classifyGmailMessage,
   inferCompany,
   inferJobTitle,
+  isLikelyRecruitmentMessage,
   matchGmailMessage,
   type GmailApplicationCandidate,
   type GmailMessageMetadata,
@@ -25,7 +26,9 @@ export async function buildGmailUpdateSuggestion(
   const deterministicClassification = classifyGmailMessage(message);
   const classification =
     deterministicClassification ??
-    (await llmClassifier.classify(message, accountEmail));
+    (isLikelyRecruitmentMessage(message)
+      ? await llmClassifier.classify(message, accountEmail)
+      : null);
   if (!classification) return null;
   const match = matchGmailMessage(message, applications);
 
@@ -57,7 +60,7 @@ export async function buildGmailUpdateSuggestions(
 ) {
   const classifications = messages.map(classifyGmailMessage);
   const ambiguousIndexes = classifications.flatMap((classification, index) =>
-    classification ? [] : [index],
+    classification || !isLikelyRecruitmentMessage(messages[index]) ? [] : [index],
   );
 
   if (ambiguousIndexes.length) {

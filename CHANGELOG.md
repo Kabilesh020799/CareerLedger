@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.29.1] - 2026-08-18
+
+### Fixed
+
+- Speed up Gmail synchronization by fetching message metadata with bounded parallelism and sending only likely recruitment messages to the optional LLM fallback.
+
 ## [3.29.0] - 2026-08-17
 
 ### Added
@@ -453,6 +459,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added categorized changelog entries as the source for GitHub Release notes.
 
 [Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.2...HEAD
+[3.29.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.29.0...v3.29.1
 [3.29.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.1...v3.29.0
 [3.28.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.0...v3.28.1
 [3.28.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.5...v3.28.0

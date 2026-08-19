@@ -3,6 +3,7 @@ import {
   classifyGmailMessage,
   inferCompany,
   inferJobTitle,
+  isLikelyRecruitmentMessage,
   matchGmailMessage,
 } from "./gmail-update-classifier";
 
@@ -39,6 +40,23 @@ describe("Gmail recruitment update classification", () => {
         snippet: "Summer skincare tips",
       }),
     ).toBeNull();
+  });
+
+  it("sends only likely recruitment metadata to the optional classifier", () => {
+    expect(
+      isLikelyRecruitmentMessage({
+        subject: "An update about your candidacy",
+        sender: "Acme Talent <talent@acme.example>",
+        snippet: "We would like to discuss next steps.",
+      }),
+    ).toBe(true);
+    expect(
+      isLikelyRecruitmentMessage({
+        subject: "Your monthly statement",
+        sender: "Bank <alerts@bank.example>",
+        snippet: "Your statement is ready.",
+      }),
+    ).toBe(false);
   });
 
   it("uses explicit rejection wording before a company interest acknowledgement", () => {

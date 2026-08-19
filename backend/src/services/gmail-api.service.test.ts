@@ -179,6 +179,27 @@ describe("gmailApiService", () => {
     expect(requestUrl).not.toContain("format=full");
   });
 
+  it("fetches message metadata with bounded parallelism", async () => {
+    let activeRequests = 0;
+    let maximumActiveRequests = 0;
+    vi.mocked(fetch).mockImplementation(async () => {
+      activeRequests += 1;
+      maximumActiveRequests = Math.max(maximumActiveRequests, activeRequests);
+      await Promise.resolve();
+      activeRequests -= 1;
+      return jsonResponse({ payload: { headers: [] } });
+    });
+    const references = Array.from({ length: 25 }, (_unused, index) => ({
+      id: `message-${index}`,
+      threadId: null,
+    }));
+
+    const result = await gmailApiService.metadata(credentials, references);
+
+    expect(result.messages).toHaveLength(25);
+    expect(maximumActiveRequests).toBe(20);
+  });
+
   it("falls back to a full sync when Gmail expires the history identifier", async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(jsonResponse({ error: "history expired" }, 404))

@@ -124,6 +124,26 @@ describe("buildGmailUpdateSuggestion", () => {
       "SCREENING",
     ]);
   });
+
+  it("does not spend LLM time on unrelated inbox metadata", async () => {
+    const classifyBatch = vi.fn();
+    const unrelatedMessage = {
+      ...message,
+      subject: "Your monthly statement",
+      sender: "Bank <alerts@bank.example>",
+      snippet: "Your statement is ready.",
+    };
+
+    await expect(
+      buildGmailUpdateSuggestions(
+        [unrelatedMessage],
+        [],
+        "user@example.com",
+        { classifyBatch },
+      ),
+    ).resolves.toEqual([]);
+    expect(classifyBatch).not.toHaveBeenCalled();
+  });
 });
 
 describe("gmailUpdateReviewService", () => {

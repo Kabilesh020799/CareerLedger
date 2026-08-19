@@ -78,6 +78,28 @@ const classificationRules: Array<{
   },
 ];
 
+const recruitmentSignals = [
+  "application",
+  "applied",
+  "applying",
+  "candidate",
+  "candidacy",
+  "interview",
+  "assessment",
+  "recruiter",
+  "recruiting",
+  "recruitment",
+  "hiring",
+  "talent acquisition",
+  "job opportunity",
+  "job application",
+  "position",
+  "role",
+  "offer",
+  "next steps",
+  "moving forward",
+];
+
 export function classifyGmailMessage(
   message: Pick<GmailMessageMetadata, "subject" | "snippet">,
 ): GmailClassification | null {
@@ -100,6 +122,14 @@ export function classifyGmailMessage(
     return { status: "APPLIED", confidence: 90 };
   }
   return null;
+}
+
+/** Limits optional LLM use to metadata that contains a recruitment signal. */
+export function isLikelyRecruitmentMessage(
+  message: Pick<GmailMessageMetadata, "subject" | "sender" | "snippet">,
+) {
+  const content = normalize(`${message.subject} ${message.sender} ${message.snippet}`);
+  return recruitmentSignals.some((signal) => content.includes(normalize(signal)));
 }
 
 function isApplicationAcknowledgement(subject: string) {
