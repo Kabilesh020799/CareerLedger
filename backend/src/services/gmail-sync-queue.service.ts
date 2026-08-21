@@ -57,7 +57,7 @@ export const gmailSyncQueueService = {
     );
   },
 
-  /** Enqueues at most one active manual synchronization per user. */
+  /** Enqueues at most one active manual synchronization per user; manual failures are retried explicitly by the user. */
   async enqueueManual(userId: string) {
     const gmailQueue = getQueue();
     const jobId = manualJobId(userId);
@@ -77,7 +77,7 @@ export const gmailSyncQueueService = {
     await gmailQueue.add(
       gmailSyncJobName,
       { userId, trigger: "manual" },
-      { jobId },
+      { attempts: 1, jobId },
     );
     return { jobId, status: "queued" as const };
   },

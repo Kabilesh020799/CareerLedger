@@ -26,8 +26,8 @@ const batchClassificationSchema = z
   .object({ results: z.array(classificationSchema) })
   .strict();
 
-const MAX_MESSAGES_PER_REQUEST = 8;
-const MAX_CONCURRENT_REQUESTS = 2;
+const MAX_MESSAGES_PER_REQUEST = 20;
+const MAX_CONCURRENT_REQUESTS = 4;
 const SUBJECT_CHARACTER_LIMIT = 240;
 const SENDER_CHARACTER_LIMIT = 160;
 const SNIPPET_CHARACTER_LIMIT = 600;

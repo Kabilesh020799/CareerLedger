@@ -64,7 +64,7 @@ describe("gmailSyncQueueService", () => {
     expect(queueMock.add).toHaveBeenCalledWith(
       "synchronize-user-gmail",
       { userId: "user-1", trigger: "manual" },
-      { jobId: "gmail-manual-user-1" },
+      { attempts: 1, jobId: "gmail-manual-user-1" },
     );
 
     queueMock.getJob.mockResolvedValue({ getState: vi.fn().mockResolvedValue("active") });

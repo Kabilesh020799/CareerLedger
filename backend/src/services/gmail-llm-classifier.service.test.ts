@@ -151,7 +151,7 @@ describe("gmailLlmClassifier", () => {
     });
   });
 
-  it("splits large sets into batches of at most eight messages", async () => {
+  it("splits large sets into batches of at most twenty messages", async () => {
     const request = vi.fn<typeof fetch>().mockImplementation(async (_url, init) => {
       const body = JSON.parse(String(init?.body));
       const inputs = JSON.parse(body.input) as Array<{ index: number }>;
@@ -167,7 +167,7 @@ describe("gmailLlmClassifier", () => {
         }),
       });
     });
-    const messages = Array.from({ length: 9 }, (_unused, index) => ({
+    const messages = Array.from({ length: 21 }, (_unused, index) => ({
       ...message,
       subject: `Ambiguous ${index}`,
     }));
@@ -177,13 +177,51 @@ describe("gmailLlmClassifier", () => {
       "user@example.com",
     );
 
-    expect(results).toHaveLength(9);
+    expect(results).toHaveLength(21);
     expect(results.every((result) => result?.status === "APPLIED")).toBe(true);
     expect(request).toHaveBeenCalledTimes(2);
     expect(
       request.mock.calls.map((call) =>
         JSON.parse(JSON.parse(String(call[1]?.body)).input).length,
       ),
-    ).toEqual([8, 1]);
+    ).toEqual([20, 1]);
+  });
+
+  it("keeps provider concurrency bounded while processing several batches", async () => {
+    let activeRequests = 0;
+    let maximumActiveRequests = 0;
+    const request = vi.fn<typeof fetch>().mockImplementation(async (_url, init) => {
+      activeRequests += 1;
+      maximumActiveRequests = Math.max(maximumActiveRequests, activeRequests);
+      await Promise.resolve();
+      const body = JSON.parse(String(init?.body));
+      const inputs = JSON.parse(body.input) as Array<{ index: number }>;
+      activeRequests -= 1;
+      return response({
+        output_text: JSON.stringify({
+          results: inputs.map(({ index }) => ({
+            index,
+            status: "APPLIED",
+            confidence: 90,
+            company: "Acme",
+            jobTitle: "Engineer",
+          })),
+        }),
+      });
+    });
+    const messages = Array.from({ length: 81 }, (_unused, index) => ({
+      ...message,
+      subject: `Ambiguous ${index}`,
+    }));
+
+    await expect(
+      createGmailLlmClassifier(request, config).classifyBatch(
+        messages,
+        "user@example.com",
+      ),
+    ).resolves.toHaveLength(81);
+
+    expect(request).toHaveBeenCalledTimes(5);
+    expect(maximumActiveRequests).toBe(4);
   });
 });

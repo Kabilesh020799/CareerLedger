@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.29.2] - 2026-08-21
+
+### Fixed
+
+- Speed up Gmail synchronization with larger bounded classification batches, more concurrent provider requests, timeouts that release the worker when Gmail stalls, and prompt manual failure handling while preserving fail-closed validation.
+
 ## [3.29.1] - 2026-08-18
 
 ### Fixed
@@ -458,7 +464,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.2...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.29.2...HEAD
+[3.29.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.29.1...v3.29.2
 [3.29.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.29.0...v3.29.1
 [3.29.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.1...v3.29.0
 [3.28.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.0...v3.28.1

@@ -68,6 +68,12 @@ Feature: Manually synchronize Gmail
     Then my saved history identifier and last successful synchronization time should remain unchanged
     And I should be able to retry manually
 
+  Scenario: Report a manual failure without waiting through automatic backoff
+    Given I request a manual Gmail synchronization
+    When the worker encounters a temporary provider failure
+    Then the manual synchronization should report a safe failure after its attempt
+    And I should be able to retry manually without waiting for scheduled retry backoff
+
   Scenario: Require a Gmail connection before synchronization
     Given I have not connected Gmail
     When I request a Gmail synchronization

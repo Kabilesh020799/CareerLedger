@@ -200,6 +200,33 @@ describe("gmailApiService", () => {
     expect(maximumActiveRequests).toBe(20);
   });
 
+  it("aborts a stalled Gmail request instead of waiting indefinitely", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(fetch).mockImplementation((_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            const error = new Error("request aborted");
+            error.name = "AbortError";
+            reject(error);
+          });
+        }),
+      );
+
+      const synchronization = gmailApiService.metadata(credentials, [
+        { id: "stalled-message", threadId: null },
+      ]);
+      const assertion = expect(synchronization).rejects.toMatchObject({
+        status: 504,
+      });
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("falls back to a full sync when Gmail expires the history identifier", async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(jsonResponse({ error: "history expired" }, 404))

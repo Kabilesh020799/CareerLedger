@@ -6,6 +6,7 @@ const tokenEndpoint = "https://oauth2.googleapis.com/token";
 const revokeEndpoint = "https://oauth2.googleapis.com/revoke";
 const gmailApiBaseUrl = "https://gmail.googleapis.com/gmail/v1/users/me";
 const METADATA_REQUEST_CONCURRENCY = 20;
+const GMAIL_REQUEST_TIMEOUT_MS = 10_000;
 export const gmailMetadataScope =
   "https://www.googleapis.com/auth/gmail.metadata";
 
@@ -92,7 +93,7 @@ export const gmailApiService = {
   },
 
   async exchangeAuthorizationCode(code: string): Promise<GmailCredentials> {
-    const response = await fetch(tokenEndpoint, {
+    const response = await fetchWithTimeout(tokenEndpoint, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
@@ -172,7 +173,7 @@ export const gmailApiService = {
 
   async revoke(credentials: GmailCredentials) {
     const token = credentials.refreshToken || credentials.accessToken;
-    await fetch(revokeEndpoint, {
+    await fetchWithTimeout(revokeEndpoint, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ token }),
@@ -301,7 +302,7 @@ async function refreshIfNeeded(
 ): Promise<GmailCredentials> {
   if (credentials.expiresAt > Date.now() + 30_000) return credentials;
 
-  const response = await fetch(tokenEndpoint, {
+  const response = await fetchWithTimeout(tokenEndpoint, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -326,7 +327,7 @@ async function refreshIfNeeded(
 }
 
 async function gmailRequest<T>(path: string, accessToken: string): Promise<T> {
-  const response = await fetch(`${gmailApiBaseUrl}${path}`, {
+  const response = await fetchWithTimeout(`${gmailApiBaseUrl}${path}`, {
     headers: { authorization: `Bearer ${accessToken}` },
   });
   const body = await readJson<T>(response);
@@ -339,6 +340,24 @@ async function gmailRequest<T>(path: string, accessToken: string): Promise<T> {
     throw new GmailApiError("Gmail request failed", response.status);
   }
   return body;
+}
+
+async function fetchWithTimeout(
+  input: Parameters<typeof fetch>[0],
+  init: Parameters<typeof fetch>[1],
+) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), GMAIL_REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new GmailApiError("Gmail request timed out", 504);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function readJson<T>(response: Response): Promise<T> {
