@@ -6,13 +6,13 @@ Feature: Capture a job posting from the browser
 
   Scenario: Review extracted posting details before saving
     Given I am viewing a job posting in a supported browser
-    When I open the Job Tracker extension
+    When I open the CareerLedger extension
     Then company, job title, location, URL, description, skills, experience, salary, and work mode should be proposed when available
     And I should be able to edit every proposed field before confirming
 
   Scenario: Keep connection setup separate from posting review
     Given I configured a valid browser-extension connection
-    When I open the Job Tracker extension
+    When I open the CareerLedger extension
     Then the connection settings should be collapsed
     And the posting review should identify required fields and provide clear loading, success, and error feedback
     And I should be able to read the current page again without reopening the extension
@@ -30,7 +30,7 @@ Feature: Capture a job posting from the browser
     And I should see them on the application details page
 
   Scenario: Authenticate capture access without sharing a login session
-    Given I created a revocable browser-extension token in Job Tracker
+    Given I created a revocable browser-extension token in CareerLedger
     When the extension submits a capture with that token
     Then the application should belong to the token owner
     And the stored token value should not be recoverable from the database

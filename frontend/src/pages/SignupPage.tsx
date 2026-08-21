@@ -35,7 +35,7 @@ export function SignupPage() {
       <Container maxW="lg">
         <Stack bg="bg.panel" borderColor="border" borderRadius="2xl" borderWidth="1px" boxShadow="xl" gap="6" p={{ base: '6', sm: '9' }}>
           <Stack gap="2">
-            <Text color="brand.fg" fontSize="sm" fontWeight="bold" letterSpacing="0.08em" textTransform="uppercase">Job Tracker</Text>
+            <Text color="brand.fg" fontSize="sm" fontWeight="bold" letterSpacing="0.08em" textTransform="uppercase">CareerLedger</Text>
             <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }}>Create your account</Heading>
             <Text color="fg.muted">Start tracking applications in your private workspace.</Text>
           </Stack>

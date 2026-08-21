@@ -20,7 +20,7 @@ export const dataTransferController = {
     if (!parsed.success) return res.status(400).json({ error: "Invalid export request", details: parsed.error.flatten() });
     try {
       const document = await dataTransferService.exportWorkspace(userId(req), parsed.data.workspaceId);
-      res.setHeader("Content-Disposition", `attachment; filename="job-tracker-backup-${new Date().toISOString().slice(0, 10)}.json"`);
+      res.setHeader("Content-Disposition", `attachment; filename="careerledger-backup-${new Date().toISOString().slice(0, 10)}.json"`);
       res.json(document);
     } catch (error) { accessError(res, error); }
   },

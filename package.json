@@ -1,6 +1,6 @@
 {
-  "name": "job-application-tracker",
-  "version": "3.29.2",
+  "name": "career-ledger",
+  "version": "3.29.3",
   "private": true,
   "scripts": {
     "release:notes": "node scripts/release-notes.js",

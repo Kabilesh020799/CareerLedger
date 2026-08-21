@@ -15,7 +15,7 @@ test('sign in, create, open, edit, and delete an application, then sign out', as
   await page.getByLabel('Attach cover letter').setInputFiles({
     name: 'cover-letter.pdf',
     mimeType: 'application/pdf',
-    buffer: Buffer.from('%PDF-1.7\nJob Tracker cover letter\n%%EOF'),
+    buffer: Buffer.from('%PDF-1.7\nCareerLedger cover letter\n%%EOF'),
   })
   await page.getByRole('button', { name: 'Create application' }).click()
 

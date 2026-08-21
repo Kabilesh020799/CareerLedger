@@ -20,7 +20,7 @@ if [ ! -f /var/lib/job-tracker-bootstrap-ready ]; then
 fi
 
 if [ ! -d "$source_dir/.git" ]; then
-  git clone https://github.com/Kabilesh020799/JobApplicationTracker.git "$source_dir"
+  git clone https://github.com/Kabilesh020799/CareerLedger.git "$source_dir"
 fi
 
 git -C "$source_dir" fetch --depth=1 origin "$git_ref"

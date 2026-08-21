@@ -31,7 +31,7 @@ export const emailService = {
     const verificationUrl = link("verify-email", token);
     return send(
       to,
-      "Verify your Job Tracker email",
+      "Verify your CareerLedger email",
       `Verify your email address by opening this link:\n\n${verificationUrl}\n\nThis link expires in 24 hours.`,
     );
   },
@@ -40,7 +40,7 @@ export const emailService = {
     const resetUrl = link("reset-password", token);
     return send(
       to,
-      "Reset your Job Tracker password",
+      "Reset your CareerLedger password",
       `Reset your password by opening this link:\n\n${resetUrl}\n\nThis link expires in 1 hour. If you did not request this, you can ignore this email.`,
     );
   },

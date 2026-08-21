@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for contributing to the Job Application Tracker. This repository contains separate React and Express applications backed by PostgreSQL.
+Thank you for contributing to CareerLedger. This repository contains separate React and Express applications backed by PostgreSQL.
 
 ## Product direction
 

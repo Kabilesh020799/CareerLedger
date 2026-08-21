@@ -4,7 +4,7 @@ These instructions apply to the entire repository. More specific `AGENTS.md` fil
 
 ## Mission
 
-Build the Job Application Tracker incrementally as a full-stack monorepo. The current goal is V0.1: users can create, list, open, edit, and delete applications through React, with data stored persistently in PostgreSQL through Express and Prisma.
+Build CareerLedger incrementally as a full-stack monorepo. The current goal is V0.1: users can create, list, open, edit, and delete applications through React, with data stored persistently in PostgreSQL through Express and Prisma.
 
 Treat [`features/v0.1`](features/v0.1) as the active behavior contract and [`features/roadmap`](features/roadmap) as future intent. Do not implement roadmap features unless the user explicitly requests them.
 

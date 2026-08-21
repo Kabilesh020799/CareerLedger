@@ -45,12 +45,12 @@ export function LoginPage() {
       <Container maxW="6xl">
         <SimpleGrid bg="bg.panel" borderColor="border" borderRadius="2xl" borderWidth="1px" boxShadow="xl" columns={{ base: 1, lg: 2 }} overflow="hidden">
         <Stack bg="brand.solid" color="brand.contrast" display={{ base: 'none', lg: 'flex' }} gap="8" justify="space-between" minH="34rem" p="12">
-          <Stack gap="5"><Flex align="center" bg="whiteAlpha.300" borderRadius="xl" fontSize="xl" fontWeight="bold" h="12" justify="center" w="12">JT</Flex><Heading fontSize="4xl" letterSpacing="-0.04em" maxW="sm">Keep every opportunity moving.</Heading><Text color="whiteAlpha.800" fontSize="lg" maxW="md">One focused workspace for applications, follow-ups, documents, and recruitment updates.</Text></Stack>
+          <Stack gap="5"><Flex align="center" bg="whiteAlpha.300" borderRadius="xl" fontSize="xl" fontWeight="bold" h="12" justify="center" w="12">CL</Flex><Heading fontSize="4xl" letterSpacing="-0.04em" maxW="sm">Your job search, organized.</Heading><Text color="whiteAlpha.800" fontSize="lg" maxW="md">One focused workspace for applications, follow-ups, documents, and recruitment updates.</Text></Stack>
           <Text color="whiteAlpha.700" fontSize="sm">Your job search stays private to your account.</Text>
         </Stack>
         <Stack gap="6" justify="center" p={{ base: '6', sm: '9', md: '12' }}>
           <Stack gap="2">
-            <Text color="brand.fg" fontSize="sm" fontWeight="bold" letterSpacing="0.08em" textTransform="uppercase">Job Tracker</Text>
+            <Text color="brand.fg" fontSize="sm" fontWeight="bold" letterSpacing="0.08em" textTransform="uppercase">CareerLedger</Text>
             <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }}>Welcome back</Heading>
             <Text color="fg.muted">Sign in to continue your job search.</Text>
           </Stack>
@@ -105,7 +105,7 @@ export function LoginPage() {
                 </Button>
                 <Text fontSize="sm" textAlign="center"><Link to="/forgot-password">Forgot your password?</Link></Text>
                 <Text color="fg.muted" fontSize="sm" textAlign="center">
-                  New to Job Tracker? <Link to="/signup">Create an account</Link>
+                  New to CareerLedger? <Link to="/signup">Create an account</Link>
                 </Text>
               </Stack>
             </form>

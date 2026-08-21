@@ -43,7 +43,7 @@ describe('DataSettingsPage', () => {
     const user = userEvent.setup()
     render(<AppProvider><DataSettingsPage /></AppProvider>)
     await user.upload(screen.getByLabelText('Import JSON backup'), new File(['not json'], 'bad.json', { type: 'application/json' }))
-    expect(await screen.findByText('This is not a valid Job Tracker backup.')).toBeInTheDocument()
+    expect(await screen.findByText('This is not a valid CareerLedger backup.')).toBeInTheDocument()
     expect(dataTransferService.importWorkspace).not.toHaveBeenCalled()
   })
 })

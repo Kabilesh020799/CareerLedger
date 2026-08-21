@@ -33,7 +33,8 @@ describe('production HTTP login', () => {
     )
 
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
-    expect(screen.getByText('Job Tracker')).toBeInTheDocument()
+    expect(screen.getByText('CareerLedger')).toBeInTheDocument()
+    expect(screen.getByText('Your job search, organized.')).toBeInTheDocument()
     expect(screen.getByText('Insecure HTTP connection')).toBeInTheDocument()
     expect(screen.getByLabelText('Username')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()

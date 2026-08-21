@@ -1,5 +1,5 @@
 self.addEventListener('push', (event) => {
-  const notification = event.data?.json() || { title: 'Job Tracker reminder', body: 'A reminder is due.', url: '/dashboard' }
+  const notification = event.data?.json() || { title: 'CareerLedger reminder', body: 'A reminder is due.', url: '/dashboard' }
   event.waitUntil(self.registration.showNotification(notification.title, { body: notification.body, icon: '/vite.svg', data: { url: notification.url } }))
 })
 

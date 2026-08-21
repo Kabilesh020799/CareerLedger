@@ -2,7 +2,7 @@ resource "aws_cloudfront_distribution" "application" {
   enabled         = true
   is_ipv6_enabled = true
   price_class     = "PriceClass_100"
-  comment         = "Job Application Tracker standalone production"
+  comment         = "CareerLedger standalone production"
   web_acl_id      = aws_wafv2_web_acl.application.arn
 
   origin {

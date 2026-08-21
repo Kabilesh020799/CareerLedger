@@ -23,11 +23,11 @@ export function NotificationSettingsPage() {
   }
 
   return <Stack gap="6">
-    <PageHeader title="Notifications" description="Choose how Job Tracker alerts you when a reminder becomes due." eyebrow="Account" />
+    <PageHeader title="Notifications" description="Choose how CareerLedger alerts you when a reminder becomes due." eyebrow="Account" />
     {(update.isError || subscription.isError) && <Alert.Root status="error"><Alert.Indicator /><Alert.Title>{getApiErrorMessage(update.error ?? subscription.error, 'Unable to update notification delivery.')}</Alert.Title></Alert.Root>}
     <Stack gap="4">
       <ChannelCard title="Email reminders" description="Send due reminders to the email address on your account." available={value.emailAvailable} enabled={value.emailEnabled} loading={update.isPending} onToggle={toggleEmail} unavailable="An administrator must configure SMTP before email delivery can be enabled." />
-      <ChannelCard title="Browser push" description="Receive reminders from this browser even when Job Tracker is not open." available={value.browserPushAvailable && 'serviceWorker' in navigator && 'PushManager' in window} enabled={value.browserPushEnabled && value.browserSubscribed} loading={subscription.isPending || update.isPending} onToggle={toggleBrowser} unavailable="Push notifications require HTTPS, browser support, and configured VAPID keys." />
+      <ChannelCard title="Browser push" description="Receive reminders from this browser even when CareerLedger is not open." available={value.browserPushAvailable && 'serviceWorker' in navigator && 'PushManager' in window} enabled={value.browserPushEnabled && value.browserSubscribed} loading={subscription.isPending || update.isPending} onToggle={toggleBrowser} unavailable="Push notifications require HTTPS, browser support, and configured VAPID keys." />
     </Stack>
     <Text color="fg.subtle" fontSize="sm">A successful notification is recorded once per reminder and channel. Failed background deliveries retry automatically.</Text>
   </Stack>

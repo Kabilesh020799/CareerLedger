@@ -47,7 +47,7 @@ export function DataSettingsPage() {
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
-      anchor.download = `job-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`
+      anchor.download = `careerledger-backup-${new Date().toISOString().slice(0, 10)}.json`
       anchor.click(); URL.revokeObjectURL(url); setMessage('Backup downloaded.')
     } catch { setError('The backup could not be created. Try again.') } finally { setBusy(false) }
   }
@@ -58,7 +58,7 @@ export function DataSettingsPage() {
     try {
       const document = backupPreviewSchema.parse(JSON.parse(await readTextFile(file)))
       setPreview({ document, fileName: file.name, applicationCount: document.applications.length, workspaceName: document.workspace.name })
-    } catch { setError('This is not a valid Job Tracker backup.') }
+    } catch { setError('This is not a valid CareerLedger backup.') }
   }
 
   const importBackup = async () => {
@@ -82,7 +82,7 @@ export function DataSettingsPage() {
     <Stack bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" gap="4" p={{ base: '5', md: '7' }}>
       <Flex align="start" gap="4"><Box color="brand.fg"><Upload aria-hidden /></Box><Box><Text fontSize="lg" fontWeight="semibold">Restore from backup</Text><Text color="fg.muted" fontSize="sm">Choose a file to review its contents before anything is imported.</Text></Box></Flex>
       <Field.Root>
-        <Field.Label>Job Tracker backup</Field.Label>
+        <Field.Label>CareerLedger backup</Field.Label>
         <Input
           ref={fileInputRef}
           id="backup-file"

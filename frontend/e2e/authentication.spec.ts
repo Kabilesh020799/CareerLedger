@@ -21,6 +21,8 @@ test('create an account and enter its private workspace', async ({ page }) => {
 
 test('switch and retain the application color theme', async ({ page }) => {
   await page.goto('/login')
+  await expect(page.getByText('CareerLedger', { exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Your job search, organized.', exact: true })).toBeVisible()
   await page.evaluate(() => window.localStorage.removeItem('job-tracker-color-mode'))
   await page.reload()
 

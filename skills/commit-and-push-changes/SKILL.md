@@ -1,6 +1,6 @@
 ---
 name: commit-and-push-changes
-description: Verify and prepare completed Job Application Tracker features and bug fixes with informative Conventional Commit messages and matching release metadata. Use after implementation and definition-of-done checks succeed; always report the changes and request explicit user approval before committing or pushing.
+description: Verify and prepare completed CareerLedger features and bug fixes with informative Conventional Commit messages and matching release metadata. Use after implementation and definition-of-done checks succeed; always report the changes and request explicit user approval before committing or pushing.
 ---
 
 # Prepare Changes for Approval

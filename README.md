@@ -1,4 +1,6 @@
-# Job Application Tracker
+# CareerLedger
+
+Your job search, organized.
 
 A secure job application workspace for individuals and teams, with applications, resumes, cover letters, timelines, reminders, Gmail updates, calendar feeds, and portable data.
 

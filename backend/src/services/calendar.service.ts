@@ -59,7 +59,7 @@ export function serializeCalendar(entries: CalendarEntry[]) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Job Application Tracker//Calendar//EN",
+    "PRODID:-//CareerLedger//Calendar//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     ...entries.flatMap((entry) => [

@@ -11,7 +11,7 @@ test('uses the styled backup picker and shows the selected filename', async ({ p
   await expect(page.getByText('No file selected')).toBeVisible()
 
   await page.getByLabel('Import JSON backup').setInputFiles({
-    name: 'job-tracker-backup.json',
+    name: 'careerledger-backup.json',
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify({
       schemaVersion: 1,
@@ -21,6 +21,6 @@ test('uses the styled backup picker and shows the selected filename', async ({ p
     })),
   })
 
-  await expect(page.getByText('job-tracker-backup.json')).toHaveCount(2)
+  await expect(page.getByText('careerledger-backup.json')).toHaveCount(2)
   await expect(page.getByText('Review import', { exact: true })).toBeVisible()
 })

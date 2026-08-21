@@ -4,10 +4,10 @@ import swaggerJSDoc from "swagger-jsdoc";
 export const openApiDocument: OpenAPIV3.Document = {
   openapi: "3.0.3",
   info: {
-    title: "Job Application Tracker API",
+    title: "CareerLedger API",
     version: process.env.APP_VERSION ?? "development",
     description:
-      "The Job Application Tracker API helps authenticated users manage their job-search pipeline. Use it to create and update applications, attach and download resumes, review follow-up reminders, view dashboard analytics, and synchronize job-related Gmail messages. Application, resume, reminder, and Gmail records are private to the signed-in user.",
+      "The CareerLedger API helps authenticated users manage their job-search pipeline. Use it to create and update applications, attach and download resumes, review follow-up reminders, view dashboard analytics, and synchronize job-related Gmail messages. Application, resume, reminder, and Gmail records are private to the signed-in user.",
   },
   servers: [{ url: "/", description: "Current server" }],
   tags: [
@@ -37,7 +37,7 @@ export const openApiDocument: OpenAPIV3.Document = {
     },
     securitySchemes: {
       sessionCookie: { type: "apiKey", in: "cookie", name: "job-tracker-session" },
-      extensionToken: { type: "http", scheme: "bearer", bearerFormat: "Job Tracker extension token" },
+      extensionToken: { type: "http", scheme: "bearer", bearerFormat: "CareerLedger extension token" },
     },
     schemas: {
       Application: {

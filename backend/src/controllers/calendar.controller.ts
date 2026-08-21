@@ -38,7 +38,7 @@ export const calendarController = {
   },
 
   async exportAll(req: Request, res: Response) {
-    sendCalendar(res, await calendarService.exportForUser(userId(req)), "job-tracker.ics");
+    sendCalendar(res, await calendarService.exportForUser(userId(req)), "careerledger.ics");
   },
 
   async exportReminder(req: Request, res: Response) {
@@ -46,7 +46,7 @@ export const calendarController = {
     if (!parsed.success) { res.status(404).json({ error: "Calendar event not found" }); return; }
     const calendar = await calendarService.exportReminder(userId(req), parsed.data);
     if (!calendar) { res.status(404).json({ error: "Calendar event not found" }); return; }
-    sendCalendar(res, calendar, "job-tracker-deadline.ics");
+    sendCalendar(res, calendar, "careerledger-deadline.ics");
   },
 
   async subscriptionStatus(req: Request, res: Response) {

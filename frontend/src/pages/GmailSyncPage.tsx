@@ -104,7 +104,7 @@ export function GmailSyncPage() {
         <Stack bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" gap="4" p={{ base: '6', md: '8' }}>
           <Heading as="h3" size="lg">Connect Gmail</Heading>
           <Text color="fg.muted">
-            Job Tracker requests read-only message metadata access and stores authorization securely on the server. Google may ask you to approve this restricted Gmail scope.
+            CareerLedger requests read-only message metadata access and stores authorization securely on the server. Google may ask you to approve this restricted Gmail scope.
           </Text>
           <Button alignSelf="start" asChild colorPalette="brand">
             <a href={gmailConnectUrl}>Authorize Gmail</a>

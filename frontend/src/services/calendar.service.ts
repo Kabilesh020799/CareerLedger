@@ -33,11 +33,11 @@ export const calendarService = {
 
   async downloadCalendar() {
     const response = await api.get<Blob>('/calendar/export', { responseType: 'blob' })
-    saveCalendar(response.data, 'job-tracker.ics')
+    saveCalendar(response.data, 'careerledger.ics')
   },
 
   async downloadReminder(reminderId: string) {
     const response = await api.get<Blob>(`/calendar/reminders/${reminderId}.ics`, { responseType: 'blob' })
-    saveCalendar(response.data, 'job-tracker-deadline.ics')
+    saveCalendar(response.data, 'careerledger-deadline.ics')
   },
 }

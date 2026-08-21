@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.29.3] - 2026-08-21
+
+### Changed
+
+- Rebrand the application, browser extension, backup and calendar downloads, API metadata, and deployment references as CareerLedger.
+
 ## [3.29.2] - 2026-08-21
 
 ### Fixed
@@ -464,56 +470,57 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.29.2...HEAD
-[3.29.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.29.1...v3.29.2
-[3.29.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.29.0...v3.29.1
-[3.29.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.1...v3.29.0
-[3.28.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.28.0...v3.28.1
-[3.28.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.5...v3.28.0
-[3.27.5]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.4...v3.27.5
-[3.27.4]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.3...v3.27.4
-[3.27.3]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.2...v3.27.3
-[3.27.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.1...v3.27.2
-[3.27.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.27.0...v3.27.1
-[3.27.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.26.0...v3.27.0
-[3.26.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.25.0...v3.26.0
-[3.25.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.4...v3.25.0
-[3.24.4]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.0...v3.24.4
-[3.24.3]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.24.0...v3.24.3
-[3.24.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.23.1...v3.24.0
-[3.23.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.23.0...v3.23.1
-[3.23.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.22.0...v3.23.0
-[3.22.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.21.0...v3.22.0
-[3.21.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.20.0...v3.21.0
-[3.20.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.19.0...v3.20.0
-[3.19.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.18.2...v3.19.0
-[3.18.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.18.1...v3.18.2
-[3.18.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.18.0...v3.18.1
-[3.18.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.17.0...v3.18.0
-[3.17.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.16.1...v3.17.0
-[3.16.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.16.0...v3.16.1
-[3.16.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.2...v3.16.0
-[3.15.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.1...v3.15.2
-[3.15.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.15.0...v3.15.1
-[3.15.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.14.0...v3.15.0
-[3.14.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.13.0...v3.14.0
-[3.13.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.12.2...v3.13.0
-[3.12.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.12.1...v3.12.2
-[3.12.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.12.0...v3.12.1
-[3.12.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.11.0...v3.12.0
-[3.11.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.10.0...v3.11.0
-[3.10.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.2...v3.10.0
-[3.9.2]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.1...v3.9.2
-[3.9.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.9.0...v3.9.1
-[3.9.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.8.0...v3.9.0
-[3.8.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.7.0...v3.8.0
-[3.7.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.6.0...v3.7.0
-[3.6.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.5.0...v3.6.0
-[3.5.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.4.0...v3.5.0
-[3.4.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.3.0...v3.4.0
-[3.3.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.2.0...v3.3.0
-[3.2.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.1.1...v3.2.0
-[3.1.1]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.1.0...v3.1.1
-[3.1.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v3.0.0...v3.1.0
-[3.0.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v2.1.0...v3.0.0
-[2.1.0]: https://github.com/Kabilesh020799/JobApplicationTracker/compare/v2.0.0...v2.1.0
+[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.2...HEAD
+[3.29.3]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.2...v3.29.3
+[3.29.2]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.1...v3.29.2
+[3.29.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.0...v3.29.1
+[3.29.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.28.1...v3.29.0
+[3.28.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.28.0...v3.28.1
+[3.28.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.27.5...v3.28.0
+[3.27.5]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.27.4...v3.27.5
+[3.27.4]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.27.3...v3.27.4
+[3.27.3]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.27.2...v3.27.3
+[3.27.2]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.27.1...v3.27.2
+[3.27.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.27.0...v3.27.1
+[3.27.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.26.0...v3.27.0
+[3.26.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.25.0...v3.26.0
+[3.25.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.24.4...v3.25.0
+[3.24.4]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.24.0...v3.24.4
+[3.24.3]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.24.0...v3.24.3
+[3.24.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.23.1...v3.24.0
+[3.23.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.23.0...v3.23.1
+[3.23.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.22.0...v3.23.0
+[3.22.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.21.0...v3.22.0
+[3.21.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.20.0...v3.21.0
+[3.20.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.19.0...v3.20.0
+[3.19.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.18.2...v3.19.0
+[3.18.2]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.18.1...v3.18.2
+[3.18.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.18.0...v3.18.1
+[3.18.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.17.0...v3.18.0
+[3.17.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.16.1...v3.17.0
+[3.16.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.16.0...v3.16.1
+[3.16.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.15.2...v3.16.0
+[3.15.2]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.15.1...v3.15.2
+[3.15.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.15.0...v3.15.1
+[3.15.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.14.0...v3.15.0
+[3.14.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.13.0...v3.14.0
+[3.13.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.12.2...v3.13.0
+[3.12.2]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.12.1...v3.12.2
+[3.12.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.12.0...v3.12.1
+[3.12.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.11.0...v3.12.0
+[3.11.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.10.0...v3.11.0
+[3.10.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.9.2...v3.10.0
+[3.9.2]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.9.1...v3.9.2
+[3.9.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.9.0...v3.9.1
+[3.9.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.8.0...v3.9.0
+[3.8.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.7.0...v3.8.0
+[3.7.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.6.0...v3.7.0
+[3.6.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.5.0...v3.6.0
+[3.5.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.4.0...v3.5.0
+[3.4.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.3.0...v3.4.0
+[3.3.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.2.0...v3.3.0
+[3.2.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.1.1...v3.2.0
+[3.1.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.1.0...v3.1.1
+[3.1.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.0.0...v3.1.0
+[3.0.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v2.1.0...v3.0.0
+[2.1.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v2.0.0...v2.1.0

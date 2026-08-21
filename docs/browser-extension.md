@@ -4,10 +4,10 @@ The Manifest V3 extension in `extension/` proposes company, job title, location,
 
 ## Install locally
 
-1. Open Job Tracker and visit **Extension**.
+1. Open CareerLedger and visit **Extension**.
 2. Create a named extension token and copy the complete value immediately.
 3. Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select the repository's `extension` directory.
-4. Open the extension, enter the Job Tracker API URL and the one-time token, then save settings.
+4. Open the extension, enter the CareerLedger API URL and the one-time token, then save settings.
 5. Visit a job posting, open the extension, review every proposed field, and choose **Save application**.
 
 After a connection is saved, setup stays collapsed so the popup opens directly into posting review. Use **Read page again** after changing tabs or when a site finishes loading late. The popup follows the browser's light or dark color preference and reports loading, validation, save, and extraction results without closing the review form.

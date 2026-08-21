@@ -1,6 +1,6 @@
 ---
 name: test-ui-changes
-description: Require and verify both frontend unit tests and Playwright end-to-end tests for every Job Application Tracker UI change. Use whenever React components, pages, layouts, styles, visible copy, navigation, forms, loading or error states, responsive behavior, or other user-visible frontend behavior is added, removed, fixed, or modified.
+description: Require and verify both frontend unit tests and Playwright end-to-end tests for every CareerLedger UI change. Use whenever React components, pages, layouts, styles, visible copy, navigation, forms, loading or error states, responsive behavior, or other user-visible frontend behavior is added, removed, fixed, or modified.
 ---
 
 # Test UI Changes

@@ -1,6 +1,6 @@
 ---
 name: update-project-documentation
-description: Review and update all Job Application Tracker documentation affected by a completed feature, bug fix, API change, schema change, configuration change, or deployment change. Use before release classification and before requesting approval to commit or push.
+description: Review and update all CareerLedger documentation affected by a completed feature, bug fix, API change, schema change, configuration change, or deployment change. Use before release classification and before requesting approval to commit or push.
 ---
 
 # Update Project Documentation

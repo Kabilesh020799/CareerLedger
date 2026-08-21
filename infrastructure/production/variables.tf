@@ -74,5 +74,5 @@ variable "cloudfront_origin_prefix_list_id" {
 variable "github_oidc_subject" {
   description = "Exact GitHub OIDC subject currently trusted by the production deployment role."
   type        = string
-  default     = "repo:Kabilesh020799@47252881/JobApplicationTracker@1326925254:environment:production"
+  default     = "repo:Kabilesh020799@47252881/CareerLedger@1326925254:environment:production"
 }

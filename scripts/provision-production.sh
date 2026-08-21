@@ -8,7 +8,7 @@ aws_account_id="$(aws sts get-caller-identity --query Account --output text)"
 state_bucket="${TF_STATE_BUCKET:-jat-terraform-state-${aws_account_id}}"
 resume_bucket="${RESUME_BUCKET:-jat-resumes-${aws_account_id}}"
 name_prefix="${NAME_PREFIX:-job-application-tracker}"
-github_subject="${GITHUB_OIDC_SUBJECT:-repo:Kabilesh020799@47252881/JobApplicationTracker@1326925254:environment:production}"
+github_subject="${GITHUB_OIDC_SUBJECT:-repo:Kabilesh020799@47252881/CareerLedger@1326925254:environment:production}"
 git_ref="${GIT_REF:-$(git -C "$repo_root" rev-parse HEAD)}"
 bootstrap_dir="$repo_root/infrastructure/bootstrap"
 stack_dir="$repo_root/infrastructure/standalone"
@@ -105,7 +105,7 @@ for _ in $(seq 1 60); do
 done
 [ "${ready:-}" = "Online" ] || { echo "The instance did not become available in SSM." >&2; exit 1; }
 
-bootstrap_command="curl -fsSL https://raw.githubusercontent.com/Kabilesh020799/JobApplicationTracker/${git_ref}/scripts/bootstrap-instance.sh -o /tmp/bootstrap-instance.sh && chmod 700 /tmp/bootstrap-instance.sh && /tmp/bootstrap-instance.sh '${application_url}' '${resume_bucket}' '${aws_region}' '${git_ref}'"
+bootstrap_command="curl -fsSL https://raw.githubusercontent.com/Kabilesh020799/CareerLedger/${git_ref}/scripts/bootstrap-instance.sh -o /tmp/bootstrap-instance.sh && chmod 700 /tmp/bootstrap-instance.sh && /tmp/bootstrap-instance.sh '${application_url}' '${resume_bucket}' '${aws_region}' '${git_ref}'"
 parameters_file="$(mktemp)"
 trap 'rm -f "$parameters_file"' EXIT
 jq -n --arg command "$bootstrap_command" '{commands: [$command]}' > "$parameters_file"

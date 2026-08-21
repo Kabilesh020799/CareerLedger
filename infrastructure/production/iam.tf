@@ -53,7 +53,7 @@ resource "aws_iam_openid_connect_provider" "github" {
   thumbprint_list = ["ab9d0263244dd0326eb67015705a667e79cfe998"]
 
   tags = {
-    Application = "JobApplicationTracker"
+    Application = "CareerLedger"
     ManagedBy   = "Codex"
   }
 
@@ -88,11 +88,11 @@ data "aws_iam_policy_document" "github_deploy_assume_role" {
 
 resource "aws_iam_role" "github_deploy" {
   name               = "JobApplicationTrackerGitHubDeploy"
-  description        = "Temporary GitHub Actions access for JobApplicationTracker production deployment"
+  description        = "Temporary GitHub Actions access for CareerLedger production deployment"
   assume_role_policy = data.aws_iam_policy_document.github_deploy_assume_role.json
 
   tags = {
-    Application = "JobApplicationTracker"
+    Application = "CareerLedger"
     ManagedBy   = "Codex"
   }
 

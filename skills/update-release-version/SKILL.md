@@ -1,6 +1,6 @@
 ---
 name: update-release-version
-description: Classify completed Job Application Tracker changes under Semantic Versioning, update the root version, and maintain categorized GitHub Release changelog entries. Use after implementing a feature, compatible fix, security or deployment fix, breaking change, or when preparing a release; also use at task completion to determine whether maintenance requires no release entry or version bump.
+description: Classify completed CareerLedger changes under Semantic Versioning, update the root version, and maintain categorized GitHub Release changelog entries. Use after implementing a feature, compatible fix, security or deployment fix, breaking change, or when preparing a release; also use at task completion to determine whether maintenance requires no release entry or version bump.
 ---
 
 # Update Release Version

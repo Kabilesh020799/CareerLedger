@@ -109,10 +109,10 @@ export function AppLayout() {
         <Stack gap={{ base: '0', lg: '7' }} minH={{ lg: '100vh' }} px={{ base: '4', sm: '6', lg: '5' }} py={{ base: '3', lg: '6' }} position={{ lg: 'sticky' }} top="0">
           <Flex align="center" gap="3" justify="space-between">
             <Flex align="center" gap="3" minW="0">
-            <Flex align="center" bg="brand.solid" borderRadius="lg" color="brand.contrast" fontWeight="bold" h="9" justify="center" shadow="sm" w="9">JT</Flex>
+            <Flex align="center" bg="brand.solid" borderRadius="lg" color="brand.contrast" fontWeight="bold" h="9" justify="center" shadow="sm" w="9">CL</Flex>
             <Box minW="0">
-              <Heading as="div" fontSize="md" letterSpacing="-0.02em" whiteSpace="nowrap">Job Tracker</Heading>
-              <Text color="fg.muted" display={{ base: 'none', lg: 'block' }} fontSize="sm" mt="1">Keep your search moving.</Text>
+              <Heading as="div" fontSize="md" letterSpacing="-0.02em" whiteSpace="nowrap">CareerLedger</Heading>
+              <Text color="fg.muted" display={{ base: 'none', lg: 'block' }} fontSize="sm" mt="1">Your job search, organized.</Text>
             </Box>
             </Flex>
           </Flex>
