@@ -12,6 +12,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Rebrand the application, browser extension, backup and calendar downloads, API metadata, and deployment references as CareerLedger.
 
+### Fixed
+
+- Restore production GitHub Actions deployments after the repository rename by aligning the AWS OIDC trust subject with the CareerLedger production environment.
+
 ## [3.29.2] - 2026-08-21
 
 ### Fixed

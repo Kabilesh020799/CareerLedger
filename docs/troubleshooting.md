@@ -8,6 +8,10 @@ If a shared workspace appears empty, select it again and confirm requests includ
 
 Use Terraform 1.10 or newer because production state uses native S3 lockfiles. Bootstrap the state bucket first, copy `infrastructure/production/backend.hcl.example` to the ignored `backend.hcl`, and run `terraform init -backend-config=backend.hcl`. An `InvalidClientTokenId` error means the active AWS credentials are expired or inconsistent; refresh the operator session before planning. Never bypass the remote backend or apply an adoption plan that proposes production replacement or deletion.
 
+## GitHub Actions cannot assume the AWS deployment role
+
+If `configure-aws-credentials` reports `Not authorized to perform sts:AssumeRoleWithWebIdentity`, compare the role trust policy's `token.actions.githubusercontent.com:sub` condition with the workflow environment. For the `production` environment, it must be exactly `repo:OWNER/REPOSITORY:environment:production`; for CareerLedger use `repo:Kabilesh020799/CareerLedger:environment:production`. Update `github_oidc_subject` in the ignored production Terraform variables, run a reviewed `terraform plan`, and apply only the in-place trust-policy change. Do not weaken the condition to all repositories or all branches.
+
 ## One-command provisioning cannot reach the instance
 
 Confirm the instance appears as `Online` in Systems Manager and that cloud-init completed. The standalone instance has no SSH ingress by design. Inspect `/var/log/cloud-init-output.log` through an SSM session when necessary. If the first build fails on a small instance, retry with `INSTANCE_TYPE=t3.medium`; the generated database credentials and Docker volumes remain on the encrypted EBS volume.
