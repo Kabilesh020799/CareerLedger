@@ -10,7 +10,7 @@ Use Terraform 1.10 or newer because production state uses native S3 lockfiles. B
 
 ## GitHub Actions cannot assume the AWS deployment role
 
-If `configure-aws-credentials` reports `Not authorized to perform sts:AssumeRoleWithWebIdentity`, compare the role trust policy's `token.actions.githubusercontent.com:sub` condition with the workflow environment. For the `production` environment, it must be exactly `repo:OWNER/REPOSITORY:environment:production`; for CareerLedger use `repo:Kabilesh020799/CareerLedger:environment:production`. Update `github_oidc_subject` in the ignored production Terraform variables, run a reviewed `terraform plan`, and apply only the in-place trust-policy change. Do not weaken the condition to all repositories or all branches.
+If `configure-aws-credentials` reports `Not authorized to perform sts:AssumeRoleWithWebIdentity`, compare the role trust policy's `token.actions.githubusercontent.com:sub` condition with the workflow environment and the repository's OIDC customization. For CareerLedger's `production` environment, it must be exactly `repo:Kabilesh020799@47252881/CareerLedger@1326925254:environment:production`. Update `github_oidc_subject` in the ignored production Terraform variables, run a reviewed `terraform plan`, and apply only the in-place trust-policy change. Do not weaken the condition to all repositories or all branches.
 
 ## One-command provisioning cannot reach the instance
 

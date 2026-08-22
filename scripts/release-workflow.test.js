@@ -41,6 +41,7 @@ const productionComposePath = path.join(
 );
 const provisionScriptPath = path.join(__dirname, "provision-production.sh");
 const standaloneDirectory = path.join(__dirname, "..", "infrastructure", "standalone");
+const productionDirectory = path.join(__dirname, "..", "infrastructure", "production");
 
 test("publishes the GitHub Release only after production deployment", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
@@ -327,4 +328,18 @@ test("provisions a complete reviewed stack without SSH", () => {
   assert.match(iam, /AmazonSSMManagedInstanceCore/);
   assert.match(cloudInit, /systemctl enable --now docker/);
   assert.match(cloudInit, /sha256sum --check/);
+});
+
+test("keeps the production GitHub OIDC subject aligned with repository customization", () => {
+  const provision = fs.readFileSync(provisionScriptPath, "utf8");
+  const variables = fs.readFileSync(path.join(productionDirectory, "variables.tf"), "utf8");
+  const example = fs.readFileSync(
+    path.join(productionDirectory, "terraform.tfvars.example"),
+    "utf8",
+  );
+  const subject = "repo:Kabilesh020799@47252881/CareerLedger@1326925254:environment:production";
+
+  assert.ok(provision.includes(`GITHUB_OIDC_SUBJECT:-${subject}`));
+  assert.ok(variables.includes(`default     = "${subject}"`));
+  assert.ok(example.includes(`github_oidc_subject = "${subject}"`));
 });

@@ -12,4 +12,4 @@ root_volume_encrypted    = false
 cloudfront_origin_domain = "ec2-54-204-226-12.compute-1.amazonaws.com"
 
 resume_bucket_name = "jatbucket2799"
-github_oidc_subject = "repo:Kabilesh020799/CareerLedger:environment:production"
+github_oidc_subject = "repo:Kabilesh020799@47252881/CareerLedger@1326925254:environment:production"
