@@ -95,7 +95,7 @@ Add environment variables:
 | `SMTP_PORT` | SMTP port, normally `587` or `465` |
 | `SMTP_FROM` | Verified sender address for reminders, password reset, and email verification |
 
-Restrict the environment to the `master` branch. Add required approval if deployments should pause for confirmation after images are published.
+Restrict the environment to the protected `master` branch. Its required status checks are `verify / Verify release metadata`, `verify / Audit npm dependencies`, `verify / Verify backend`, `verify / Verify frontend`, `verify / Verify critical browser workflows (1/2)`, `verify / Verify critical browser workflows (2/2)`, and `verify / Verify deployment automation`. Dependabot can queue only npm patch updates for squash merge after those checks pass; major and minor dependency updates require manual review. Add required approval if deployments should pause for confirmation after images are published.
 
 Every email in `ADMIN_ACCOUNT_EMAILS` is reserved from public password signup and first-time Google account creation. Provision those identities before adding them to the list, or configure the first demo identity through the protected production environment. The application does not provide a public path for creating or promoting administrators.
 

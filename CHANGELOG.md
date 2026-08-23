@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.30.0] - 2026-08-23
+
+### Added
+
+- Queue Dependabot npm patch updates for automatic squash merging only after the protected verification checks pass, while keeping major and minor updates manual.
+
 ## [3.29.6] - 2026-08-23
 
 ### Security
@@ -492,7 +498,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.6...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.30.0...HEAD
+[3.30.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.6...v3.30.0
 [3.29.6]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.5...v3.29.6
 [3.29.5]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.4...v3.29.5
 [3.29.4]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.3...v3.29.4
