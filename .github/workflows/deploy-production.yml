@@ -28,6 +28,7 @@ jobs:
     outputs:
       release_tag: ${{ steps.version.outputs.release_tag }}
       should_release: ${{ steps.release.outputs.should_release }}
+      previous_release_tag: ${{ steps.release.outputs.previous_release_tag }}
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
@@ -56,6 +57,7 @@ jobs:
             200)
               echo "Release $RELEASE_TAG already exists; verification is complete and deployment will be skipped."
               echo "should_release=false" >> "$GITHUB_OUTPUT"
+              echo "previous_release_tag=" >> "$GITHUB_OUTPUT"
               ;;
             404)
               set +e
@@ -72,6 +74,12 @@ jobs:
                 2)
                   echo "Release $RELEASE_TAG is new and will be published."
                   echo "should_release=true" >> "$GITHUB_OUTPUT"
+                  previous_release_tag="$(
+                    gh api --paginate "/repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+                      --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' \
+                      | head -n 1 || true
+                  )"
+                  echo "previous_release_tag=$previous_release_tag" >> "$GITHUB_OUTPUT"
                   ;;
                 *)
                   echo "Unable to check whether tag $RELEASE_TAG exists." >&2
@@ -144,7 +152,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
-      packages: read
+      packages: write
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
@@ -400,6 +408,15 @@ jobs:
           done
           echo "SSM deployment timed out." >&2
           exit 1
+
+      - name: Retain current and previous GHCR releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_OWNER: ${{ github.repository_owner }}
+          GHCR_PACKAGES: jobapplicationtracker-backend jobapplicationtracker-frontend
+          RELEASE_TAG: ${{ needs.plan_release.outputs.release_tag }}
+          PREVIOUS_RELEASE_TAG: ${{ needs.plan_release.outputs.previous_release_tag }}
+        run: sh scripts/cleanup-ghcr-images.sh
 
       - name: Remove short-lived SSM deployment parameters
         if: always() && (vars.DEPLOY_METHOD == 'ssm' || steps.ssh_install.outcome == 'failure') && steps.ssm_parameters.outputs.token_parameter != ''

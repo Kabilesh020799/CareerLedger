@@ -162,6 +162,8 @@ jobs:
       - run: |
           sh -n scripts/deploy-production.sh
           sh scripts/deploy-production.test.sh
+          sh -n scripts/cleanup-ghcr-images.sh
+          sh scripts/cleanup-ghcr-images.test.sh
           cp deploy/.auth.env.production.example deploy/.auth.env
           docker compose --env-file deploy/.env.production.example -f deploy/compose.production.yml config --quiet
           rm deploy/.auth.env

@@ -8,6 +8,8 @@ ENV_FILE="${APP_DIR}/.env"
 NEW_TAG="${1:-}"
 NEW_COMMIT_SHA="${2:-unknown}"
 SKIP_IMAGE_PULL="${SKIP_IMAGE_PULL:-false}"
+SKIP_IMAGE_CLEANUP="${SKIP_IMAGE_CLEANUP:-false}"
+IMAGE_REPOSITORIES="${IMAGE_REPOSITORIES:-ghcr.io/kabilesh020799/jobapplicationtracker-backend ghcr.io/kabilesh020799/jobapplicationtracker-frontend}"
 
 if [ -z "$NEW_TAG" ]; then
   echo "Usage: deploy-production.sh <image-tag>" >&2
@@ -123,6 +125,83 @@ set_commit_sha() {
   mv "$temporary_file" "$ENV_FILE"
 }
 
+is_retained_tag() {
+  tag="$1"
+  if [ "$tag" = "$NEW_TAG" ]; then
+    return 0
+  fi
+  [ -n "$OLD_TAG" ] && [ "$tag" = "$OLD_TAG" ]
+}
+
+is_retained_image_id() {
+  image_id="$1"
+  case " $protected_image_ids " in
+    *" $image_id "*) return 0 ;;
+  esac
+  return 1
+}
+
+cleanup_local_images() {
+  if [ "$SKIP_IMAGE_CLEANUP" = "true" ]; then
+    echo "Skipping local application image cleanup."
+    return 0
+  fi
+
+  cleanup_failed=0
+  for repository in $IMAGE_REPOSITORIES; do
+    protected_image_ids=""
+    for retained_tag in "$NEW_TAG" "$OLD_TAG"; do
+      [ -n "$retained_tag" ] || continue
+      retained_image_id="$(docker image inspect --format '{{.Id}}' "$repository:$retained_tag" 2>/dev/null || true)"
+      if [ -n "$retained_image_id" ]; then
+        protected_image_ids="$protected_image_ids $retained_image_id"
+      fi
+    done
+
+    image_list="$(docker image ls --format '{{.Repository}}|{{.Tag}}|{{.ID}}' "$repository" 2>/dev/null || true)"
+    [ -n "$image_list" ] || continue
+
+    while IFS='|' read -r image_repository image_tag image_id; do
+      [ -n "$image_repository" ] || continue
+      if is_retained_tag "$image_tag"; then
+        continue
+      fi
+
+      if [ "$image_tag" = "<none>" ]; then
+        image_reference="$image_id"
+      else
+        image_reference="$image_repository:$image_tag"
+      fi
+
+      # If an old tag points at a retained image, remove only that obsolete
+      # tag. Never remove the image ID that backs the current or previous
+      # release.
+      if is_retained_image_id "$image_id" && [ "$image_tag" = "<none>" ]; then
+        continue
+      fi
+
+      if ! docker image rm "$image_reference" >/dev/null 2>&1; then
+        echo "Warning: unable to remove local image $image_reference." >&2
+        cleanup_failed=1
+      fi
+    done <<EOF
+$image_list
+EOF
+  done
+
+  # Remove dangling layers from failed builds without touching tagged images,
+  # including the current and previous release tags.
+  if ! docker image prune --force >/dev/null 2>&1; then
+    echo "Warning: unable to prune dangling Docker images." >&2
+    cleanup_failed=1
+  fi
+
+  if [ "$cleanup_failed" -ne 0 ]; then
+    echo "Local image cleanup was incomplete; the healthy release remains active but release publication must be retried." >&2
+    return 1
+  fi
+}
+
 rollback() {
   exit_code="$?"
   trap - INT TERM HUP EXIT
@@ -146,9 +225,10 @@ set_image_tag "$NEW_TAG"
 set_commit_sha "$NEW_COMMIT_SHA"
 
 # Stop the current stack before pulling so removed services cannot consume the
-# host's limited memory while replacement images are downloaded.
+# host's limited memory while replacement images are downloaded. Cleanup is
+# intentionally deferred until the new release is healthy so rollback can use
+# the previous local images without downloading them again.
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" down --remove-orphans
-docker image prune --all --force
 
 if [ "$SKIP_IMAGE_PULL" != "true" ]; then
   docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull backend frontend
@@ -163,4 +243,7 @@ if [ "$health_response" != '{"status":"ok"}' ]; then
 fi
 
 trap - INT TERM HUP EXIT
+if ! cleanup_local_images; then
+  exit 1
+fi
 echo "Deployment of $NEW_TAG completed successfully."

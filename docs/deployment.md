@@ -148,10 +148,12 @@ The workflow:
 9. On the first deployment, generates protected database and session credentials, bootstraps any environment-configured demo users, and starts the PostgreSQL container and volume.
 10. Waits for Compose health checks and verifies the proxied API.
 11. Restores the previous release version when deployment fails.
-12. Creates the version tag and GitHub Release with the matching changelog entries only after deployment succeeds.
-13. Removes the runner-specific SSH ingress rule whether deployment succeeds or fails.
+12. After the new release is healthy, removes obsolete local backend and frontend image tags, prunes dangling Docker layers, and retains the current and previous release tags for rollback. If local cleanup fails, the healthy release remains active but release publication is blocked.
+13. Removes older GHCR package versions that do not contain either the current or previous release tag. If GHCR cleanup cannot complete, the deployment remains active but the GitHub Release is not published, so the verified deployment can be retried safely.
+14. Creates the version tag and GitHub Release with the matching changelog entries only after deployment and GHCR cleanup succeed.
+15. Removes the runner-specific SSH ingress rule whether deployment succeeds or fails.
 
-Release planning runs alongside verification. Within verification, dependency audits, backend checks, frontend unit/lint/build checks, release metadata, deployment automation, and two isolated Playwright shards run concurrently when GitHub runner capacity is available. Each browser shard receives its own PostgreSQL and Redis services and uses a version-matched Playwright image with Chromium preinstalled. Frontend and backend images also build in parallel with persistent BuildKit caches. Publishing remains gated on every verification job and a new version. The deployment pulls only the two versioned application images; stable infrastructure images are reused unless they are missing. The backend runtime image contains compiled code and production dependencies rather than test and build tooling.
+Release planning runs alongside verification. Within verification, dependency audits, backend checks, frontend unit/lint/build checks, release metadata, deployment automation, and two isolated Playwright shards run concurrently when GitHub runner capacity is available. Each browser shard receives its own PostgreSQL and Redis services and uses a version-matched Playwright image with Chromium preinstalled. Frontend and backend images also build in parallel with persistent BuildKit caches. Publishing remains gated on every verification job and a new version. The deployment pulls only the two versioned application images; stable infrastructure images are reused unless they are missing. The backend runtime image contains compiled code and production dependencies rather than test and build tooling. Local cleanup is limited to the two application image repositories plus dangling layers, so it does not remove the active PostgreSQL, Redis, or frontend containers. GHCR cleanup retains the complete package version associated with the current and previous release tags, including their commit and `latest` aliases.
 
 If deployment fails, the version remains unreleased and a later verified push can retry it. Image tags for an unreleased version may be replaced by that retry; after the GitHub Release is created, the version is immutable.
 
@@ -176,6 +178,8 @@ docker compose --env-file .env -f compose.production.yml logs --tail=100
 ```
 
 Deployments remove obsolete containers while preserving the application, PostgreSQL, Redis, and their named volumes.
+
+After a healthy deployment, the host retains the current and previous backend and frontend release images for rollback. Older application tags and dangling Docker layers are removed; the cleanup does not remove named volumes. GHCR retains the package versions associated with the current and previous release tags and removes older package versions after the deployment succeeds.
 
 Manual rollback:
 
