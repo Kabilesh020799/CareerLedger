@@ -17,6 +17,13 @@ const verifyWorkflowPath = path.join(
   "workflows",
   "verify.yml",
 );
+const dependabotWorkflowPath = path.join(
+  __dirname,
+  "..",
+  ".github",
+  "workflows",
+  "dependabot-auto-merge.yml",
+);
 const deployScriptPath = path.join(
   __dirname,
   "deploy-production.sh",
@@ -79,6 +86,22 @@ test("runs dependency-free release checks without a root npm cache", () => {
   assert.match(releaseBlock, /node-version: 22/);
   assert.doesNotMatch(releaseBlock, /cache: npm/);
   assert.doesNotMatch(releaseBlock, /npm ci/);
+});
+
+test("guards Dependabot auto-merge behind npm patch metadata and CI", () => {
+  const workflow = fs.readFileSync(dependabotWorkflowPath, "utf8");
+
+  assert.match(workflow, /pull_request_target:/);
+  assert.match(workflow, /github\.event\.pull_request\.user\.login == 'dependabot\[bot\]'/);
+  assert.match(workflow, /github\.event\.pull_request\.base\.ref == 'master'/);
+  assert.match(workflow, /github\.repository == 'Kabilesh020799\/CareerLedger'/);
+  assert.match(workflow, /dependabot\/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98/);
+  assert.match(workflow, /outputs\.package-ecosystem == 'npm'/);
+  assert.match(workflow, /outputs\.directory == '\/backend'/);
+  assert.match(workflow, /outputs\.directory == '\/frontend'/);
+  assert.match(workflow, /outputs\.update-type == 'version-update:semver-patch'/);
+  assert.match(workflow, /gh pr merge --auto --squash/);
+  assert.doesNotMatch(workflow, /actions\/checkout/);
 });
 
 test("configures HTTP or HTTPS application origins without account secrets", () => {
