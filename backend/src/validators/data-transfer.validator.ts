@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { applicationStatuses } from "./application.validator";
+import { httpOrHttpsUrlSchema } from "./http-url.validator";
 import { reminderTypes } from "./reminder.validator";
 
 const nullableText = (max: number) => z.string().trim().max(max).nullable();
@@ -24,7 +25,7 @@ const applicationSchema = z.object({
   company: z.string().trim().min(1).max(300),
   jobTitle: z.string().trim().min(1).max(300),
   location: nullableText(300),
-  jobUrl: z.url().max(2_000).nullable(),
+  jobUrl: httpOrHttpsUrlSchema.max(2_000).nullable(),
   source: nullableText(300),
   status: z.enum(applicationStatuses),
   notes: nullableText(10_000),

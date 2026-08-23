@@ -24,10 +24,17 @@ Feature: Validate application input
       | company  |
       | jobTitle |
 
-  Scenario: Reject an invalid job URL
-    When I create an application with job URL "not-a-url"
+  Scenario Outline: Reject an invalid or unsafe job URL
+    When I create an application with job URL "<jobUrl>"
     Then the response status should be 400
     And the validation response should identify "jobUrl"
+
+    Examples:
+      | jobUrl                                      |
+      | not-a-url                                   |
+      | javascript:alert(1)                         |
+      | data:text/html,<script>alert(1)</script>    |
+      | ftp://jobs.example/1                        |
 
   Scenario: Reject an unsupported status
     When I create an application with status "UNKNOWN"

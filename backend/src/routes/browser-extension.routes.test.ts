@@ -48,4 +48,17 @@ describe("browser extension API", () => {
     expect(invalid.status).toBe(400);
     expect(serviceMock.capture).not.toHaveBeenCalled();
   });
+
+  it.each(["javascript:alert(1)", "data:text/html,<script>alert(1)</script>", "ftp://jobs.example/1"])(
+    "rejects unsafe job URL schemes: %s",
+    async (jobUrl) => {
+      serviceMock.authenticate.mockResolvedValue({ userId: "owner-1" });
+      const response = await request(app()).post("/api/browser-extension/captures")
+        .set("authorization", "Bearer valid")
+        .send({ company: "Acme", jobTitle: "Engineer", jobUrl, jobDescription: "Description" });
+
+      expect(response.status).toBe(400);
+      expect(serviceMock.capture).not.toHaveBeenCalled();
+    },
+  );
 });

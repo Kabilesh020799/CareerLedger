@@ -17,3 +17,8 @@ Feature: Portable application data
   Scenario: Reject an invalid or oversized import
     When I import unsupported or excessive data
     Then no imported records are written
+
+  Scenario: Reject unsafe job URLs in an import
+    When I import a portable document containing a javascript or data job URL
+    Then the import should be rejected
+    And no imported records are written

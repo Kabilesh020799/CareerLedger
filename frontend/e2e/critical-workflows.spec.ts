@@ -57,6 +57,18 @@ test('shows validation without creating an incomplete application', async ({ pag
   await expect(page).toHaveURL(/\/applications\/new$/)
 })
 
+test('rejects unsafe job URL schemes before saving an application', async ({ page }) => {
+  await signInAsDemoUser(page)
+  await page.getByRole('link', { name: 'Add application' }).click()
+  await page.getByLabel('Company').fill('Unsafe URL validation')
+  await page.getByLabel('Job title').fill('Security Engineer')
+  await page.getByLabel('Job URL').fill('javascript:alert(1)')
+  await page.getByRole('button', { name: 'Create application' }).click()
+
+  await expect(page.getByText('Enter a valid HTTP or HTTPS URL')).toBeVisible()
+  await expect(page).toHaveURL(/\/applications\/new$/)
+})
+
 test('shows notification delivery capabilities from the authenticated API', async ({ page }) => {
   await signInAsDemoUser(page)
   await page.getByRole('button', { name: 'Settings' }).click()

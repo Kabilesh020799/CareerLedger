@@ -20,6 +20,8 @@ The content script first looks for Schema.org `JobPosting` JSON-LD, then common 
 
 Confirmed captures create a `SAVED` application with source `Browser extension`, the reviewed structured fields, original URL, description snapshot, and server capture timestamp. Salary is retained as optional minimum/maximum numeric values, a three-letter currency, and an hour/day/week/month/year period.
 
+The capture API accepts only HTTP or HTTPS posting URLs. This validation runs again on the server after the editable review, so unsupported schemes cannot be stored through the extension.
+
 ## Security
 
 The web application creates a random 90-day capture token and displays it once. PostgreSQL stores only its SHA-256 hash and a non-secret prefix. The extension keeps the token in extension-local storage and never injects it into the viewed page. Tokens can create captured applications only; they cannot read, edit, or delete existing data. Revoke lost or unused tokens from the Extension page.

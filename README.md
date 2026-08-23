@@ -43,7 +43,7 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 
 ## Features
 
-- Create, live-search, progressively filter, sort, edit, and delete applications with validated server-side discovery and bounded pagination, plus focused status, note, and reminder actions from application details.
+- Create, live-search, progressively filter, sort, edit, and delete applications with validated HTTP/HTTPS job URLs, server-side discovery, and bounded pagination, plus focused status, note, and reminder actions from application details.
 - Use a responsive workspace with collapsible secondary navigation groups, a focus-contained mobile More menu, persistent mobile shortcuts, clamped application cards, and an accessible tabbed mobile status board.
 - Work in a calm, accessible light or dark design system with an indigo action accent, cool slate surfaces, visible focus states, compact semantic application-status badges, focused page hierarchy, responsive forms, and page-shaped loading states.
 - Track application timelines, notes, status changes, follow-ups, and deadlines.

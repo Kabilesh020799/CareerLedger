@@ -40,4 +40,10 @@ describe("OpenAPI documentation", () => {
       },
     });
   });
+
+  it("documents the HTTP and HTTPS restriction for job URLs", () => {
+    const schema = generatedOpenApiDocument.components?.schemas?.ApplicationInput;
+    const jobUrl = schema && "properties" in schema ? schema.properties?.jobUrl : undefined;
+    expect(jobUrl).toMatchObject({ pattern: "^https?://" });
+  });
 });

@@ -22,6 +22,8 @@ Browser capture uses the `extensionToken` bearer scheme instead of the session c
 
 The capture request accepts reviewed posting fields plus optional structured `skills`, `experienceRequirements`, salary range/currency/period, and `REMOTE`, `HYBRID`, or `ONSITE` work mode. The interactive schema and validation limits are available in Swagger at `/api-docs`.
 
+Application and browser-extension `jobUrl` inputs accept only absolute `http://` or `https://` URLs. Portable imports apply the same restriction before any records are written.
+
 Application create and update requests may attach both a résumé and a cover letter. Each document accepts PDF, DOC, or DOCX content up to 5 MB and has a separate prepare/abandon upload endpoint for private S3 delivery. Authenticated cover-letter access is available at `/api/applications/:id/cover-letter` for inline viewing and `/api/applications/:id/cover-letter-download` for download preparation. Inaccessible applications and missing attachments return the same safe not-found response.
 
 Notification endpoints use the authenticated session. Settings report whether SMTP and Web Push are available without returning secrets. Subscription endpoints register or remove only the current user's browser endpoint. Complete request shapes are documented in Swagger at `/api-docs`.

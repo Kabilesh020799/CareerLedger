@@ -29,6 +29,33 @@ const download = vi.fn()
 const downloadCoverLetter = vi.fn()
 const move = vi.fn()
 
+const applicationData = {
+  id: 'application-1',
+  company: 'Acme Corp',
+  jobTitle: 'Software Engineer',
+  location: null,
+  jobUrl: null,
+  source: null,
+  status: 'SAVED' as const,
+  notes: null,
+  appliedAt: null,
+  resumeVersion: null,
+  resumeAttachment: {
+    fileName: 'Software_Engineer_Acme_Corp.pdf',
+    mimeType: 'application/pdf',
+    size: 2048,
+    createdAt: '2026-08-10T00:00:00.000Z',
+  },
+  coverLetterAttachment: {
+    fileName: 'Software_Engineer_Acme_Corp_Cover_Letter.pdf',
+    mimeType: 'application/pdf',
+    size: 1024,
+    createdAt: '2026-08-10T00:00:00.000Z',
+  },
+  createdAt: '2026-08-10T00:00:00.000Z',
+  updatedAt: '2026-08-10T00:00:00.000Z',
+}
+
 describe('ApplicationDetailsPage resume attachment', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -51,32 +78,7 @@ describe('ApplicationDetailsPage resume attachment', () => {
     vi.mocked(useApplication).mockReturnValue({
       isPending: false,
       isError: false,
-      data: {
-        id: 'application-1',
-        company: 'Acme Corp',
-        jobTitle: 'Software Engineer',
-        location: null,
-        jobUrl: null,
-        source: null,
-        status: 'SAVED',
-        notes: null,
-        appliedAt: null,
-        resumeVersion: null,
-        resumeAttachment: {
-          fileName: 'Software_Engineer_Acme_Corp.pdf',
-          mimeType: 'application/pdf',
-          size: 2048,
-          createdAt: '2026-08-10T00:00:00.000Z',
-        },
-        coverLetterAttachment: {
-          fileName: 'Software_Engineer_Acme_Corp_Cover_Letter.pdf',
-          mimeType: 'application/pdf',
-          size: 1024,
-          createdAt: '2026-08-10T00:00:00.000Z',
-        },
-        createdAt: '2026-08-10T00:00:00.000Z',
-        updatedAt: '2026-08-10T00:00:00.000Z',
-      },
+      data: applicationData,
     } as never)
   })
   afterEach(cleanup)
@@ -110,5 +112,26 @@ describe('ApplicationDetailsPage resume attachment', () => {
       applicationId: 'application-1',
       fileName: 'Software_Engineer_Acme_Corp_Cover_Letter.pdf',
     })
+  })
+
+  it('does not render a legacy unsafe job URL as a link', () => {
+    vi.mocked(useApplication).mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: { ...applicationData, jobUrl: 'javascript:alert(1)' },
+    } as never)
+
+    render(
+      <AppProvider>
+        <MemoryRouter initialEntries={['/applications/application-1']}>
+          <Routes>
+            <Route path="/applications/:id" element={<ApplicationDetailsPage />} />
+          </Routes>
+        </MemoryRouter>
+      </AppProvider>,
+    )
+
+    expect(screen.queryByRole('link', { name: 'Open job posting' })).not.toBeInTheDocument()
+    expect(screen.getByText('Job URL').parentElement).toHaveTextContent('Not provided')
   })
 })

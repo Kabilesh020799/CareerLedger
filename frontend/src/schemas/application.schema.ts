@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { applicationStatuses } from '../types/application'
 import type { Application, CreateApplicationInput } from '../types/application'
+import { isHttpOrHttpsUrl } from '../utils/externalUrl'
 
 const optionalText = z.string().trim().optional()
 export const applicationResumeMaxBytes = 5 * 1024 * 1024
@@ -37,8 +38,8 @@ export const applicationFormSchema = z.object({
   jobUrl: z
     .string()
     .trim()
-    .refine((value) => value === '' || z.url().safeParse(value).success, {
-      message: 'Enter a valid URL',
+    .refine((value) => value === '' || isHttpOrHttpsUrl(value), {
+      message: 'Enter a valid HTTP or HTTPS URL',
     })
     .optional(),
   source: optionalText,

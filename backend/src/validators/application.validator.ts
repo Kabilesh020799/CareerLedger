@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { httpOrHttpsUrlSchema } from "./http-url.validator";
 
 export const applicationStatuses = [
   "SAVED",
@@ -17,7 +18,7 @@ export const createApplicationSchema = z.object({
   company: z.string().trim().min(1, "Company is required"),
   jobTitle: z.string().trim().min(1, "Job title is required"),
   location: nullableText,
-  jobUrl: z.url("Job URL must be a valid URL").nullable().optional(),
+  jobUrl: httpOrHttpsUrlSchema.nullable().optional(),
   source: nullableText,
   status: z.enum(applicationStatuses).optional(),
   notes: nullableText,

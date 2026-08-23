@@ -14,6 +14,7 @@ import { useMoveApplication } from '../hooks/useMoveApplication'
 import { applicationStatuses, type ApplicationStatus } from '../types/application'
 import { BellPlus, MessageSquarePlus } from 'lucide-react'
 import { CustomSelect } from '../components/ui/CustomSelect'
+import { isHttpOrHttpsUrl } from '../utils/externalUrl'
 
 const statusLabels: Record<ApplicationStatus, string> = {
   SAVED: 'Saved', APPLIED: 'Applied', SCREENING: 'Screening', ASSESSMENT: 'Assessment',
@@ -61,6 +62,7 @@ export function ApplicationDetailsPage() {
   }
 
   const application = applicationQuery.data
+  const safeJobUrl = isHttpOrHttpsUrl(application.jobUrl) ? application.jobUrl : null
 
   return (
     <Stack gap="6">
@@ -107,7 +109,7 @@ export function ApplicationDetailsPage() {
           {(application.salaryMin != null || application.salaryMax != null) && <Detail label="Salary">{formatSalary(application.salaryMin, application.salaryMax, application.salaryCurrency, application.salaryPeriod)}</Detail>}
           {application.source && <Detail label="Source">{application.source}</Detail>}
           <Detail label="Job URL">
-            {application.jobUrl ? <a href={application.jobUrl} target="_blank" rel="noreferrer">Open job posting</a> : 'Not provided'}
+            {safeJobUrl ? <a href={safeJobUrl} target="_blank" rel="noreferrer">Open job posting</a> : 'Not provided'}
           </Detail>
         </SimpleGrid>
         {(application.skills?.length || application.experienceRequirements || application.jobDescription) && <Box borderTopWidth="1px" mt="8" pt="6">

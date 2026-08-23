@@ -233,6 +233,20 @@ describe("application resume routes", () => {
     );
   });
 
+  it.each(["javascript:alert(1)", "data:text/html,<script>alert(1)</script>", "ftp://jobs.example/1"])(
+    "rejects unsafe job URL schemes: %s",
+    async (jobUrl) => {
+      const response = await request(app).post("/api/applications").send({
+        company: "Acme Corp",
+        jobTitle: "Software Engineer",
+        jobUrl,
+      });
+
+      expect(response.status).toBe(400);
+      expect(applicationServiceMock.create).not.toHaveBeenCalled();
+    },
+  );
+
   it("updates an application with a replacement PDF resume", async () => {
     const content = Buffer.from("%PDF-1.7\nreplacement resume");
     applicationServiceMock.update.mockResolvedValue({

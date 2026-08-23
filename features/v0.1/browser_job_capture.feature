@@ -39,3 +39,8 @@ Feature: Capture a job posting from the browser
     Given I revoked a browser-extension token
     When the extension submits another capture with that token
     Then the request should be rejected without creating an application
+
+  Scenario: Reject unsafe job URLs in extension captures
+    Given I have reviewed a posting with a javascript or data URL
+    When the extension submits the capture
+    Then the request should be rejected without creating an application

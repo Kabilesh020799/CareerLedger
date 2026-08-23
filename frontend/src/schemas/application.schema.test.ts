@@ -48,11 +48,18 @@ describe('applicationFormSchema', () => {
     expect(result.success).toBe(false)
     if (!result.success) {
       const errors = result.error.flatten().fieldErrors
-      expect(errors.jobUrl).toContain('Enter a valid URL')
+      expect(errors.jobUrl).toContain('Enter a valid HTTP or HTTPS URL')
       expect(errors.appliedAt).toContain('Enter a valid applied date')
       expect(errors.status).toBeDefined()
     }
   })
+
+  it.each(['javascript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'ftp://example.com/jobs/1'])
+    ('rejects unsafe URL schemes: %s', (jobUrl) => {
+      const result = applicationFormSchema.safeParse({ ...validApplication, jobUrl })
+
+      expect(result.success).toBe(false)
+    })
 
   it('normalizes optional form fields for the API', () => {
     const input = applicationFormToInput({

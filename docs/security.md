@@ -34,6 +34,11 @@ The account-administration route additionally requires the normalized signed-in 
 - Restrict the EC2 role to the bucket's `resumes/*` prefix; cover letters remain within `resumes/cover-letters/*`.
 - Expire abandoned `resumes/pending/` and `resumes/cover-letters/pending/` objects through S3 lifecycle rules.
 
+## External job URLs
+
+- Accept only HTTP and HTTPS job URLs during application writes, portable imports, and browser-extension captures.
+- Re-check stored values before rendering job-posting links, so legacy unsafe values remain non-clickable instead of becoming script or data links.
+
 ## Gmail data
 
 OAuth credentials are encrypted at rest. Do not log access tokens, refresh tokens, or full email content. Synchronization stores identifiers and review metadata needed by the feature. Suggested updates never mutate an application until the user confirms them.
