@@ -53,8 +53,27 @@ vi.mock("./services/signup-abuse-protection.service", () => ({
   },
 }));
 
+vi.mock("./services/auth-recovery-abuse-protection.service", () => ({
+  authRecoveryAbuseProtectionService: {
+    begin: vi.fn().mockResolvedValue({
+      allowed: true,
+      delayMs: 0,
+      attempt: {
+        accountKey: "recovery-account-key",
+        ipKey: "recovery-ip-key",
+        accountReference: "recovery-account-reference",
+        ipReference: "recovery-ip-reference",
+      },
+    }),
+    recordFailure: vi.fn().mockResolvedValue(undefined),
+    recordSuccess: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 import { createApp } from "./app";
+import { authRecoveryAbuseProtectionService } from "./services/auth-recovery-abuse-protection.service";
 import { loginAbuseProtectionService } from "./services/login-abuse-protection.service";
+import { signupAbuseProtectionService } from "./services/signup-abuse-protection.service";
 
 describe("authentication API boundary", () => {
   const app = createApp();
@@ -224,6 +243,131 @@ describe("authentication API boundary", () => {
     expect(response.headers["retry-after"]).toBe("600");
     expect(response.body).toEqual({
       error: "Too many login attempts. Try again later.",
+    });
+  });
+
+  it("fails closed before credential work when login protection is unavailable", async () => {
+    vi.mocked(loginAbuseProtectionService.begin).mockResolvedValueOnce({
+      allowed: false,
+      delayMs: 0,
+      retryAfterSeconds: 30,
+      protectionUnavailable: true,
+      attempt: {
+        accountKey: "account-key",
+        ipKey: "ip-key",
+        accountReference: "account-reference",
+        ipReference: "ip-reference",
+      },
+    });
+    prismaMock.user.findUnique.mockClear();
+
+    const response = await request(app)
+      .post("/api/auth/login")
+      .send({ username: "demo", password: "correct" });
+
+    expect(response.status).toBe(503);
+    expect(response.headers["retry-after"]).toBe("30");
+    expect(response.body).toEqual({
+      error: "Authentication is temporarily unavailable. Try again later.",
+    });
+    expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("fails closed before account creation when signup protection is unavailable", async () => {
+    vi.mocked(signupAbuseProtectionService.begin).mockResolvedValueOnce({
+      allowed: false,
+      delayMs: 0,
+      retryAfterSeconds: 30,
+      protectionUnavailable: true,
+      attempt: {
+        accountKey: "signup-account-key",
+        ipKey: "signup-ip-key",
+        accountReference: "signup-account-reference",
+        ipReference: "signup-ip-reference",
+      },
+    });
+    prismaMock.user.create.mockClear();
+
+    const response = await request(app).post("/api/auth/signup").send({
+      name: "New User",
+      username: "new_user_2",
+      email: "person2@example.com",
+      password: "SecurePassword1",
+    });
+
+    expect(response.status).toBe(503);
+    expect(response.headers["retry-after"]).toBe("30");
+    expect(response.body).toEqual({
+      error: "Authentication is temporarily unavailable. Try again later.",
+    });
+    expect(prismaMock.user.create).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["/api/auth/forgot-password", { error: "Too many recovery requests. Try again later." }],
+    ["/api/auth/resend-verification", { error: "Too many recovery requests. Try again later." }],
+  ])("limits repeated recovery requests at %s", async (path, body) => {
+    vi.mocked(authRecoveryAbuseProtectionService.begin).mockResolvedValueOnce({
+      allowed: false,
+      delayMs: 0,
+      retryAfterSeconds: 600,
+      attempt: {
+        accountKey: "recovery-account-key",
+        ipKey: "recovery-ip-key",
+        accountReference: "recovery-account-reference",
+        ipReference: "recovery-ip-reference",
+      },
+    });
+    prismaMock.user.findUnique.mockClear();
+
+    const response = await request(app).post(path).send({ email: "person@example.com" });
+
+    expect(response.status).toBe(429);
+    expect(response.headers["retry-after"]).toBe("600");
+    expect(response.body).toEqual(body);
+    expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("fails closed before sending recovery mail when protection is unavailable", async () => {
+    vi.mocked(authRecoveryAbuseProtectionService.begin).mockResolvedValueOnce({
+      allowed: false,
+      delayMs: 0,
+      retryAfterSeconds: 30,
+      protectionUnavailable: true,
+      attempt: {
+        accountKey: "recovery-account-key",
+        ipKey: "recovery-ip-key",
+        accountReference: "recovery-account-reference",
+        ipReference: "recovery-ip-reference",
+      },
+    });
+
+    const response = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: "person@example.com" });
+
+    expect(response.status).toBe(503);
+    expect(response.headers["retry-after"]).toBe("30");
+    expect(response.body).toEqual({
+      error: "Authentication is temporarily unavailable. Try again later.",
+    });
+  });
+
+  it("keeps allowed recovery responses non-disclosing", async () => {
+    const resetResponse = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: "unknown@example.com" });
+    const verificationResponse = await request(app)
+      .post("/api/auth/resend-verification")
+      .send({ email: "unknown@example.com" });
+
+    expect(resetResponse.status).toBe(202);
+    expect(resetResponse.body).toEqual({
+      message: "If that account can be recovered, a reset link will be sent.",
+    });
+    expect(verificationResponse.status).toBe(202);
+    expect(verificationResponse.body).toEqual({
+      message: "If verification is available, an email will be sent.",
     });
   });
 });

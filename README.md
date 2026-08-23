@@ -65,7 +65,7 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 - Create team workspaces through validated inline forms, invite members with role-based access, switch between personal and shared application data, and preserve at least one workspace owner.
 - Export a workspace as privacy-filtered JSON and validate a backup's format, source, and application count before importing it atomically, with duplicate applications safely skipped.
 - Review deadlines and interview milestones in a responsive month calendar, click a date to add a persistent task, event, or reminder with an optional application link, download everything as an iCalendar file, or create a revocable private subscription URL.
-- Protect password login with progressive delays, temporary account and network limits, uniform credential failures, and sanitized security events.
+- Protect password login, signup, and recovery email delivery with progressive or temporary account and network limits, uniform public responses, fail-closed Redis outages, and sanitized security events.
 - Use custom accessible dropdown menus for application filtering and form selections.
 - Let server-authorized administrators search and review paginated account summaries, verification status, authentication methods, signup dates, and high-level usage counts without exposing credentials or private user content.
 
@@ -119,7 +119,7 @@ OPENAI_GMAIL_TIMEOUT_MS=10000
 
 The SMTP configuration also sends password-reset and email-verification links. Without SMTP, authentication and profile management continue to work, while recovery requests return a non-disclosing acknowledgement without sending mail. Set `PUBLIC_API_URL` to the externally reachable backend origin so calendar subscription URLs work outside the browser.
 
-Redis protects password login from repeated account and network attempts and also supports automatic Gmail synchronization through a separate BullMQ worker. Docker Compose configures it automatically. When running services separately, set `REDIS_URL=redis://localhost:6379`, build the backend, and run `npm run start:worker` for scheduled work.
+Redis protects password login, signup, password reset, and verification email delivery from repeated account and network attempts; authentication protection fails closed with a safe retry response if Redis is unavailable. Redis also supports automatic Gmail synchronization through a separate BullMQ worker. Docker Compose configures it automatically. When running services separately, set `REDIS_URL=redis://localhost:6379`, build the backend, and run `npm run start:worker` for scheduled work.
 
 Reminder delivery is optional. Generate Web Push credentials with `npx web-push generate-vapid-keys`, then configure `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and a `VAPID_SUBJECT` such as `mailto:admin@example.com`. Email delivery requires `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`, and provider credentials in `SMTP_USER` and `SMTP_PASSWORD` when required. The Notifications page shows unavailable channels until their server configuration is complete.
 
@@ -129,7 +129,7 @@ All management and user-data endpoints require an authenticated session and enfo
 
 | Area | Endpoints |
 | --- | --- |
-| Health and auth | `GET /api/health`, `POST /api/auth/signup`, `GET /api/auth/session`, `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, `POST /api/auth/verify-email`, `GET /api/auth/google` |
+| Health and auth | `GET /api/health`, `POST /api/auth/signup`, `GET /api/auth/session`, `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, `POST /api/auth/verify-email`, `POST /api/auth/resend-verification`, `GET /api/auth/google` |
 | Account | `GET/PATCH/DELETE /api/account` |
 | Workspaces | `GET/POST /api/workspaces`, plus members and invitations under `/api/workspaces/:id` |
 | Data portability | `GET /api/data/export`, `POST /api/data/import` |

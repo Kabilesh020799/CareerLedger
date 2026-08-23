@@ -95,7 +95,7 @@ describe("loginAbuseProtectionService", () => {
     expect(audit).toHaveBeenCalledWith("auth.signup.succeeded", expect.any(Object));
   });
 
-  it("fails open with a sanitized event when Redis is unavailable", async () => {
+  it("fails closed with a sanitized event when Redis is unavailable", async () => {
     const failingClient = {
       status: "ready",
       connect: vi.fn(),
@@ -111,7 +111,11 @@ describe("loginAbuseProtectionService", () => {
 
     const decision = await protectedService.begin("203.0.113.10", "demo");
 
-    expect(decision.allowed).toBe(true);
+    expect(decision).toMatchObject({
+      allowed: false,
+      protectionUnavailable: true,
+      retryAfterSeconds: 30,
+    });
     expect(audit).toHaveBeenCalledWith(
       "auth.login.protection_unavailable",
       expect.objectContaining({

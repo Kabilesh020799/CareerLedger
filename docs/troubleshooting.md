@@ -86,7 +86,9 @@ If an intended administrator cannot sign up, that is expected: allowlisted admin
 
 ## Password login is temporarily limited
 
-A `429` response means the account or network address exceeded its temporary login allowance. Respect the response's `Retry-After` seconds instead of repeatedly retrying. If valid logins are never delayed or logs contain `auth.login.protection_unavailable`, confirm Redis is healthy and `REDIS_URL` is reachable from the backend. Do not print raw usernames, passwords, or Redis connection strings while investigating.
+A `429` response means the account or network address exceeded its temporary login allowance. Respect the response's `Retry-After` seconds instead of repeatedly retrying. A `503` response with the same header means Redis protection is unavailable; login, signup, and recovery email endpoints fail closed until the backend can reach Redis again. Confirm Redis is healthy and `REDIS_URL` is reachable from the backend, and inspect only sanitized `auth.*.protection_unavailable` events. Do not print raw usernames, passwords, or Redis connection strings while investigating.
+
+Password reset and verification resend requests share a separate recovery budget. A `429` from either endpoint can be caused by the normalized email or the originating network address; wait for `Retry-After` rather than switching endpoints or repeatedly retrying.
 
 ## Data after restart
 

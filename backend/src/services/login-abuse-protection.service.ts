@@ -7,6 +7,7 @@ const WINDOW_SECONDS = 15 * 60;
 const ACCOUNT_ATTEMPT_LIMIT = 8;
 const IP_ATTEMPT_LIMIT = 30;
 const MAX_PROGRESSIVE_DELAY_MS = 1_200;
+export const PROTECTION_UNAVAILABLE_RETRY_AFTER_SECONDS = 30;
 
 const incrementScript = `
 local accountCount = redis.call("INCR", KEYS[1])
@@ -40,6 +41,7 @@ export type LoginAttemptDecision = {
   allowed: boolean;
   delayMs: number;
   retryAfterSeconds?: number;
+  protectionUnavailable?: boolean;
   attempt: LoginAttempt;
 };
 
@@ -139,7 +141,13 @@ export function createLoginAbuseProtectionService(
           accountReference,
           ipReference,
         });
-        return { allowed: true, delayMs: 0, attempt };
+        return {
+          allowed: false,
+          delayMs: 0,
+          retryAfterSeconds: PROTECTION_UNAVAILABLE_RETRY_AFTER_SECONDS,
+          protectionUnavailable: true,
+          attempt,
+        };
       }
     },
 

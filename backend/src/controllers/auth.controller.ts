@@ -1,13 +1,24 @@
 import type { NextFunction, Request, Response } from "express";
 import { authConfig } from "../config/auth";
 import { CredentialAlreadyExistsError, credentialAuthService } from "../services/credential-auth.service";
-import { loginAbuseProtectionService } from "../services/login-abuse-protection.service";
+import { authRecoveryAbuseProtectionService } from "../services/auth-recovery-abuse-protection.service";
+import {
+  loginAbuseProtectionService,
+  PROTECTION_UNAVAILABLE_RETRY_AFTER_SECONDS,
+} from "../services/login-abuse-protection.service";
 import { signupAbuseProtectionService } from "../services/signup-abuse-protection.service";
 import { authTokenService } from "../services/auth-token.service";
 import { isAdminAccount } from "../config/admin";
 import { emailRequestSchema, passwordLoginSchema, passwordSignupSchema, resetPasswordSchema, tokenSchema } from "../validators/auth.validator";
 
 const invalidCredentialsResponse = { error: "Invalid username or password" };
+const protectionUnavailableResponse = {
+  error: "Authentication is temporarily unavailable. Try again later.",
+};
+
+function requestIp(req: Request) {
+  return req.ip ?? req.socket.remoteAddress ?? "unknown-ip";
+}
 
 function sessionUser(user: Express.User) {
   return { ...user, isAdmin: isAdminAccount(user.email) };
@@ -28,12 +39,23 @@ export const authController = {
 
   async passwordSignup(req: Request, res: Response, next: NextFunction) {
     const decision = await signupAbuseProtectionService.begin(
-      req.ip ?? req.socket.remoteAddress ?? "unknown-ip",
+      requestIp(req),
       req.body?.username,
     );
     if (decision.delayMs > 0) await delay(decision.delayMs);
+    if (decision.protectionUnavailable) {
+      res.setHeader(
+        "Retry-After",
+        String(decision.retryAfterSeconds ?? PROTECTION_UNAVAILABLE_RETRY_AFTER_SECONDS),
+      );
+      res.status(503).json(protectionUnavailableResponse);
+      return;
+    }
     if (!decision.allowed) {
-      res.setHeader("Retry-After", String(decision.retryAfterSeconds));
+      res.setHeader(
+        "Retry-After",
+        String(decision.retryAfterSeconds ?? PROTECTION_UNAVAILABLE_RETRY_AFTER_SECONDS),
+      );
       res.status(429).json({ error: "Too many signup attempts. Try again later." });
       return;
     }
@@ -66,11 +88,36 @@ export const authController = {
   },
 
   async forgotPassword(req: Request, res: Response) {
+    const decision = await authRecoveryAbuseProtectionService.begin(
+      requestIp(req),
+      req.body?.email,
+    );
+    if (decision.delayMs > 0) await delay(decision.delayMs);
+    if (decision.protectionUnavailable) {
+      res.setHeader(
+        "Retry-After",
+        String(decision.retryAfterSeconds ?? PROTECTION_UNAVAILABLE_RETRY_AFTER_SECONDS),
+      );
+      res.status(503).json(protectionUnavailableResponse);
+      return;
+    }
+    if (!decision.allowed) {
+      res.setHeader(
+        "Retry-After",
+        String(decision.retryAfterSeconds ?? PROTECTION_UNAVAILABLE_RETRY_AFTER_SECONDS),
+      );
+      res.status(429).json({ error: "Too many recovery requests. Try again later." });
+      return;
+    }
+
     const parsed = emailRequestSchema.safeParse(req.body);
     if (parsed.success) {
       await authTokenService.requestPasswordReset(parsed.data.email).catch(() => {
         console.warn("auth.password_reset.delivery_failed");
       });
+      await authRecoveryAbuseProtectionService.recordSuccess(decision.attempt);
+    } else {
+      await authRecoveryAbuseProtectionService.recordFailure(decision.attempt);
     }
     res.status(202).json({ message: "If that account can be recovered, a reset link will be sent." });
   },
@@ -112,23 +159,59 @@ export const authController = {
   },
 
   async resendVerification(req: Request, res: Response) {
+    const decision = await authRecoveryAbuseProtectionService.begin(
+      requestIp(req),
+      req.body?.email,
+    );
+    if (decision.delayMs > 0) await delay(decision.delayMs);
+    if (decision.protectionUnavailable) {
+      res.setHeader(
+        "Retry-After",
+        String(decision.retryAfterSeconds ?? PROTECTION_UNAVAILABLE_RETRY_AFTER_SECONDS),
+      );
+      res.status(503).json(protectionUnavailableResponse);
+      return;
+    }
+    if (!decision.allowed) {
+      res.setHeader(
+        "Retry-After",
+        String(decision.retryAfterSeconds ?? PROTECTION_UNAVAILABLE_RETRY_AFTER_SECONDS),
+      );
+      res.status(429).json({ error: "Too many recovery requests. Try again later." });
+      return;
+    }
+
     const parsed = emailRequestSchema.safeParse(req.body);
     if (parsed.success) {
       await authTokenService.requestEmailVerification(parsed.data.email).catch(() => {
         console.warn("auth.email_verification.delivery_failed");
       });
+      await authRecoveryAbuseProtectionService.recordSuccess(decision.attempt);
+    } else {
+      await authRecoveryAbuseProtectionService.recordFailure(decision.attempt);
     }
     res.status(202).json({ message: "If verification is available, an email will be sent." });
   },
 
   async passwordLogin(req: Request, res: Response, next: NextFunction) {
     const decision = await loginAbuseProtectionService.begin(
-      req.ip ?? req.socket.remoteAddress ?? "unknown-ip",
+      requestIp(req),
       req.body?.username,
     );
     if (decision.delayMs > 0) await delay(decision.delayMs);
+    if (decision.protectionUnavailable) {
+      res.setHeader(
+        "Retry-After",
+        String(decision.retryAfterSeconds ?? PROTECTION_UNAVAILABLE_RETRY_AFTER_SECONDS),
+      );
+      res.status(503).json(protectionUnavailableResponse);
+      return;
+    }
     if (!decision.allowed) {
-      res.setHeader("Retry-After", String(decision.retryAfterSeconds));
+      res.setHeader(
+        "Retry-After",
+        String(decision.retryAfterSeconds ?? PROTECTION_UNAVAILABLE_RETRY_AFTER_SECONDS),
+      );
       res.status(429).json({ error: "Too many login attempts. Try again later." });
       return;
     }

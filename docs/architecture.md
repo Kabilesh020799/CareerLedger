@@ -63,7 +63,7 @@ Manual and scheduled synchronization share the same queue and incremental synchr
 
 ## Password-login protection
 
-Before password verification, the authentication controller asks the login-abuse service to atomically count opaque account and network references in Redis. The service applies progressive delay and temporary account/IP limits, while the credential service continues to use a fallback bcrypt comparison to avoid username-enumeration timing differences. Successful authentication clears the account counter. Sanitized JSON security events make failures, blocks, and Redis degradation observable without logging raw identifiers or credentials.
+Before password verification, the authentication controller asks the login-abuse service to atomically count opaque account and network references in Redis. The service applies progressive delay and temporary account/IP limits, while the credential service continues to use a fallback bcrypt comparison to avoid username-enumeration timing differences. Successful authentication clears the account counter. Signup uses an independent budget, and password-reset plus verification-resend requests share a third budget so email delivery cannot be abused through either endpoint. All three protections fail closed with a generic retryable response when Redis is unavailable. Sanitized JSON security events make failures, blocks, and Redis degradation observable without logging raw identifiers or credentials.
 
 ## Production topology
 

@@ -3,6 +3,18 @@ Feature: Account recovery and email verification
     When a visitor submits an email address for password recovery
     Then the application shows the same acknowledgement whether or not an eligible account exists
 
+  Scenario: Limit repeated recovery email requests
+    When a visitor repeatedly requests password recovery or verification emails
+    And the account or network recovery limit is exceeded
+    Then the response status should be 429
+    And the response should not reveal whether the email belongs to an account
+
+  Scenario: Fail closed when recovery protection storage fails
+    Given recovery email protection cannot reach Redis
+    When a visitor requests password recovery or verification
+    Then the response status should be 503
+    And the response should ask the visitor to retry later
+
   Scenario: Reset a password with a valid one-time link
     Given a password user has an unexpired reset link
     When the user chooses a valid new password

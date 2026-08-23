@@ -76,11 +76,18 @@ Feature: Secure user-owned application data
     Then successful sign-ins should not exhaust the network attempt limit
     And failed attempts from that network should remain counted
 
-  Scenario: Avoid an authentication outage when protection storage fails
+  Scenario: Fail closed when protection storage fails
     Given password login protection cannot reach Redis
     When valid credentials are submitted
-    Then normal authentication should remain available
+    Then the response status should be 503
+    And the response should ask the user to retry later
     And a sanitized protection-unavailable event should be logged
+
+  Scenario: Fail closed before signup when protection storage fails
+    Given password signup protection cannot reach Redis
+    When valid account details are submitted
+    Then the response status should be 503
+    And no user account should be created
 
   Scenario: Sign in to the production HTTP deployment
     Given password login is enabled in production
