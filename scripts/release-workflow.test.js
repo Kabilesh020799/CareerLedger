@@ -53,15 +53,35 @@ const productionDirectory = path.join(__dirname, "..", "infrastructure", "produc
 test("publishes the GitHub Release only after production deployment", () => {
   const workflow = fs.readFileSync(workflowPath, "utf8");
   const deployStep = workflow.indexOf("- name: Deploy immutable images");
+  const cleanupStep = workflow.indexOf("- name: Retain current and previous GHCR releases");
   const releaseStep = workflow.indexOf("- name: Publish successful GitHub Release");
 
   assert.notEqual(deployStep, -1, "deployment step is missing");
+  assert.notEqual(cleanupStep, -1, "GHCR cleanup step is missing");
   assert.notEqual(releaseStep, -1, "release step is missing");
-  assert.ok(deployStep < releaseStep, "release must follow successful deployment");
+  assert.ok(deployStep < cleanupStep, "GHCR cleanup must follow successful deployment");
+  assert.ok(cleanupStep < releaseStep, "release must follow image cleanup");
   assert.doesNotMatch(workflow, /^  create_release:/m);
   assert.match(workflow, /node scripts\/release-notes\.js > release-notes\.md/);
   assert.match(workflow, /--notes-file release-notes\.md/);
   assert.doesNotMatch(workflow, /--generate-notes/);
+});
+
+test("retains the current and previous release tags during cleanup", () => {
+  const workflow = fs.readFileSync(workflowPath, "utf8");
+  const planBlock = workflow.slice(
+    workflow.indexOf("  plan_release:"),
+    workflow.indexOf("  publish:"),
+  );
+  const deployBlock = workflow.slice(
+    workflow.indexOf("  deploy:"),
+  );
+
+  assert.match(planBlock, /previous_release_tag:/);
+  assert.match(planBlock, /previous_release_tag=\$previous_release_tag/);
+  assert.match(deployBlock, /packages: write/);
+  assert.match(deployBlock, /scripts\/cleanup-ghcr-images\.sh/);
+  assert.match(deployBlock, /PREVIOUS_RELEASE_TAG: \$\{\{ needs\.plan_release\.outputs\.previous_release_tag \}\}/);
 });
 
 test("validates the versioned changelog before publishing images", () => {

@@ -20,6 +20,20 @@ Confirm the instance appears as `Online` in Systems Manager and that cloud-init 
 
 If `docker info` cannot access `/var/run/docker.sock`, add the deployment user to the Docker group, log out and back in, and verify `docker info` succeeds without `sudo`.
 
+## Docker disk usage or image cleanup
+
+Inspect local image usage without touching containers or volumes:
+
+```bash
+docker system df
+docker image ls ghcr.io/kabilesh020799/jobapplicationtracker-backend
+docker image ls ghcr.io/kabilesh020799/jobapplicationtracker-frontend
+```
+
+A successful release deployment cleans old tags from those two application repositories and prunes dangling layers only after the new release passes its health check. The current and previous `IMAGE_TAG` values remain available for rollback. If cleanup fails, the healthy containers remain active but the GitHub Release is not published; inspect the deployment output before retrying. Do not run `docker system prune --volumes` because it can delete PostgreSQL and Redis data.
+
+GHCR cleanup runs before the GitHub Release is published and keeps the package versions carrying the current and previous release tags. If the cleanup step fails, the healthy deployment remains running but release publication is blocked; inspect the workflow's `packages: write` permission and retry the verified release after correcting the GitHub API or registry failure.
+
 ## `docker --env-file` is unknown
 
 `--env-file` belongs to Docker Compose, not the root Docker command. Install the Compose plugin and use `docker compose --env-file .env -f compose.production.yml up -d`.
