@@ -181,6 +181,13 @@ cd backend && npm test && npm run typecheck && npm run build
 cd ../frontend && npm test && npm run lint && npm run build
 ```
 
+Check dependency advisories before release:
+
+```bash
+cd backend && npm audit --audit-level=high
+cd ../frontend && npm audit --audit-level=high
+```
+
 Run the critical browser workflows with PostgreSQL available at the backend `DATABASE_URL`:
 
 ```bash

@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.29.6] - 2026-08-23
+
+### Security
+
+- Patch the Prisma transitive deepmerge-ts vulnerability without downgrading Prisma, refresh the frontend nanoid lock entry, and fail CI on high-severity npm audit findings while tracking upstream Prisma updates.
+
 ## [3.29.5] - 2026-08-23
 
 ### Security
@@ -486,7 +492,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.5...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.6...HEAD
+[3.29.6]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.5...v3.29.6
 [3.29.5]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.4...v3.29.5
 [3.29.4]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.3...v3.29.4
 [3.29.3]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.2...v3.29.3

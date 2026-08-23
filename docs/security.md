@@ -67,6 +67,10 @@ Extension tokens are random, expire after 90 days, are displayed once, and are s
 
 Notification preferences and Web Push subscriptions are scoped to the authenticated user. Push endpoints and encryption keys are operational credentials and are never returned through another user's API. VAPID private keys and SMTP passwords belong in local environment files or protected GitHub environment secrets, never source control. Browser push requires HTTPS outside localhost. Notification payloads contain the reminder description, company, role, and application path, so users should avoid sensitive reminder text on shared devices.
 
+## Dependency and supply-chain controls
+
+CI runs `npm audit --audit-level=high` against both application lockfiles and blocks verification when a high or critical advisory is present. Dependabot checks both npm projects weekly and groups Prisma package updates so an upstream patched Prisma release is reviewed promptly. Prisma 7.9.1 currently requests vulnerable `deepmerge-ts@7.1.5`; the backend temporarily overrides that transitive package to patched `deepmerge-ts@8.0.2` without downgrading Prisma. Remove the override after a supported Prisma release adopts the patched dependency, then regenerate and review the lockfile.
+
 ## Operational expectations
 
 - Prefer HTTPS for any public login deployment.

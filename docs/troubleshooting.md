@@ -38,6 +38,10 @@ Generate `DEPLOY_KNOWN_HOSTS` with `ssh-keyscan -H <host>` from a trusted networ
 
 Run `npm run db:generate` in `backend`. Docker and CI builds run generation before TypeScript compilation; do not edit generated client files.
 
+## Dependency audit fails
+
+Run `npm audit --audit-level=high` from `backend` or `frontend` and review the advisory path before changing versions. The backend keeps Prisma 7.9.1 and temporarily overrides its vulnerable `deepmerge-ts` request to 8.0.2; do not use `npm audit fix --force` to downgrade Prisma. Dependabot monitors the Prisma packages for the upstream release that can remove this compatibility override.
+
 ## Swagger page does not load
 
 Confirm the backend is running and `GET /api/health` succeeds. Swagger redirects `/api-docs` to `/api-docs/`. Rebuild the backend container after changing OpenAPI or route JSDoc: `docker compose up -d --build backend`.
