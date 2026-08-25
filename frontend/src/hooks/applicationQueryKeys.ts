@@ -12,4 +12,5 @@ export const sprintQueryKeys = {
   current: ['sprints', 'current'] as const,
   archived: ['sprints', 'archived'] as const,
   history: ['sprints', 'history'] as const,
+  upcoming: ['sprints', 'upcoming'] as const,
 }

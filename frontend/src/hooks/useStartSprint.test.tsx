@@ -19,6 +19,7 @@ const result = {
     name: 'Sprint 2',
     sequence: 2,
     status: 'ACTIVE' as const,
+    scheduledStartAt: null,
     durationDays: 21,
     endsAt: '2026-09-05T12:00:00.000Z',
     startedAt: '2026-08-15T12:00:00.000Z',

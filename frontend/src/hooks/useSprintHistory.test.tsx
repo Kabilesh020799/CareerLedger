@@ -21,6 +21,7 @@ describe('useSprintHistory', () => {
         name: 'Sprint 2',
         sequence: 2,
         status: 'ACTIVE' as const,
+        scheduledStartAt: null,
         durationDays: 14,
         startedAt: '2026-08-15T12:00:00.000Z',
         endsAt: '2026-08-29T12:00:00.000Z',

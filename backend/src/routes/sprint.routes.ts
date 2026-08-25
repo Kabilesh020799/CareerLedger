@@ -66,6 +66,44 @@ sprintRouter.get("/archived", sprintController.archived);
 
 /**
  * @swagger
+ * /api/sprints/schedule:
+ *   post:
+ *     tags: [Sprints]
+ *     summary: Schedule an upcoming sprint
+ *     description: Creates a future sprint plan after the active sprint and all existing scheduled plans. Scheduling does not change application assignments.
+ *     security:
+ *       - sessionCookie: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [startsAt]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 100
+ *               durationDays:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 90
+ *               startsAt:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       201:
+ *         description: Sprint scheduled
+ *       400:
+ *         description: Invalid scheduled sprint data
+ *       409:
+ *         description: The requested start time is in the past or overlaps an existing sprint plan
+ */
+sprintRouter.post("/schedule", sprintController.schedule);
+
+/**
+ * @swagger
  * /api/sprints/start:
  *   post:
  *     tags: [Sprints]
@@ -89,6 +127,9 @@ sprintRouter.get("/archived", sprintController.archived);
  *                 minimum: 1
  *                 maximum: 90
  *                 description: Sprint duration in whole days. Defaults to 14 for the first sprint or inherits the active sprint duration thereafter.
+ *               scheduledSprintId:
+ *                 type: string
+ *                 description: Activates the next eligible scheduled sprint when its planned start has arrived.
  *     responses:
  *       201:
  *         description: Sprint started

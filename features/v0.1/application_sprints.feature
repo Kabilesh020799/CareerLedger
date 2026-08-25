@@ -39,6 +39,21 @@ Feature: Carry applications between job-search sprints
     Then I should see the rejected job
     And it should be grouped under the sprint that closed it
 
+  Scenario: Schedule multiple upcoming sprints
+    Given I have an active sprint
+    When I schedule a 14-day sprint for a future date
+    And I schedule a 21-day sprint after that sprint
+    Then I should see both plans in the upcoming sprint timeline
+    And each plan should show its scheduled start and end dates
+    And the current sprint should remain active until I start a scheduled sprint
+
+  Scenario: Start a scheduled sprint when it is due
+    Given a scheduled sprint has reached its start date
+    And the current sprint has reached its configured end
+    When I start the scheduled sprint
+    Then the scheduled sprint should become active
+    And the previous sprint should be closed
+
   Scenario: Add a new application to the active sprint
     Given I have an active sprint
     When I create an application

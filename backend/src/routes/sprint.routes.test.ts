@@ -2,7 +2,11 @@ import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { sprintServiceMock, SprintNotEndedErrorMock } = vi.hoisted(() => {
+const {
+  sprintServiceMock,
+  SprintNotEndedErrorMock,
+  SprintScheduleConflictErrorMock,
+} = vi.hoisted(() => {
   class SprintNotEndedErrorMock extends Error {
     readonly endsAt: Date;
 
@@ -13,20 +17,38 @@ const { sprintServiceMock, SprintNotEndedErrorMock } = vi.hoisted(() => {
     }
   }
 
+  class SprintScheduleConflictErrorMock extends Error {
+    readonly scheduledStartAt?: Date;
+    readonly requiredStartAt?: Date;
+
+    constructor(
+      message: string,
+      details: { scheduledStartAt?: Date; requiredStartAt?: Date } = {},
+    ) {
+      super(message);
+      this.name = "SprintScheduleConflictError";
+      this.scheduledStartAt = details.scheduledStartAt;
+      this.requiredStartAt = details.requiredStartAt;
+    }
+  }
+
   return {
     sprintServiceMock: {
       list: vi.fn(),
       current: vi.fn(),
       archived: vi.fn(),
+      schedule: vi.fn(),
       start: vi.fn(),
     },
     SprintNotEndedErrorMock,
+    SprintScheduleConflictErrorMock,
   };
 });
 
 vi.mock("../services/sprint.service", () => ({
   sprintService: sprintServiceMock,
   SprintNotEndedError: SprintNotEndedErrorMock,
+  SprintScheduleConflictError: SprintScheduleConflictErrorMock,
 }));
 
 import { sprintRouter } from "./sprint.routes";
@@ -114,6 +136,62 @@ describe("sprint routes", () => {
     );
   });
 
+  it("schedules a sprint with validated input in the selected scope", async () => {
+    sprintServiceMock.schedule.mockResolvedValue({
+      id: "sprint-2",
+      status: "SCHEDULED",
+    });
+    const startsAt = "2026-09-01T12:00:00.000Z";
+
+    const response = await request(app)
+      .post("/api/sprints/schedule")
+      .set("X-Workspace-Id", "workspace-1")
+      .send({ name: "September push", durationDays: 21, startsAt });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({ id: "sprint-2", status: "SCHEDULED" });
+    expect(sprintServiceMock.schedule).toHaveBeenCalledWith(
+      "user-1",
+      {
+        name: "September push",
+        durationDays: 21,
+        startsAt: new Date(startsAt),
+      },
+      "workspace-1",
+    );
+  });
+
+  it("rejects an invalid scheduled sprint without calling the service", async () => {
+    const response = await request(app)
+      .post("/api/sprints/schedule")
+      .send({ startsAt: "2026-09-01" });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Invalid scheduled sprint data");
+    expect(sprintServiceMock.schedule).not.toHaveBeenCalled();
+  });
+
+  it("returns a safe 409 for scheduling conflicts", async () => {
+    const startsAt = new Date("2026-09-01T12:00:00.000Z");
+    sprintServiceMock.schedule.mockRejectedValue(
+      new SprintScheduleConflictErrorMock("The scheduled sprint overlaps an existing plan.", {
+        scheduledStartAt: startsAt,
+        requiredStartAt: new Date("2026-09-08T12:00:00.000Z"),
+      }),
+    );
+
+    const response = await request(app)
+      .post("/api/sprints/schedule")
+      .send({ startsAt: startsAt.toISOString() });
+
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({
+      error: "The scheduled sprint overlaps an existing plan.",
+      scheduledStartAt: startsAt.toISOString(),
+      requiredStartAt: "2026-09-08T12:00:00.000Z",
+    });
+  });
+
   it("rejects an invalid sprint name without starting it", async () => {
     const response = await request(app)
       .post("/api/sprints/start")
@@ -168,6 +246,7 @@ describe("sprint routes", () => {
     expect(requestSchema).toMatchObject({
       properties: {
         durationDays: { type: "integer", minimum: 1, maximum: 90 },
+        scheduledSprintId: { type: "string" },
       },
     });
 
@@ -182,6 +261,27 @@ describe("sprint routes", () => {
 
     expect(generatedOpenApiDocument.components?.schemas?.ArchivedSprintGroup).toMatchObject({
       required: ["sprint", "applications"],
+    });
+    expect(sprintSchema).toMatchObject({
+      properties: {
+        status: { enum: ["ACTIVE", "CLOSED", "SCHEDULED"] },
+        scheduledStartAt: { type: "string", format: "date-time", nullable: true },
+      },
+    });
+    expect(generatedOpenApiDocument.components?.schemas?.SprintScheduleConflict).toMatchObject({
+      required: ["error"],
+    });
+    expect(generatedOpenApiDocument.paths["/api/sprints/schedule"]?.post).toMatchObject({
+      responses: expect.objectContaining({
+        "201": expect.anything(),
+        "409": expect.objectContaining({
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/SprintScheduleConflict" },
+            },
+          },
+        }),
+      }),
     });
     expect(generatedOpenApiDocument.paths["/api/sprints/archived"]?.get).toMatchObject({
       responses: expect.objectContaining({

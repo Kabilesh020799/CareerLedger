@@ -22,6 +22,7 @@ describe('useArchivedSprints', () => {
         name: 'Sprint 0',
         sequence: 0,
         status: 'CLOSED' as const,
+        scheduledStartAt: null,
         durationDays: 14,
         startedAt: '2026-07-24T12:00:00.000Z',
         endsAt: '2026-08-07T12:00:00.000Z',

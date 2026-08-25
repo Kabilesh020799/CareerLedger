@@ -31,7 +31,11 @@ const { prismaMock, transactionMock } = vi.hoisted(() => {
 
 vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
 
-import { SprintNotEndedError, sprintService } from "./sprint.service";
+import {
+  SprintNotEndedError,
+  SprintScheduleConflictError,
+  sprintService,
+} from "./sprint.service";
 
 const date = new Date("2026-08-24T12:00:00.000Z");
 const day = 24 * 60 * 60 * 1000;
@@ -42,9 +46,10 @@ function sprint(overrides: Partial<{
   workspaceId: string | null;
   name: string;
   sequence: number;
-  status: "ACTIVE" | "CLOSED";
+  status: "ACTIVE" | "CLOSED" | "SCHEDULED";
   durationDays: number;
   startedAt: Date;
+  scheduledStartAt: Date | null;
   endsAt: Date;
   closedAt: Date | null;
   createdAt: Date;
@@ -59,6 +64,7 @@ function sprint(overrides: Partial<{
     status: "ACTIVE" as const,
     durationDays: 14,
     startedAt: date,
+    scheduledStartAt: null,
     endsAt: new Date(date.getTime() + 14 * day),
     closedAt: null,
     createdAt: date,
@@ -117,6 +123,99 @@ describe("sprintService", () => {
       durationDays: 21,
       endsAt: new Date(date.getTime() + 21 * day),
     });
+  });
+
+  it("creates a future scheduled sprint after the active sprint without touching applications", async () => {
+    const active = sprint({
+      durationDays: 7,
+      endsAt: new Date(date.getTime() + 7 * day),
+    });
+    const startsAt = new Date(date.getTime() + 8 * day);
+    const created = sprint({
+      id: "sprint-2",
+      name: "Hiring push",
+      sequence: 2,
+      status: "SCHEDULED",
+      durationDays: 21,
+      startedAt: startsAt,
+      scheduledStartAt: startsAt,
+      endsAt: new Date(startsAt.getTime() + 21 * day),
+    });
+    prismaMock.workspaceMember.findUnique.mockResolvedValue({
+      role: "MEMBER",
+      workspace: { isPersonal: false },
+    });
+    transactionMock.sprint.findFirst
+      .mockResolvedValueOnce(active)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(active);
+    transactionMock.sprint.create.mockResolvedValue(created);
+
+    const result = await sprintService.schedule(
+      "user-1",
+      { name: "Hiring push", durationDays: 21, startsAt },
+      "workspace-1",
+    );
+
+    expect(transactionMock.sprint.create).toHaveBeenCalledWith({
+      data: {
+        userId: "user-1",
+        workspaceId: "workspace-1",
+        name: "Hiring push",
+        sequence: 2,
+        status: "SCHEDULED",
+        durationDays: 21,
+        startedAt: startsAt,
+        scheduledStartAt: startsAt,
+        endsAt: new Date(startsAt.getTime() + 21 * day),
+      },
+    });
+    expect(transactionMock.application.count).not.toHaveBeenCalled();
+    expect(transactionMock.$executeRaw).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      id: "sprint-2",
+      status: "SCHEDULED",
+      scheduledStartAt: startsAt,
+      endsAt: new Date(startsAt.getTime() + 21 * day),
+    });
+  });
+
+  it("rejects a scheduled sprint that is not in the future or overlaps a plan", async () => {
+    await expect(
+      sprintService.schedule("user-1", { startsAt: date }),
+    ).rejects.toBeInstanceOf(SprintScheduleConflictError);
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+
+    const active = sprint({ endsAt: new Date(date.getTime() + 7 * day) });
+    transactionMock.sprint.findFirst
+      .mockResolvedValueOnce(active)
+      .mockResolvedValueOnce(null);
+
+    await expect(
+      sprintService.schedule("user-1", {
+        startsAt: new Date(date.getTime() + 6 * day),
+      }),
+    ).rejects.toMatchObject({
+      name: "SprintScheduleConflictError",
+      requiredStartAt: active.endsAt,
+    });
+    expect(transactionMock.sprint.create).not.toHaveBeenCalled();
+  });
+
+  it("requires write access before scheduling in a selected workspace", async () => {
+    prismaMock.workspaceMember.findUnique.mockResolvedValue({
+      role: "VIEWER",
+      workspace: { isPersonal: false },
+    });
+
+    await expect(
+      sprintService.schedule(
+        "user-1",
+        { startsAt: new Date(date.getTime() + 7 * day) },
+        "workspace-1",
+      ),
+    ).rejects.toBeInstanceOf(WorkspaceAccessError);
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
   });
 
   it("lists closed sprint groups newest first with all assigned applications", async () => {
@@ -218,7 +317,10 @@ describe("sprintService", () => {
       sequence: 2,
       status: "ACTIVE",
     });
-    transactionMock.sprint.findFirst.mockResolvedValue(active);
+    transactionMock.sprint.findFirst
+      .mockReset()
+      .mockResolvedValueOnce(active)
+      .mockResolvedValueOnce(null);
     transactionMock.sprint.update.mockResolvedValue(closed);
     transactionMock.sprint.create.mockResolvedValue(next);
     transactionMock.application.count.mockResolvedValue(1);
@@ -251,7 +353,9 @@ describe("sprintService", () => {
 
   it("uses an explicitly configured duration for a later sprint", async () => {
     const active = sprint({ endsAt: new Date(date.getTime() - 1) });
-    transactionMock.sprint.findFirst.mockResolvedValue(active);
+    transactionMock.sprint.findFirst
+      .mockResolvedValueOnce(active)
+      .mockResolvedValueOnce(null);
     transactionMock.sprint.update.mockResolvedValue(
       sprint({ status: "CLOSED", closedAt: date }),
     );
@@ -287,5 +391,133 @@ describe("sprintService", () => {
     expect(transactionMock.sprint.create).not.toHaveBeenCalled();
     expect(transactionMock.application.count).not.toHaveBeenCalled();
     expect(transactionMock.$executeRaw).not.toHaveBeenCalled();
+  });
+
+  it("requires the next scheduled plan instead of creating an unscheduled sprint", async () => {
+    const active = sprint({ endsAt: new Date(date.getTime() - 1) });
+    const scheduled = sprint({
+      id: "sprint-2",
+      sequence: 2,
+      status: "SCHEDULED",
+      scheduledStartAt: new Date(date.getTime() + day),
+      startedAt: new Date(date.getTime() + day),
+      endsAt: new Date(date.getTime() + 15 * day),
+    });
+    transactionMock.sprint.findFirst
+      .mockResolvedValueOnce(active)
+      .mockResolvedValueOnce(scheduled);
+
+    await expect(sprintService.start("user-1", {})).rejects.toMatchObject({
+      name: "SprintScheduleConflictError",
+      scheduledStartAt: scheduled.scheduledStartAt,
+    });
+    expect(transactionMock.sprint.update).not.toHaveBeenCalled();
+    expect(transactionMock.sprint.create).not.toHaveBeenCalled();
+    expect(transactionMock.$executeRaw).not.toHaveBeenCalled();
+  });
+
+  it("activates the next scheduled sprint when it is due and carries applications over", async () => {
+    const active = sprint({ endsAt: new Date(date.getTime() - 1) });
+    const scheduledStart = date;
+    const scheduled = sprint({
+      id: "sprint-2",
+      sequence: 2,
+      status: "SCHEDULED",
+      durationDays: 21,
+      startedAt: scheduledStart,
+      scheduledStartAt: scheduledStart,
+      endsAt: new Date(scheduledStart.getTime() + 21 * day),
+    });
+    const closed = sprint({ status: "CLOSED", closedAt: date });
+    const activated = sprint({
+      id: "sprint-2",
+      sequence: 2,
+      status: "ACTIVE",
+      durationDays: 21,
+      startedAt: date,
+      scheduledStartAt: null,
+      endsAt: new Date(date.getTime() + 21 * day),
+    });
+    transactionMock.sprint.findFirst
+      .mockResolvedValueOnce(active)
+      .mockResolvedValueOnce(scheduled)
+      .mockResolvedValueOnce(scheduled);
+    transactionMock.sprint.update
+      .mockResolvedValueOnce(closed)
+      .mockResolvedValueOnce(activated);
+    transactionMock.application.count.mockResolvedValue(1);
+    transactionMock.$executeRaw.mockResolvedValue(2);
+
+    const result = await sprintService.start("user-1", {
+      scheduledSprintId: "sprint-2",
+    });
+
+    expect(transactionMock.sprint.update).toHaveBeenNthCalledWith(2, {
+      where: { id: "sprint-2" },
+      data: {
+        status: "ACTIVE",
+        startedAt: date,
+        scheduledStartAt: null,
+        endsAt: new Date(date.getTime() + 21 * day),
+        closedAt: null,
+      },
+    });
+    expect(transactionMock.sprint.create).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      sprint: { id: "sprint-2", status: "ACTIVE" },
+      previousSprint: { id: "sprint-1", status: "CLOSED" },
+      carriedOverCount: 2,
+      closedRejectedCount: 1,
+    });
+  });
+
+  it("rejects scheduled activation before its start or when it is out of order", async () => {
+    const futureScheduled = sprint({
+      id: "sprint-2",
+      sequence: 2,
+      status: "SCHEDULED",
+      scheduledStartAt: new Date(date.getTime() + day),
+      startedAt: new Date(date.getTime() + day),
+      endsAt: new Date(date.getTime() + 15 * day),
+    });
+    transactionMock.sprint.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(futureScheduled)
+      .mockResolvedValueOnce(futureScheduled);
+
+    await expect(
+      sprintService.start("user-1", { scheduledSprintId: "sprint-2" }),
+    ).rejects.toMatchObject({
+      name: "SprintScheduleConflictError",
+      scheduledStartAt: futureScheduled.scheduledStartAt,
+    });
+    expect(transactionMock.sprint.update).not.toHaveBeenCalled();
+    expect(transactionMock.$executeRaw).not.toHaveBeenCalled();
+
+    const firstScheduled = sprint({
+      id: "sprint-1",
+      sequence: 1,
+      status: "SCHEDULED",
+      scheduledStartAt: date,
+      startedAt: date,
+      endsAt: new Date(date.getTime() + 14 * day),
+    });
+    const secondScheduled = sprint({
+      id: "sprint-2",
+      sequence: 2,
+      status: "SCHEDULED",
+      scheduledStartAt: date,
+      startedAt: date,
+      endsAt: new Date(date.getTime() + 21 * day),
+    });
+    transactionMock.sprint.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(secondScheduled)
+      .mockResolvedValueOnce(firstScheduled);
+
+    await expect(
+      sprintService.start("user-1", { scheduledSprintId: "sprint-2" }),
+    ).rejects.toMatchObject({ name: "SprintScheduleConflictError" });
+    expect(transactionMock.sprint.update).not.toHaveBeenCalled();
   });
 });

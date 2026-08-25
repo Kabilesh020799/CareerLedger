@@ -144,6 +144,33 @@ describe('applicationService', () => {
     expect(api.post).toHaveBeenCalledWith('/sprints/start', { name: 'Sprint 1', durationDays: 21 })
   })
 
+  it('schedules a future sprint with its ISO start time', async () => {
+    const scheduled = {
+      id: 'sprint-scheduled',
+      userId: 'user-1',
+      workspaceId: 'workspace-1',
+      name: 'Interview push',
+      sequence: 2,
+      status: 'SCHEDULED' as const,
+      scheduledStartAt: '2026-09-01T13:00:00.000Z',
+      durationDays: 14,
+      startedAt: '2026-08-24T13:00:00.000Z',
+      endsAt: '2026-09-15T13:00:00.000Z',
+      closedAt: null,
+      createdAt: '2026-08-24T13:00:00.000Z',
+      updatedAt: '2026-08-24T13:00:00.000Z',
+    }
+    const input = {
+      name: 'Interview push',
+      durationDays: 14,
+      startsAt: '2026-09-01T13:00:00.000Z',
+    }
+    vi.mocked(api.post).mockResolvedValue({ data: scheduled })
+
+    await expect(applicationService.scheduleSprint(input)).resolves.toEqual(scheduled)
+    expect(api.post).toHaveBeenCalledWith('/sprints/schedule', input)
+  })
+
   it('creates an application through the API', async () => {
     vi.mocked(api.post).mockResolvedValue({ data: application })
     const input = { company: 'Acme Corp', jobTitle: 'Software Engineer' }

@@ -44,6 +44,80 @@ test('shows archived applications grouped under their closed sprint', async ({ p
   await expect(archive.getByText('Rejected')).toBeVisible()
 })
 
+test('schedules multiple named sprints and shows the upcoming timeline', async ({ page }) => {
+  const firstStart = new Date(Date.now() + 2 * 86_400_000)
+  const secondStart = new Date(Date.now() + 5 * 86_400_000)
+  secondStart.setSeconds(0, 0)
+  const toLocalDateTime = (date: Date) => new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+  const toSprint = (id: string, name: string, sequence: number, start: Date, durationDays: number) => ({
+    id,
+    userId: 'user-1',
+    workspaceId: 'workspace-1',
+    name,
+    sequence,
+    status: 'SCHEDULED',
+    scheduledStartAt: start.toISOString(),
+    durationDays,
+    startedAt: new Date().toISOString(),
+    endsAt: new Date(start.getTime() + durationDays * 86_400_000).toISOString(),
+    closedAt: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  })
+  let scheduled = [toSprint('sprint-planned-1', 'Interview push', 2, firstStart, 14)]
+  const scheduleRequests: unknown[] = []
+
+  await signInAsDemoUser(page)
+  await page.route('**/api/sprints/current', async (route) => {
+    await route.fulfill({ json: { sprint: null, applications: [] } })
+  })
+  await page.route('**/api/sprints/archived', async (route) => {
+    await route.fulfill({ json: [] })
+  })
+  await page.route('**/api/sprints', async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.continue()
+      return
+    }
+    await route.fulfill({ json: scheduled })
+  })
+  await page.route('**/api/sprints/schedule', async (route) => {
+    const body = route.request().postDataJSON() as { name?: string; durationDays?: number; startsAt: string }
+    scheduleRequests.push(body)
+    const next = toSprint(
+      `sprint-planned-${scheduled.length + 1}`,
+      body.name ?? `Sprint ${scheduled.length + 1}`,
+      scheduled.length + 2,
+      new Date(body.startsAt),
+      body.durationDays ?? 14,
+    )
+    scheduled = [...scheduled, next]
+    await route.fulfill({ status: 201, json: next })
+  })
+
+  await page.getByRole('link', { name: 'Board', exact: true }).click()
+  const upcoming = page.getByRole('region', { name: 'Upcoming sprints' })
+  await expect(upcoming.getByRole('heading', { name: 'Interview push' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Schedule sprint' }).click()
+  let dialog = page.getByRole('dialog')
+  await dialog.getByLabel('Sprint name (optional)').fill('Launch follow-up')
+  await dialog.getByLabel('Sprint duration (days)').fill('21')
+  await dialog.getByLabel('Scheduled start').fill(toLocalDateTime(secondStart))
+  await dialog.getByRole('button', { name: 'Schedule sprint' }).click()
+
+  await expect.poll(() => scheduleRequests).toHaveLength(1)
+  await expect.poll(() => scheduleRequests[0]).toEqual({
+    name: 'Launch follow-up',
+    durationDays: 21,
+    startsAt: secondStart.toISOString(),
+  })
+
+  await expect(upcoming.getByRole('heading', { name: 'Launch follow-up' })).toBeVisible()
+  await expect(upcoming.getByRole('heading', { name: 'Interview push' })).toBeVisible()
+  await expect(upcoming.getByText('Duration: 21 days')).toBeVisible()
+})
+
 test('loads archived sprint groups from the authenticated API', async ({ page }) => {
   await signInAsDemoUser(page)
 
@@ -130,6 +204,9 @@ test('configures and manually starts the next sprint after the end date', async 
   await page.route('**/api/sprints/current', async (route) => {
     await route.fulfill({ json: current })
   })
+  await page.route('**/api/sprints', async (route) => {
+    await route.fulfill({ json: [] })
+  })
   await page.route('**/api/sprints/start', async (route) => {
     startRequestBody = route.request().postDataJSON()
     current = { sprint: nextSprint, applications: [] }
@@ -181,6 +258,9 @@ test('shows a safe conflict message when the server rejects an early transition'
   await signInAsDemoUser(page)
   await page.route('**/api/sprints/current', async (route) => {
     await route.fulfill({ json: { sprint: currentSprint, applications: [] } })
+  })
+  await page.route('**/api/sprints', async (route) => {
+    await route.fulfill({ json: [] })
   })
   await page.route('**/api/sprints/start', async (route) => {
     await route.fulfill({ status: 409, json: {
@@ -237,4 +317,42 @@ test('returns 409 and preserves the current sprint when an API transition is ear
   expect(unchangedResponse.ok()).toBe(true)
   const unchanged = await unchangedResponse.json()
   expect(unchanged.sprint.id).toBe(current.sprint.id)
+})
+
+test('creates multiple upcoming sprint plans through the API', async ({ page }) => {
+  await signInAsDemoUser(page)
+  const membershipsResponse = await page.request.get(`${apiOrigin}/workspaces`)
+  expect(membershipsResponse.ok()).toBe(true)
+  const memberships = await membershipsResponse.json()
+  const workspaceId = memberships[0]?.workspace?.id as string | undefined
+  if (!workspaceId) throw new Error('The signed-in test user has no workspace')
+  const headers = { 'X-Workspace-Id': workspaceId }
+
+  const currentResponse = await page.request.get(`${apiOrigin}/sprints/current`, { headers })
+  expect(currentResponse.ok()).toBe(true)
+  const current = await currentResponse.json()
+  const firstStart = new Date(Math.max(
+    Date.now() + 2 * 86_400_000,
+    current.sprint?.endsAt ? Date.parse(current.sprint.endsAt) + 60_000 : 0,
+  ))
+  const secondStart = new Date(firstStart.getTime() + 14 * 86_400_000 + 60_000)
+
+  const firstResponse = await page.request.post(`${apiOrigin}/sprints/schedule`, {
+    data: { name: `Planned sprint ${Date.now()}`, durationDays: 14, startsAt: firstStart.toISOString() },
+    headers,
+  })
+  expect(firstResponse.status()).toBe(201)
+  const first = await firstResponse.json()
+
+  const secondResponse = await page.request.post(`${apiOrigin}/sprints/schedule`, {
+    data: { name: `Planned follow-up ${Date.now()}`, durationDays: 21, startsAt: secondStart.toISOString() },
+    headers,
+  })
+  expect(secondResponse.status()).toBe(201)
+  const second = await secondResponse.json()
+
+  const historyResponse = await page.request.get(`${apiOrigin}/sprints`, { headers })
+  expect(historyResponse.ok()).toBe(true)
+  const history = await historyResponse.json()
+  expect(history.filter((sprint: { status: string }) => sprint.status === 'SCHEDULED').map((sprint: { id: string }) => sprint.id)).toEqual([second.id, first.id])
 })

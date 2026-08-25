@@ -55,6 +55,7 @@ describe('application board hooks', () => {
         name: 'Sprint 1',
         sequence: 1,
         status: 'ACTIVE',
+        scheduledStartAt: null,
         durationDays: 14,
         startedAt: '2026-08-08T12:00:00.000Z',
         endsAt: '2026-08-22T12:00:00.000Z',

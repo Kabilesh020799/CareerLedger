@@ -1,7 +1,14 @@
 import type { Request, Response } from "express";
-import { SprintNotEndedError, sprintService } from "../services/sprint.service";
+import {
+  SprintNotEndedError,
+  SprintScheduleConflictError,
+  sprintService,
+} from "../services/sprint.service";
 import { selectedWorkspaceId } from "../services/workspace-access.service";
-import { startSprintSchema } from "../validators/sprint.validator";
+import {
+  scheduleSprintSchema,
+  startSprintSchema,
+} from "../validators/sprint.validator";
 
 function userId(req: Request) {
   if (!req.user) throw new Error("Authenticated user is missing");
@@ -28,6 +35,40 @@ export const sprintController = {
     res.json(result);
   },
 
+  async schedule(req: Request, res: Response) {
+    const parsed = scheduleSprintSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Invalid scheduled sprint data",
+        details: parsed.error.flatten(),
+      });
+      return;
+    }
+
+    try {
+      const result = await sprintService.schedule(
+        userId(req),
+        parsed.data,
+        workspaceId(req),
+      );
+      res.status(201).json(result);
+    } catch (error) {
+      if (error instanceof SprintScheduleConflictError) {
+        res.status(409).json({
+          error: error.message,
+          ...(error.scheduledStartAt
+            ? { scheduledStartAt: error.scheduledStartAt.toISOString() }
+            : {}),
+          ...(error.requiredStartAt
+            ? { requiredStartAt: error.requiredStartAt.toISOString() }
+            : {}),
+        });
+        return;
+      }
+      throw error;
+    }
+  },
+
   async start(req: Request, res: Response) {
     const parsed = startSprintSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
@@ -50,6 +91,18 @@ export const sprintController = {
         res.status(409).json({
           error: error.message,
           endsAt: error.endsAt.toISOString(),
+        });
+        return;
+      }
+      if (error instanceof SprintScheduleConflictError) {
+        res.status(409).json({
+          error: error.message,
+          ...(error.scheduledStartAt
+            ? { scheduledStartAt: error.scheduledStartAt.toISOString() }
+            : {}),
+          ...(error.requiredStartAt
+            ? { requiredStartAt: error.requiredStartAt.toISOString() }
+            : {}),
         });
         return;
       }

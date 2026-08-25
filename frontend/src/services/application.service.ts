@@ -15,6 +15,7 @@ import type {
   CurrentSprint,
   Sprint,
   SprintStartResult,
+  ScheduleSprintInput,
   StartSprintInput,
 } from '../types/application'
 
@@ -209,6 +210,11 @@ export const applicationService = {
 
   async startSprint(input: StartSprintInput = {}) {
     const response = await api.post<SprintStartResult>('/sprints/start', input)
+    return response.data
+  },
+
+  async scheduleSprint(input: ScheduleSprintInput) {
+    const response = await api.post<Sprint>('/sprints/schedule', input)
     return response.data
   },
 

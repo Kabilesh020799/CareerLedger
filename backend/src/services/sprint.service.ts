@@ -1,9 +1,12 @@
 import { prisma } from "../config/prisma";
 import { Prisma } from "../generated/prisma/client";
-import type { StartSprintInput } from "../validators/sprint.validator";
+import type {
+  ScheduleSprintInput,
+  StartSprintInput,
+} from "../validators/sprint.validator";
 import { applicationAccess } from "./workspace-access.service";
 
-export type SprintStatusValue = "ACTIVE" | "CLOSED";
+export type SprintStatusValue = "ACTIVE" | "CLOSED" | "SCHEDULED";
 export const DEFAULT_SPRINT_DURATION_DAYS = 14;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -17,6 +20,21 @@ export class SprintNotEndedError extends Error {
   }
 }
 
+export class SprintScheduleConflictError extends Error {
+  readonly scheduledStartAt?: Date;
+  readonly requiredStartAt?: Date;
+
+  constructor(
+    message: string,
+    details: { scheduledStartAt?: Date; requiredStartAt?: Date } = {},
+  ) {
+    super(message);
+    this.name = "SprintScheduleConflictError";
+    this.scheduledStartAt = details.scheduledStartAt;
+    this.requiredStartAt = details.requiredStartAt;
+  }
+}
+
 export interface SprintSummary {
   id: string;
   userId: string;
@@ -26,6 +44,7 @@ export interface SprintSummary {
   status: SprintStatusValue;
   durationDays: number;
   startedAt: Date;
+  scheduledStartAt: Date | null;
   endsAt: Date;
   closedAt: Date | null;
   createdAt: Date;
@@ -83,6 +102,7 @@ interface SprintRecord {
   status: SprintStatusValue;
   durationDays: number;
   startedAt: Date;
+  scheduledStartAt: Date | null;
   endsAt: Date;
   closedAt: Date | null;
   createdAt: Date;
@@ -93,11 +113,13 @@ type SprintWhere = {
   userId?: string;
   workspaceId?: string | null;
   status?: SprintStatusValue;
+  id?: string;
 };
 
 type SprintOrderBy =
   | { sequence: "asc" | "desc" }
-  | { startedAt: "asc" | "desc" };
+  | { startedAt: "asc" | "desc" }
+  | { scheduledStartAt: "asc" | "desc" };
 
 type ApplicationWhere = Prisma.ApplicationWhereInput & {
   sprintId?: string | null;
@@ -121,12 +143,19 @@ interface SprintDelegate {
       status: SprintStatusValue;
       durationDays: number;
       startedAt: Date;
+      scheduledStartAt: Date | null;
       endsAt: Date;
     };
   }): Promise<SprintRecord>;
   update(args: {
     where: { id: string };
-    data: { status: SprintStatusValue; closedAt: Date };
+    data: {
+      status?: SprintStatusValue;
+      closedAt?: Date | null;
+      startedAt?: Date;
+      scheduledStartAt?: Date | null;
+      endsAt?: Date;
+    };
   }): Promise<SprintRecord>;
 }
 
@@ -174,6 +203,7 @@ function summary(sprint: SprintRecord): SprintSummary {
     status: sprint.status,
     durationDays: sprint.durationDays,
     startedAt: sprint.startedAt,
+    scheduledStartAt: sprint.scheduledStartAt,
     endsAt: sprint.endsAt,
     closedAt: sprint.closedAt,
     createdAt: sprint.createdAt,
@@ -193,6 +223,47 @@ function applicationScopeSql(
     )`;
   }
   return Prisma.sql`"workspaceId" = ${access.workspaceId}`;
+}
+
+async function carryApplications(
+  transaction: SprintTransactionClient,
+  userId: string,
+  access: { where: Prisma.ApplicationWhereInput; workspaceId?: string; isPersonal?: boolean },
+  previousSprint: SprintRecord | null,
+  nextSprint: SprintRecord,
+) {
+  let carriedOverCount = 0;
+  let closedRejectedCount = 0;
+
+  if (previousSprint) {
+    closedRejectedCount = await transaction.application.count({
+      where: {
+        ...access.where,
+        sprintId: previousSprint.id,
+        status: "REJECTED",
+      },
+    });
+    carriedOverCount = await transaction.$executeRaw(
+      Prisma.sql`
+        UPDATE "Application"
+        SET "sprintId" = ${nextSprint.id}
+        WHERE "sprintId" = ${previousSprint.id}
+          AND "status" <> ${"REJECTED"}
+          AND ${applicationScopeSql(userId, access)}
+      `,
+    );
+  } else {
+    carriedOverCount = await transaction.$executeRaw(
+      Prisma.sql`
+        UPDATE "Application"
+        SET "sprintId" = ${nextSprint.id}
+        WHERE "sprintId" IS NULL
+          AND ${applicationScopeSql(userId, access)}
+      `,
+    );
+  }
+
+  return { carriedOverCount, closedRejectedCount };
 }
 
 export const sprintService = {
@@ -243,6 +314,80 @@ export const sprintService = {
     );
   },
 
+  async schedule(
+    userId: string,
+    input: ScheduleSprintInput,
+    workspaceId?: string,
+  ): Promise<SprintSummary> {
+    const { where } = await scopedAccess(userId, workspaceId, true);
+    const now = new Date();
+
+    if (input.startsAt <= now) {
+      throw new SprintScheduleConflictError(
+        "A scheduled sprint must start in the future.",
+        { scheduledStartAt: input.startsAt },
+      );
+    }
+
+    return database.$transaction(async (transaction) => {
+      const databaseTransaction = transaction as SprintTransactionClient;
+      const activeSprint = await databaseTransaction.sprint.findFirst({
+        where: { ...where, status: "ACTIVE" },
+        orderBy: [{ sequence: "desc" }, { startedAt: "desc" }],
+      });
+      const latestScheduledSprint = await databaseTransaction.sprint.findFirst({
+        where: { ...where, status: "SCHEDULED" },
+        orderBy: [{ sequence: "desc" }, { scheduledStartAt: "desc" }],
+      });
+
+      if (activeSprint && input.startsAt < activeSprint.endsAt) {
+        throw new SprintScheduleConflictError(
+          "The scheduled sprint overlaps the current sprint.",
+          { scheduledStartAt: input.startsAt, requiredStartAt: activeSprint.endsAt },
+        );
+      }
+
+      if (latestScheduledSprint && input.startsAt < latestScheduledSprint.endsAt) {
+        throw new SprintScheduleConflictError(
+          "The scheduled sprint overlaps an existing scheduled sprint.",
+          {
+            scheduledStartAt: input.startsAt,
+            requiredStartAt: latestScheduledSprint.endsAt,
+          },
+        );
+      }
+
+      const latestSprint = await databaseTransaction.sprint.findFirst({
+        where,
+        orderBy: [{ sequence: "desc" }, { startedAt: "desc" }],
+      });
+      const sequence = (latestSprint?.sequence ?? 0) + 1;
+      const durationDays =
+        input.durationDays ??
+        activeSprint?.durationDays ??
+        latestScheduledSprint?.durationDays ??
+        latestSprint?.durationDays ??
+        DEFAULT_SPRINT_DURATION_DAYS;
+      const endsAt = new Date(input.startsAt.getTime() + durationDays * MILLISECONDS_PER_DAY);
+
+      const scheduledSprint = await databaseTransaction.sprint.create({
+        data: {
+          userId,
+          workspaceId: workspaceId ?? null,
+          name: input.name?.trim() || `Sprint ${sequence}`,
+          sequence,
+          status: "SCHEDULED",
+          durationDays,
+          startedAt: input.startsAt,
+          scheduledStartAt: input.startsAt,
+          endsAt,
+        },
+      });
+
+      return summary(scheduledSprint);
+    });
+  },
+
   async start(
     userId: string,
     input: StartSprintInput,
@@ -258,8 +403,91 @@ export const sprintService = {
       });
       const now = new Date();
 
+      if (input.scheduledSprintId) {
+        const scheduledSprint = await databaseTransaction.sprint.findFirst({
+          where: {
+            ...where,
+            id: input.scheduledSprintId,
+            status: "SCHEDULED",
+          },
+          orderBy: [{ sequence: "asc" }, { scheduledStartAt: "asc" }],
+        });
+
+        if (!scheduledSprint || !scheduledSprint.scheduledStartAt) {
+          throw new SprintScheduleConflictError(
+            "The requested scheduled sprint is not available.",
+          );
+        }
+
+        const nextScheduledSprint = await databaseTransaction.sprint.findFirst({
+          where: { ...where, status: "SCHEDULED" },
+          orderBy: [{ sequence: "asc" }, { scheduledStartAt: "asc" }],
+        });
+
+        if (!nextScheduledSprint || nextScheduledSprint.id !== scheduledSprint.id) {
+          throw new SprintScheduleConflictError(
+            "The requested sprint is not the next scheduled sprint.",
+          );
+        }
+
+        if (scheduledSprint.scheduledStartAt > now) {
+          throw new SprintScheduleConflictError(
+            "The scheduled sprint has not reached its start time.",
+            { scheduledStartAt: scheduledSprint.scheduledStartAt },
+          );
+        }
+
+        if (activeSprint && activeSprint.endsAt > now) {
+          throw new SprintNotEndedError(activeSprint.endsAt);
+        }
+
+        const previousSprint = activeSprint
+          ? await databaseTransaction.sprint.update({
+              where: { id: activeSprint.id },
+              data: { status: "CLOSED", closedAt: now },
+            })
+          : null;
+        const sprint = await databaseTransaction.sprint.update({
+          where: { id: scheduledSprint.id },
+          data: {
+            status: "ACTIVE",
+            startedAt: now,
+            scheduledStartAt: null,
+            endsAt: new Date(now.getTime() + scheduledSprint.durationDays * MILLISECONDS_PER_DAY),
+            closedAt: null,
+          },
+        });
+        const { carriedOverCount, closedRejectedCount } = await carryApplications(
+          databaseTransaction,
+          userId,
+          access,
+          activeSprint,
+          sprint,
+        );
+
+        return {
+          sprint: summary(sprint),
+          previousSprint: previousSprint ? summary(previousSprint) : null,
+          carriedOverCount,
+          closedRejectedCount,
+        };
+      }
+
       if (activeSprint && activeSprint.endsAt > now) {
         throw new SprintNotEndedError(activeSprint.endsAt);
+      }
+
+      const nextScheduledSprint = await databaseTransaction.sprint.findFirst({
+        where: { ...where, status: "SCHEDULED" },
+        orderBy: [{ sequence: "asc" }, { scheduledStartAt: "asc" }],
+      });
+      if (nextScheduledSprint) {
+        throw new SprintScheduleConflictError(
+          "A scheduled sprint is next. Start it from the upcoming sprint timeline.",
+          nextScheduledSprint.scheduledStartAt
+            ? { scheduledStartAt: nextScheduledSprint.scheduledStartAt }
+            : {},
+        );
       }
 
       const latestSprint = activeSprint
@@ -289,40 +517,18 @@ export const sprintService = {
           status: "ACTIVE",
           durationDays,
           startedAt: now,
+          scheduledStartAt: null,
           endsAt,
         },
       });
 
-      let carriedOverCount = 0;
-      let closedRejectedCount = 0;
-
-      if (activeSprint) {
-        closedRejectedCount = await databaseTransaction.application.count({
-          where: {
-            ...access.where,
-            sprintId: activeSprint.id,
-            status: "REJECTED",
-          },
-        });
-        carriedOverCount = await databaseTransaction.$executeRaw(
-          Prisma.sql`
-            UPDATE "Application"
-            SET "sprintId" = ${sprint.id}
-            WHERE "sprintId" = ${activeSprint.id}
-              AND "status" <> ${"REJECTED"}
-              AND ${applicationScopeSql(userId, access)}
-          `,
-        );
-      } else {
-        carriedOverCount = await databaseTransaction.$executeRaw(
-          Prisma.sql`
-            UPDATE "Application"
-            SET "sprintId" = ${sprint.id}
-            WHERE "sprintId" IS NULL
-              AND ${applicationScopeSql(userId, access)}
-          `,
-        );
-      }
+      const { carriedOverCount, closedRejectedCount } = await carryApplications(
+        databaseTransaction,
+        userId,
+        access,
+        activeSprint,
+        sprint,
+      );
 
       return {
         sprint: summary(sprint),

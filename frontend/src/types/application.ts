@@ -11,7 +11,7 @@ export const applicationStatuses = [
 
 export type ApplicationStatus = (typeof applicationStatuses)[number]
 
-export type SprintStatus = 'ACTIVE' | 'CLOSED'
+export type SprintStatus = 'ACTIVE' | 'SCHEDULED' | 'CLOSED'
 
 export type Sprint = {
   id: string
@@ -20,6 +20,7 @@ export type Sprint = {
   name: string
   sequence: number
   status: SprintStatus
+  scheduledStartAt: string | null
   /** Configured length of the sprint in whole days. */
   durationDays: number
   /** Timestamp after which the user may deliberately start the next sprint. */
@@ -163,6 +164,13 @@ export type ArchivedSprintGroup = {
 export type StartSprintInput = {
   name?: string
   durationDays?: number
+  scheduledSprintId?: string
+}
+
+export type ScheduleSprintInput = {
+  name?: string
+  durationDays?: number
+  startsAt: string
 }
 
 export type SprintStartResult = {
@@ -172,7 +180,7 @@ export type SprintStartResult = {
   closedRejectedCount: number
 }
 
-/** Backend name for the metadata returned for an active or closed sprint. */
+/** Backend name for the metadata returned for a scheduled, active, or closed sprint. */
 export type SprintSummary = Sprint
 
 /** Backend response for the current sprint board. */

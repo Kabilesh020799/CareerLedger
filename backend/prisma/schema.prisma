@@ -27,6 +27,7 @@ enum ApplicationStatus {
 enum SprintStatus {
   ACTIVE
   CLOSED
+  SCHEDULED
 }
 
 enum ApplicationEventType {
@@ -229,6 +230,7 @@ model Sprint {
   status       SprintStatus  @default(ACTIVE)
   durationDays Int
   startedAt    DateTime      @default(now())
+  scheduledStartAt DateTime?
   endsAt       DateTime
   closedAt     DateTime?
   applications Application[]
@@ -236,6 +238,7 @@ model Sprint {
   updatedAt    DateTime      @updatedAt
 
   @@index([userId, workspaceId, status, sequence])
+  @@index([userId, workspaceId, status, scheduledStartAt])
   @@index([workspaceId, status, sequence])
 }
 

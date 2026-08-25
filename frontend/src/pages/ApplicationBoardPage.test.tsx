@@ -6,6 +6,8 @@ import { AppProvider } from '../components/ui/AppProvider'
 import { useApplicationBoard } from '../hooks/useApplicationBoard'
 import { useArchivedSprints } from '../hooks/useArchivedSprints'
 import { useMoveApplication } from '../hooks/useMoveApplication'
+import { useScheduleSprint } from '../hooks/useScheduleSprint'
+import { useScheduledSprints } from '../hooks/useScheduledSprints'
 import { useStartSprint } from '../hooks/useStartSprint'
 import type { Application } from '../types/application'
 import { ApplicationBoardPage } from './ApplicationBoardPage'
@@ -13,6 +15,11 @@ import { ApplicationBoardPage } from './ApplicationBoardPage'
 vi.mock('../hooks/useApplicationBoard', () => ({ useApplicationBoard: vi.fn() }))
 vi.mock('../hooks/useArchivedSprints', () => ({ useArchivedSprints: vi.fn() }))
 vi.mock('../hooks/useMoveApplication', () => ({ useMoveApplication: vi.fn() }))
+vi.mock('../hooks/useScheduleSprint', () => ({ useScheduleSprint: vi.fn() }))
+vi.mock('../hooks/useScheduledSprints', () => ({
+  useScheduledSprints: vi.fn(),
+  useSprintTimelineNow: vi.fn(() => Date.now()),
+}))
 vi.mock('../hooks/useStartSprint', () => ({ useStartSprint: vi.fn() }))
 
 const application = {
@@ -59,6 +66,19 @@ function startResult(overrides: Record<string, unknown> = {}) {
   }
 }
 
+function scheduleResult(overrides: Record<string, unknown> = {}) {
+  return {
+    mutate: vi.fn(),
+    reset: vi.fn(),
+    isPending: false,
+    isSuccess: false,
+    isError: false,
+    data: undefined,
+    error: null,
+    ...overrides,
+  }
+}
+
 const sprint = {
   id: 'sprint-1',
   userId: 'user-1',
@@ -66,6 +86,7 @@ const sprint = {
   name: 'Sprint 1',
   sequence: 1,
   status: 'ACTIVE' as const,
+  scheduledStartAt: null,
   durationDays: 14,
   endsAt: futureEndsAt,
   startedAt: '2026-08-08T12:00:00.000Z',
@@ -83,6 +104,17 @@ const archivedSprint = {
   endsAt: '2026-08-07T12:00:00.000Z',
   startedAt: '2026-07-24T12:00:00.000Z',
   closedAt: '2026-08-07T12:00:00.000Z',
+}
+
+const scheduledSprint = {
+  ...sprint,
+  id: 'sprint-scheduled',
+  name: 'Interview push',
+  sequence: 2,
+  status: 'SCHEDULED' as const,
+  scheduledStartAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+  startedAt: new Date().toISOString(),
+  endsAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
 }
 
 function renderPage() {
@@ -104,7 +136,14 @@ describe('ApplicationBoardPage', () => {
       isSuccess: true,
       data: [],
     } as never)
+    vi.mocked(useScheduledSprints).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: [],
+    } as never)
     vi.mocked(useMoveApplication).mockReturnValue(moveResult() as never)
+    vi.mocked(useScheduleSprint).mockReturnValue(scheduleResult() as never)
     vi.mocked(useStartSprint).mockReturnValue(startResult() as never)
   })
   afterEach(cleanup)
@@ -149,6 +188,130 @@ describe('ApplicationBoardPage', () => {
     expect(within(archive).getByRole('heading', { name: 'Sprint 0' })).toBeInTheDocument()
     expect(within(archive).getByRole('link', { name: /Acme Corp.*Software Engineer/ })).toHaveAttribute('href', '/applications/archived-1')
     expect(within(archive).getByText('Rejected')).toBeInTheDocument()
+  })
+
+  it('shows multiple upcoming sprints with their planned windows', () => {
+    vi.mocked(useApplicationBoard).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: { sprint, applications: [] },
+    } as never)
+    vi.mocked(useScheduledSprints).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: [
+        scheduledSprint,
+        { ...scheduledSprint, id: 'sprint-later', name: 'Launch follow-up', scheduledStartAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() },
+      ],
+    } as never)
+
+    renderPage()
+
+    const upcoming = screen.getByRole('region', { name: 'Upcoming sprints' })
+    expect(within(upcoming).getByRole('heading', { name: 'Interview push' })).toBeInTheDocument()
+    expect(within(upcoming).getByRole('heading', { name: 'Launch follow-up' })).toBeInTheDocument()
+    expect(within(upcoming).getAllByText('Duration: 14 days')).toHaveLength(2)
+    expect(within(upcoming).getAllByText(/Scheduled start:/)).toHaveLength(2)
+    expect(within(upcoming).getAllByText(/Calculated end:/)).toHaveLength(2)
+  })
+
+  it('shows upcoming loading, empty, and recoverable error states', async () => {
+    const user = userEvent.setup()
+    const refetch = vi.fn()
+    vi.mocked(useApplicationBoard).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: { sprint, applications: [] },
+    } as never)
+    vi.mocked(useScheduledSprints).mockReturnValue({ isPending: true } as never)
+
+    const { unmount } = renderPage()
+    expect(screen.getByLabelText('Loading upcoming sprints')).toBeInTheDocument()
+
+    unmount()
+    vi.mocked(useScheduledSprints).mockReturnValue({
+      isPending: false,
+      isError: true,
+      isSuccess: false,
+      error: new Error('Upcoming failed'),
+      refetch,
+    } as never)
+    renderPage()
+    expect(screen.getByText('Upcoming failed')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(refetch).toHaveBeenCalledOnce()
+
+    unmount()
+    vi.mocked(useScheduledSprints).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: [],
+    } as never)
+    renderPage()
+    expect(screen.getByText('No upcoming sprints scheduled.')).toBeInTheDocument()
+  })
+
+  it('validates and submits a scheduled sprint using the local start time', async () => {
+    const user = userEvent.setup()
+    const schedule = scheduleResult()
+    vi.mocked(useScheduleSprint).mockReturnValue(schedule as never)
+    vi.mocked(useApplicationBoard).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: { sprint, applications: [] },
+    } as never)
+
+    renderPage()
+    await user.click(screen.getByRole('button', { name: 'Schedule sprint' }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByRole('heading', { name: 'Schedule a sprint' })).toBeInTheDocument()
+    expect(within(dialog).getByLabelText('Sprint duration (days)')).toHaveValue(14)
+
+    await user.click(within(dialog).getByRole('button', { name: 'Schedule sprint' }))
+    expect(await within(dialog).findByText('Choose when the sprint should start')).toBeInTheDocument()
+    expect(schedule.mutate).not.toHaveBeenCalled()
+
+    const future = new Date(Date.now() + 48 * 60 * 60 * 1000)
+    const localValue = new Date(future.getTime() - future.getTimezoneOffset() * 60 * 1000).toISOString().slice(0, 16)
+    await user.type(within(dialog).getByLabelText('Sprint name (optional)'), 'Interview push')
+    await user.clear(within(dialog).getByLabelText('Sprint duration (days)'))
+    await user.type(within(dialog).getByLabelText('Sprint duration (days)'), '21')
+    await user.type(within(dialog).getByLabelText('Scheduled start'), localValue)
+    await user.click(within(dialog).getByRole('button', { name: 'Schedule sprint' }))
+
+    expect(schedule.mutate).toHaveBeenCalledWith(
+      { name: 'Interview push', durationDays: 21, startsAt: new Date(localValue).toISOString() },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    )
+  })
+
+  it('starts a due scheduled sprint only after the current sprint has ended', async () => {
+    const user = userEvent.setup()
+    const start = startResult()
+    vi.mocked(useStartSprint).mockReturnValue(start as never)
+    vi.mocked(useApplicationBoard).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: { sprint: { ...sprint, endsAt: expiredEndsAt }, applications: [] },
+    } as never)
+    vi.mocked(useScheduledSprints).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: [{ ...scheduledSprint, scheduledStartAt: new Date(Date.now() - 60_000).toISOString() }],
+    } as never)
+
+    renderPage()
+
+    const upcoming = screen.getByRole('region', { name: 'Upcoming sprints' })
+    await user.click(within(upcoming).getByRole('button', { name: 'Start scheduled sprint' }))
+    expect(start.mutate).toHaveBeenCalledWith({ scheduledSprintId: 'sprint-scheduled' })
   })
 
   it('moves an application with its accessible status control', async () => {

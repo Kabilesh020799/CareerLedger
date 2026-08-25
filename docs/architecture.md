@@ -26,7 +26,7 @@ The frontend and backend are independent TypeScript applications. PostgreSQL is 
 
 ## Backend boundaries
 
-Requests follow `Route -> Validation -> Controller -> Service -> Prisma`. Routes compose middleware and handlers, validators define accepted input, controllers translate HTTP concerns, and services contain ownership rules, transactions, and persistence logic. Sprint transitions record a whole-day duration and end timestamp. The service permits a user-triggered transition only after that timestamp, then uses one Prisma transaction to close the previous sprint, create the next active sprint, and carry non-rejected applications forward; rejected applications remain associated with the closed sprint. No scheduler or automatic transition is involved.
+Requests follow `Route -> Validation -> Controller -> Service -> Prisma`. Routes compose middleware and handlers, validators define accepted input, controllers translate HTTP concerns, and services contain ownership rules, transactions, and persistence logic. Sprint plans record a whole-day duration, calculated end timestamp, and optional scheduled start. The service prevents overlapping future plans and permits a user-triggered transition only after the current sprint's end and the selected plan's start; one Prisma transaction closes the previous sprint, activates or creates the next sprint, and carries non-rejected applications forward while rejected applications remain associated with the closed sprint. No background scheduler or automatic transition is involved.
 
 Password signup and login create the same PostgreSQL-backed HTTP-only session cookie. Signup validates and normalizes identifiers before the credential service creates the user with a bcrypt password hash. Every user-owned query is scoped to the authenticated user. Application status changes and timeline events are saved in one Prisma transaction.
 
@@ -38,7 +38,7 @@ The first Express middleware creates a canonical request ID so unhandled errors 
 
 ## Frontend boundaries
 
-Frontend data follows `Component -> Hook -> TanStack Query -> API service`. React Hook Form and Zod handle forms, Chakra UI handles layout and accessibility, and Axios sends credentials to the backend. Mutations invalidate affected application, sprint, dashboard, reminder, resume, or Gmail query keys. The board reads the current sprint view and closed-sprint archive, shows the configured duration/end date, and exposes the user-triggered sprint transition only when the backend permits it.
+Frontend data follows `Component -> Hook -> TanStack Query -> API service`. React Hook Form and Zod handle forms, Chakra UI handles layout and accessibility, and Axios sends credentials to the backend. Mutations invalidate affected application, sprint, dashboard, reminder, resume, or Gmail query keys. The board reads the current sprint view, upcoming scheduled plans, and closed-sprint archive, shows configured start/end dates, and exposes scheduling and user-triggered activation only when the backend permits it.
 
 ## Application document storage
 

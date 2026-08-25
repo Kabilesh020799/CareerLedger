@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { startSprintSchema } from "./sprint.validator";
+import { scheduleSprintSchema, startSprintSchema } from "./sprint.validator";
 
 describe("startSprintSchema", () => {
   it("accepts an omitted or trimmed sprint name", () => {
@@ -22,5 +22,33 @@ describe("startSprintSchema", () => {
     expect(startSprintSchema.safeParse({ durationDays: 91 }).success).toBe(false);
     expect(startSprintSchema.safeParse({ durationDays: 7.5 }).success).toBe(false);
     expect(startSprintSchema.safeParse({ durationDays: "14" }).success).toBe(false);
+  });
+
+  it("accepts a scheduled sprint start as a Date and an optional activation ID", () => {
+    const startsAt = "2026-09-01T12:00:00.000Z";
+
+    expect(
+      scheduleSprintSchema.parse({
+        name: "  September push  ",
+        durationDays: 21,
+        startsAt,
+      }),
+    ).toEqual({
+      name: "September push",
+      durationDays: 21,
+      startsAt: new Date(startsAt),
+    });
+    expect(startSprintSchema.parse({ scheduledSprintId: " sprint-2 " })).toEqual({
+      scheduledSprintId: "sprint-2",
+    });
+  });
+
+  it("requires an ISO date-time for scheduled sprint creation", () => {
+    expect(scheduleSprintSchema.safeParse({}).success).toBe(false);
+    expect(scheduleSprintSchema.safeParse({ startsAt: "2026-09-01" }).success).toBe(false);
+    expect(
+      scheduleSprintSchema.safeParse({ startsAt: "2026-09-01T12:00:00" }).success,
+    ).toBe(false);
+    expect(scheduleSprintSchema.safeParse({ startsAt: "not-a-date" }).success).toBe(false);
   });
 });
