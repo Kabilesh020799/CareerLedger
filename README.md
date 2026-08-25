@@ -44,6 +44,7 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 ## Features
 
 - Create, live-search, progressively filter, sort, edit, and delete applications with validated HTTP/HTTPS job URLs, server-side discovery, and bounded pagination, plus focused status, note, and reminder actions from application details.
+- Organize applications into active job-search sprints: rejected applications stay with the closed sprint, while other applications carry into the next sprint and new applications join the active sprint.
 - Use a responsive workspace with collapsible secondary navigation groups, a focus-contained mobile More menu, persistent mobile shortcuts, clamped application cards, and an accessible tabbed mobile status board.
 - Work in a calm, accessible light or dark design system with an indigo action accent, cool slate surfaces, visible focus states, compact semantic application-status badges, focused page hierarchy, responsive forms, and page-shaped loading states.
 - Track application timelines, notes, status changes, follow-ups, and deadlines.
@@ -135,6 +136,7 @@ All management and user-data endpoints require an authenticated session and enfo
 | Data portability | `GET /api/data/export`, `POST /api/data/import` |
 | Calendar | `GET /api/calendar/export`, `GET/POST/DELETE /api/calendar/subscription`, `GET /api/calendar/feed/:token` |
 | Applications | `GET/POST /api/applications`, `GET/PATCH/DELETE /api/applications/:id`, `GET /api/applications/search` |
+| Sprints | `GET /api/sprints`, `GET /api/sprints/current`, `POST /api/sprints/start` |
 | Resume uploads | `POST/DELETE /api/applications/resume-uploads`, `GET /api/applications/:id/resume`, `GET /api/applications/:id/resume-download` |
 | Cover-letter uploads | `POST/DELETE /api/applications/cover-letter-uploads`, `GET /api/applications/:id/cover-letter`, `GET /api/applications/:id/cover-letter-download` |
 | Uploaded resume library | `GET /api/resumes/uploads` |
@@ -196,7 +198,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Playwright refuses a non-test database URL, defaults local runs to `jobtracker_test`, generates an ephemeral local demo password when protected test credentials are absent, and uses the Compose Redis service exposed on port `6379`. It migrates and seeds the isolated database, starts the backend and frontend on ports `3001` and `4173`, and covers login/logout, application CRUD and validation, board/timeline/reminder workflows, resume and cover-letter uploads, resume tags, dashboards, notification capabilities, themes, and responsive layouts. Pull-request verification uploads traces, screenshots, videos, and the HTML report after failures.
+Playwright refuses a non-test database URL, defaults local runs to `jobtracker_test`, generates an ephemeral local demo password when protected test credentials are absent, and uses the Compose Redis service exposed on port `6379`. It migrates and seeds the isolated database, starts the backend and frontend on ports `3001` and `4173`, and covers login/logout, application CRUD and validation, board/sprint/timeline/reminder workflows, resume and cover-letter uploads, resume tags, dashboards, notification capabilities, themes, and responsive layouts. Pull-request verification uploads traces, screenshots, videos, and the HTML report after failures.
 
 ## Production deployment
 

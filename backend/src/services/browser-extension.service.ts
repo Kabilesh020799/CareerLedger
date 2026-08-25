@@ -52,10 +52,17 @@ export const browserExtensionService = {
     return { userId: record.userId };
   },
 
-  capture(userId: string, input: CaptureJobPostingInput, now = new Date()) {
+  async capture(userId: string, input: CaptureJobPostingInput, now = new Date()) {
+    const activeSprint = await prisma.sprint.findFirst({
+      where: { userId, workspaceId: null, status: "ACTIVE" },
+      orderBy: { sequence: "desc" },
+      select: { id: true },
+    });
+
     return prisma.application.create({
       data: {
         userId,
+        ...(activeSprint ? { sprintId: activeSprint.id } : {}),
         company: input.company,
         jobTitle: input.jobTitle,
         location: input.location ?? null,

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { applicationService } from '../services/application.service'
-import type { Application, ApplicationStatus } from '../types/application'
+import type { Application, ApplicationStatus, CurrentSprint } from '../types/application'
 import { applicationQueryKeys } from './applicationQueryKeys'
 import { dashboardQueryKeys } from './dashboardQueryKeys'
 import { useFeedback } from '../components/ui/feedback-context'
@@ -11,7 +11,7 @@ type MoveApplicationVariables = {
 }
 
 type MoveApplicationContext = {
-  previousBoard?: Application[]
+  previousBoard?: CurrentSprint
 }
 
 export function useMoveApplication() {
@@ -22,15 +22,20 @@ export function useMoveApplication() {
     mutationFn: ({ id, status }) => applicationService.update(id, { status }),
     onMutate: async ({ id, status }) => {
       await queryClient.cancelQueries({ queryKey: applicationQueryKeys.board })
-      const previousBoard = queryClient.getQueryData<Application[]>(
+      const previousBoard = queryClient.getQueryData<CurrentSprint>(
         applicationQueryKeys.board,
       )
 
-      queryClient.setQueryData<Application[]>(
+      queryClient.setQueryData<CurrentSprint>(
         applicationQueryKeys.board,
-        (applications) => applications?.map((application) =>
-          application.id === id ? { ...application, status } : application,
-        ),
+        (board) => board
+          ? {
+              ...board,
+              applications: board.applications.map((application) =>
+                application.id === id ? { ...application, status } : application,
+              ),
+            }
+          : board,
       )
 
       return { previousBoard }
@@ -38,7 +43,7 @@ export function useMoveApplication() {
     onError: (_error, _variables, context) => {
       feedback.show('Status update failed', { description: 'The application was returned to its previous status.', status: 'error' })
       if (context?.previousBoard) {
-        queryClient.setQueryData(
+        queryClient.setQueryData<CurrentSprint>(
           applicationQueryKeys.board,
           context.previousBoard,
         )

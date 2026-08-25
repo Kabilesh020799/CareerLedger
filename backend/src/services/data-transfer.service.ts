@@ -112,6 +112,12 @@ export const dataTransferService = {
         throw new WorkspaceForbiddenError("Workspace write access is required");
       }
 
+      const activeSprint = await transaction.sprint.findFirst({
+        where: { workspaceId: input.workspaceId, status: "ACTIVE" },
+        orderBy: { sequence: "desc" },
+        select: { id: true },
+      });
+
       const ownership = access.workspace.isPersonal
         ? {
             OR: [
@@ -189,6 +195,7 @@ export const dataTransferService = {
             createdAt: new Date(application.createdAt),
             userId,
             workspaceId: input.workspaceId,
+            ...(activeSprint ? { sprintId: activeSprint.id } : {}),
             events: {
               create: application.events.map((event) => ({
                 type: event.type,

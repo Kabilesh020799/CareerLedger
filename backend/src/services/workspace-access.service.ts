@@ -14,7 +14,7 @@ export async function applicationAccess(
   userId: string,
   workspaceId: string | undefined,
   write = false,
-): Promise<{ where: Prisma.ApplicationWhereInput; workspaceId?: string }> {
+): Promise<{ where: Prisma.ApplicationWhereInput; workspaceId?: string; isPersonal?: boolean }> {
   if (!workspaceId) return { where: { userId } };
   const member = await prisma.workspaceMember.findUnique({
     where: { workspaceId_userId: { workspaceId, userId } },
@@ -24,6 +24,7 @@ export async function applicationAccess(
   if (write && !writeRoles.has(member.role)) throw new WorkspaceAccessError("FORBIDDEN");
   return {
     workspaceId,
+    isPersonal: member.workspace.isPersonal,
     where: member.workspace.isPersonal
       ? { OR: [{ workspaceId }, { workspaceId: null, userId }] }
       : { workspaceId },

@@ -11,6 +11,23 @@ export const applicationStatuses = [
 
 export type ApplicationStatus = (typeof applicationStatuses)[number]
 
+export type SprintStatus = 'ACTIVE' | 'CLOSED'
+
+export type Sprint = {
+  id: string
+  userId: string
+  workspaceId: string | null
+  name: string
+  sequence: number
+  status: SprintStatus
+  startedAt: string
+  closedAt: string | null
+  applicationCount?: number
+  rejectedCount?: number
+  createdAt: string
+  updatedAt: string
+}
+
 /** Work arrangement extracted from a captured job posting. */
 export type WorkMode = 'REMOTE' | 'HYBRID' | 'ONSITE'
 
@@ -41,6 +58,7 @@ export type Application = {
   } | null
   resumeAttachment?: ApplicationAttachment | null
   coverLetterAttachment?: ApplicationAttachment | null
+  sprint?: Pick<Sprint, 'id' | 'name' | 'sequence' | 'status'> | null
   createdAt: string
   updatedAt: string
 }
@@ -126,6 +144,31 @@ export type ApplicationDiscoveryResult = {
   data: Application[]
   pagination: ApplicationPagination
 }
+
+export type CurrentSprint = {
+  sprint: Sprint | null
+  applications: Application[]
+}
+
+export type StartSprintInput = {
+  name?: string
+}
+
+export type SprintStartResult = {
+  sprint: Sprint
+  previousSprint: Sprint | null
+  carriedOverCount: number
+  closedRejectedCount: number
+}
+
+/** Backend name for the metadata returned for an active or closed sprint. */
+export type SprintSummary = Sprint
+
+/** Backend response for the current sprint board. */
+export type CurrentSprintResponse = CurrentSprint
+
+/** Backend response for starting a sprint. */
+export type StartSprintResponse = SprintStartResult
 
 export const applicationEventTypes = ['NOTE', 'STATUS_CHANGE'] as const
 

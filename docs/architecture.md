@@ -26,7 +26,7 @@ The frontend and backend are independent TypeScript applications. PostgreSQL is 
 
 ## Backend boundaries
 
-Requests follow `Route -> Validation -> Controller -> Service -> Prisma`. Routes compose middleware and handlers, validators define accepted input, controllers translate HTTP concerns, and services contain ownership rules, transactions, and persistence logic.
+Requests follow `Route -> Validation -> Controller -> Service -> Prisma`. Routes compose middleware and handlers, validators define accepted input, controllers translate HTTP concerns, and services contain ownership rules, transactions, and persistence logic. Sprint transitions use one Prisma transaction to close the previous sprint, create the next active sprint, and carry non-rejected applications forward; rejected applications remain associated with the closed sprint.
 
 Password signup and login create the same PostgreSQL-backed HTTP-only session cookie. Signup validates and normalizes identifiers before the credential service creates the user with a bcrypt password hash. Every user-owned query is scoped to the authenticated user. Application status changes and timeline events are saved in one Prisma transaction.
 
@@ -38,7 +38,7 @@ The first Express middleware creates a canonical request ID so unhandled errors 
 
 ## Frontend boundaries
 
-Frontend data follows `Component -> Hook -> TanStack Query -> API service`. React Hook Form and Zod handle forms, Chakra UI handles layout and accessibility, and Axios sends credentials to the backend. Mutations invalidate affected application, dashboard, reminder, resume, or Gmail query keys.
+Frontend data follows `Component -> Hook -> TanStack Query -> API service`. React Hook Form and Zod handle forms, Chakra UI handles layout and accessibility, and Axios sends credentials to the backend. Mutations invalidate affected application, sprint, dashboard, reminder, resume, or Gmail query keys. The board reads the current sprint view and exposes the sprint transition as an accessible action.
 
 ## Application document storage
 

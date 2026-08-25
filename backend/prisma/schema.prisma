@@ -24,6 +24,11 @@ enum ApplicationStatus {
   WITHDRAWN
 }
 
+enum SprintStatus {
+  ACTIVE
+  CLOSED
+}
+
 enum ApplicationEventType {
   NOTE
   STATUS_CHANGE
@@ -87,6 +92,8 @@ model Application {
   user                   User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspaceId            String?
   workspace              Workspace?            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sprintId               String?
+  sprint                 Sprint?               @relation(fields: [sprintId], references: [id], onDelete: SetNull)
   resumeVersionId        String?
   resumeVersion          ResumeVersion?        @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
   resumeAttachment       ApplicationResume?
@@ -109,6 +116,7 @@ model Application {
   @@index([workspaceId, createdAt, id])
   @@index([workspaceId, status, createdAt, id])
   @@index([workspaceId, updatedAt, id])
+  @@index([sprintId, createdAt, id])
   @@index([company(ops: raw("gin_trgm_ops"))], type: Gin, map: "Application_company_trgm_idx")
   @@index([jobTitle(ops: raw("gin_trgm_ops"))], type: Gin, map: "Application_jobTitle_trgm_idx")
   @@index([location(ops: raw("gin_trgm_ops"))], type: Gin, map: "Application_location_trgm_idx")
@@ -210,6 +218,25 @@ model ApplicationEvent {
   @@index([applicationId, occurredAt])
 }
 
+model Sprint {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  workspace   Workspace?  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name        String
+  sequence    Int
+  status      SprintStatus @default(ACTIVE)
+  startedAt   DateTime    @default(now())
+  closedAt    DateTime?
+  applications Application[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([userId, workspaceId, status, sequence])
+  @@index([workspaceId, status, sequence])
+}
+
 model User {
   id              String    @id @default(cuid())
   googleId        String?   @unique
@@ -221,6 +248,7 @@ model User {
   emailVerifiedAt DateTime?
 
   applications       Application[]
+  sprints            Sprint[]
   resumeVersions     ResumeVersion[]
   gmailConnection    GmailConnection?
   gmailUpdateReviews GmailUpdateReview[]
@@ -269,6 +297,7 @@ model Workspace {
   members      WorkspaceMember[]
   invitations  WorkspaceInvitation[]
   applications Application[]
+  sprints      Sprint[]
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
 }

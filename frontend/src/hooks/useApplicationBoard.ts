@@ -5,6 +5,6 @@ import { applicationQueryKeys } from './applicationQueryKeys'
 export function useApplicationBoard() {
   return useQuery({
     queryKey: applicationQueryKeys.board,
-    queryFn: () => applicationService.list(),
+    queryFn: () => applicationService.getCurrentSprint(),
   })
 }

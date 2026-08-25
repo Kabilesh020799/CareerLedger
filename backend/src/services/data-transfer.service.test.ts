@@ -7,6 +7,7 @@ const prismaMock = vi.hoisted(() => ({
 }));
 const transactionMock = vi.hoisted(() => ({
   workspaceMember: { findUnique: vi.fn() },
+  sprint: { findFirst: vi.fn() },
   application: { findMany: vi.fn(), create: vi.fn() },
 }));
 

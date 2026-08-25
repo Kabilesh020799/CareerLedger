@@ -6,3 +6,9 @@ export const applicationQueryKeys = {
   detail: (id: string) => ['applications', id] as const,
   events: (id: string) => ['applications', id, 'events'] as const,
 }
+
+export const sprintQueryKeys = {
+  all: ['sprints'] as const,
+  current: ['sprints', 'current'] as const,
+  history: ['sprints', 'history'] as const,
+}

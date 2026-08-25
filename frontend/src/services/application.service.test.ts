@@ -90,6 +90,38 @@ describe('applicationService', () => {
     expect(api.get).toHaveBeenCalledWith('/applications/search', { params: query })
   })
 
+  it('loads the active sprint and starts the next sprint', async () => {
+    const current = { sprint: null, applications: [] }
+    const started = {
+      sprint: {
+        id: 'sprint-1',
+        userId: 'user-1',
+        workspaceId: 'workspace-1',
+        name: 'Sprint 1',
+        sequence: 1,
+        status: 'ACTIVE' as const,
+        startedAt: '2026-08-08T12:00:00.000Z',
+        closedAt: null,
+        createdAt: '2026-08-08T12:00:00.000Z',
+        updatedAt: '2026-08-08T12:00:00.000Z',
+      },
+      previousSprint: null,
+      carriedOverCount: 0,
+      closedRejectedCount: 0,
+    }
+    vi.mocked(api.get).mockResolvedValueOnce({ data: current })
+    vi.mocked(api.get).mockResolvedValueOnce({ data: [started.sprint] })
+    vi.mocked(api.post).mockResolvedValueOnce({ data: started })
+
+    await expect(applicationService.getCurrentSprint()).resolves.toEqual(current)
+    await expect(applicationService.listSprints()).resolves.toEqual([started.sprint])
+    await expect(applicationService.startSprint({ name: 'Sprint 1' })).resolves.toEqual(started)
+
+    expect(api.get).toHaveBeenNthCalledWith(1, '/sprints/current')
+    expect(api.get).toHaveBeenNthCalledWith(2, '/sprints')
+    expect(api.post).toHaveBeenCalledWith('/sprints/start', { name: 'Sprint 1' })
+  })
+
   it('creates an application through the API', async () => {
     vi.mocked(api.post).mockResolvedValue({ data: application })
     const input = { company: 'Acme Corp', jobTitle: 'Software Engineer' }

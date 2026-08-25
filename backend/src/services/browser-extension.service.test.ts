@@ -4,6 +4,7 @@ const prismaMock = vi.hoisted(() => ({
   browserExtensionToken: {
     create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn(), findMany: vi.fn(),
   },
+  sprint: { findFirst: vi.fn() },
   application: { create: vi.fn() },
 }));
 vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
@@ -50,5 +51,19 @@ describe("browserExtensionService", () => {
       skills: ["TypeScript", "PostgreSQL"], experienceRequirements: "3+ years", salaryMin: 90000,
       salaryMax: 120000, salaryCurrency: "CAD", salaryPeriod: "YEAR", workMode: "HYBRID",
     }) });
+  });
+
+  it("places a captured application in the active legacy sprint", async () => {
+    prismaMock.sprint.findFirst.mockResolvedValue({ id: "sprint-1" });
+    prismaMock.application.create.mockResolvedValue({ id: "application-1" });
+
+    await browserExtensionService.capture("user-1", {
+      company: "Acme", jobTitle: "Engineer", jobUrl: "https://jobs.example/1", jobDescription: "Build useful software",
+      skills: [],
+    });
+
+    expect(prismaMock.application.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ userId: "user-1", sprintId: "sprint-1" }),
+    }));
   });
 });

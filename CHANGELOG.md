@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.31.0] - 2026-08-24
+
+### Added
+
+- Add active job-search sprints that keep rejected applications in closed sprints, carry unfinished applications forward, and place new applications in the active sprint.
+
 ## [3.30.1] - 2026-08-23
 
 ### Fixed
@@ -504,7 +510,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.30.1...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.31.0...HEAD
+[3.31.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.30.1...v3.31.0
 [3.30.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.30.0...v3.30.1
 [3.30.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.6...v3.30.0
 [3.29.6]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.5...v3.29.6

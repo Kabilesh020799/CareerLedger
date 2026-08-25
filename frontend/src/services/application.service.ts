@@ -11,6 +11,10 @@ import type {
   ResumeUploadPreparation,
   ResumeDownloadPreparation,
   ApplicationAttachments,
+  CurrentSprint,
+  Sprint,
+  SprintStartResult,
+  StartSprintInput,
 } from '../types/application'
 
 /** Converts application fields and a resume into a legacy multipart request. */
@@ -184,6 +188,21 @@ export const applicationService = {
     const response = await api.get<ApplicationDiscoveryResult>('/applications/search', {
       params: query,
     })
+    return response.data
+  },
+
+  async getCurrentSprint() {
+    const response = await api.get<CurrentSprint>('/sprints/current')
+    return response.data
+  },
+
+  async listSprints() {
+    const response = await api.get<Sprint[]>('/sprints')
+    return response.data
+  },
+
+  async startSprint(input: StartSprintInput = {}) {
+    const response = await api.post<SprintStartResult>('/sprints/start', input)
     return response.data
   },
 

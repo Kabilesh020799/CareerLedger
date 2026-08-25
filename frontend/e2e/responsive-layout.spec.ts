@@ -23,6 +23,17 @@ test('phone workflows fit the viewport and use status tabs for the board', async
   await expectNoPageOverflow(page)
   await signInAsDemoUser(page)
 
+  const membershipsResponse = await page.request.get('http://127.0.0.1:3001/api/workspaces')
+  expect(membershipsResponse.ok()).toBe(true)
+  const memberships = await membershipsResponse.json()
+  const workspaceId = memberships[0]?.workspace?.id as string | undefined
+  if (!workspaceId) throw new Error('The signed-in test user has no workspace')
+  const sprintResponse = await page.request.post(
+    'http://127.0.0.1:3001/api/sprints/start',
+    { data: {}, headers: { 'X-Workspace-Id': workspaceId } },
+  )
+  expect(sprintResponse.ok()).toBe(true)
+
   const menuButton = page.getByRole('button', { name: 'Open more navigation' })
   await expect(menuButton).toBeVisible()
   await menuButton.click()

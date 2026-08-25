@@ -22,7 +22,7 @@ vi.mock('./hooks/useApplicationBoard', () => ({
     isPending: false,
     isError: false,
     isSuccess: true,
-    data: [],
+    data: { sprint: null, applications: [] },
   }),
 }))
 
@@ -155,7 +155,7 @@ describe('application routing', () => {
     await user.click(screen.getByRole('link', { name: 'Board' }))
 
     expect(await screen.findByRole('heading', { name: 'Application board' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'No applications on your board' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'No active sprint' })).toBeInTheDocument()
   })
 
   it('shows all matched and new-application Gmail reviews in the navigation badge', async () => {

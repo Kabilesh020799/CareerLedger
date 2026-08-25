@@ -5,11 +5,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProvider } from '../components/ui/AppProvider'
 import { useApplicationBoard } from '../hooks/useApplicationBoard'
 import { useMoveApplication } from '../hooks/useMoveApplication'
+import { useStartSprint } from '../hooks/useStartSprint'
 import type { Application } from '../types/application'
 import { ApplicationBoardPage } from './ApplicationBoardPage'
 
 vi.mock('../hooks/useApplicationBoard', () => ({ useApplicationBoard: vi.fn() }))
 vi.mock('../hooks/useMoveApplication', () => ({ useMoveApplication: vi.fn() }))
+vi.mock('../hooks/useStartSprint', () => ({ useStartSprint: vi.fn() }))
 
 const application = {
   id: 'application-1',
@@ -39,6 +41,32 @@ function moveResult(overrides: Record<string, unknown> = {}) {
   }
 }
 
+function startResult(overrides: Record<string, unknown> = {}) {
+  return {
+    mutate: vi.fn(),
+    reset: vi.fn(),
+    isPending: false,
+    isSuccess: false,
+    isError: false,
+    data: undefined,
+    error: null,
+    ...overrides,
+  }
+}
+
+const sprint = {
+  id: 'sprint-1',
+  userId: 'user-1',
+  workspaceId: 'workspace-1',
+  name: 'Sprint 1',
+  sequence: 1,
+  status: 'ACTIVE' as const,
+  startedAt: '2026-08-08T12:00:00.000Z',
+  closedAt: null,
+  createdAt: '2026-08-08T12:00:00.000Z',
+  updatedAt: '2026-08-08T12:00:00.000Z',
+}
+
 function renderPage() {
   return render(
     <AppProvider>
@@ -53,6 +81,7 @@ describe('ApplicationBoardPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(useMoveApplication).mockReturnValue(moveResult() as never)
+    vi.mocked(useStartSprint).mockReturnValue(startResult() as never)
   })
   afterEach(cleanup)
 
@@ -62,7 +91,7 @@ describe('ApplicationBoardPage', () => {
       isPending: false,
       isError: false,
       isSuccess: true,
-      data: [application],
+      data: { sprint, applications: [application] },
     } as never)
 
     renderPage()
@@ -84,7 +113,7 @@ describe('ApplicationBoardPage', () => {
       isPending: false,
       isError: false,
       isSuccess: true,
-      data: [application],
+      data: { sprint, applications: [application] },
     } as never)
 
     renderPage()
@@ -105,7 +134,7 @@ describe('ApplicationBoardPage', () => {
       isPending: false,
       isError: false,
       isSuccess: true,
-      data: [application],
+      data: { sprint, applications: [application] },
     } as never)
     const storedData = new Map<string, string>()
     const setDragImage = vi.fn()
@@ -137,7 +166,7 @@ describe('ApplicationBoardPage', () => {
       isPending: false,
       isError: false,
       isSuccess: true,
-      data: [],
+      data: { sprint, applications: [] },
     } as never)
     const { unmount } = renderPage()
     expect(screen.getByRole('heading', { name: 'No applications on your board' })).toBeInTheDocument()
@@ -173,5 +202,81 @@ describe('ApplicationBoardPage', () => {
     await user.click(screen.getByRole('button', { name: 'Dismiss' }))
     expect(refetch).toHaveBeenCalledOnce()
     expect(reset).toHaveBeenCalledOnce()
+  })
+
+  it('starts a new sprint from the board and shows the current sprint summary', async () => {
+    const user = userEvent.setup()
+    const start = startResult()
+    vi.mocked(useStartSprint).mockReturnValue(start as never)
+    vi.mocked(useApplicationBoard).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: { sprint, applications: [application] },
+    } as never)
+
+    renderPage()
+
+    expect(screen.getByRole('heading', { name: 'Sprint 1' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Start new sprint' }))
+    expect(start.mutate).toHaveBeenCalledWith({})
+  })
+
+  it('communicates carried-over and closed-rejected counts after starting a sprint', () => {
+    vi.mocked(useApplicationBoard).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: { sprint, applications: [application] },
+    } as never)
+    vi.mocked(useStartSprint).mockReturnValue(startResult({
+      isSuccess: true,
+      data: {
+        sprint: { ...sprint, id: 'sprint-2', name: 'Sprint 2', sequence: 2 },
+        previousSprint: sprint,
+        carriedOverCount: 2,
+        closedRejectedCount: 1,
+      },
+    }) as never)
+
+    renderPage()
+
+    expect(screen.getByText(/2 applications carried over\. 1 rejected application closed in the previous sprint\./)).toBeInTheDocument()
+  })
+
+  it('shows a recoverable sprint-start failure', async () => {
+    const user = userEvent.setup()
+    const reset = vi.fn()
+    vi.mocked(useApplicationBoard).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: { sprint, applications: [application] },
+    } as never)
+    vi.mocked(useStartSprint).mockReturnValue(startResult({
+      isError: true,
+      error: new Error('Start failed'),
+      reset,
+    }) as never)
+
+    renderPage()
+
+    expect(screen.getByText('Start failed')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }))
+    expect(reset).toHaveBeenCalledOnce()
+  })
+
+  it('shows the first-sprint state when no sprint is active', () => {
+    vi.mocked(useApplicationBoard).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: { sprint: null, applications: [] },
+    } as never)
+
+    renderPage()
+
+    expect(screen.getByRole('heading', { name: 'No active sprint' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Start sprint' })).toHaveLength(1)
   })
 })

@@ -24,6 +24,7 @@ import { WorkspaceAccessError } from "./services/workspace-access.service";
 import { requestPerformance } from "./middleware/request-performance";
 import { requireAdmin } from "./middleware/require-admin";
 import { adminRouter } from "./routes/admin.routes";
+import { sprintRouter } from "./routes/sprint.routes";
 
 export function createApp() {
   const app = express();
@@ -71,6 +72,7 @@ export function createApp() {
   app.use("/api/admin", requireAuth, requireAdmin, adminRouter);
   app.use("/api/calendar", requireAuth, calendarRouter);
   app.use("/api/workspaces", requireAuth, workspaceRouter);
+  app.use("/api/sprints", requireAuth, sprintRouter);
   app.use("/api/data", requireAuth, dataTransferRouter);
   app.use("/api/applications", requireAuth, applicationRouter);
   app.use("/api/dashboard", requireAuth, dashboardRouter);

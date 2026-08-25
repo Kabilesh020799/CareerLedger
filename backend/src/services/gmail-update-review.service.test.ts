@@ -13,6 +13,7 @@ const { prismaMock, transactionMock } = vi.hoisted(() => {
     },
     applicationEvent: { create: vi.fn() },
     resumeVersion: { findFirst: vi.fn() },
+    sprint: { findFirst: vi.fn() },
   };
   return {
     transactionMock: transaction,

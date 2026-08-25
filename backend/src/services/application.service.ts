@@ -81,6 +81,13 @@ export const applicationService = {
   ) {
     return prisma.$transaction(async (transaction) => {
       const access = await applicationAccess(userId, workspaceId, true);
+      const activeSprint = await transaction.sprint.findFirst({
+        where: access.workspaceId
+          ? { workspaceId: access.workspaceId, status: "ACTIVE" }
+          : { userId, workspaceId: null, status: "ACTIVE" },
+        orderBy: { sequence: "desc" },
+        select: { id: true },
+      });
       const { resumeUploadKey: _resumeUploadKey, coverLetterUploadKey: _coverLetterUploadKey, ...applicationData } = data;
       if (applicationData.resumeVersionId) {
         const resumeVersion = await transaction.resumeVersion.findFirst({
@@ -90,26 +97,37 @@ export const applicationService = {
         if (!resumeVersion) return null;
       }
 
+      const createData = {
+        ...applicationData,
+        userId,
+        ...(access.workspaceId ? { workspaceId: access.workspaceId } : {}),
+        ...(activeSprint ? { sprintId: activeSprint.id } : {}),
+        ...(resume
+          ? {
+              resumeAttachment: {
+                create: applicationResumeCreateData(
+                  applicationData.jobTitle,
+                  applicationData.company,
+                  resume,
+                ),
+              },
+            }
+          : {}),
+        ...(coverLetter
+          ? {
+              coverLetterAttachment: {
+                create: applicationCoverLetterCreateData(
+                  applicationData.jobTitle,
+                  applicationData.company,
+                  coverLetter,
+                ),
+              },
+            }
+          : {}),
+      };
+
       return transaction.application.create({
-        data: {
-          ...applicationData,
-          userId,
-          ...(access.workspaceId ? { workspaceId: access.workspaceId } : {}),
-          ...(resume
-            ? {
-                resumeAttachment: {
-                  create: applicationResumeCreateData(
-                    applicationData.jobTitle,
-                    applicationData.company,
-                    resume,
-                  ),
-                },
-              }
-            : {}),
-          ...(coverLetter
-            ? { coverLetterAttachment: { create: applicationCoverLetterCreateData(applicationData.jobTitle, applicationData.company, coverLetter) } }
-            : {}),
-        },
+        data: createData,
         include: applicationInclude,
       });
     });
@@ -254,6 +272,9 @@ const applicationInclude = {
   },
   coverLetterAttachment: {
     select: { fileName: true, mimeType: true, size: true, createdAt: true },
+  },
+  sprint: {
+    select: { id: true, name: true, sequence: true, status: true },
   },
 } satisfies Prisma.ApplicationInclude;
 

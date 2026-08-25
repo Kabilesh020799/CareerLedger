@@ -10,7 +10,7 @@ import { useMoveApplication } from './useMoveApplication'
 
 vi.mock('../services/application.service', () => ({
   applicationService: {
-    list: vi.fn(),
+    getCurrentSprint: vi.fn(),
     update: vi.fn(),
   },
 }))
@@ -46,15 +46,29 @@ function setup() {
 describe('application board hooks', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('loads the authenticated application list for the board', async () => {
-    vi.mocked(applicationService.list).mockResolvedValue([application])
+  it('loads the active sprint and its applications for the board', async () => {
+    vi.mocked(applicationService.getCurrentSprint).mockResolvedValue({
+      sprint: {
+        id: 'sprint-1',
+        userId: 'user-1',
+        workspaceId: 'workspace-1',
+        name: 'Sprint 1',
+        sequence: 1,
+        status: 'ACTIVE',
+        startedAt: '2026-08-08T12:00:00.000Z',
+        closedAt: null,
+        createdAt: '2026-08-08T12:00:00.000Z',
+        updatedAt: '2026-08-08T12:00:00.000Z',
+      },
+      applications: [application],
+    })
     const { wrapper } = setup()
     const { result } = renderHook(useApplicationBoard, { wrapper })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
-    expect(result.current.data).toEqual([application])
-    expect(applicationService.list).toHaveBeenCalledOnce()
+    expect(result.current.data?.applications).toEqual([application])
+    expect(applicationService.getCurrentSprint).toHaveBeenCalledOnce()
   })
 
   it('moves a card optimistically and refreshes application caches', async () => {
@@ -64,7 +78,7 @@ describe('application board hooks', () => {
     })
     const { queryClient, wrapper } = setup()
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
-    queryClient.setQueryData(applicationQueryKeys.board, [application])
+    queryClient.setQueryData(applicationQueryKeys.board, { sprint: null, applications: [application] })
     const { result } = renderHook(useMoveApplication, { wrapper })
 
     await act(() => result.current.mutateAsync({
@@ -75,7 +89,7 @@ describe('application board hooks', () => {
     expect(applicationService.update).toHaveBeenCalledWith(application.id, {
       status: 'INTERVIEW',
     })
-    expect(queryClient.getQueryData<Application[]>(applicationQueryKeys.board)?.[0].status)
+    expect(queryClient.getQueryData<{ applications: Application[] }>(applicationQueryKeys.board)?.applications[0].status)
       .toBe('INTERVIEW')
     expect(queryClient.getQueryData(applicationQueryKeys.detail(application.id)))
       .toEqual(expect.objectContaining({ status: 'INTERVIEW' }))
@@ -92,20 +106,20 @@ describe('application board hooks', () => {
       rejectUpdate = reject
     }))
     const { queryClient, wrapper } = setup()
-    queryClient.setQueryData(applicationQueryKeys.board, [application])
+    queryClient.setQueryData(applicationQueryKeys.board, { sprint: null, applications: [application] })
     const { result } = renderHook(useMoveApplication, { wrapper })
 
     act(() => result.current.mutate({ id: application.id, status: 'INTERVIEW' }))
 
     await waitFor(() => {
-      expect(queryClient.getQueryData<Application[]>(applicationQueryKeys.board)?.[0].status)
+      expect(queryClient.getQueryData<{ applications: Application[] }>(applicationQueryKeys.board)?.applications[0].status)
         .toBe('INTERVIEW')
     })
 
     act(() => rejectUpdate(new Error('Update failed')))
     await waitFor(() => expect(result.current.isError).toBe(true))
 
-    expect(queryClient.getQueryData<Application[]>(applicationQueryKeys.board)?.[0].status)
+    expect(queryClient.getQueryData<{ applications: Application[] }>(applicationQueryKeys.board)?.applications[0].status)
       .toBe('APPLIED')
   })
 })

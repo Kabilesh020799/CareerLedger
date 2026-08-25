@@ -143,9 +143,15 @@ export const gmailUpdateReviewService = {
             throw new GmailUpdateReviewNotFoundError("Resume tag not found");
           }
         }
+        const activeSprint = await transaction.sprint.findFirst({
+          where: { userId, workspaceId: null, status: "ACTIVE" },
+          orderBy: { sequence: "desc" },
+          select: { id: true },
+        });
         const application = await transaction.application.create({
           data: {
             userId,
+            ...(activeSprint ? { sprintId: activeSprint.id } : {}),
             company: input.company,
             jobTitle: input.jobTitle,
             source: "Gmail",

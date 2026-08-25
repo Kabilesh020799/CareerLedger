@@ -17,6 +17,9 @@ const { prismaMock, transactionMock } = vi.hoisted(() => {
     resumeObjectDeletion: {
       upsert: vi.fn(),
     },
+    sprint: {
+      findFirst: vi.fn(),
+    },
   };
 
   return {
@@ -28,6 +31,9 @@ const { prismaMock, transactionMock } = vi.hoisted(() => {
         create: vi.fn(),
         findFirst: vi.fn(),
         deleteMany: vi.fn(),
+      },
+      workspaceMember: {
+        findUnique: vi.fn(),
       },
       $transaction: vi.fn(),
     },
@@ -61,6 +67,9 @@ const applicationInclude = {
   coverLetterAttachment: {
     select: { fileName: true, mimeType: true, size: true, createdAt: true },
   },
+  sprint: {
+    select: { id: true, name: true, sequence: true, status: true },
+  },
 };
 
 describe("application ownership", () => {
@@ -69,6 +78,7 @@ describe("application ownership", () => {
     prismaMock.$transaction.mockImplementation((callback) =>
       callback(transactionMock),
     );
+    transactionMock.sprint.findFirst.mockResolvedValue(null);
     applicationResumeStorageServiceMock.processQueuedDeletion.mockResolvedValue(true);
   });
 
@@ -168,6 +178,31 @@ describe("application ownership", () => {
         company: "Acme",
         jobTitle: "Engineer",
         userId: "user-1",
+      },
+      include: applicationInclude,
+    });
+  });
+
+  it("connects a newly created application to the active legacy sprint", async () => {
+    transactionMock.sprint.findFirst.mockResolvedValue({ id: "sprint-1" });
+    transactionMock.application.create.mockResolvedValue({ id: "application-1" });
+
+    await applicationService.create("user-1", {
+      company: "Acme",
+      jobTitle: "Engineer",
+    });
+
+    expect(transactionMock.sprint.findFirst).toHaveBeenCalledWith({
+      where: { userId: "user-1", workspaceId: null, status: "ACTIVE" },
+      orderBy: { sequence: "desc" },
+      select: { id: true },
+    });
+    expect(transactionMock.application.create).toHaveBeenCalledWith({
+      data: {
+        company: "Acme",
+        jobTitle: "Engineer",
+        userId: "user-1",
+        sprintId: "sprint-1",
       },
       include: applicationInclude,
     });

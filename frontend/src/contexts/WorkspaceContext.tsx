@@ -10,7 +10,14 @@ export function useWorkspaces() { return useQuery({ queryKey: workspaceQueryKey,
 export function WorkspaceProvider({ children }: PropsWithChildren) {
   const query = useWorkspaces(); const client = useQueryClient()
   const [workspaceId, setState] = useState<string | null>(() => localStorage.getItem(storageKey))
-  useEffect(() => { if (!workspaceId && query.data?.[0]) setState(query.data[0].workspace.id) }, [query.data, workspaceId])
+  useEffect(() => {
+    if (!workspaceId && query.data?.[0]) {
+      const nextWorkspaceId = query.data[0].workspace.id
+      setSelectedWorkspaceId(nextWorkspaceId)
+      setState(nextWorkspaceId)
+      void client.invalidateQueries()
+    }
+  }, [client, query.data, workspaceId])
   useEffect(() => { setSelectedWorkspaceId(workspaceId); if (workspaceId) localStorage.setItem(storageKey, workspaceId) }, [workspaceId])
   const setWorkspaceId = (id: string) => { setSelectedWorkspaceId(id); setState(id); localStorage.setItem(storageKey,id); void client.invalidateQueries() }
   const value = useMemo(() => ({ workspaceId, setWorkspaceId, memberships: query.data, isLoading: query.isLoading }), [workspaceId, query.data, query.isLoading])
