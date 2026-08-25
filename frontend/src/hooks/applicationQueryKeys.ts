@@ -10,5 +10,6 @@ export const applicationQueryKeys = {
 export const sprintQueryKeys = {
   all: ['sprints'] as const,
   current: ['sprints', 'current'] as const,
+  archived: ['sprints', 'archived'] as const,
   history: ['sprints', 'history'] as const,
 }

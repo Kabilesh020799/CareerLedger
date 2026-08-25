@@ -15,6 +15,12 @@ export const sprintRouter = Router();
  *     responses:
  *       200:
  *         description: Sprint history
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Sprint'
  */
 sprintRouter.get("/", sprintController.list);
 
@@ -30,8 +36,33 @@ sprintRouter.get("/", sprintController.list);
  *     responses:
  *       200:
  *         description: Current sprint and applications
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CurrentSprint'
  */
 sprintRouter.get("/current", sprintController.current);
+
+/**
+ * @swagger
+ * /api/sprints/archived:
+ *   get:
+ *     tags: [Sprints]
+ *     summary: List archived sprints
+ *     description: Returns closed sprints for the signed-in user or selected workspace, newest first, with every application still assigned to each closed sprint.
+ *     security:
+ *       - sessionCookie: []
+ *     responses:
+ *       200:
+ *         description: Archived sprint groups
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ArchivedSprintGroup'
+ */
+sprintRouter.get("/archived", sprintController.archived);
 
 /**
  * @swagger
@@ -39,11 +70,39 @@ sprintRouter.get("/current", sprintController.current);
  *   post:
  *     tags: [Sprints]
  *     summary: Start the next sprint
- *     description: Closes the active sprint and creates the next one transactionally. Rejected applications remain in the closed sprint while other applications carry over.
+ *     description: After the active sprint reaches its configured end, closes it and creates the next one transactionally. Rejected applications remain in the closed sprint while other applications carry over. The first sprint defaults to 14 days; later sprints inherit the previous duration unless one is provided.
  *     security:
  *       - sessionCookie: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 100
+ *               durationDays:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 90
+ *                 description: Sprint duration in whole days. Defaults to 14 for the first sprint or inherits the active sprint duration thereafter.
  *     responses:
  *       201:
  *         description: Sprint started
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SprintStartResult'
+ *       400:
+ *         description: Invalid sprint name or duration
+ *       409:
+ *         description: The active sprint has not reached its configured end time
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SprintActiveConflict'
  */
 sprintRouter.post("/start", sprintController.start);

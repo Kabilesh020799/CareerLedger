@@ -219,19 +219,21 @@ model ApplicationEvent {
 }
 
 model Sprint {
-  id          String      @id @default(cuid())
-  userId      String
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workspaceId String?
-  workspace   Workspace?  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name        String
-  sequence    Int
-  status      SprintStatus @default(ACTIVE)
-  startedAt   DateTime    @default(now())
-  closedAt    DateTime?
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId  String?
+  workspace    Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name         String
+  sequence     Int
+  status       SprintStatus  @default(ACTIVE)
+  durationDays Int
+  startedAt    DateTime      @default(now())
+  endsAt       DateTime
+  closedAt     DateTime?
   applications Application[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@index([userId, workspaceId, status, sequence])
   @@index([workspaceId, status, sequence])

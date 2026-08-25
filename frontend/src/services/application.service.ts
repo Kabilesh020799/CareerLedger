@@ -11,6 +11,7 @@ import type {
   ResumeUploadPreparation,
   ResumeDownloadPreparation,
   ApplicationAttachments,
+  ArchivedSprintGroup,
   CurrentSprint,
   Sprint,
   SprintStartResult,
@@ -193,6 +194,11 @@ export const applicationService = {
 
   async getCurrentSprint() {
     const response = await api.get<CurrentSprint>('/sprints/current')
+    return response.data
+  },
+
+  async listArchivedSprints() {
+    const response = await api.get<ArchivedSprintGroup[]>('/sprints/archived')
     return response.data
   },
 

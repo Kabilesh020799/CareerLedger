@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { sprintService } from "../services/sprint.service";
+import { SprintNotEndedError, sprintService } from "../services/sprint.service";
 import { selectedWorkspaceId } from "../services/workspace-access.service";
 import { startSprintSchema } from "../validators/sprint.validator";
 
@@ -23,6 +23,11 @@ export const sprintController = {
     res.json(result);
   },
 
+  async archived(req: Request, res: Response) {
+    const result = await sprintService.archived(userId(req), workspaceId(req));
+    res.json(result);
+  },
+
   async start(req: Request, res: Response) {
     const parsed = startSprintSchema.safeParse(req.body ?? {});
     if (!parsed.success) {
@@ -33,11 +38,22 @@ export const sprintController = {
       return;
     }
 
-    const result = await sprintService.start(
-      userId(req),
-      parsed.data,
-      workspaceId(req),
-    );
-    res.status(201).json(result);
+    try {
+      const result = await sprintService.start(
+        userId(req),
+        parsed.data,
+        workspaceId(req),
+      );
+      res.status(201).json(result);
+    } catch (error) {
+      if (error instanceof SprintNotEndedError) {
+        res.status(409).json({
+          error: error.message,
+          endsAt: error.endsAt.toISOString(),
+        });
+        return;
+      }
+      throw error;
+    }
   },
 };

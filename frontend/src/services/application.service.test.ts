@@ -92,6 +92,23 @@ describe('applicationService', () => {
 
   it('loads the active sprint and starts the next sprint', async () => {
     const current = { sprint: null, applications: [] }
+    const archived = [{
+      sprint: {
+        id: 'sprint-0',
+        userId: 'user-1',
+        workspaceId: 'workspace-1',
+        name: 'Sprint 0',
+        sequence: 0,
+        status: 'CLOSED' as const,
+        durationDays: 14,
+        endsAt: '2026-08-07T12:00:00.000Z',
+        startedAt: '2026-07-24T12:00:00.000Z',
+        closedAt: '2026-08-07T12:00:00.000Z',
+        createdAt: '2026-07-24T12:00:00.000Z',
+        updatedAt: '2026-08-07T12:00:00.000Z',
+      },
+      applications: [application],
+    }]
     const started = {
       sprint: {
         id: 'sprint-1',
@@ -100,6 +117,8 @@ describe('applicationService', () => {
         name: 'Sprint 1',
         sequence: 1,
         status: 'ACTIVE' as const,
+        durationDays: 14,
+        endsAt: '2026-08-22T12:00:00.000Z',
         startedAt: '2026-08-08T12:00:00.000Z',
         closedAt: null,
         createdAt: '2026-08-08T12:00:00.000Z',
@@ -111,15 +130,18 @@ describe('applicationService', () => {
     }
     vi.mocked(api.get).mockResolvedValueOnce({ data: current })
     vi.mocked(api.get).mockResolvedValueOnce({ data: [started.sprint] })
+    vi.mocked(api.get).mockResolvedValueOnce({ data: archived })
     vi.mocked(api.post).mockResolvedValueOnce({ data: started })
 
     await expect(applicationService.getCurrentSprint()).resolves.toEqual(current)
     await expect(applicationService.listSprints()).resolves.toEqual([started.sprint])
-    await expect(applicationService.startSprint({ name: 'Sprint 1' })).resolves.toEqual(started)
+    await expect(applicationService.listArchivedSprints()).resolves.toEqual(archived)
+    await expect(applicationService.startSprint({ name: 'Sprint 1', durationDays: 21 })).resolves.toEqual(started)
 
     expect(api.get).toHaveBeenNthCalledWith(1, '/sprints/current')
     expect(api.get).toHaveBeenNthCalledWith(2, '/sprints')
-    expect(api.post).toHaveBeenCalledWith('/sprints/start', { name: 'Sprint 1' })
+    expect(api.get).toHaveBeenNthCalledWith(3, '/sprints/archived')
+    expect(api.post).toHaveBeenCalledWith('/sprints/start', { name: 'Sprint 1', durationDays: 21 })
   })
 
   it('creates an application through the API', async () => {

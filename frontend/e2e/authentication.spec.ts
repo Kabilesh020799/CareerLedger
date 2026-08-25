@@ -257,11 +257,19 @@ test('move an application across the board and record its timeline', async ({ pa
   const memberships = await membershipsResponse.json()
   const workspaceId = memberships[0]?.workspace?.id as string | undefined
   if (!workspaceId) throw new Error('The signed-in test user has no workspace')
-  const firstSprintResponse = await page.request.post(
-    'http://127.0.0.1:3001/api/sprints/start',
-    { data: {}, headers: { 'X-Workspace-Id': workspaceId } },
+  const currentSprintResponse = await page.request.get(
+    'http://127.0.0.1:3001/api/sprints/current',
+    { headers: { 'X-Workspace-Id': workspaceId } },
   )
-  expect(firstSprintResponse.ok()).toBe(true)
+  expect(currentSprintResponse.ok()).toBe(true)
+  const currentSprint = await currentSprintResponse.json()
+  if (!currentSprint.sprint) {
+    const firstSprintResponse = await page.request.post(
+      'http://127.0.0.1:3001/api/sprints/start',
+      { data: {}, headers: { 'X-Workspace-Id': workspaceId } },
+    )
+    expect(firstSprintResponse.ok()).toBe(true)
+  }
   await page.getByRole('link', { name: 'Board', exact: true }).click()
   const card = page.getByRole('article', {
     name: `${company}, Pipeline Engineer`,

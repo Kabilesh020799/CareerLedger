@@ -75,7 +75,7 @@ export const openApiDocument: OpenAPIV3.Document = {
       ApplicationStatus: { type: "string", enum: ["SAVED", "APPLIED", "SCREENING", "ASSESSMENT", "INTERVIEW", "OFFER", "REJECTED", "WITHDRAWN"] },
       Sprint: {
         type: "object",
-        required: ["id", "name", "sequence", "status", "startedAt", "createdAt", "updatedAt"],
+        required: ["id", "name", "sequence", "status", "durationDays", "startedAt", "endsAt", "createdAt", "updatedAt"],
         properties: {
           id: { type: "string" },
           userId: { type: "string" },
@@ -83,7 +83,9 @@ export const openApiDocument: OpenAPIV3.Document = {
           name: { type: "string" },
           sequence: { type: "integer", minimum: 1 },
           status: { type: "string", enum: ["ACTIVE", "CLOSED"] },
+          durationDays: { type: "integer", minimum: 1, maximum: 90 },
           startedAt: { type: "string", format: "date-time" },
+          endsAt: { type: "string", format: "date-time" },
           closedAt: { type: "string", format: "date-time", nullable: true },
           applicationCount: { type: "integer", minimum: 0 },
           rejectedCount: { type: "integer", minimum: 0 },
@@ -99,6 +101,14 @@ export const openApiDocument: OpenAPIV3.Document = {
           applications: { type: "array", items: { $ref: "#/components/schemas/Application" } },
         },
       },
+      ArchivedSprintGroup: {
+        type: "object",
+        required: ["sprint", "applications"],
+        properties: {
+          sprint: { $ref: "#/components/schemas/Sprint" },
+          applications: { type: "array", items: { $ref: "#/components/schemas/Application" } },
+        },
+      },
       SprintStartResult: {
         type: "object",
         required: ["sprint", "previousSprint", "carriedOverCount", "closedRejectedCount"],
@@ -107,6 +117,14 @@ export const openApiDocument: OpenAPIV3.Document = {
           previousSprint: { allOf: [{ $ref: "#/components/schemas/Sprint" }], nullable: true },
           carriedOverCount: { type: "integer", minimum: 0 },
           closedRejectedCount: { type: "integer", minimum: 0 },
+        },
+      },
+      SprintActiveConflict: {
+        type: "object",
+        required: ["error", "endsAt"],
+        properties: {
+          error: { type: "string" },
+          endsAt: { type: "string", format: "date-time" },
         },
       },
       ApplicationEvent: { type: "object", properties: { id: { type: "string" }, type: { type: "string", enum: ["NOTE", "STATUS_CHANGE"] }, description: { type: "string" }, fromStatus: { $ref: "#/components/schemas/ApplicationStatus" }, toStatus: { $ref: "#/components/schemas/ApplicationStatus" }, occurredAt: { type: "string", format: "date-time" } } },
@@ -139,7 +157,8 @@ export const openApiDocument: OpenAPIV3.Document = {
     ], responses: { "200": { description: "Paginated discovery result.", headers: { "Server-Timing": { $ref: "#/components/headers/ServerTiming" }, "X-Response-Time-Ms": { $ref: "#/components/headers/ResponseTimeMs" } } }, "400": { description: "Invalid query." } } } },
     "/api/sprints": { get: { tags: ["Sprints"], summary: "List sprint history", description: "Returns the signed-in user's or selected workspace's sprints from newest to oldest.", security: [{ sessionCookie: [] }], responses: { "200": { description: "Sprint history.", content: { "application/json": { schema: { type: "array", items: { $ref: "#/components/schemas/Sprint" } } } } }, "401": { description: "Authentication required." } } } },
     "/api/sprints/current": { get: { tags: ["Sprints"], summary: "Get the current sprint", description: "Returns the active sprint and its applications, or a null sprint and empty application list before the first sprint starts.", security: [{ sessionCookie: [] }], responses: { "200": { description: "Current sprint view.", content: { "application/json": { schema: { $ref: "#/components/schemas/CurrentSprint" } } } } } } },
-    "/api/sprints/start": { post: { tags: ["Sprints"], summary: "Start the next sprint", description: "Closes the active sprint and creates the next sprint in one transaction. Rejected applications remain in the closed sprint; all other applications carry over. The first sprint claims unassigned applications in scope.", security: [{ sessionCookie: [] }], requestBody: { required: false, content: { "application/json": { schema: { type: "object", properties: { name: { type: "string", minLength: 1, maxLength: 100 } } } } } }, responses: { "201": { description: "Sprint started.", content: { "application/json": { schema: { $ref: "#/components/schemas/SprintStartResult" } } } }, "400": { description: "Invalid sprint name." }, "401": { description: "Authentication required." }, "403": { description: "Selected workspace is read-only." }, "404": { description: "Selected workspace was not found." } } } },
+    "/api/sprints/archived": { get: { tags: ["Sprints"], summary: "List archived sprints", description: "Returns closed sprints for the signed-in user or selected workspace, newest first, with every application still assigned to each closed sprint.", security: [{ sessionCookie: [] }], responses: { "200": { description: "Archived sprint groups.", content: { "application/json": { schema: { type: "array", items: { $ref: "#/components/schemas/ArchivedSprintGroup" } } } } }, "401": { description: "Authentication required." } } } },
+    "/api/sprints/start": { post: { tags: ["Sprints"], summary: "Start the next sprint", description: "After the active sprint reaches its configured end time, closes it and creates the next sprint in one transaction. Rejected applications remain in the closed sprint; all other applications carry over. The first sprint claims unassigned applications in scope. Starting early returns 409 and does not mutate sprint or application data.", security: [{ sessionCookie: [] }], requestBody: { required: false, content: { "application/json": { schema: { type: "object", properties: { name: { type: "string", minLength: 1, maxLength: 100 }, durationDays: { type: "integer", minimum: 1, maximum: 90, description: "Whole-day sprint duration. Defaults to 14 for the first sprint or inherits the active sprint duration thereafter." } } } } } }, responses: { "201": { description: "Sprint started.", content: { "application/json": { schema: { $ref: "#/components/schemas/SprintStartResult" } } } }, "400": { description: "Invalid sprint name or duration." }, "401": { description: "Authentication required." }, "403": { description: "Selected workspace is read-only." }, "404": { description: "Selected workspace was not found." }, "409": { description: "The active sprint has not reached its configured end time.", content: { "application/json": { schema: { $ref: "#/components/schemas/SprintActiveConflict" } } } } } } },
     "/api/applications/resume-uploads": {
       post: { tags: ["Resumes"], summary: "Prepare a resume upload", description: "Validates file metadata and returns either S3 form fields or database fallback instructions.", security: [{ sessionCookie: [] }], requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["fileName", "mimeType", "size"], properties: { fileName: { type: "string" }, mimeType: { type: "string" }, size: { type: "integer", maximum: 5242880 } } } } } }, responses: { "200": { description: "Upload preparation." }, "400": { description: "Unsupported or oversized file." } } },
       delete: { tags: ["Resumes"], summary: "Abandon a pending resume upload", description: "Deletes a pending object owned by the current user.", security: [{ sessionCookie: [] }], responses: { "204": { description: "Pending upload removed." } } },

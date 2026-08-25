@@ -20,6 +20,10 @@ export type Sprint = {
   name: string
   sequence: number
   status: SprintStatus
+  /** Configured length of the sprint in whole days. */
+  durationDays: number
+  /** Timestamp after which the user may deliberately start the next sprint. */
+  endsAt: string
   startedAt: string
   closedAt: string | null
   applicationCount?: number
@@ -150,8 +154,15 @@ export type CurrentSprint = {
   applications: Application[]
 }
 
+/** Applications that remain assigned to one closed sprint for archive review. */
+export type ArchivedSprintGroup = {
+  sprint: Sprint
+  applications: Application[]
+}
+
 export type StartSprintInput = {
   name?: string
+  durationDays?: number
 }
 
 export type SprintStartResult = {

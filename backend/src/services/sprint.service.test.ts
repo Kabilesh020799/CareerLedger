@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkspaceAccessError } from "./workspace-access.service";
 
 const { prismaMock, transactionMock } = vi.hoisted(() => {
@@ -31,9 +31,10 @@ const { prismaMock, transactionMock } = vi.hoisted(() => {
 
 vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
 
-import { sprintService } from "./sprint.service";
+import { SprintNotEndedError, sprintService } from "./sprint.service";
 
 const date = new Date("2026-08-24T12:00:00.000Z");
+const day = 24 * 60 * 60 * 1000;
 
 function sprint(overrides: Partial<{
   id: string;
@@ -42,7 +43,9 @@ function sprint(overrides: Partial<{
   name: string;
   sequence: number;
   status: "ACTIVE" | "CLOSED";
+  durationDays: number;
   startedAt: Date;
+  endsAt: Date;
   closedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -54,7 +57,9 @@ function sprint(overrides: Partial<{
     name: "Sprint 1",
     sequence: 1,
     status: "ACTIVE" as const,
+    durationDays: 14,
     startedAt: date,
+    endsAt: new Date(date.getTime() + 14 * day),
     closedAt: null,
     createdAt: date,
     updatedAt: date,
@@ -64,9 +69,12 @@ function sprint(overrides: Partial<{
 
 describe("sprintService", () => {
   beforeEach(() => {
+    vi.useFakeTimers({ now: date });
     vi.clearAllMocks();
     prismaMock.$transaction.mockImplementation((callback) => callback(transactionMock));
   });
+
+  afterEach(() => vi.useRealTimers());
 
   it("lists only the authenticated user's legacy sprint scope newest first", async () => {
     prismaMock.sprint.findMany.mockResolvedValue([sprint()]);
@@ -77,7 +85,12 @@ describe("sprintService", () => {
       where: { userId: "user-1", workspaceId: null },
       orderBy: [{ sequence: "desc" }, { startedAt: "desc" }],
     });
-    expect(result[0]).toMatchObject({ id: "sprint-1", sequence: 1 });
+    expect(result[0]).toMatchObject({
+      id: "sprint-1",
+      sequence: 1,
+      durationDays: 14,
+      endsAt: new Date(date.getTime() + 14 * day),
+    });
   });
 
   it("rejects access to a workspace when the user is not a member", async () => {
@@ -87,6 +100,74 @@ describe("sprintService", () => {
       WorkspaceAccessError,
     );
     expect(prismaMock.sprint.findMany).not.toHaveBeenCalled();
+  });
+
+  it("includes duration and end time in the current sprint response", async () => {
+    prismaMock.sprint.findFirst.mockResolvedValue(
+      sprint({
+        durationDays: 21,
+        endsAt: new Date(date.getTime() + 21 * day),
+      }),
+    );
+    prismaMock.application.findMany.mockResolvedValue([]);
+
+    const result = await sprintService.current("user-1");
+
+    expect(result.sprint).toMatchObject({
+      durationDays: 21,
+      endsAt: new Date(date.getTime() + 21 * day),
+    });
+  });
+
+  it("lists closed sprint groups newest first with all assigned applications", async () => {
+    const newest = sprint({
+      id: "sprint-2",
+      sequence: 2,
+      name: "Sprint 2",
+      status: "CLOSED",
+      closedAt: date,
+    });
+    const oldest = sprint({
+      id: "sprint-1",
+      sequence: 1,
+      name: "Sprint 1",
+      status: "CLOSED",
+      closedAt: date,
+    });
+    prismaMock.workspaceMember.findUnique.mockResolvedValue({
+      role: "MEMBER",
+      workspace: { isPersonal: false },
+    });
+    prismaMock.sprint.findMany.mockResolvedValue([newest, oldest]);
+    prismaMock.application.findMany
+      .mockResolvedValueOnce([{ id: "application-2" }])
+      .mockResolvedValueOnce([{ id: "application-1" }]);
+
+    const result = await sprintService.archived("user-1", "workspace-1");
+
+    expect(prismaMock.sprint.findMany).toHaveBeenCalledWith({
+      where: { workspaceId: "workspace-1", status: "CLOSED" },
+      orderBy: [{ sequence: "desc" }, { startedAt: "desc" }],
+    });
+    expect(prismaMock.application.findMany).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: { workspaceId: "workspace-1", sprintId: "sprint-2" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      }),
+    );
+    expect(prismaMock.application.findMany).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        where: { workspaceId: "workspace-1", sprintId: "sprint-1" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      }),
+    );
+    expect(result.map((group) => group.sprint.id)).toEqual(["sprint-2", "sprint-1"]);
+    expect(result.map((group) => group.applications)).toEqual([
+      [{ id: "application-2" }],
+      [{ id: "application-1" }],
+    ]);
   });
 
   it("starts Sprint 1 and assigns unassigned applications atomically", async () => {
@@ -106,11 +187,19 @@ describe("sprintService", () => {
         name: "Sprint 1",
         sequence: 1,
         status: "ACTIVE",
+        durationDays: 14,
+        startedAt: date,
+        endsAt: new Date(date.getTime() + 14 * day),
       }),
     });
     expect(transactionMock.$executeRaw).toHaveBeenCalledOnce();
     expect(result).toMatchObject({
-      sprint: { id: "sprint-1", name: "Sprint 1" },
+      sprint: {
+        id: "sprint-1",
+        name: "Sprint 1",
+        durationDays: 14,
+        endsAt: new Date(date.getTime() + 14 * day),
+      },
       previousSprint: null,
       carriedOverCount: 3,
       closedRejectedCount: 0,
@@ -118,7 +207,10 @@ describe("sprintService", () => {
   });
 
   it("closes a sprint, retains rejected applications, and carries over the rest", async () => {
-    const active = sprint();
+    const active = sprint({
+      durationDays: 7,
+      endsAt: new Date(date.getTime() - 1),
+    });
     const closed = sprint({ status: "CLOSED", closedAt: date });
     const next = sprint({
       id: "sprint-2",
@@ -138,6 +230,13 @@ describe("sprintService", () => {
       where: { id: "sprint-1" },
       data: expect.objectContaining({ status: "CLOSED" }),
     });
+    expect(transactionMock.sprint.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        durationDays: 7,
+        startedAt: date,
+        endsAt: new Date(date.getTime() + 7 * day),
+      }),
+    });
     expect(transactionMock.application.count).toHaveBeenCalledWith({
       where: { userId: "user-1", sprintId: "sprint-1", status: "REJECTED" },
     });
@@ -148,5 +247,45 @@ describe("sprintService", () => {
       carriedOverCount: 2,
       closedRejectedCount: 1,
     });
+  });
+
+  it("uses an explicitly configured duration for a later sprint", async () => {
+    const active = sprint({ endsAt: new Date(date.getTime() - 1) });
+    transactionMock.sprint.findFirst.mockResolvedValue(active);
+    transactionMock.sprint.update.mockResolvedValue(
+      sprint({ status: "CLOSED", closedAt: date }),
+    );
+    transactionMock.sprint.create.mockResolvedValue(
+      sprint({ id: "sprint-2", sequence: 2 }),
+    );
+    transactionMock.application.count.mockResolvedValue(0);
+    transactionMock.$executeRaw.mockResolvedValue(0);
+
+    await sprintService.start("user-1", { durationDays: 21 });
+
+    expect(transactionMock.sprint.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        durationDays: 21,
+        endsAt: new Date(date.getTime() + 21 * day),
+      }),
+    });
+  });
+
+  it("rejects an early next-sprint start without mutating sprint or applications", async () => {
+    const active = sprint({ endsAt: new Date(date.getTime() + 1) });
+    transactionMock.sprint.findFirst.mockResolvedValue(active);
+    const start = sprintService.start("user-1", {});
+
+    await expect(start).rejects.toEqual(
+      expect.objectContaining({
+        name: "SprintNotEndedError",
+        endsAt: active.endsAt,
+      }),
+    );
+    await expect(start).rejects.toBeInstanceOf(SprintNotEndedError);
+    expect(transactionMock.sprint.update).not.toHaveBeenCalled();
+    expect(transactionMock.sprint.create).not.toHaveBeenCalled();
+    expect(transactionMock.application.count).not.toHaveBeenCalled();
+    expect(transactionMock.$executeRaw).not.toHaveBeenCalled();
   });
 });

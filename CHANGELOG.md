@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.32.0] - 2026-08-24
+
+### Added
+
+- Configure whole-day sprint durations, see each sprint's end date, and manually start the next sprint only after the configured end while carrying unfinished applications forward.
+- Show an accessible in-app notification when the active sprint reaches its configured end.
+- Review applications that remain in closed sprints from an Archived applications section grouped by sprint.
+
 ## [3.31.0] - 2026-08-24
 
 ### Added
@@ -510,7 +518,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.31.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.32.0...HEAD
+[3.32.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.31.0...v3.32.0
 [3.31.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.30.1...v3.31.0
 [3.30.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.30.0...v3.30.1
 [3.30.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.29.6...v3.30.0

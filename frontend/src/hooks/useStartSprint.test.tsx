@@ -19,6 +19,8 @@ const result = {
     name: 'Sprint 2',
     sequence: 2,
     status: 'ACTIVE' as const,
+    durationDays: 21,
+    endsAt: '2026-09-05T12:00:00.000Z',
     startedAt: '2026-08-15T12:00:00.000Z',
     closedAt: null,
     createdAt: '2026-08-15T12:00:00.000Z',
@@ -48,9 +50,9 @@ describe('useStartSprint', () => {
     const { wrapper, invalidate } = setup()
     const { result: hook } = renderHook(useStartSprint, { wrapper })
 
-    await act(() => hook.current.mutateAsync({}))
+    await act(() => hook.current.mutateAsync({ name: 'Focused sprint', durationDays: 21 }))
 
-    expect(applicationService.startSprint).toHaveBeenCalledWith({})
+    expect(applicationService.startSprint).toHaveBeenCalledWith({ name: 'Focused sprint', durationDays: 21 })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: applicationQueryKeys.all })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: sprintQueryKeys.all })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['dashboard'] })

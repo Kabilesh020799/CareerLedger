@@ -4,6 +4,18 @@ import type { StartSprintInput } from "../validators/sprint.validator";
 import { applicationAccess } from "./workspace-access.service";
 
 export type SprintStatusValue = "ACTIVE" | "CLOSED";
+export const DEFAULT_SPRINT_DURATION_DAYS = 14;
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
+export class SprintNotEndedError extends Error {
+  readonly endsAt: Date;
+
+  constructor(endsAt: Date) {
+    super("The current sprint has not ended yet.");
+    this.name = "SprintNotEndedError";
+    this.endsAt = endsAt;
+  }
+}
 
 export interface SprintSummary {
   id: string;
@@ -12,7 +24,9 @@ export interface SprintSummary {
   name: string;
   sequence: number;
   status: SprintStatusValue;
+  durationDays: number;
   startedAt: Date;
+  endsAt: Date;
   closedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -20,6 +34,12 @@ export interface SprintSummary {
 
 export interface CurrentSprintResult {
   sprint: SprintSummary | null;
+  applications: SprintApplication[];
+}
+
+/** Closed sprint metadata and the applications still assigned to it. */
+export interface ArchivedSprintGroup {
+  sprint: SprintSummary;
   applications: SprintApplication[];
 }
 
@@ -50,7 +70,7 @@ const applicationInclude = {
   },
 } satisfies Prisma.ApplicationInclude;
 
-type SprintApplication = Prisma.ApplicationGetPayload<{
+export type SprintApplication = Prisma.ApplicationGetPayload<{
   include: typeof applicationInclude;
 }>;
 
@@ -61,7 +81,9 @@ interface SprintRecord {
   name: string;
   sequence: number;
   status: SprintStatusValue;
+  durationDays: number;
   startedAt: Date;
+  endsAt: Date;
   closedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -97,7 +119,9 @@ interface SprintDelegate {
       name: string;
       sequence: number;
       status: SprintStatusValue;
+      durationDays: number;
       startedAt: Date;
+      endsAt: Date;
     };
   }): Promise<SprintRecord>;
   update(args: {
@@ -148,7 +172,9 @@ function summary(sprint: SprintRecord): SprintSummary {
     name: sprint.name,
     sequence: sprint.sequence,
     status: sprint.status,
+    durationDays: sprint.durationDays,
     startedAt: sprint.startedAt,
+    endsAt: sprint.endsAt,
     closedAt: sprint.closedAt,
     createdAt: sprint.createdAt,
     updatedAt: sprint.updatedAt,
@@ -197,6 +223,26 @@ export const sprintService = {
     return { sprint: summary(sprint), applications };
   },
 
+  async archived(userId: string, workspaceId?: string): Promise<ArchivedSprintGroup[]> {
+    const { access, where } = await scopedAccess(userId, workspaceId);
+    const sprints = await database.sprint.findMany({
+      where: { ...where, status: "CLOSED" },
+      orderBy: [{ sequence: "desc" }, { startedAt: "desc" }],
+    });
+
+    return Promise.all(
+      sprints.map(async (sprint) => {
+        const applications = await database.application.findMany({
+          where: { ...access.where, sprintId: sprint.id },
+          include: applicationInclude,
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        });
+
+        return { sprint: summary(sprint), applications };
+      }),
+    );
+  },
+
   async start(
     userId: string,
     input: StartSprintInput,
@@ -210,6 +256,12 @@ export const sprintService = {
         where: { ...where, status: "ACTIVE" },
         orderBy: [{ sequence: "desc" }, { startedAt: "desc" }],
       });
+      const now = new Date();
+
+      if (activeSprint && activeSprint.endsAt > now) {
+        throw new SprintNotEndedError(activeSprint.endsAt);
+      }
+
       const latestSprint = activeSprint
         ? activeSprint
         : await databaseTransaction.sprint.findFirst({
@@ -217,7 +269,9 @@ export const sprintService = {
             orderBy: [{ sequence: "desc" }, { startedAt: "desc" }],
           });
       const sequence = (activeSprint?.sequence ?? latestSprint?.sequence ?? 0) + 1;
-      const now = new Date();
+      const durationDays =
+        input.durationDays ?? activeSprint?.durationDays ?? DEFAULT_SPRINT_DURATION_DAYS;
+      const endsAt = new Date(now.getTime() + durationDays * MILLISECONDS_PER_DAY);
 
       const previousSprint = activeSprint
         ? await databaseTransaction.sprint.update({
@@ -233,7 +287,9 @@ export const sprintService = {
           name: input.name?.trim() || `Sprint ${sequence}`,
           sequence,
           status: "ACTIVE",
+          durationDays,
           startedAt: now,
+          endsAt,
         },
       });
 
