@@ -4,16 +4,17 @@ import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProvider } from '../components/ui/AppProvider'
 import { useApplicationBoard } from '../hooks/useApplicationBoard'
-import { useArchivedSprints } from '../hooks/useArchivedSprints'
+import { useCancelScheduledSprint } from '../hooks/useCancelScheduledSprint'
 import { useMoveApplication } from '../hooks/useMoveApplication'
 import { useScheduleSprint } from '../hooks/useScheduleSprint'
 import { useScheduledSprints } from '../hooks/useScheduledSprints'
 import { useStartSprint } from '../hooks/useStartSprint'
+import { useUpdateScheduledSprint } from '../hooks/useUpdateScheduledSprint'
 import type { Application } from '../types/application'
 import { ApplicationBoardPage } from './ApplicationBoardPage'
 
 vi.mock('../hooks/useApplicationBoard', () => ({ useApplicationBoard: vi.fn() }))
-vi.mock('../hooks/useArchivedSprints', () => ({ useArchivedSprints: vi.fn() }))
+vi.mock('../hooks/useCancelScheduledSprint', () => ({ useCancelScheduledSprint: vi.fn() }))
 vi.mock('../hooks/useMoveApplication', () => ({ useMoveApplication: vi.fn() }))
 vi.mock('../hooks/useScheduleSprint', () => ({ useScheduleSprint: vi.fn() }))
 vi.mock('../hooks/useScheduledSprints', () => ({
@@ -21,6 +22,7 @@ vi.mock('../hooks/useScheduledSprints', () => ({
   useSprintTimelineNow: vi.fn(() => Date.now()),
 }))
 vi.mock('../hooks/useStartSprint', () => ({ useStartSprint: vi.fn() }))
+vi.mock('../hooks/useUpdateScheduledSprint', () => ({ useUpdateScheduledSprint: vi.fn() }))
 
 const application = {
   id: 'application-1',
@@ -79,6 +81,32 @@ function scheduleResult(overrides: Record<string, unknown> = {}) {
   }
 }
 
+function updateResult(overrides: Record<string, unknown> = {}) {
+  return {
+    mutate: vi.fn(),
+    reset: vi.fn(),
+    isPending: false,
+    isSuccess: false,
+    isError: false,
+    data: undefined,
+    error: null,
+    ...overrides,
+  }
+}
+
+function cancelResult(overrides: Record<string, unknown> = {}) {
+  return {
+    mutate: vi.fn(),
+    reset: vi.fn(),
+    isPending: false,
+    isSuccess: false,
+    isError: false,
+    data: undefined,
+    error: null,
+    ...overrides,
+  }
+}
+
 const sprint = {
   id: 'sprint-1',
   userId: 'user-1',
@@ -93,17 +121,6 @@ const sprint = {
   closedAt: null,
   createdAt: '2026-08-08T12:00:00.000Z',
   updatedAt: '2026-08-08T12:00:00.000Z',
-}
-
-const archivedSprint = {
-  ...sprint,
-  id: 'sprint-0',
-  name: 'Sprint 0',
-  sequence: 0,
-  status: 'CLOSED' as const,
-  endsAt: '2026-08-07T12:00:00.000Z',
-  startedAt: '2026-07-24T12:00:00.000Z',
-  closedAt: '2026-08-07T12:00:00.000Z',
 }
 
 const scheduledSprint = {
@@ -130,12 +147,6 @@ function renderPage() {
 describe('ApplicationBoardPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(useArchivedSprints).mockReturnValue({
-      isPending: false,
-      isError: false,
-      isSuccess: true,
-      data: [],
-    } as never)
     vi.mocked(useScheduledSprints).mockReturnValue({
       isPending: false,
       isError: false,
@@ -145,6 +156,8 @@ describe('ApplicationBoardPage', () => {
     vi.mocked(useMoveApplication).mockReturnValue(moveResult() as never)
     vi.mocked(useScheduleSprint).mockReturnValue(scheduleResult() as never)
     vi.mocked(useStartSprint).mockReturnValue(startResult() as never)
+    vi.mocked(useUpdateScheduledSprint).mockReturnValue(updateResult() as never)
+    vi.mocked(useCancelScheduledSprint).mockReturnValue(cancelResult() as never)
   })
   afterEach(cleanup)
 
@@ -166,28 +179,6 @@ describe('ApplicationBoardPage', () => {
     await user.click(screen.getByRole('tab', { name: 'Interview 0' }))
     const interviewColumn = screen.getByRole('tabpanel', { name: /Interview/ })
     expect(within(interviewColumn).getByText('0')).toBeInTheDocument()
-  })
-
-  it('shows archived applications grouped by closed sprint with detail links and statuses', () => {
-    vi.mocked(useApplicationBoard).mockReturnValue({
-      isPending: false,
-      isError: false,
-      isSuccess: true,
-      data: { sprint, applications: [application] },
-    } as never)
-    vi.mocked(useArchivedSprints).mockReturnValue({
-      isPending: false,
-      isError: false,
-      isSuccess: true,
-      data: [{ sprint: archivedSprint, applications: [{ ...application, id: 'archived-1', status: 'REJECTED' as const }] }],
-    } as never)
-
-    renderPage()
-
-    const archive = screen.getByRole('region', { name: 'Archived applications' })
-    expect(within(archive).getByRole('heading', { name: 'Sprint 0' })).toBeInTheDocument()
-    expect(within(archive).getByRole('link', { name: /Acme Corp.*Software Engineer/ })).toHaveAttribute('href', '/applications/archived-1')
-    expect(within(archive).getByText('Rejected')).toBeInTheDocument()
   })
 
   it('shows multiple upcoming sprints with their planned windows', () => {
@@ -214,7 +205,85 @@ describe('ApplicationBoardPage', () => {
     expect(within(upcoming).getByRole('heading', { name: 'Launch follow-up' })).toBeInTheDocument()
     expect(within(upcoming).getAllByText('Duration: 14 days')).toHaveLength(2)
     expect(within(upcoming).getAllByText(/Scheduled start:/)).toHaveLength(2)
-    expect(within(upcoming).getAllByText(/Calculated end:/)).toHaveLength(2)
+    expect(within(upcoming).getAllByText(/Ends:/)).toHaveLength(2)
+  })
+
+  it('opens an upcoming sprint for editing and submits the corrected plan', async () => {
+    const user = userEvent.setup()
+    const update = updateResult()
+    vi.mocked(useUpdateScheduledSprint).mockReturnValue(update as never)
+    vi.mocked(useApplicationBoard).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: { sprint, applications: [] },
+    } as never)
+    vi.mocked(useScheduledSprints).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: [scheduledSprint],
+    } as never)
+
+    renderPage()
+
+    const upcoming = screen.getByRole('region', { name: 'Upcoming sprints' })
+    await user.click(within(upcoming).getByRole('button', { name: 'Edit scheduled sprint Interview push' }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByRole('heading', { name: 'Edit scheduled sprint' })).toBeInTheDocument()
+    expect(within(dialog).getByLabelText('Sprint name (optional)')).toHaveValue('Interview push')
+    expect(within(dialog).getByLabelText('Sprint duration (days)')).toHaveValue(14)
+
+    await user.clear(within(dialog).getByLabelText('Sprint name (optional)'))
+    await user.type(within(dialog).getByLabelText('Sprint name (optional)'), 'Interview push revised')
+    await user.clear(within(dialog).getByLabelText('Sprint duration (days)'))
+    await user.type(within(dialog).getByLabelText('Sprint duration (days)'), '21')
+    await user.click(within(dialog).getByRole('button', { name: 'Save changes' }))
+
+    expect(update.mutate).toHaveBeenCalledWith(
+      {
+        id: scheduledSprint.id,
+        input: {
+          name: 'Interview push revised',
+          durationDays: 21,
+          startsAt: expect.any(String),
+        },
+      },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    )
+  })
+
+  it('asks for confirmation before canceling an upcoming sprint', async () => {
+    const user = userEvent.setup()
+    const cancel = cancelResult()
+    vi.mocked(useCancelScheduledSprint).mockReturnValue(cancel as never)
+    vi.mocked(useApplicationBoard).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: { sprint, applications: [] },
+    } as never)
+    vi.mocked(useScheduledSprints).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: [scheduledSprint],
+    } as never)
+
+    renderPage()
+
+    const upcoming = screen.getByRole('region', { name: 'Upcoming sprints' })
+    await user.click(within(upcoming).getByRole('button', { name: 'Cancel scheduled sprint Interview push' }))
+    const dialog = screen.getByRole('alertdialog')
+    expect(within(dialog).getByRole('heading', { name: 'Cancel scheduled sprint?' })).toBeInTheDocument()
+    expect(dialog).toHaveTextContent('Interview push will be removed from your upcoming sprint timeline.')
+
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel sprint' }))
+
+    expect(cancel.mutate).toHaveBeenCalledWith(
+      scheduledSprint.id,
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    )
   })
 
   it('shows upcoming loading, empty, and recoverable error states', async () => {
@@ -255,7 +324,7 @@ describe('ApplicationBoardPage', () => {
     expect(screen.getByText('No upcoming sprints scheduled.')).toBeInTheDocument()
   })
 
-  it('validates and submits a scheduled sprint using the local start time', async () => {
+  it('defaults a scheduled sprint to the next available date and submits it in the local timezone', async () => {
     const user = userEvent.setup()
     const schedule = scheduleResult()
     vi.mocked(useScheduleSprint).mockReturnValue(schedule as never)
@@ -271,21 +340,26 @@ describe('ApplicationBoardPage', () => {
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByRole('heading', { name: 'Schedule a sprint' })).toBeInTheDocument()
     expect(within(dialog).getByLabelText('Sprint duration (days)')).toHaveValue(14)
+    const startInput = within(dialog).getByLabelText(/Scheduled start/)
+    expect(startInput).not.toHaveValue('')
+    expect(within(dialog).getByText(/Starts at midnight in/)).toBeInTheDocument()
 
+    await user.clear(startInput)
     await user.click(within(dialog).getByRole('button', { name: 'Schedule sprint' }))
     expect(await within(dialog).findByText('Choose when the sprint should start')).toBeInTheDocument()
     expect(schedule.mutate).not.toHaveBeenCalled()
 
     const future = new Date(Date.now() + 48 * 60 * 60 * 1000)
-    const localValue = new Date(future.getTime() - future.getTimezoneOffset() * 60 * 1000).toISOString().slice(0, 16)
+    const localValue = [future.getFullYear(), String(future.getMonth() + 1).padStart(2, '0'), String(future.getDate()).padStart(2, '0')].join('-')
+    const expectedStartsAt = new Date(future.getFullYear(), future.getMonth(), future.getDate()).toISOString()
     await user.type(within(dialog).getByLabelText('Sprint name (optional)'), 'Interview push')
     await user.clear(within(dialog).getByLabelText('Sprint duration (days)'))
     await user.type(within(dialog).getByLabelText('Sprint duration (days)'), '21')
-    await user.type(within(dialog).getByLabelText('Scheduled start'), localValue)
+    fireEvent.change(startInput, { target: { value: localValue } })
     await user.click(within(dialog).getByRole('button', { name: 'Schedule sprint' }))
 
     expect(schedule.mutate).toHaveBeenCalledWith(
-      { name: 'Interview push', durationDays: 21, startsAt: new Date(localValue).toISOString() },
+      { name: 'Interview push', durationDays: 21, startsAt: expectedStartsAt },
       expect.objectContaining({ onSuccess: expect.any(Function) }),
     )
   })
@@ -385,44 +459,6 @@ describe('ApplicationBoardPage', () => {
     vi.mocked(useApplicationBoard).mockReturnValue({ isPending: true } as never)
     renderPage()
     expect(screen.getByLabelText('Loading application board')).toBeInTheDocument()
-  })
-
-  it('shows archived loading, empty, and recoverable error states', async () => {
-    const user = userEvent.setup()
-    const refetch = vi.fn()
-    vi.mocked(useApplicationBoard).mockReturnValue({
-      isPending: false,
-      isError: false,
-      isSuccess: true,
-      data: { sprint, applications: [] },
-    } as never)
-    vi.mocked(useArchivedSprints).mockReturnValue({ isPending: true } as never)
-
-    const { unmount } = renderPage()
-    expect(screen.getByLabelText('Loading archived applications')).toBeInTheDocument()
-
-    unmount()
-    vi.mocked(useArchivedSprints).mockReturnValue({
-      isPending: false,
-      isError: true,
-      isSuccess: false,
-      error: new Error('Archive failed'),
-      refetch,
-    } as never)
-    renderPage()
-    expect(screen.getByText('Archive failed')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Retry' }))
-    expect(refetch).toHaveBeenCalledOnce()
-
-    unmount()
-    vi.mocked(useArchivedSprints).mockReturnValue({
-      isPending: false,
-      isError: false,
-      isSuccess: true,
-      data: [],
-    } as never)
-    renderPage()
-    expect(screen.getByText('No archived applications yet.')).toBeInTheDocument()
   })
 
   it('shows load and move failures with recovery actions', async () => {
@@ -600,5 +636,7 @@ describe('ApplicationBoardPage', () => {
 
     expect(screen.getByRole('heading', { name: 'No active sprint' })).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Start sprint' })).toHaveLength(1)
+    expect(screen.getByText(/Schedule future sprints after this one is active/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Schedule sprint' })).not.toBeInTheDocument()
   })
 })

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { scheduleSprintSchema, startSprintSchema } from "./sprint.validator";
+import {
+  scheduleSprintSchema,
+  startSprintSchema,
+  updateScheduledSprintSchema,
+} from "./sprint.validator";
 
 describe("startSprintSchema", () => {
   it("accepts an omitted or trimmed sprint name", () => {
@@ -50,5 +54,16 @@ describe("startSprintSchema", () => {
       scheduleSprintSchema.safeParse({ startsAt: "2026-09-01T12:00:00" }).success,
     ).toBe(false);
     expect(scheduleSprintSchema.safeParse({ startsAt: "not-a-date" }).success).toBe(false);
+  });
+
+  it("validates partial scheduled-sprint updates", () => {
+    expect(updateScheduledSprintSchema.parse({ durationDays: 21 })).toEqual({
+      durationDays: 21,
+    });
+    expect(
+      updateScheduledSprintSchema.parse({ startsAt: "2026-09-01T12:00:00.000Z" }),
+    ).toEqual({ startsAt: new Date("2026-09-01T12:00:00.000Z") });
+    expect(updateScheduledSprintSchema.safeParse({}).success).toBe(false);
+    expect(updateScheduledSprintSchema.safeParse({ durationDays: 0 }).success).toBe(false);
   });
 });

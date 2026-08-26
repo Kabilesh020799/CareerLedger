@@ -4,10 +4,12 @@ import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProvider } from '../components/ui/AppProvider'
 import { useDashboardSummary } from '../hooks/useDashboardSummary'
+import { useScheduledSprints } from '../hooks/useScheduledSprints'
 import type { DashboardSummary } from '../types/dashboard'
 import { DashboardPage } from './DashboardPage'
 
 vi.mock('../hooks/useDashboardSummary', () => ({ useDashboardSummary: vi.fn() }))
+vi.mock('../hooks/useScheduledSprints', () => ({ useScheduledSprints: vi.fn() }))
 vi.mock('../components/reminders/DashboardReminders', () => ({
   DashboardReminders: () => <div>Reminder overview</div>,
 }))
@@ -61,7 +63,15 @@ function renderPage() {
 }
 
 describe('DashboardPage', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(useScheduledSprints).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: [],
+    } as never)
+  })
   afterEach(cleanup)
 
   it('shows status totals, weekly activity, and conversion rates', () => {
@@ -93,6 +103,38 @@ describe('DashboardPage', () => {
     expect(screen.getByRole('tab', { name: 'By source' })).toHaveAttribute('data-selected')
     await user.click(screen.getByRole('tab', { name: 'By resume tag' }))
     expect(screen.getByRole('row', { name: 'Outcomes for Full-stack resume' })).toBeInTheDocument()
+  })
+
+  it('shows upcoming sprint dates with a shortcut back to the timeline', () => {
+    vi.mocked(useDashboardSummary).mockReturnValue({ isPending: false, isError: false, isSuccess: true, data: summary } as never)
+    vi.mocked(useScheduledSprints).mockReturnValue({
+      isPending: false,
+      isError: false,
+      isSuccess: true,
+      data: [{
+        id: 'sprint-upcoming',
+        userId: 'user-1',
+        workspaceId: null,
+        name: 'Interview push',
+        sequence: 2,
+        status: 'SCHEDULED',
+        scheduledStartAt: '2026-09-10T00:00:00.000Z',
+        durationDays: 14,
+        startedAt: '2026-09-10T00:00:00.000Z',
+        endsAt: '2026-09-24T00:00:00.000Z',
+        closedAt: null,
+        createdAt: '2026-08-01T00:00:00.000Z',
+        updatedAt: '2026-08-01T00:00:00.000Z',
+      }],
+    } as never)
+
+    renderPage()
+
+    const schedule = screen.getByRole('region', { name: 'Upcoming sprint schedule' })
+    expect(within(schedule).getByRole('article', { name: 'Interview push, upcoming sprint summary' })).toBeInTheDocument()
+    expect(within(schedule).getByText(/Starts/)).toBeInTheDocument()
+    expect(within(schedule).getByText(/Ends/)).toBeInTheDocument()
+    expect(within(schedule).getByRole('link', { name: 'Manage on Board' })).toHaveAttribute('href', '/board#upcoming-sprints-heading')
   })
 
   it('shows zero metrics and a creation action for an empty dashboard', () => {

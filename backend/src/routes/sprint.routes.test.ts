@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   sprintServiceMock,
   SprintNotEndedErrorMock,
+  SprintNotFoundErrorMock,
   SprintScheduleConflictErrorMock,
 } = vi.hoisted(() => {
   class SprintNotEndedErrorMock extends Error {
@@ -32,15 +33,25 @@ const {
     }
   }
 
+  class SprintNotFoundErrorMock extends Error {
+    constructor() {
+      super("Sprint not found");
+      this.name = "SprintNotFoundError";
+    }
+  }
+
   return {
     sprintServiceMock: {
       list: vi.fn(),
       current: vi.fn(),
       archived: vi.fn(),
       schedule: vi.fn(),
+      updateScheduled: vi.fn(),
+      cancelScheduled: vi.fn(),
       start: vi.fn(),
     },
     SprintNotEndedErrorMock,
+    SprintNotFoundErrorMock,
     SprintScheduleConflictErrorMock,
   };
 });
@@ -48,6 +59,7 @@ const {
 vi.mock("../services/sprint.service", () => ({
   sprintService: sprintServiceMock,
   SprintNotEndedError: SprintNotEndedErrorMock,
+  SprintNotFoundError: SprintNotFoundErrorMock,
   SprintScheduleConflictError: SprintScheduleConflictErrorMock,
 }));
 
@@ -169,6 +181,94 @@ describe("sprint routes", () => {
     expect(response.status).toBe(400);
     expect(response.body.error).toBe("Invalid scheduled sprint data");
     expect(sprintServiceMock.schedule).not.toHaveBeenCalled();
+  });
+
+  it("updates a scheduled sprint with validated input", async () => {
+    sprintServiceMock.updateScheduled.mockResolvedValue({
+      id: "sprint-2",
+      name: "October focus",
+      status: "SCHEDULED",
+    });
+    const startsAt = "2026-10-01T12:00:00.000Z";
+
+    const response = await request(app)
+      .patch("/api/sprints/sprint-2")
+      .set("X-Workspace-Id", "workspace-1")
+      .send({ name: "October focus", durationDays: 21, startsAt });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      id: "sprint-2",
+      name: "October focus",
+      status: "SCHEDULED",
+    });
+    expect(sprintServiceMock.updateScheduled).toHaveBeenCalledWith(
+      "user-1",
+      "sprint-2",
+      { name: "October focus", durationDays: 21, startsAt: new Date(startsAt) },
+      "workspace-1",
+    );
+  });
+
+  it("rejects an empty scheduled-sprint update without calling the service", async () => {
+    const response = await request(app)
+      .patch("/api/sprints/sprint-2")
+      .send({});
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Invalid scheduled sprint data");
+    expect(sprintServiceMock.updateScheduled).not.toHaveBeenCalled();
+  });
+
+  it("returns safe errors for scheduled-sprint updates", async () => {
+    const startsAt = new Date("2026-10-01T12:00:00.000Z");
+    sprintServiceMock.updateScheduled.mockRejectedValue(
+      new SprintScheduleConflictErrorMock("The scheduled sprint overlaps an existing plan.", {
+        scheduledStartAt: startsAt,
+        requiredStartAt: new Date("2026-10-08T12:00:00.000Z"),
+      }),
+    );
+
+    const conflictResponse = await request(app)
+      .patch("/api/sprints/sprint-2")
+      .send({ startsAt: startsAt.toISOString() });
+
+    expect(conflictResponse.status).toBe(409);
+    expect(conflictResponse.body).toEqual({
+      error: "The scheduled sprint overlaps an existing plan.",
+      scheduledStartAt: startsAt.toISOString(),
+      requiredStartAt: "2026-10-08T12:00:00.000Z",
+    });
+
+    sprintServiceMock.updateScheduled.mockRejectedValue(new SprintNotFoundErrorMock());
+    const missingResponse = await request(app).patch("/api/sprints/missing").send({ name: "Updated" });
+    expect(missingResponse.status).toBe(404);
+    expect(missingResponse.body).toEqual({ error: "Sprint not found" });
+  });
+
+  it("cancels a scheduled sprint and returns no content", async () => {
+    sprintServiceMock.cancelScheduled.mockResolvedValue(undefined);
+
+    const response = await request(app)
+      .delete("/api/sprints/sprint-2")
+      .set("X-Workspace-Id", "workspace-1");
+
+    expect(response.status).toBe(204);
+    expect(response.body).toEqual({});
+    expect(sprintServiceMock.cancelScheduled).toHaveBeenCalledWith(
+      "user-1",
+      "sprint-2",
+      "workspace-1",
+    );
+  });
+
+  it("returns not found when a scheduled sprint cannot be canceled", async () => {
+    sprintServiceMock.cancelScheduled.mockRejectedValue(new SprintNotFoundErrorMock());
+
+    const response = await request(app).delete("/api/sprints/sprint-2");
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ error: "Sprint not found" });
   });
 
   it("returns a safe 409 for scheduling conflicts", async () => {
@@ -295,6 +395,23 @@ describe("sprint routes", () => {
             },
           },
         }),
+      }),
+    });
+    expect(generatedOpenApiDocument.paths["/api/sprints/{id}"]).toMatchObject({
+      patch: expect.objectContaining({
+        responses: expect.objectContaining({
+          "200": expect.anything(),
+          "409": expect.objectContaining({
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/SprintScheduleConflict" },
+              },
+            },
+          }),
+        }),
+      }),
+      delete: expect.objectContaining({
+        responses: expect.objectContaining({ "204": expect.anything() }),
       }),
     });
   });

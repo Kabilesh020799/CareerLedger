@@ -26,6 +26,15 @@ vi.mock('./hooks/useApplicationBoard', () => ({
   }),
 }))
 
+vi.mock('./hooks/useArchivedSprints', () => ({
+  useArchivedSprints: () => ({ isPending: false, isError: false, isSuccess: true, data: [] }),
+}))
+
+vi.mock('./hooks/useScheduledSprints', () => ({
+  useScheduledSprints: () => ({ isPending: false, isError: false, isSuccess: true, data: [] }),
+  useSprintTimelineNow: () => Date.now(),
+}))
+
 vi.mock('./hooks/useMoveApplication', () => ({
   useMoveApplication: () => ({
     mutate: vi.fn(),
@@ -156,6 +165,17 @@ describe('application routing', () => {
 
     expect(await screen.findByRole('heading', { name: 'Application board' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'No active sprint' })).toBeInTheDocument()
+  })
+
+  it('makes the archive available from primary navigation', async () => {
+    const user = userEvent.setup()
+    renderApp('/dashboard')
+
+    await user.click(await screen.findByRole('button', { name: 'Open more navigation' }))
+    await user.click(screen.getByRole('link', { name: 'Archive' }))
+
+    expect(await screen.findByRole('heading', { name: 'Archive' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Archived applications' })).toBeInTheDocument()
   })
 
   it('shows all matched and new-application Gmail reviews in the navigation badge', async () => {

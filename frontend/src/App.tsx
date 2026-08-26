@@ -7,6 +7,7 @@ import { AdminRoute } from './components/auth/AdminRoute'
 
 const ApplicationDetailsPage = lazy(() => import('./pages/ApplicationDetailsPage').then((module) => ({ default: module.ApplicationDetailsPage })))
 const ApplicationBoardPage = lazy(() => import('./pages/ApplicationBoardPage').then((module) => ({ default: module.ApplicationBoardPage })))
+const ArchivedApplicationsPage = lazy(() => import('./pages/ArchivedApplicationsPage').then((module) => ({ default: module.ArchivedApplicationsPage })))
 const ApplicationsPage = lazy(() => import('./pages/ApplicationsPage').then((module) => ({ default: module.ApplicationsPage })))
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then((module) => ({ default: module.DashboardPage })))
 const EditApplicationPage = lazy(() => import('./pages/EditApplicationPage').then((module) => ({ default: module.EditApplicationPage })))
@@ -41,6 +42,7 @@ function App() {
           <Route index element={<Navigate to="/applications" replace />} />
           <Route path="dashboard" element={load(<DashboardPage />)} />
           <Route path="board" element={load(<ApplicationBoardPage />)} />
+          <Route path="archive" element={load(<ArchivedApplicationsPage />)} />
           <Route path="resumes" element={load(<ResumeVersionsPage />)} />
           <Route path="gmail" element={load(<GmailSyncPage />)} />
           <Route path="browser-extension" element={load(<BrowserExtensionPage />)} />

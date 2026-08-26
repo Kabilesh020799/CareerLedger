@@ -35,3 +35,29 @@ export const scheduleSprintSchema = z.object({
 });
 
 export type ScheduleSprintInput = z.infer<typeof scheduleSprintSchema>;
+
+export const updateScheduledSprintSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(1, "Sprint name cannot be empty")
+      .max(100, "Sprint name is too long")
+      .optional(),
+    durationDays: z
+      .number()
+      .int("Sprint duration must be a whole number of days")
+      .min(1, "Sprint duration must be at least 1 day")
+      .max(90, "Sprint duration cannot exceed 90 days")
+      .optional(),
+    startsAt: z
+      .iso.datetime({ offset: true })
+      .transform((value) => new Date(value))
+      .optional(),
+  })
+  .refine(
+    (value) => value.name !== undefined || value.durationDays !== undefined || value.startsAt !== undefined,
+    { message: "Provide a name, duration, or scheduled start to update the sprint." },
+  );
+
+export type UpdateScheduledSprintInput = z.infer<typeof updateScheduledSprintSchema>;

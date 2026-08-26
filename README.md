@@ -44,7 +44,7 @@ Create an operational PostgreSQL backup with `./scripts/backup-database.sh`. Res
 ## Features
 
 - Create, live-search, progressively filter, sort, edit, and delete applications with validated HTTP/HTTPS job URLs, server-side discovery, and bounded pagination, plus focused status, note, and reminder actions from application details.
-- Organize applications into configurable whole-day job-search sprints: the first sprint defaults to 14 days, later sprints inherit the previous duration unless changed, and you can schedule multiple non-overlapping upcoming sprints with their own start dates; the current sprint stays active until its end, and you explicitly start the next due sprint. An in-app notification marks the end, rejected applications stay with the closed sprint and remain reviewable in Archived applications, while other applications carry forward and new applications join the active sprint.
+- Organize applications into configurable whole-day job-search sprints: the first sprint defaults to 14 days, later sprints inherit the previous duration unless changed, and after the first sprint starts you can schedule multiple non-overlapping upcoming sprints by local calendar date, edit or reschedule those plans, and cancel plans you no longer need; the date defaults to the next available day, the timezone is shown beside each scheduled start, and you explicitly start the next due sprint. A persistent Sprint ended banner keeps the next action visible, upcoming plans are summarized on the dashboard, and rejected applications stay with the closed sprint in the dedicated Archive navigation item while other applications carry forward and new applications join the active sprint.
 - Use a responsive workspace with collapsible secondary navigation groups, a focus-contained mobile More menu, persistent mobile shortcuts, clamped application cards, and an accessible tabbed mobile status board.
 - Work in a calm, accessible light or dark design system with an indigo action accent, cool slate surfaces, visible focus states, compact semantic application-status badges, focused page hierarchy, responsive forms, and page-shaped loading states.
 - Track application timelines, notes, status changes, follow-ups, and deadlines.
@@ -136,7 +136,7 @@ All management and user-data endpoints require an authenticated session and enfo
 | Data portability | `GET /api/data/export`, `POST /api/data/import` |
 | Calendar | `GET /api/calendar/export`, `GET/POST/DELETE /api/calendar/subscription`, `GET /api/calendar/feed/:token` |
 | Applications | `GET/POST /api/applications`, `GET/PATCH/DELETE /api/applications/:id`, `GET /api/applications/search` |
-| Sprints | `GET /api/sprints`, `GET /api/sprints/current`, `GET /api/sprints/archived`, `POST /api/sprints/schedule`, `POST /api/sprints/start` |
+| Sprints | `GET /api/sprints`, `GET /api/sprints/current`, `GET /api/sprints/archived`, `POST /api/sprints/schedule`, `PATCH/DELETE /api/sprints/:id`, `POST /api/sprints/start` |
 | Resume uploads | `POST/DELETE /api/applications/resume-uploads`, `GET /api/applications/:id/resume`, `GET /api/applications/:id/resume-download` |
 | Cover-letter uploads | `POST/DELETE /api/applications/cover-letter-uploads`, `GET /api/applications/:id/cover-letter`, `GET /api/applications/:id/cover-letter-download` |
 | Uploaded resume library | `GET /api/resumes/uploads` |

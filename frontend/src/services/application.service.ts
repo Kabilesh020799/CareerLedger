@@ -17,6 +17,7 @@ import type {
   SprintStartResult,
   ScheduleSprintInput,
   StartSprintInput,
+  UpdateScheduledSprintInput,
 } from '../types/application'
 
 /** Converts application fields and a resume into a legacy multipart request. */
@@ -216,6 +217,15 @@ export const applicationService = {
   async scheduleSprint(input: ScheduleSprintInput) {
     const response = await api.post<Sprint>('/sprints/schedule', input)
     return response.data
+  },
+
+  async updateScheduledSprint(id: string, input: UpdateScheduledSprintInput) {
+    const response = await api.patch<Sprint>(`/sprints/${id}`, input)
+    return response.data
+  },
+
+  async cancelScheduledSprint(id: string) {
+    await api.delete(`/sprints/${id}`)
   },
 
   async getById(id: string) {

@@ -147,3 +147,67 @@ sprintRouter.post("/schedule", sprintController.schedule);
  *               $ref: '#/components/schemas/SprintActiveConflict'
  */
 sprintRouter.post("/start", sprintController.start);
+
+/**
+ * @swagger
+ * /api/sprints/{id}:
+ *   patch:
+ *     tags: [Sprints]
+ *     summary: Edit an upcoming sprint
+ *     description: Updates the name, duration, and/or scheduled start of a future sprint plan. The plan must remain after the active sprint and before the next scheduled plan; application assignments are unchanged.
+ *     security:
+ *       - sessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             minProperties: 1
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 100
+ *               durationDays:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 90
+ *               startsAt:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Updated sprint plan
+ *       400:
+ *         description: Invalid scheduled sprint data
+ *       404:
+ *         description: Scheduled sprint not found
+ *       409:
+ *         description: The requested plan is in the past or overlaps another sprint plan
+ *   delete:
+ *     tags: [Sprints]
+ *     summary: Cancel an upcoming sprint
+ *     description: Removes a future sprint plan without changing application assignments.
+ *     security:
+ *       - sessionCookie: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Sprint plan canceled
+ *       404:
+ *         description: Scheduled sprint not found
+ */
+sprintRouter.patch("/:id", sprintController.update);
+sprintRouter.delete("/:id", sprintController.cancel);

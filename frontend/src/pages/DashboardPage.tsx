@@ -9,6 +9,7 @@ import type { DashboardSummary } from '../types/dashboard'
 import { getApiErrorMessage } from '../utils/apiError'
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton'
 import { PageHeader } from '../components/ui/PageHeader'
+import { UpcomingSprintSummary } from '../components/dashboard/UpcomingSprintSummary'
 
 export function DashboardPage() {
   const summaryQuery = useDashboardSummary()
@@ -39,6 +40,7 @@ export function DashboardPage() {
       {summaryQuery.isSuccess && (
         <>
           <DashboardContent summary={summaryQuery.data} />
+          <UpcomingSprintSummary />
           <AttentionPanel />
           <PerformanceInsights summary={summaryQuery.data} />
         </>

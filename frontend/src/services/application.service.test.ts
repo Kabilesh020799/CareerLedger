@@ -171,6 +171,22 @@ describe('applicationService', () => {
     expect(api.post).toHaveBeenCalledWith('/sprints/schedule', input)
   })
 
+  it('edits and cancels an upcoming sprint plan', async () => {
+    const updated = { id: 'sprint-scheduled', name: 'Interview push revised', status: 'SCHEDULED' as const }
+    const input = {
+      name: 'Interview push revised',
+      durationDays: 21,
+      startsAt: '2026-09-03T13:00:00.000Z',
+    }
+    vi.mocked(api.patch).mockResolvedValue({ data: updated })
+
+    await expect(applicationService.updateScheduledSprint('sprint-scheduled', input)).resolves.toEqual(updated)
+    await expect(applicationService.cancelScheduledSprint('sprint-scheduled')).resolves.toBeUndefined()
+
+    expect(api.patch).toHaveBeenCalledWith('/sprints/sprint-scheduled', input)
+    expect(api.delete).toHaveBeenCalledWith('/sprints/sprint-scheduled')
+  })
+
   it('creates an application through the API', async () => {
     vi.mocked(api.post).mockResolvedValue({ data: application })
     const input = { company: 'Acme Corp', jobTitle: 'Software Engineer' }

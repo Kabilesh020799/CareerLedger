@@ -3,6 +3,7 @@ import { Prisma } from "../generated/prisma/client";
 import type {
   ScheduleSprintInput,
   StartSprintInput,
+  UpdateScheduledSprintInput,
 } from "../validators/sprint.validator";
 import { applicationAccess } from "./workspace-access.service";
 
@@ -32,6 +33,13 @@ export class SprintScheduleConflictError extends Error {
     this.name = "SprintScheduleConflictError";
     this.scheduledStartAt = details.scheduledStartAt;
     this.requiredStartAt = details.requiredStartAt;
+  }
+}
+
+export class SprintNotFoundError extends Error {
+  constructor() {
+    super("Sprint not found");
+    this.name = "SprintNotFoundError";
   }
 }
 
@@ -150,6 +158,8 @@ interface SprintDelegate {
   update(args: {
     where: { id: string };
     data: {
+      name?: string;
+      durationDays?: number;
       status?: SprintStatusValue;
       closedAt?: Date | null;
       startedAt?: Date;
@@ -157,6 +167,7 @@ interface SprintDelegate {
       endsAt?: Date;
     };
   }): Promise<SprintRecord>;
+  delete(args: { where: { id: string } }): Promise<SprintRecord>;
 }
 
 interface ApplicationDelegate {
@@ -264,6 +275,53 @@ async function carryApplications(
   }
 
   return { carriedOverCount, closedRejectedCount };
+}
+
+function sprintIntervalsOverlap(
+  startsAt: Date,
+  endsAt: Date,
+  otherStartsAt: Date,
+  otherEndsAt: Date,
+) {
+  return startsAt < otherEndsAt && endsAt > otherStartsAt;
+}
+
+function assertNoSprintScheduleOverlap(
+  startsAt: Date,
+  endsAt: Date,
+  activeSprint: SprintRecord | null,
+  scheduledSprints: SprintRecord[],
+  excludedSprintId?: string,
+) {
+  if (
+    activeSprint &&
+    sprintIntervalsOverlap(startsAt, endsAt, activeSprint.startedAt, activeSprint.endsAt)
+  ) {
+    throw new SprintScheduleConflictError(
+      "The scheduled sprint overlaps the current sprint.",
+      { scheduledStartAt: startsAt, requiredStartAt: activeSprint.endsAt },
+    );
+  }
+
+  for (const scheduledSprint of scheduledSprints) {
+    if (scheduledSprint.id === excludedSprintId || !scheduledSprint.scheduledStartAt) continue;
+    if (
+      sprintIntervalsOverlap(
+        startsAt,
+        endsAt,
+        scheduledSprint.scheduledStartAt,
+        scheduledSprint.endsAt,
+      )
+    ) {
+      throw new SprintScheduleConflictError(
+        "The scheduled sprint overlaps an existing scheduled sprint.",
+        {
+          scheduledStartAt: startsAt,
+          requiredStartAt: scheduledSprint.endsAt,
+        },
+      );
+    }
+  }
 }
 
 export const sprintService = {
@@ -385,6 +443,110 @@ export const sprintService = {
       });
 
       return summary(scheduledSprint);
+    });
+  },
+
+  async updateScheduled(
+    userId: string,
+    sprintId: string,
+    input: UpdateScheduledSprintInput,
+    workspaceId?: string,
+  ): Promise<SprintSummary> {
+    const { where } = await scopedAccess(userId, workspaceId, true);
+    const now = new Date();
+
+    return database.$transaction(async (transaction) => {
+      const databaseTransaction = transaction as SprintTransactionClient;
+      const scheduledSprint = await databaseTransaction.sprint.findFirst({
+        where: { ...where, id: sprintId, status: "SCHEDULED" },
+      });
+
+      if (!scheduledSprint?.scheduledStartAt) throw new SprintNotFoundError();
+
+      const startsAt = input.startsAt ?? scheduledSprint.scheduledStartAt;
+      if (startsAt <= now) {
+        throw new SprintScheduleConflictError(
+          "A scheduled sprint must start in the future.",
+          { scheduledStartAt: startsAt },
+        );
+      }
+
+      const durationDays = input.durationDays ?? scheduledSprint.durationDays;
+      const endsAt = new Date(startsAt.getTime() + durationDays * MILLISECONDS_PER_DAY);
+      const activeSprint = await databaseTransaction.sprint.findFirst({
+        where: { ...where, status: "ACTIVE" },
+        orderBy: [{ sequence: "desc" }, { startedAt: "desc" }],
+      });
+      const scheduledSprints = await databaseTransaction.sprint.findMany({
+        where: { ...where, status: "SCHEDULED" },
+        orderBy: [{ sequence: "asc" }, { scheduledStartAt: "asc" }],
+      });
+
+      assertNoSprintScheduleOverlap(
+        startsAt,
+        endsAt,
+        activeSprint,
+        scheduledSprints,
+        sprintId,
+      );
+
+      const scheduledIndex = scheduledSprints.findIndex(({ id }) => id === sprintId);
+      const previousScheduledSprint = scheduledIndex > 0
+        ? scheduledSprints[scheduledIndex - 1]
+        : undefined;
+      const nextScheduledSprint = scheduledIndex >= 0
+        ? scheduledSprints[scheduledIndex + 1]
+        : undefined;
+
+      if (previousScheduledSprint && startsAt < previousScheduledSprint.endsAt) {
+        throw new SprintScheduleConflictError(
+          "The scheduled sprint must remain after the previous scheduled sprint.",
+          {
+            scheduledStartAt: startsAt,
+            requiredStartAt: previousScheduledSprint.endsAt,
+          },
+        );
+      }
+      if (nextScheduledSprint?.scheduledStartAt && endsAt > nextScheduledSprint.scheduledStartAt) {
+        throw new SprintScheduleConflictError(
+          "The scheduled sprint must remain before the next scheduled sprint.",
+          {
+            scheduledStartAt: startsAt,
+            requiredStartAt: nextScheduledSprint.scheduledStartAt,
+          },
+        );
+      }
+
+      const updatedSprint = await databaseTransaction.sprint.update({
+        where: { id: sprintId },
+        data: {
+          name: input.name ?? scheduledSprint.name,
+          durationDays,
+          startedAt: startsAt,
+          scheduledStartAt: startsAt,
+          endsAt,
+        },
+      });
+
+      return summary(updatedSprint);
+    });
+  },
+
+  async cancelScheduled(
+    userId: string,
+    sprintId: string,
+    workspaceId?: string,
+  ): Promise<void> {
+    const { where } = await scopedAccess(userId, workspaceId, true);
+
+    await database.$transaction(async (transaction) => {
+      const databaseTransaction = transaction as SprintTransactionClient;
+      const scheduledSprint = await databaseTransaction.sprint.findFirst({
+        where: { ...where, id: sprintId, status: "SCHEDULED" },
+      });
+
+      if (!scheduledSprint) throw new SprintNotFoundError();
+      await databaseTransaction.sprint.delete({ where: { id: sprintId } });
     });
   },
 

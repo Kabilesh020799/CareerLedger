@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.34.0] - 2026-08-25
+
+### Added
+
+- Edit, reschedule, or cancel future scheduled sprint plans without changing application assignments.
+- Schedule whole-day sprint plans by local calendar date with a visible timezone, review upcoming plans from the dashboard, and find archived applications from dedicated navigation.
+
+### Fixed
+
+- Clarified the first-run sprint flow by hiding future-sprint scheduling until the first sprint is active.
+- Keep sprint-end guidance visible in a persistent banner and simplify upcoming sprint labels and date defaults.
+
 ## [3.33.0] - 2026-08-25
 
 ### Added
@@ -524,7 +536,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.33.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.34.0...HEAD
+[3.34.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.33.0...v3.34.0
 [3.33.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.32.0...v3.33.0
 [3.32.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.31.0...v3.32.0
 [3.31.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.30.1...v3.31.0

@@ -5,8 +5,10 @@ const { prismaMock, transactionMock } = vi.hoisted(() => {
   const transaction = {
     sprint: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     application: {
       findMany: vi.fn(),
@@ -32,6 +34,7 @@ const { prismaMock, transactionMock } = vi.hoisted(() => {
 vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
 
 import {
+  SprintNotFoundError,
   SprintNotEndedError,
   SprintScheduleConflictError,
   sprintService,
@@ -200,6 +203,142 @@ describe("sprintService", () => {
       requiredStartAt: active.endsAt,
     });
     expect(transactionMock.sprint.create).not.toHaveBeenCalled();
+  });
+
+  it("edits a scheduled sprint without changing its sequence or applications", async () => {
+    const active = sprint({
+      endsAt: new Date(date.getTime() + 7 * day),
+    });
+    const target = sprint({
+      id: "sprint-2",
+      name: "Original plan",
+      sequence: 2,
+      status: "SCHEDULED",
+      scheduledStartAt: new Date(date.getTime() + 8 * day),
+      startedAt: new Date(date.getTime() + 8 * day),
+      endsAt: new Date(date.getTime() + 22 * day),
+    });
+    const next = sprint({
+      id: "sprint-3",
+      name: "Later plan",
+      sequence: 3,
+      status: "SCHEDULED",
+      scheduledStartAt: new Date(date.getTime() + 30 * day),
+      startedAt: new Date(date.getTime() + 30 * day),
+      endsAt: new Date(date.getTime() + 44 * day),
+    });
+    const startsAt = new Date(date.getTime() + 10 * day);
+    const updated = sprint({
+      ...target,
+      name: "Updated plan",
+      durationDays: 18,
+      scheduledStartAt: startsAt,
+      startedAt: startsAt,
+      endsAt: new Date(startsAt.getTime() + 18 * day),
+    });
+    transactionMock.sprint.findFirst
+      .mockResolvedValueOnce(target)
+      .mockResolvedValueOnce(active);
+    transactionMock.sprint.findMany.mockResolvedValue([target, next]);
+    transactionMock.sprint.update.mockResolvedValue(updated);
+
+    const result = await sprintService.updateScheduled(
+      "user-1",
+      "sprint-2",
+      { name: "Updated plan", durationDays: 18, startsAt },
+    );
+
+    expect(transactionMock.sprint.update).toHaveBeenCalledWith({
+      where: { id: "sprint-2" },
+      data: {
+        name: "Updated plan",
+        durationDays: 18,
+        startedAt: startsAt,
+        scheduledStartAt: startsAt,
+        endsAt: new Date(startsAt.getTime() + 18 * day),
+      },
+    });
+    expect(transactionMock.application.count).not.toHaveBeenCalled();
+    expect(transactionMock.$executeRaw).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      id: "sprint-2",
+      sequence: 2,
+      name: "Updated plan",
+      durationDays: 18,
+      scheduledStartAt: startsAt,
+      endsAt: new Date(startsAt.getTime() + 18 * day),
+    });
+  });
+
+  it("rejects an edit that overlaps the active or another scheduled sprint", async () => {
+    const active = sprint({ endsAt: new Date(date.getTime() + 7 * day) });
+    const target = sprint({
+      id: "sprint-2",
+      sequence: 2,
+      status: "SCHEDULED",
+      scheduledStartAt: new Date(date.getTime() + 8 * day),
+      startedAt: new Date(date.getTime() + 8 * day),
+      endsAt: new Date(date.getTime() + 22 * day),
+    });
+    const next = sprint({
+      id: "sprint-3",
+      sequence: 3,
+      status: "SCHEDULED",
+      scheduledStartAt: new Date(date.getTime() + 30 * day),
+      startedAt: new Date(date.getTime() + 30 * day),
+      endsAt: new Date(date.getTime() + 44 * day),
+    });
+    transactionMock.sprint.findFirst
+      .mockResolvedValueOnce(target)
+      .mockResolvedValueOnce(active);
+    transactionMock.sprint.findMany.mockResolvedValue([target, next]);
+
+    await expect(
+      sprintService.updateScheduled(
+        "user-1",
+        "sprint-2",
+        { startsAt: new Date(date.getTime() + 20 * day), durationDays: 14 },
+      ),
+    ).rejects.toMatchObject({
+      name: "SprintScheduleConflictError",
+      scheduledStartAt: new Date(date.getTime() + 20 * day),
+    });
+    expect(transactionMock.sprint.update).not.toHaveBeenCalled();
+    expect(transactionMock.application.count).not.toHaveBeenCalled();
+  });
+
+  it("cancels only a scheduled sprint plan", async () => {
+    const scheduled = sprint({
+      id: "sprint-2",
+      sequence: 2,
+      status: "SCHEDULED",
+      scheduledStartAt: new Date(date.getTime() + 8 * day),
+      startedAt: new Date(date.getTime() + 8 * day),
+      endsAt: new Date(date.getTime() + 22 * day),
+    });
+    transactionMock.sprint.findFirst.mockResolvedValue(scheduled);
+    transactionMock.sprint.delete.mockResolvedValue(scheduled);
+
+    await expect(sprintService.cancelScheduled("user-1", "sprint-2")).resolves.toBeUndefined();
+
+    expect(transactionMock.sprint.delete).toHaveBeenCalledWith({
+      where: { id: "sprint-2" },
+    });
+    expect(transactionMock.application.count).not.toHaveBeenCalled();
+    expect(transactionMock.$executeRaw).not.toHaveBeenCalled();
+  });
+
+  it("does not edit or cancel a sprint outside the scheduled scope", async () => {
+    transactionMock.sprint.findFirst.mockResolvedValue(null);
+
+    await expect(
+      sprintService.updateScheduled("user-1", "sprint-2", { name: "Updated" }),
+    ).rejects.toBeInstanceOf(SprintNotFoundError);
+    await expect(sprintService.cancelScheduled("user-1", "sprint-2")).rejects.toBeInstanceOf(
+      SprintNotFoundError,
+    );
+    expect(transactionMock.sprint.update).not.toHaveBeenCalled();
+    expect(transactionMock.sprint.delete).not.toHaveBeenCalled();
   });
 
   it("requires write access before scheduling in a selected workspace", async () => {

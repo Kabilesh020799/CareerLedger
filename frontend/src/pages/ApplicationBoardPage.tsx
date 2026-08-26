@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import axios from 'axios'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import {
@@ -13,30 +13,39 @@ import {
   Flex,
   Heading,
   Input,
-  Link as ChakraLink,
   Portal,
   Stack,
   Text,
 } from '@chakra-ui/react'
 import { Link } from 'react-router-dom'
 import { ApplicationBoard } from '../components/applications/ApplicationBoard'
-import { useFeedback } from '../components/ui/feedback-context'
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton'
 import { PageHeader } from '../components/ui/PageHeader'
 import { useApplicationBoard } from '../hooks/useApplicationBoard'
-import { useArchivedSprints } from '../hooks/useArchivedSprints'
+import { useCancelScheduledSprint } from '../hooks/useCancelScheduledSprint'
 import { useMoveApplication } from '../hooks/useMoveApplication'
 import { useScheduleSprint } from '../hooks/useScheduleSprint'
 import { useScheduledSprints, useSprintTimelineNow } from '../hooks/useScheduledSprints'
 import { useStartSprint } from '../hooks/useStartSprint'
-import { StatusBadge } from '../components/applications/StatusBadge'
+import { useUpdateScheduledSprint } from '../hooks/useUpdateScheduledSprint'
 import type {
   ApplicationStatus,
   ScheduleSprintInput,
   Sprint,
   StartSprintInput,
+  UpdateScheduledSprintInput,
 } from '../types/application'
 import { getApiErrorMessage } from '../utils/apiError'
+import {
+  calculatedSprintEndAt,
+  earliestFutureSprintDate,
+  formatSprintDate,
+  formatSprintDateTime,
+  getLocalSprintTimeZone,
+  localSprintDateInputToIso,
+  nextAvailableSprintDate,
+  toLocalSprintDateInput,
+} from '../utils/sprint'
 
 const DEFAULT_SPRINT_DURATION_DAYS = 14
 const MAX_SPRINT_DURATION_DAYS = 90
@@ -58,7 +67,7 @@ const sprintScheduleSchema = z.object({
   startsAt: z.string()
     .min(1, 'Choose when the sprint should start')
     .refine((value) => {
-      const timestamp = new Date(value).getTime()
+      const timestamp = new Date(`${value}T00:00:00`).getTime()
       return Number.isFinite(timestamp) && timestamp > Date.now()
     }, 'Scheduled start must be in the future'),
 })
@@ -68,26 +77,6 @@ type SprintScheduleFormValues = z.infer<typeof sprintScheduleSchema>
 
 function countLabel(count: number, singular: string, plural: string) {
   return `${count} ${count === 1 ? singular : plural}`
-}
-
-function formatSprintEndDate(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'an unknown date'
-
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'long',
-    timeStyle: 'short',
-  }).format(date)
-}
-
-function calculateSprintEndAt(sprint: Sprint) {
-  const startAt = sprint.scheduledStartAt ?? sprint.startedAt
-  const timestamp = Date.parse(startAt)
-  if (Number.isFinite(timestamp)) {
-    return new Date(timestamp + sprint.durationDays * 24 * 60 * 60 * 1000).toISOString()
-  }
-
-  return sprint.endsAt
 }
 
 function useSprintHasEnded(endsAt?: string) {
@@ -123,11 +112,11 @@ function sprintStartErrorMessage(error: unknown) {
   if (!axios.isAxiosError<{ error?: string; endsAt?: string; scheduledStartAt?: string }>(error)) return message
   if (error.response?.status !== 409) return message
   if (error.response.data?.scheduledStartAt) {
-    return `${message} The scheduled sprint starts at ${formatSprintEndDate(error.response.data.scheduledStartAt)}.`
+    return `${message} The scheduled sprint starts at ${formatSprintDateTime(error.response.data.scheduledStartAt)}.`
   }
   if (!error.response.data?.endsAt) return message
 
-  return `${message} The current sprint remains active until ${formatSprintEndDate(error.response.data.endsAt)}.`
+  return `${message} The current sprint remains active until ${formatSprintDateTime(error.response.data.endsAt)}.`
 }
 
 function defaultSprintFormValues(sprint: Sprint | null): SprintStartFormValues {
@@ -140,30 +129,44 @@ function defaultSprintFormValues(sprint: Sprint | null): SprintStartFormValues {
 function defaultSprintScheduleValues(
   currentSprint: Sprint | null,
   scheduledSprints: Sprint[],
+  scheduledSprint?: Sprint | null,
 ): SprintScheduleFormValues {
+  if (scheduledSprint) {
+    return {
+      name: scheduledSprint.name,
+      durationDays: scheduledSprint.durationDays,
+      startsAt: toLocalSprintDateInput(scheduledSprint.scheduledStartAt),
+    }
+  }
+
   return {
     name: '',
     durationDays: currentSprint?.durationDays ?? scheduledSprints[scheduledSprints.length - 1]?.durationDays ?? DEFAULT_SPRINT_DURATION_DAYS,
-    startsAt: '',
+    startsAt: nextAvailableSprintDate(currentSprint, scheduledSprints),
   }
 }
 
 export function ApplicationBoardPage() {
   const boardQuery = useApplicationBoard()
-  const archivedQuery = useArchivedSprints()
   const scheduledQuery = useScheduledSprints()
   const moveApplication = useMoveApplication()
   const scheduleSprint = useScheduleSprint()
+  const updateScheduledSprint = useUpdateScheduledSprint()
+  const cancelScheduledSprint = useCancelScheduledSprint()
   const startSprint = useStartSprint()
-  const feedback = useFeedback()
   const [isStartDialogOpen, setIsStartDialogOpen] = useState(false)
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false)
-  const notifiedSprintEndId = useRef<string | null>(null)
+  const [editingScheduledSprint, setEditingScheduledSprint] = useState<Sprint | null>(null)
+  const [cancelingScheduledSprint, setCancelingScheduledSprint] = useState<Sprint | null>(null)
   const currentSprint = boardQuery.data?.sprint ?? null
   const scheduledSprints = scheduledQuery.data ?? []
   const sprintHasEnded = useSprintHasEnded(currentSprint?.endsAt)
   const timelineNow = useSprintTimelineNow()
   const canStartNewSprint = sprintHasEnded && scheduledQuery.isSuccess && scheduledSprints.length === 0
+  const nextDueScheduledSprint = scheduledSprints.find((scheduledSprint) => {
+    const timestamp = Date.parse(scheduledSprint.scheduledStartAt ?? '')
+    return Number.isFinite(timestamp) && timestamp <= timelineNow
+  })
   const sprintForm = useForm<SprintStartFormValues>({
     resolver: zodResolver(sprintStartSchema),
     defaultValues: defaultSprintFormValues(null),
@@ -172,6 +175,9 @@ export function ApplicationBoardPage() {
     resolver: zodResolver(sprintScheduleSchema),
     defaultValues: defaultSprintScheduleValues(null, []),
   })
+  const scheduleMinimumDate = editingScheduledSprint
+    ? earliestFutureSprintDate()
+    : nextAvailableSprintDate(currentSprint, scheduledSprints)
 
   const move = (id: string, status: ApplicationStatus) => {
     moveApplication.mutate({ id, status })
@@ -188,15 +194,24 @@ export function ApplicationBoardPage() {
     setIsStartDialogOpen(false)
   }
 
-  const openScheduleDialog = () => {
+  const openScheduleDialog = (scheduledSprint?: Sprint) => {
     scheduleSprint.reset()
-    scheduleForm.reset(defaultSprintScheduleValues(currentSprint, scheduledSprints))
+    updateScheduledSprint.reset()
+    setEditingScheduledSprint(scheduledSprint ?? null)
+    scheduleForm.reset(defaultSprintScheduleValues(currentSprint, scheduledSprints, scheduledSprint))
     setIsScheduleDialogOpen(true)
   }
 
   const closeScheduleDialog = () => {
     if (scheduleSprint.isError) scheduleSprint.reset()
+    if (updateScheduledSprint.isError) updateScheduledSprint.reset()
     setIsScheduleDialogOpen(false)
+    setEditingScheduledSprint(null)
+  }
+
+  const closeCancelDialog = () => {
+    if (cancelScheduledSprint.isError) cancelScheduledSprint.reset()
+    setCancelingScheduledSprint(null)
   }
 
   const submitStartSprint = (values: SprintStartFormValues) => {
@@ -212,15 +227,31 @@ export function ApplicationBoardPage() {
   }
 
   const submitScheduleSprint = (values: SprintScheduleFormValues) => {
-    const input: ScheduleSprintInput = {
-      startsAt: new Date(values.startsAt).toISOString(),
-      durationDays: values.durationDays,
-    }
+    const startsAt = localSprintDateInputToIso(values.startsAt)
     const name = values.name.trim()
+    if (editingScheduledSprint) {
+      const input: UpdateScheduledSprintInput = {
+        durationDays: values.durationDays,
+        startsAt,
+      }
+      if (name) input.name = name
+
+      updateScheduledSprint.mutate({ id: editingScheduledSprint.id, input }, {
+        onSuccess: () => closeScheduleDialog(),
+      })
+      return
+    }
+
+    const input: ScheduleSprintInput = { startsAt, durationDays: values.durationDays }
     if (name) input.name = name
 
-    scheduleSprint.mutate(input, {
-      onSuccess: () => setIsScheduleDialogOpen(false),
+    scheduleSprint.mutate(input, { onSuccess: () => closeScheduleDialog() })
+  }
+
+  const confirmCancelScheduledSprint = () => {
+    if (!cancelingScheduledSprint) return
+    cancelScheduledSprint.mutate(cancelingScheduledSprint.id, {
+      onSuccess: () => closeCancelDialog(),
     })
   }
 
@@ -230,16 +261,6 @@ export function ApplicationBoardPage() {
     startSprint.reset()
     startSprint.mutate({ scheduledSprintId })
   }
-
-  useEffect(() => {
-    if (!currentSprint || !sprintHasEnded || notifiedSprintEndId.current === currentSprint.id) return
-
-    notifiedSprintEndId.current = currentSprint.id
-    feedback.show('Sprint ended', {
-      description: `${currentSprint.name} has ended. Start the next sprint when you are ready.`,
-      status: 'info',
-    })
-  }, [currentSprint, feedback, sprintHasEnded])
 
   return (
     <Stack gap="6">
@@ -265,7 +286,7 @@ export function ApplicationBoardPage() {
             {currentSprint && (
               <>
                 <Text color="fg.muted" fontSize="sm">
-                  Duration: {countLabel(currentSprint.durationDays ?? DEFAULT_SPRINT_DURATION_DAYS, 'day', 'days')} · Ends {currentSprint.endsAt ? formatSprintEndDate(currentSprint.endsAt) : 'date unavailable'}
+                  Duration: {countLabel(currentSprint.durationDays ?? DEFAULT_SPRINT_DURATION_DAYS, 'day', 'days')} · Ends {currentSprint.endsAt ? formatSprintDateTime(currentSprint.endsAt) : 'date unavailable'}
                 </Text>
                 <Text
                   id="sprint-transition-status"
@@ -277,7 +298,7 @@ export function ApplicationBoardPage() {
                     ? scheduledSprints.length > 0
                       ? 'This sprint has ended. Start the next due plan from Upcoming sprints.'
                       : 'This sprint has ended. You can start the next sprint when you are ready.'
-                    : `The current sprint remains active until ${currentSprint.endsAt ? formatSprintEndDate(currentSprint.endsAt) : 'its configured end date'}. You can start the next sprint after that time.`}
+                    : `The current sprint remains active until ${currentSprint.endsAt ? formatSprintDateTime(currentSprint.endsAt) : 'its configured end date'}. You can start the next sprint after that time.`}
                 </Text>
               </>
             )}
@@ -294,9 +315,46 @@ export function ApplicationBoardPage() {
                 Start new sprint
               </Button>
             )}
-            <Button variant="outline" onClick={openScheduleDialog}>Schedule sprint</Button>
+            {currentSprint && (
+              <Button variant="outline" onClick={() => openScheduleDialog()}>Schedule sprint</Button>
+            )}
           </Flex>
         </Flex>
+      )}
+
+      {currentSprint && sprintHasEnded && (
+        <Alert.Root aria-live="polite" borderRadius="lg" status="warning">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>Sprint ended</Alert.Title>
+            <Alert.Description>
+              {nextDueScheduledSprint
+                ? `${currentSprint.name} has ended. The next scheduled sprint is ready to start.`
+                : scheduledQuery.isSuccess && scheduledSprints.length > 0
+                  ? `${currentSprint.name} has ended. Review the upcoming timeline and start the next plan when its date arrives.`
+                  : `${currentSprint.name} has ended. Start the next sprint when you are ready.`}
+            </Alert.Description>
+          </Alert.Content>
+          {scheduledQuery.isSuccess && nextDueScheduledSprint && (
+            <Button
+              colorPalette="brand"
+              loading={startSprint.isPending && startSprint.variables?.scheduledSprintId === nextDueScheduledSprint.id}
+              onClick={() => startScheduledSprint(nextDueScheduledSprint.id)}
+            >
+              Start next sprint
+            </Button>
+          )}
+          {scheduledQuery.isSuccess && !nextDueScheduledSprint && scheduledSprints.length > 0 && (
+            <Button asChild variant="outline">
+              <a href="#upcoming-sprints-heading">View upcoming sprints</a>
+            </Button>
+          )}
+          {scheduledQuery.isSuccess && scheduledSprints.length === 0 && (
+            <Button colorPalette="brand" loading={startSprint.isPending} onClick={openStartDialog}>
+              Start next sprint
+            </Button>
+          )}
+        </Alert.Root>
       )}
 
       <Dialog.Root
@@ -373,12 +431,14 @@ export function ApplicationBoardPage() {
             <Dialog.Content maxH="calc(100dvh - 2rem)" maxW={{ base: 'calc(100vw - 2rem)', sm: 'lg' }} overflowY="auto">
               <form noValidate onSubmit={scheduleForm.handleSubmit(submitScheduleSprint)}>
                 <Dialog.Header>
-                  <Dialog.Title>Schedule a sprint</Dialog.Title>
+                  <Dialog.Title>{editingScheduledSprint ? 'Edit scheduled sprint' : 'Schedule a sprint'}</Dialog.Title>
                 </Dialog.Header>
                 <Dialog.Body>
                   <Stack gap="4">
                     <Text color="fg.muted" fontSize="sm">
-                      Plan an upcoming sprint while the current sprint stays active. You will start the scheduled sprint when its start time arrives and the current sprint has ended.
+                      {editingScheduledSprint
+                        ? 'Correct the sprint plan before it starts. Its application assignments will remain unchanged.'
+                        : 'Plan an upcoming sprint by date. You will start the scheduled sprint when its start date arrives and the current sprint has ended.'}
                     </Text>
                     <Field.Root invalid={Boolean(scheduleForm.formState.errors.name)}>
                       <Field.Label>Sprint name (optional)</Field.Label>
@@ -398,17 +458,24 @@ export function ApplicationBoardPage() {
                       <Field.ErrorText>{scheduleForm.formState.errors.durationDays?.message}</Field.ErrorText>
                     </Field.Root>
                     <Field.Root invalid={Boolean(scheduleForm.formState.errors.startsAt)} required>
-                      <Field.Label>Scheduled start</Field.Label>
-                      <Input type="datetime-local" {...scheduleForm.register('startsAt')} />
-                      <Field.HelperText>Choose your local date and time. The sprint must start in the future.</Field.HelperText>
+                      <Field.Label>
+                        Scheduled start <Text as="span" color="fg.muted" fontSize="sm" fontWeight="normal">({getLocalSprintTimeZone()})</Text>
+                      </Field.Label>
+                      <Input min={scheduleMinimumDate} type="date" {...scheduleForm.register('startsAt')} />
+                      <Field.HelperText>Starts at midnight in {getLocalSprintTimeZone()}. Choose a future date.</Field.HelperText>
                       <Field.ErrorText>{scheduleForm.formState.errors.startsAt?.message}</Field.ErrorText>
                     </Field.Root>
-                    {scheduleSprint.isError && (
+                    {(scheduleSprint.isError || updateScheduledSprint.isError) && (
                       <Alert.Root role="alert" status="error">
                         <Alert.Indicator />
                         <Alert.Content>
-                          <Alert.Title>Unable to schedule sprint</Alert.Title>
-                          <Alert.Description>{getApiErrorMessage(scheduleSprint.error, 'Please check the details and try again.')}</Alert.Description>
+                          <Alert.Title>{editingScheduledSprint ? 'Unable to update sprint' : 'Unable to schedule sprint'}</Alert.Title>
+                          <Alert.Description>
+                            {getApiErrorMessage(
+                              editingScheduledSprint ? updateScheduledSprint.error : scheduleSprint.error,
+                              'Please check the details and try again.',
+                            )}
+                          </Alert.Description>
                         </Alert.Content>
                       </Alert.Root>
                     )}
@@ -416,11 +483,62 @@ export function ApplicationBoardPage() {
                 </Dialog.Body>
                 <Dialog.Footer alignItems={{ base: 'stretch', sm: 'center' }} flexDirection={{ base: 'column-reverse', sm: 'row' }}>
                   <Button type="button" variant="outline" w={{ base: 'full', sm: 'auto' }} onClick={closeScheduleDialog}>Cancel</Button>
-                  <Button colorPalette="brand" loading={scheduleSprint.isPending} type="submit" w={{ base: 'full', sm: 'auto' }}>Schedule sprint</Button>
+                  <Button
+                    colorPalette="brand"
+                    loading={scheduleSprint.isPending || updateScheduledSprint.isPending}
+                    type="submit"
+                    w={{ base: 'full', sm: 'auto' }}
+                  >
+                    {editingScheduledSprint ? 'Save changes' : 'Schedule sprint'}
+                  </Button>
                 </Dialog.Footer>
               </form>
               <Dialog.CloseTrigger asChild>
                 <CloseButton aria-label="Close sprint scheduling" size="sm" />
+              </Dialog.CloseTrigger>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
+
+      <Dialog.Root
+        open={Boolean(cancelingScheduledSprint)}
+        role="alertdialog"
+        onOpenChange={(details) => {
+          if (!details.open && !cancelScheduledSprint.isPending) closeCancelDialog()
+        }}
+      >
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content maxH="calc(100dvh - 2rem)" maxW={{ base: 'calc(100vw - 2rem)', sm: 'md' }} overflowY="auto">
+              <Dialog.Header>
+                <Dialog.Title>Cancel scheduled sprint?</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                <Stack gap="3">
+                  <Text>
+                    {cancelingScheduledSprint
+                      ? `${cancelingScheduledSprint.name} will be removed from your upcoming sprint timeline. Application assignments will not change.`
+                      : 'This sprint will be removed from your upcoming sprint timeline.'}
+                  </Text>
+                  {cancelScheduledSprint.isError && (
+                    <Alert.Root role="alert" status="error">
+                      <Alert.Indicator />
+                      <Alert.Content>
+                        <Alert.Title>Unable to cancel sprint</Alert.Title>
+                        <Alert.Description>{getApiErrorMessage(cancelScheduledSprint.error, 'Please try again.')}</Alert.Description>
+                      </Alert.Content>
+                    </Alert.Root>
+                  )}
+                </Stack>
+              </Dialog.Body>
+              <Dialog.Footer alignItems={{ base: 'stretch', sm: 'center' }} flexDirection={{ base: 'column-reverse', sm: 'row' }}>
+                <Button disabled={cancelScheduledSprint.isPending} type="button" variant="outline" w={{ base: 'full', sm: 'auto' }} onClick={closeCancelDialog}>Keep sprint</Button>
+                <Button colorPalette="red" loading={cancelScheduledSprint.isPending} type="button" w={{ base: 'full', sm: 'auto' }} onClick={confirmCancelScheduledSprint}>Cancel sprint</Button>
+              </Dialog.Footer>
+              <Dialog.CloseTrigger asChild>
+                <CloseButton aria-label="Close sprint cancellation" size="sm" />
               </Dialog.CloseTrigger>
             </Dialog.Content>
           </Dialog.Positioner>
@@ -456,6 +574,26 @@ export function ApplicationBoardPage() {
           <Alert.Content>
             <Alert.Title>Sprint scheduled</Alert.Title>
             <Alert.Description>{scheduleSprint.data.name} was added to your upcoming sprint timeline.</Alert.Description>
+          </Alert.Content>
+        </Alert.Root>
+      )}
+
+      {updateScheduledSprint.isSuccess && updateScheduledSprint.data && (
+        <Alert.Root aria-live="polite" status="success" borderRadius="lg">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>Sprint updated</Alert.Title>
+            <Alert.Description>{updateScheduledSprint.data.name} was updated in your upcoming sprint timeline.</Alert.Description>
+          </Alert.Content>
+        </Alert.Root>
+      )}
+
+      {cancelScheduledSprint.isSuccess && (
+        <Alert.Root aria-live="polite" status="success" borderRadius="lg">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>Sprint canceled</Alert.Title>
+            <Alert.Description>The sprint was removed from your upcoming timeline.</Alert.Description>
           </Alert.Content>
         </Alert.Root>
       )}
@@ -506,7 +644,7 @@ export function ApplicationBoardPage() {
       {boardQuery.isSuccess && !currentSprint && (
         <Stack align="center" bg="bg.panel" borderColor="border" borderRadius="xl" borderWidth="1px" gap="3" p={{ base: '8', md: '12' }} textAlign="center">
           <Heading as="h3" size="lg">Start your first sprint</Heading>
-          <Text color="fg.muted">Applications already in your pipeline will be included when you start.</Text>
+          <Text color="fg.muted">Applications already in your pipeline will be included when you start. Schedule future sprints after this one is active.</Text>
           <Button
             colorPalette="brand"
             disabled={!scheduledQuery.isSuccess || scheduledSprints.length > 0}
@@ -586,7 +724,7 @@ export function ApplicationBoardPage() {
             {scheduledSprints.map((scheduledSprint) => {
               const startTimestamp = Date.parse(scheduledSprint.scheduledStartAt ?? '')
               const startHasArrived = Number.isFinite(startTimestamp) && startTimestamp <= timelineNow
-              const endAt = calculateSprintEndAt(scheduledSprint)
+              const endAt = calculatedSprintEndAt(scheduledSprint)
               const canStart = startHasArrived && canStartScheduledSprint
               const isStarting = startSprint.isPending && startSprint.variables?.scheduledSprintId === scheduledSprint.id
 
@@ -613,25 +751,47 @@ export function ApplicationBoardPage() {
                       Duration: {countLabel(scheduledSprint.durationDays, 'day', 'days')}
                     </Text>
                     <Text color="fg.muted" fontSize="sm">
-                      Scheduled start: {scheduledSprint.scheduledStartAt ? formatSprintEndDate(scheduledSprint.scheduledStartAt) : 'date unavailable'}
+                      Scheduled start: {scheduledSprint.scheduledStartAt ? formatSprintDate(scheduledSprint.scheduledStartAt) : 'date unavailable'} · {getLocalSprintTimeZone()}
                     </Text>
                     <Text color="fg.muted" fontSize="sm">
-                      Calculated end: {endAt ? formatSprintEndDate(endAt) : 'date unavailable'}
+                      Ends: {endAt ? formatSprintDateTime(endAt) : 'date unavailable'}
                     </Text>
                   </Stack>
-                  {canStart ? (
+                  <Flex align={{ base: 'start', sm: 'center' }} gap="2" justify="flex-end" wrap="wrap">
+                    {canStart ? (
+                      <Button
+                        colorPalette="brand"
+                        loading={isStarting}
+                        onClick={() => startScheduledSprint(scheduledSprint.id)}
+                      >
+                        Start scheduled sprint
+                      </Button>
+                    ) : (
+                      <Text color="fg.muted" fontSize="sm">
+                        {startHasArrived ? 'Ready after the current sprint ends.' : 'Waiting for the scheduled start time.'}
+                      </Text>
+                    )}
                     <Button
-                      colorPalette="brand"
-                      loading={isStarting}
-                      onClick={() => startScheduledSprint(scheduledSprint.id)}
+                      aria-label={`Edit scheduled sprint ${scheduledSprint.name}`}
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openScheduleDialog(scheduledSprint)}
                     >
-                      Start scheduled sprint
+                      Edit
                     </Button>
-                  ) : (
-                    <Text color="fg.muted" fontSize="sm">
-                      {startHasArrived ? 'Ready after the current sprint ends.' : 'Waiting for the scheduled start time.'}
-                    </Text>
-                  )}
+                    <Button
+                      aria-label={`Cancel scheduled sprint ${scheduledSprint.name}`}
+                      colorPalette="red"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        cancelScheduledSprint.reset()
+                        setCancelingScheduledSprint(scheduledSprint)
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </Flex>
                 </Flex>
               )
             })}
@@ -639,88 +799,6 @@ export function ApplicationBoardPage() {
         )}
       </Stack>
 
-      <Stack
-        aria-labelledby="archived-applications-heading"
-        as="section"
-        bg="bg.panel"
-        borderColor="border"
-        borderRadius="xl"
-        borderWidth="1px"
-        gap="4"
-        p={{ base: '5', md: '6' }}
-      >
-        <Stack gap="1">
-          <Heading as="h2" id="archived-applications-heading" size="lg">Archived applications</Heading>
-          <Text color="fg.muted" fontSize="sm">Review applications from completed sprints.</Text>
-        </Stack>
-
-        {archivedQuery.isPending && (
-          <LoadingSkeleton label="Loading archived applications" />
-        )}
-
-        {archivedQuery.isError && (
-          <Alert.Root role="alert" status="error">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>Unable to load archived applications</Alert.Title>
-              <Alert.Description>{getApiErrorMessage(archivedQuery.error, 'Please try again.')}</Alert.Description>
-            </Alert.Content>
-            <Button alignSelf="center" ml="auto" size="sm" variant="outline" onClick={() => archivedQuery.refetch()}>
-              Retry
-            </Button>
-          </Alert.Root>
-        )}
-
-        {archivedQuery.isSuccess && archivedQuery.data.length === 0 && (
-          <Text color="fg.muted">No archived applications yet.</Text>
-        )}
-
-        {archivedQuery.isSuccess && archivedQuery.data.length > 0 && (
-          <Stack gap="6">
-            {archivedQuery.data.map(({ sprint, applications }) => (
-              <Stack aria-labelledby={`archived-sprint-${sprint.id}`} as="section" gap="3" key={sprint.id}>
-                <Flex align={{ base: 'start', sm: 'center' }} direction={{ base: 'column', sm: 'row' }} gap="2" justify="space-between">
-                  <Heading as="h3" id={`archived-sprint-${sprint.id}`} size="md">{sprint.name}</Heading>
-                  <Text color="fg.muted" fontSize="sm">
-                    Sprint {sprint.sequence} · Closed {sprint.closedAt ? formatSprintEndDate(sprint.closedAt) : 'date unavailable'}
-                  </Text>
-                </Flex>
-                {applications.length === 0 ? (
-                  <Text color="fg.muted" fontSize="sm">No applications were archived in this sprint.</Text>
-                ) : (
-                  <Stack gap="3">
-                    {applications.map((archivedApplication) => (
-                      <Flex
-                        align={{ base: 'start', sm: 'center' }}
-                        aria-label={`${archivedApplication.company}, ${archivedApplication.jobTitle}`}
-                        as="article"
-                        borderColor="border"
-                        borderRadius="lg"
-                        borderWidth="1px"
-                        gap="3"
-                        justify="space-between"
-                        key={archivedApplication.id}
-                        p="4"
-                        wrap="wrap"
-                      >
-                        <Stack gap="1">
-                          <ChakraLink asChild color="brand.fg" fontWeight="semibold">
-                            <Link to={`/applications/${archivedApplication.id}`}>
-                              <Text as="span" display="block">{archivedApplication.company}</Text>
-                              <Text as="span" color="fg" display="block" fontSize="sm" fontWeight="normal">{archivedApplication.jobTitle}</Text>
-                            </Link>
-                          </ChakraLink>
-                        </Stack>
-                        <StatusBadge status={archivedApplication.status} />
-                      </Flex>
-                    ))}
-                  </Stack>
-                )}
-              </Stack>
-            ))}
-          </Stack>
-        )}
-      </Stack>
     </Stack>
   )
 }

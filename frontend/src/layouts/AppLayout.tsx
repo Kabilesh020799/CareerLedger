@@ -5,7 +5,7 @@ import { useLogout } from '../hooks/useLogout'
 import { useSession } from '../hooks/useSession'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
 import { useGmailUpdateReviews } from '../hooks/useGmailUpdateReviews'
-import { Bell, BriefcaseBusiness, CalendarDays, ChevronDown, Columns3, Database, FileText, Gauge, Mail, Menu, Puzzle, ShieldCheck, UserRound, Users, X } from 'lucide-react'
+import { Archive as ArchiveIcon, Bell, BriefcaseBusiness, CalendarDays, ChevronDown, Columns3, Database, FileText, Gauge, Mail, Menu, Puzzle, ShieldCheck, UserRound, Users, X } from 'lucide-react'
 import { useWorkspace } from '../contexts/WorkspaceContext'
 import { CustomSelect } from '../components/ui/CustomSelect'
 
@@ -13,6 +13,7 @@ const navigation = [
   { label: 'Workspace', items: [
     { label: 'Dashboard', to: '/dashboard', icon: Gauge },
     { label: 'Applications', to: '/applications', icon: BriefcaseBusiness },
+    { label: 'Archive', to: '/archive', icon: ArchiveIcon },
     { label: 'Board', to: '/board', icon: Columns3 },
     { label: 'Calendar', to: '/calendar', icon: CalendarDays },
   ] },

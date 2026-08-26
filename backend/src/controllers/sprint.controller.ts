@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import {
+  SprintNotFoundError,
   SprintNotEndedError,
   SprintScheduleConflictError,
   sprintService,
@@ -8,6 +9,7 @@ import { selectedWorkspaceId } from "../services/workspace-access.service";
 import {
   scheduleSprintSchema,
   startSprintSchema,
+  updateScheduledSprintSchema,
 } from "../validators/sprint.validator";
 
 function userId(req: Request) {
@@ -17,6 +19,24 @@ function userId(req: Request) {
 
 function workspaceId(req: Request) {
   return selectedWorkspaceId(req.headers["x-workspace-id"]);
+}
+
+function sprintId(req: Request) {
+  const id = req.params.id;
+  if (typeof id !== "string") throw new Error("Sprint ID is missing");
+  return id;
+}
+
+function sprintConflictResponse(error: SprintScheduleConflictError) {
+  return {
+    error: error.message,
+    ...(error.scheduledStartAt
+      ? { scheduledStartAt: error.scheduledStartAt.toISOString() }
+      : {}),
+    ...(error.requiredStartAt
+      ? { requiredStartAt: error.requiredStartAt.toISOString() }
+      : {}),
+  };
 }
 
 export const sprintController = {
@@ -54,15 +74,51 @@ export const sprintController = {
       res.status(201).json(result);
     } catch (error) {
       if (error instanceof SprintScheduleConflictError) {
-        res.status(409).json({
-          error: error.message,
-          ...(error.scheduledStartAt
-            ? { scheduledStartAt: error.scheduledStartAt.toISOString() }
-            : {}),
-          ...(error.requiredStartAt
-            ? { requiredStartAt: error.requiredStartAt.toISOString() }
-            : {}),
-        });
+        res.status(409).json(sprintConflictResponse(error));
+        return;
+      }
+      throw error;
+    }
+  },
+
+  async update(req: Request, res: Response) {
+    const parsed = updateScheduledSprintSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Invalid scheduled sprint data",
+        details: parsed.error.flatten(),
+      });
+      return;
+    }
+
+    try {
+      const result = await sprintService.updateScheduled(
+        userId(req),
+        sprintId(req),
+        parsed.data,
+        workspaceId(req),
+      );
+      res.json(result);
+    } catch (error) {
+      if (error instanceof SprintNotFoundError) {
+        res.status(404).json({ error: "Sprint not found" });
+        return;
+      }
+      if (error instanceof SprintScheduleConflictError) {
+        res.status(409).json(sprintConflictResponse(error));
+        return;
+      }
+      throw error;
+    }
+  },
+
+  async cancel(req: Request, res: Response) {
+    try {
+      await sprintService.cancelScheduled(userId(req), sprintId(req), workspaceId(req));
+      res.status(204).send();
+    } catch (error) {
+      if (error instanceof SprintNotFoundError) {
+        res.status(404).json({ error: "Sprint not found" });
         return;
       }
       throw error;
@@ -95,15 +151,7 @@ export const sprintController = {
         return;
       }
       if (error instanceof SprintScheduleConflictError) {
-        res.status(409).json({
-          error: error.message,
-          ...(error.scheduledStartAt
-            ? { scheduledStartAt: error.scheduledStartAt.toISOString() }
-            : {}),
-          ...(error.requiredStartAt
-            ? { requiredStartAt: error.requiredStartAt.toISOString() }
-            : {}),
-        });
+        res.status(409).json(sprintConflictResponse(error));
         return;
       }
       throw error;

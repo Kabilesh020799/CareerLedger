@@ -173,6 +173,12 @@ export type ScheduleSprintInput = {
   startsAt: string
 }
 
+export type UpdateScheduledSprintInput = {
+  name?: string
+  durationDays?: number
+  startsAt?: string
+}
+
 export type SprintStartResult = {
   sprint: Sprint
   previousSprint: Sprint | null

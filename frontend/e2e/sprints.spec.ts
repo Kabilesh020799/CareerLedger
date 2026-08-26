@@ -3,7 +3,7 @@ import { signInAsDemoUser } from './support/demo-auth'
 
 const apiOrigin = 'http://127.0.0.1:3001/api'
 
-test('shows archived applications grouped under their closed sprint', async ({ page }) => {
+test('shows archived applications from a dedicated navigation item', async ({ page }) => {
   await signInAsDemoUser(page)
   await page.route('**/api/sprints/archived', async (route) => {
     await route.fulfill({ json: [{
@@ -37,7 +37,7 @@ test('shows archived applications grouped under their closed sprint', async ({ p
     }] })
   })
 
-  await page.getByRole('link', { name: 'Board', exact: true }).click()
+  await page.getByRole('link', { name: 'Archive', exact: true }).click()
   const archive = page.getByRole('region', { name: 'Archived applications' })
   await expect(archive.getByRole('heading', { name: 'Completed applications' })).toBeVisible()
   await expect(archive.getByRole('link', { name: /Northstar Labs.*Platform Engineer/ })).toHaveAttribute('href', '/applications/application-archived-ui')
@@ -48,7 +48,8 @@ test('schedules multiple named sprints and shows the upcoming timeline', async (
   const firstStart = new Date(Date.now() + 2 * 86_400_000)
   const secondStart = new Date(Date.now() + 5 * 86_400_000)
   secondStart.setSeconds(0, 0)
-  const toLocalDateTime = (date: Date) => new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+  secondStart.setHours(0, 0, 0, 0)
+  const toLocalDate = (date: Date) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
   const toSprint = (id: string, name: string, sequence: number, start: Date, durationDays: number) => ({
     id,
     userId: 'user-1',
@@ -69,7 +70,24 @@ test('schedules multiple named sprints and shows the upcoming timeline', async (
 
   await signInAsDemoUser(page)
   await page.route('**/api/sprints/current', async (route) => {
-    await route.fulfill({ json: { sprint: null, applications: [] } })
+    const now = Date.now()
+    await route.fulfill({ json: {
+      sprint: {
+        id: 'sprint-active-ui',
+        userId: 'user-1',
+        workspaceId: 'workspace-1',
+        name: 'Current sprint',
+        sequence: 1,
+        status: 'ACTIVE',
+        durationDays: 14,
+        startedAt: new Date(now - 7 * 86_400_000).toISOString(),
+        endsAt: new Date(now + 7 * 86_400_000).toISOString(),
+        closedAt: null,
+        createdAt: new Date(now - 7 * 86_400_000).toISOString(),
+        updatedAt: new Date(now).toISOString(),
+      },
+      applications: [],
+    } })
   })
   await page.route('**/api/sprints/archived', async (route) => {
     await route.fulfill({ json: [] })
@@ -103,7 +121,8 @@ test('schedules multiple named sprints and shows the upcoming timeline', async (
   let dialog = page.getByRole('dialog')
   await dialog.getByLabel('Sprint name (optional)').fill('Launch follow-up')
   await dialog.getByLabel('Sprint duration (days)').fill('21')
-  await dialog.getByLabel('Scheduled start').fill(toLocalDateTime(secondStart))
+  await dialog.getByLabel(/Scheduled start/).fill(toLocalDate(secondStart))
+  await expect(dialog.getByText(/Starts at midnight in/)).toBeVisible()
   await dialog.getByRole('button', { name: 'Schedule sprint' }).click()
 
   await expect.poll(() => scheduleRequests).toHaveLength(1)
@@ -116,6 +135,155 @@ test('schedules multiple named sprints and shows the upcoming timeline', async (
   await expect(upcoming.getByRole('heading', { name: 'Launch follow-up' })).toBeVisible()
   await expect(upcoming.getByRole('heading', { name: 'Interview push' })).toBeVisible()
   await expect(upcoming.getByText('Duration: 21 days')).toBeVisible()
+})
+
+test('guides first-run users to start before scheduling future sprints', async ({ page }) => {
+  await signInAsDemoUser(page)
+  await page.route('**/api/sprints/current', async (route) => {
+    await route.fulfill({ json: { sprint: null, applications: [] } })
+  })
+  await page.route('**/api/sprints/archived', async (route) => {
+    await route.fulfill({ json: [] })
+  })
+  await page.route('**/api/sprints', async (route) => {
+    await route.fulfill({ json: [] })
+  })
+
+  await page.getByRole('link', { name: 'Board', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Start your first sprint' })).toBeVisible()
+  await expect(page.getByText('Schedule future sprints after this one is active.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Schedule sprint' })).toHaveCount(0)
+})
+
+test('shows upcoming sprint plans on the dashboard', async ({ page }) => {
+  const start = new Date(Date.now() + 4 * 86_400_000)
+  start.setHours(0, 0, 0, 0)
+  const scheduled = {
+    id: 'sprint-dashboard-upcoming',
+    userId: 'user-1',
+    workspaceId: 'workspace-1',
+    name: 'Dashboard focus',
+    sequence: 2,
+    status: 'SCHEDULED',
+    scheduledStartAt: start.toISOString(),
+    durationDays: 14,
+    startedAt: start.toISOString(),
+    endsAt: new Date(start.getTime() + 14 * 86_400_000).toISOString(),
+    closedAt: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
+
+  await signInAsDemoUser(page)
+  await page.route('**/api/dashboard/summary', async (route) => {
+    await route.fulfill({ json: {
+      totalApplications: 0,
+      createdThisWeek: 0,
+      weekStartedAt: new Date().toISOString(),
+      submittedApplications: 0,
+      statusCounts: { SAVED: 0, APPLIED: 0, SCREENING: 0, ASSESSMENT: 0, INTERVIEW: 0, OFFER: 0, REJECTED: 0, WITHDRAWN: 0 },
+      conversionRates: { screening: 0, interview: 0, offer: 0 },
+      resumeOutcomes: [],
+      sourceOutcomes: [],
+    } })
+  })
+  await page.route('**/api/sprints', async (route) => {
+    await route.fulfill({ json: [scheduled] })
+  })
+
+  await page.getByRole('link', { name: 'Dashboard', exact: true }).click()
+  const summary = page.getByRole('region', { name: 'Upcoming sprint schedule' })
+  await expect(summary.getByRole('article', { name: 'Dashboard focus, upcoming sprint summary' })).toBeVisible()
+  await expect(summary.getByText(/Starts/)).toBeVisible()
+  await expect(summary.getByText(/Ends/)).toBeVisible()
+  await expect(summary.getByRole('link', { name: 'Manage on Board' })).toHaveAttribute('href', '/board#upcoming-sprints-heading')
+})
+
+test('edits and cancels an upcoming sprint from the timeline', async ({ page }) => {
+  const start = new Date(Date.now() + 4 * 86_400_000)
+  start.setSeconds(0, 0)
+  const toLocalDate = (date: Date) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
+  const toSprint = (name: string, durationDays: number) => ({
+    id: 'sprint-upcoming-actions',
+    userId: 'user-1',
+    workspaceId: 'workspace-1',
+    name,
+    sequence: 2,
+    status: 'SCHEDULED',
+    scheduledStartAt: start.toISOString(),
+    durationDays,
+    startedAt: start.toISOString(),
+    endsAt: new Date(start.getTime() + durationDays * 86_400_000).toISOString(),
+    closedAt: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  })
+  let scheduled: ReturnType<typeof toSprint>[] = [toSprint('Interview push', 14)]
+  const patchRequests: unknown[] = []
+  let deleteRequests = 0
+
+  await signInAsDemoUser(page)
+  await page.route('**/api/sprints/current', async (route) => {
+    await route.fulfill({ json: { sprint: null, applications: [] } })
+  })
+  await page.route('**/api/sprints/archived', async (route) => {
+    await route.fulfill({ json: [] })
+  })
+  await page.route('**/api/sprints', async (route) => {
+    if (route.request().method() === 'GET') await route.fulfill({ json: scheduled })
+    else await route.continue()
+  })
+  await page.route('**/api/sprints/sprint-upcoming-actions', async (route) => {
+    if (route.request().method() === 'PATCH') {
+      const body = route.request().postDataJSON() as { name?: string; durationDays?: number; startsAt?: string }
+      patchRequests.push(body)
+      scheduled = [{
+        ...scheduled[0],
+        name: body.name ?? scheduled[0].name,
+        durationDays: body.durationDays ?? scheduled[0].durationDays,
+        scheduledStartAt: body.startsAt ?? scheduled[0].scheduledStartAt,
+        startedAt: body.startsAt ?? scheduled[0].startedAt,
+        endsAt: new Date(
+          Date.parse(body.startsAt ?? scheduled[0].scheduledStartAt) +
+          (body.durationDays ?? scheduled[0].durationDays) * 86_400_000,
+        ).toISOString(),
+      }]
+      await route.fulfill({ json: scheduled[0] })
+      return
+    }
+    if (route.request().method() === 'DELETE') {
+      deleteRequests += 1
+      scheduled = []
+      await route.fulfill({ status: 204, body: '' })
+      return
+    }
+    await route.continue()
+  })
+
+  await page.getByRole('link', { name: 'Board', exact: true }).click()
+  const upcoming = page.getByRole('region', { name: 'Upcoming sprints' })
+  await expect(upcoming.getByRole('heading', { name: 'Interview push' })).toBeVisible()
+
+  const card = upcoming.getByRole('article', { name: 'Interview push, upcoming sprint' })
+  await card.getByRole('button', { name: 'Edit scheduled sprint Interview push' }).click()
+  const editDialog = page.getByRole('dialog')
+  await editDialog.getByLabel('Sprint name (optional)').fill('Interview push revised')
+  await editDialog.getByLabel('Sprint duration (days)').fill('21')
+  await editDialog.getByLabel(/Scheduled start/).fill(toLocalDate(start))
+  await editDialog.getByRole('button', { name: 'Save changes' }).click()
+
+  await expect.poll(() => patchRequests).toHaveLength(1)
+  await expect(upcoming.getByRole('heading', { name: 'Interview push revised' })).toBeVisible()
+  await expect(upcoming.getByText('Duration: 21 days')).toBeVisible()
+
+  const revisedCard = upcoming.getByRole('article', { name: 'Interview push revised, upcoming sprint' })
+  await revisedCard.getByRole('button', { name: 'Cancel scheduled sprint Interview push revised' }).click()
+  const cancelDialog = page.getByRole('alertdialog')
+  await expect(cancelDialog).toContainText('Application assignments will not change.')
+  await cancelDialog.getByRole('button', { name: 'Cancel sprint' }).click()
+
+  await expect.poll(() => deleteRequests).toBe(1)
+  await expect(upcoming.getByText('No upcoming sprints scheduled.')).toBeVisible()
 })
 
 test('loads archived sprint groups from the authenticated API', async ({ page }) => {
@@ -355,4 +523,73 @@ test('creates multiple upcoming sprint plans through the API', async ({ page }) 
   expect(historyResponse.ok()).toBe(true)
   const history = await historyResponse.json()
   expect(history.filter((sprint: { status: string }) => sprint.status === 'SCHEDULED').map((sprint: { id: string }) => sprint.id)).toEqual([second.id, first.id])
+})
+
+test('edits and cancels a scheduled sprint through the API', async ({ page }) => {
+  await signInAsDemoUser(page)
+  const membershipsResponse = await page.request.get(`${apiOrigin}/workspaces`)
+  expect(membershipsResponse.ok()).toBe(true)
+  const memberships = await membershipsResponse.json()
+  const workspaceId = memberships[0]?.workspace?.id as string | undefined
+  if (!workspaceId) throw new Error('The signed-in test user has no workspace')
+  const headers = { 'X-Workspace-Id': workspaceId }
+
+  const currentResponse = await page.request.get(`${apiOrigin}/sprints/current`, { headers })
+  expect(currentResponse.ok()).toBe(true)
+  const current = await currentResponse.json()
+  const historyResponse = await page.request.get(`${apiOrigin}/sprints`, { headers })
+  expect(historyResponse.ok()).toBe(true)
+  const history = await historyResponse.json()
+  const latestScheduled = history
+    .filter((sprint: { status: string }) => sprint.status === 'SCHEDULED')
+    .sort((left: { sequence: number }, right: { sequence: number }) => right.sequence - left.sequence)[0]
+  const previousEnd = latestScheduled?.endsAt
+    ? Date.parse(latestScheduled.endsAt)
+    : current.sprint?.endsAt
+      ? Date.parse(current.sprint.endsAt)
+      : Date.now()
+  const start = new Date(Math.max(Date.now() + 2 * 86_400_000, previousEnd + 60_000))
+
+  const createResponse = await page.request.post(`${apiOrigin}/sprints/schedule`, {
+    data: { name: `Editable sprint ${Date.now()}`, durationDays: 14, startsAt: start.toISOString() },
+    headers,
+  })
+  expect(createResponse.status()).toBe(201)
+  const created = await createResponse.json()
+  const updatedStart = new Date(start.getTime() + 60_000)
+
+  const updateResponse = await page.request.patch(`${apiOrigin}/sprints/${created.id}`, {
+    data: {
+      name: 'Corrected sprint plan',
+      durationDays: 7,
+      startsAt: updatedStart.toISOString(),
+    },
+    headers,
+  })
+  expect(updateResponse.status()).toBe(200)
+  const updated = await updateResponse.json()
+  expect(updated).toMatchObject({
+    id: created.id,
+    name: 'Corrected sprint plan',
+    durationDays: 7,
+    status: 'SCHEDULED',
+    scheduledStartAt: updatedStart.toISOString(),
+    endsAt: new Date(updatedStart.getTime() + 7 * 86_400_000).toISOString(),
+  })
+
+  const conflictResponse = await page.request.patch(`${apiOrigin}/sprints/${created.id}`, {
+    data: { startsAt: new Date(Date.now() - 60_000).toISOString() },
+    headers,
+  })
+  expect(conflictResponse.status()).toBe(409)
+  expect(await conflictResponse.json()).toMatchObject({
+    error: 'A scheduled sprint must start in the future.',
+  })
+
+  const cancelResponse = await page.request.delete(`${apiOrigin}/sprints/${created.id}`, { headers })
+  expect(cancelResponse.status()).toBe(204)
+  const finalHistoryResponse = await page.request.get(`${apiOrigin}/sprints`, { headers })
+  expect(finalHistoryResponse.ok()).toBe(true)
+  const finalHistory = await finalHistoryResponse.json()
+  expect(finalHistory.some((sprint: { id: string }) => sprint.id === created.id)).toBe(false)
 })
