@@ -17,6 +17,27 @@ async function expectInternalHorizontalScroll(locator: ReturnType<Page['locator'
   expect(dimensions.scrollWidth).toBeGreaterThan(dimensions.clientWidth)
 }
 
+test('waits for workspace initialization before rendering protected screens', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 720 })
+  let releaseWorkspaceRequest: (() => void) | undefined
+  const workspaceRequestPending = new Promise<void>((resolve) => {
+    releaseWorkspaceRequest = resolve
+  })
+
+  await page.route('**/api/workspaces', async (route) => {
+    await workspaceRequestPending
+    await route.continue()
+  })
+  await signInAsDemoUser(page)
+
+  await expect(page.getByText('Loading workspace…')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Open more navigation' })).toHaveCount(0)
+
+  releaseWorkspaceRequest?.()
+  await expect(page.getByRole('button', { name: 'Open more navigation' })).toBeVisible()
+  await page.unroute('**/api/workspaces')
+})
+
 test('phone workflows fit the viewport and use status tabs for the board', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 })
   await page.goto('/login')

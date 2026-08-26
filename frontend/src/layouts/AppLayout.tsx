@@ -1,4 +1,4 @@
-import { Badge, Box, Button, Container, Flex, Heading, Link, Stack, Text } from '@chakra-ui/react'
+import { Alert, Badge, Box, Button, Center, Container, Flex, Heading, Link, Spinner, Stack, Text } from '@chakra-ui/react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useLogout } from '../hooks/useLogout'
@@ -91,6 +91,34 @@ export function AppLayout() {
     logout.mutate(undefined, {
       onSuccess: () => navigate('/login', { replace: true }),
     })
+  }
+
+  if (workspace.isError) {
+    return (
+      <Center minH="100vh" px="6">
+        <Stack align="center" gap="4" maxW="md" textAlign="center">
+          <Alert.Root status="error">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Unable to load workspace</Alert.Title>
+              <Alert.Description>Refresh the workspace connection to continue.</Alert.Description>
+            </Alert.Content>
+          </Alert.Root>
+          <Button variant="outline" onClick={() => void workspace.refetch()}>Retry</Button>
+        </Stack>
+      </Center>
+    )
+  }
+
+  if (workspace.isLoading || !workspace.isReady) {
+    return (
+      <Center minH="100vh" px="6">
+        <Stack align="center" gap="3">
+          <Spinner color="brand.fg" />
+          <Text color="fg.muted">Loading workspace…</Text>
+        </Stack>
+      </Center>
+    )
   }
 
   return (

@@ -17,6 +17,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Clarified the first-run sprint flow by hiding future-sprint scheduling until the first sprint is active.
 - Keep sprint-end guidance visible in a persistent banner and simplify upcoming sprint labels and date defaults.
+- Load the signed-in workspace before protected screens request scoped data, so first-run users reliably enter the correct board after login.
 
 ## [3.33.0] - 2026-08-25
 

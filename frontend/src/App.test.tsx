@@ -7,6 +7,7 @@ import App from './App'
 import { AppProvider } from './components/ui/AppProvider'
 import { useGmailUpdateReviews } from './hooks/useGmailUpdateReviews'
 import { WorkspaceProvider } from './contexts/WorkspaceContext'
+import { workspaceService } from './services/workspace.service'
 
 vi.mock('./hooks/useApplications', () => ({
   useApplications: () => ({
@@ -87,7 +88,7 @@ vi.mock('./hooks/useGmailStatus', () => ({
 }))
 vi.mock('./hooks/useGmailUpdateReviews', () => ({ useGmailUpdateReviews: vi.fn() }))
 vi.mock('./services/workspace.service', () => ({
-  workspaceService: { list: async () => [{ role: 'OWNER', workspace: { id: 'workspace-1', name: 'Personal workspace', isPersonal: true, _count: { applications: 0, members: 1 } } }] },
+  workspaceService: { list: vi.fn() },
 }))
 
 vi.mock('./components/reminders/DashboardReminders', () => ({
@@ -133,6 +134,18 @@ function renderApp(path: string) {
 describe('application routing', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(workspaceService.list).mockResolvedValue([{
+      role: 'OWNER',
+      joinedAt: '2026-08-25T00:00:00.000Z',
+      workspace: {
+        id: 'workspace-1',
+        name: 'Personal workspace',
+        isPersonal: true,
+        createdAt: '2026-08-25T00:00:00.000Z',
+        updatedAt: '2026-08-25T00:00:00.000Z',
+        _count: { applications: 0, members: 1 },
+      },
+    }])
     vi.mocked(useGmailUpdateReviews).mockReturnValue({
       data: [],
       isPending: false,
@@ -140,6 +153,33 @@ describe('application routing', () => {
     } as never)
   })
   afterEach(cleanup)
+
+  it('waits for workspace initialization before rendering protected navigation', async () => {
+    let resolveWorkspace: ((value: Awaited<ReturnType<typeof workspaceService.list>>) => void) | undefined
+    vi.mocked(workspaceService.list).mockReturnValue(new Promise((resolve) => {
+      resolveWorkspace = resolve
+    }))
+
+    renderApp('/dashboard')
+
+    expect(screen.getByText('Loading workspace…')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Open more navigation' })).not.toBeInTheDocument()
+
+    resolveWorkspace?.([{
+      role: 'OWNER',
+      joinedAt: '2026-08-25T00:00:00.000Z',
+      workspace: {
+        id: 'workspace-1',
+        name: 'Personal workspace',
+        isPersonal: true,
+        createdAt: '2026-08-25T00:00:00.000Z',
+        updatedAt: '2026-08-25T00:00:00.000Z',
+        _count: { applications: 0, members: 1 },
+      },
+    }])
+
+    expect(await screen.findByRole('button', { name: 'Open more navigation' })).toBeInTheDocument()
+  })
 
   it('shows primary navigation and navigates to applications', async () => {
     const user = userEvent.setup()

@@ -2,25 +2,72 @@ import { createContext, useContext, useEffect, useMemo, useState, type PropsWith
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { workspaceService } from '../services/workspace.service'
 import { setSelectedWorkspaceId } from '../services/api'
+import { useSession } from '../hooks/useSession'
 
 const storageKey = 'job-tracker-workspace-id'
-const Context = createContext<{ workspaceId: string | null; setWorkspaceId: (id: string) => void; memberships: ReturnType<typeof useWorkspaces>['data']; isLoading: boolean } | null>(null)
+type WorkspaceContextValue = {
+  workspaceId: string | null
+  setWorkspaceId: (id: string) => void
+  memberships: ReturnType<typeof useWorkspaces>['data']
+  isLoading: boolean
+  isError: boolean
+  isReady: boolean
+  refetch: () => Promise<unknown>
+}
+
+const Context = createContext<WorkspaceContextValue | null>(null)
 export const workspaceQueryKey = ['workspaces'] as const
-export function useWorkspaces() { return useQuery({ queryKey: workspaceQueryKey, queryFn: workspaceService.list }) }
+
+export function useWorkspaces() {
+  const session = useSession()
+  return useQuery({
+    queryKey: workspaceQueryKey,
+    queryFn: workspaceService.list,
+    enabled: Boolean(session.data?.user),
+  })
+}
+
+/** Loads the selected workspace before rendering protected workspace screens. */
 export function WorkspaceProvider({ children }: PropsWithChildren) {
   const query = useWorkspaces(); const client = useQueryClient()
   const [workspaceId, setState] = useState<string | null>(() => localStorage.getItem(storageKey))
+  const [isReady, setIsReady] = useState(false)
+
   useEffect(() => {
-    if (!workspaceId && query.data?.[0]) {
-      const nextWorkspaceId = query.data[0].workspace.id
-      setSelectedWorkspaceId(nextWorkspaceId)
-      setState(nextWorkspaceId)
-      void client.invalidateQueries()
+    if (!query.isSuccess || !query.data?.length) return
+
+    const selectedWorkspace = workspaceId && query.data.some(({ workspace }) => workspace.id === workspaceId)
+      ? workspaceId
+      : query.data[0].workspace.id
+    if (selectedWorkspace !== workspaceId) {
+      setIsReady(false)
+      setState(selectedWorkspace)
+      return
     }
-  }, [client, query.data, workspaceId])
-  useEffect(() => { setSelectedWorkspaceId(workspaceId); if (workspaceId) localStorage.setItem(storageKey, workspaceId) }, [workspaceId])
-  const setWorkspaceId = (id: string) => { setSelectedWorkspaceId(id); setState(id); localStorage.setItem(storageKey,id); void client.invalidateQueries() }
-  const value = useMemo(() => ({ workspaceId, setWorkspaceId, memberships: query.data, isLoading: query.isLoading }), [workspaceId, query.data, query.isLoading])
+
+    setSelectedWorkspaceId(selectedWorkspace)
+    localStorage.setItem(storageKey, selectedWorkspace)
+    setIsReady(true)
+  }, [query.data, query.isSuccess, workspaceId])
+
+  useEffect(() => {
+    if (isReady && workspaceId) void client.invalidateQueries()
+  }, [client, isReady, workspaceId])
+
+  const setWorkspaceId = (id: string) => {
+    if (id === workspaceId) return
+    setIsReady(false)
+    setState(id)
+  }
+  const value = useMemo(() => ({
+    workspaceId,
+    setWorkspaceId,
+    memberships: query.data,
+    isLoading: query.isFetching,
+    isError: query.isError,
+    isReady,
+    refetch: query.refetch,
+  }), [isReady, query.data, query.isError, query.isFetching, query.refetch, workspaceId])
   return <Context.Provider value={value}>{children}</Context.Provider>
 }
 export function useWorkspace() { const value=useContext(Context); if(!value) throw new Error('WorkspaceProvider missing'); return value }
