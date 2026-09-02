@@ -54,7 +54,7 @@ Run `npm run db:generate` in `backend`. Docker and CI builds run generation befo
 
 ## Dependency audit fails
 
-Run `npm audit --audit-level=high` from `backend` or `frontend` and review the advisory path before changing versions. The backend keeps Prisma 7.9.1 and temporarily overrides its vulnerable transitive `deepmerge-ts` and `mysql2` dependencies with patched versions (`8.0.2` and `3.24.2`); do not use `npm audit fix --force` to downgrade Prisma. Dependabot monitors the Prisma packages for the upstream release that can remove these compatibility overrides. A failed `Verify` check, or a major/minor update, intentionally prevents automatic merging.
+Run `npm audit --audit-level=high` from `backend` or `frontend` and review the advisory path before changing versions. The backend keeps Prisma 7.9.1 and temporarily overrides vulnerable transitive `deepmerge-ts`, `fast-uri`, `mysql2`, and `qs` dependencies with patched versions (`8.0.2`, `3.1.7`, `3.24.2`, and `6.16.0`); do not use `npm audit fix --force` to downgrade Prisma. Dependabot monitors the upstream packages for releases that can remove these compatibility overrides. A failed `Verify` check, or a major/minor update, intentionally prevents automatic merging.
 
 ## Swagger page does not load
 

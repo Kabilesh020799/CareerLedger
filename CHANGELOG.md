@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.34.2] - 2026-09-02
+
+### Security
+
+- Keep the backend dependency audit clear of newly reported high-severity transitive `fast-uri` advisories and the moderate `qs` advisories with compatible patched overrides.
+
+### Fixed
+
+- Keep dependency-update verification compatible with Vitest 4 queue mocks and cold CI workers loading the lazy Applications route.
+
 ## [3.34.1] - 2026-09-01
 
 ### Fixed
@@ -544,7 +554,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.34.1...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.34.2...HEAD
+[3.34.2]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.34.1...v3.34.2
 [3.34.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.34.0...v3.34.1
 [3.34.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.33.0...v3.34.0
 [3.33.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.32.0...v3.33.0
