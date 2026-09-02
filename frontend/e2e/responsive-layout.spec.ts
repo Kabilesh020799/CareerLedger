@@ -39,6 +39,7 @@ test('waits for workspace initialization before rendering protected screens', as
 })
 
 test('phone workflows fit the viewport and use status tabs for the board', async ({ page }) => {
+  test.setTimeout(60_000)
   await page.setViewportSize({ width: 320, height: 720 })
   await page.goto('/login')
   await expectNoPageOverflow(page)

@@ -1,6 +1,6 @@
 {
   "name": "career-ledger",
-  "version": "3.34.0",
+  "version": "3.34.1",
   "private": true,
   "scripts": {
     "release:notes": "node scripts/release-notes.js",

@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [3.34.1] - 2026-09-01
+
+### Fixed
+
+- Keep release verification's high-severity dependency audit clean with patched Prisma transitive dependencies without downgrading Prisma.
+- Allow the expanded responsive phone workflow to finish within its CI test budget so cleanup is not interrupted by the default timeout.
+
 ## [3.34.0] - 2026-08-25
 
 ### Added
@@ -537,7 +544,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added automatic status-change events that store the previous and new statuses in the same database transaction as the application update.
 - Added categorized changelog entries as the source for GitHub Release notes.
 
-[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.34.0...HEAD
+[Unreleased]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.34.1...HEAD
+[3.34.1]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.34.0...v3.34.1
 [3.34.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.33.0...v3.34.0
 [3.33.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.32.0...v3.33.0
 [3.32.0]: https://github.com/Kabilesh020799/CareerLedger/compare/v3.31.0...v3.32.0
