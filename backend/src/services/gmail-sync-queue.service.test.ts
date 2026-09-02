@@ -10,7 +10,11 @@ const prismaMock = vi.hoisted(() => ({
   gmailConnection: { findMany: vi.fn() },
 }));
 
-vi.mock("bullmq", () => ({ Queue: vi.fn(() => queueMock) }));
+vi.mock("bullmq", () => ({
+  Queue: vi.fn(function QueueMock() {
+    return queueMock;
+  }),
+}));
 vi.mock("../config/prisma", () => ({ prisma: prismaMock }));
 vi.mock("../config/redis", () => ({ createRedisConnection: vi.fn(() => ({})) }));
 

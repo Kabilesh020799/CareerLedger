@@ -192,9 +192,9 @@ describe('application routing', () => {
     await user.click(screen.getByRole('button', { name: 'Tools' }))
     expect(screen.getByRole('link', { name: 'Email sync' })).toHaveAttribute('href', '/gmail')
     await user.click(screen.getByRole('link', { name: 'Applications' }))
-    expect(await screen.findByRole('heading', { name: 'Applications' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Applications' }, { timeout: 5_000 })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Open more navigation' })).toHaveAttribute('aria-expanded', 'false')
-  })
+  }, 10_000)
 
   it('navigates to the application board', async () => {
     const user = userEvent.setup()

@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
 const queueMock = vi.hoisted(() => ({ upsertJobScheduler: vi.fn() }));
-vi.mock("bullmq", () => ({ Queue: vi.fn(() => queueMock) }));
+vi.mock("bullmq", () => ({
+  Queue: vi.fn(function QueueMock() {
+    return queueMock;
+  }),
+}));
 vi.mock("../config/redis", () => ({ createRedisConnection: vi.fn(() => ({})) }));
 
 import { Queue } from "bullmq";
